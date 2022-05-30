@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -24,12 +26,23 @@ var infaTemplates = []string{
 	"Уверяю вас в том, что %s с вероятностью %d%%",
 }
 
+const kotURL = "https://thiscatdoesnotexist.com/"
+
+const animeFormat = "https://thisanimedoesnotexist.ai/results/psi-%s/seed%s.png"
+
+var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8",
+	"0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5",
+	"1.6", "1.7", "1.8", "2.0"}
+
+const furFormat = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%s.jpg"
+
+const flagFormat = "https://thisflagdoesnotexist.com/images/%d.png"
+
+const chelURL = "https://thispersondoesnotexist.com/image"
+
 // handleInfa responds with the probability of message happening
 func (a *app) handleInfa(c tele.Context, message string) error {
-	p := rand.Intn(101)
-	i := rand.Intn(len(infaTemplates))
-	t := infaTemplates[i]
-	return c.Send(fmt.Sprintf(t, message, p))
+	return c.Send(infa(message))
 }
 
 // handleKto responds with message appended to the random chat member username
@@ -38,24 +51,21 @@ func (a *app) handleKto(c tele.Context, message string) error {
 	if err != nil {
 		return err
 	}
-	user, err := c.Bot().ChatByID(userID)
+	chat, err := c.Bot().ChatByID(userID)
 	if err != nil {
 		return err
 	}
-	name := getUserName(user)
-	return c.Send(fmt.Sprintf("[%s](tg://user?id=%d) %s", name, userID, message), tele.ModeMarkdownV2)
+	name := getUserName(chat)
+	return c.Send(kto(userID, name, message), tele.ModeMarkdownV2)
 }
 
 // handleKot responds with a cat picture
 func (a *app) handleKot(c tele.Context) error {
-	l := "https://thiscatdoesnotexist.com/"
-	r, err := http.Get(l)
+	pic, err := fetchPicture(kotURL)
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
-	photo := &tele.Photo{File: tele.FromReader(r.Body)}
-	return c.Send(photo)
+	return c.Send(pic)
 }
 
 // handleImya sets the user's admin title
@@ -71,26 +81,51 @@ func (a *app) handleImya(c tele.Context, title string) error {
 
 // handleAnime responds with an anime picture
 func (a *app) handleAnime(c tele.Context) error {
-	l := "https://thisanimedoesnotexist.ai/results/psi-1.0/seed%s.png"
-	r, err := http.Get(fmt.Sprintf(l, getRandomNumbers(5)))
+	psi := animePsis[rand.Intn(len(animePsis))]
+	seed := getRandomNumbers(5)
+	url := fmt.Sprintf(animeFormat, psi, seed)
+
+	pic, err := fetchPicture(url)
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
-	photo := &tele.Photo{File: tele.FromReader(r.Body)}
-	return c.Send(photo)
+
+	return c.Send(pic)
 }
 
 // handleFur responds with a furry picture
 func (a *app) handleFur(c tele.Context) error {
-	l := "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%s.jpg"
-	r, err := http.Get(fmt.Sprintf(l, getRandomNumbers(5)))
+	seed := getRandomNumbers(5)
+	url := fmt.Sprintf(furFormat, seed)
+
+	pic, err := fetchPicture(url)
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
-	photo := &tele.Photo{File: tele.FromReader(r.Body)}
-	return c.Send(photo)
+
+	return c.Send(pic)
+}
+
+// handleFlag respons with a flag picture
+func (a *app) handleFlag(c tele.Context) error {
+	seed := rand.Intn(5000)
+	url := fmt.Sprintf(flagFormat, seed)
+
+	pic, err := fetchPicture(url)
+	if err != nil {
+		return err
+	}
+
+	return c.Send(pic)
+}
+
+// handleChel respons with a human picture
+func (a *app) handleChel(c tele.Context) error {
+	pic, err := fetchPicture(chelURL)
+	if err != nil {
+		return err
+	}
+	return c.Send(pic)
 }
 
 // getRandomGroupMember returns the random member's ID from the group
@@ -99,8 +134,7 @@ func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	i := rand.Intn(len(userIDs))
-	return userIDs[i], nil
+	return userIDs[rand.Intn(len(userIDs))], nil
 }
 
 // getRandomNumbers generates a string of random numbers of length c
@@ -116,4 +150,31 @@ func getRandomNumbers(c int) string {
 // getUserName returns the displayed user name
 func getUserName(chat *tele.Chat) string {
 	return strings.TrimSpace(strings.Join([]string{chat.FirstName, chat.LastName}, " "))
+}
+
+// infa returns the probability of message happening
+func infa(message string) string {
+	p := rand.Intn(101)
+	i := rand.Intn(len(infaTemplates))
+	t := infaTemplates[i]
+	return fmt.Sprintf(t, message, p)
+}
+
+// kto returns the mention for user together with message
+func kto(userID int64, name, message string) string {
+	return fmt.Sprintf("[%s](tg://user?id=%d) %s", name, userID, message)
+}
+
+// fetchPicture returns the picture located at url
+func fetchPicture(url string) (*tele.Photo, error) {
+	r, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return &tele.Photo{File: tele.FromReader(bytes.NewReader(body))}, nil
 }
