@@ -60,6 +60,7 @@ func (a *app) handleKto(c tele.Context, message string) error {
 		return err
 	}
 	name := getUserName(chat)
+	message = escapeMarkdown(message)
 	return c.Send(kto(userID, name, message), tele.ModeMarkdownV2)
 }
 
@@ -199,4 +200,12 @@ func fetchPicture(url string) (*tele.Photo, error) {
 		return nil, err
 	}
 	return &tele.Photo{File: tele.FromReader(bytes.NewReader(body))}, nil
+}
+
+func escapeMarkdown(message string) string {
+	chars := []string{"_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"}
+	for _, c := range chars {
+		message = strings.ReplaceAll(message, c, fmt.Sprintf("\\%s", c))
+	}
+	return message
 }
