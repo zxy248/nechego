@@ -27,7 +27,7 @@ func (a *app) handleMessage(c tele.Context) error {
 	case strings.HasPrefix(text, "!кто"):
 		message := getCommandArgument(text, "!кто")
 		return a.handleKto(c, message)
-	case strings.HasPrefix(text, "!кот"):
+	case strings.HasPrefix(text, "!кот") || strings.HasPrefix(text, "!кошка"):
 		return a.handleKot(c)
 	case strings.HasPrefix(text, "!имя"):
 		message := getCommandArgument(text, "!имя")
@@ -40,6 +40,10 @@ func (a *app) handleMessage(c tele.Context) error {
 		return a.handleFlag(c)
 	case strings.HasPrefix(text, "!чел"):
 		return a.handleChel(c)
+	case strings.HasPrefix(text, "!лошадь") || strings.HasPrefix(text, "!конь"):
+		return a.handleHorse(c)
+	case strings.HasPrefix(text, "!арт") || strings.HasPrefix(text, "!пик"):
+		return a.handleArt(c)
 	}
 
 	return nil

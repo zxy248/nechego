@@ -40,6 +40,10 @@ const flagFormat = "https://thisflagdoesnotexist.com/images/%d.png"
 
 const chelURL = "https://thispersondoesnotexist.com/image"
 
+const horseURL = "https://thishorsedoesnotexist.com/"
+
+const artURL = "https://thisartworkdoesnotexist.com/"
+
 // handleInfa responds with the probability of message happening
 func (a *app) handleInfa(c tele.Context, message string) error {
 	return c.Send(infa(message))
@@ -122,6 +126,24 @@ func (a *app) handleFlag(c tele.Context) error {
 // handleChel respons with a human picture
 func (a *app) handleChel(c tele.Context) error {
 	pic, err := fetchPicture(chelURL)
+	if err != nil {
+		return err
+	}
+	return c.Send(pic)
+}
+
+// handleHorse responds with a horse picture
+func (a *app) handleHorse(c tele.Context) error {
+	pic, err := fetchPicture(horseURL)
+	if err != nil {
+		return err
+	}
+	return c.Send(pic)
+}
+
+// handleArt responds with an art picture
+func (a *app) handleArt(c tele.Context) error {
+	pic, err := fetchPicture(artURL)
 	if err != nil {
 		return err
 	}
