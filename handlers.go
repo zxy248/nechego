@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -170,6 +171,45 @@ func (a *app) handleCar(c tele.Context) error {
 	return c.Send(byteSliceToPhoto(img))
 }
 
+// handlePair sends a pair of the day
+func (a *app) handlePair(c tele.Context) error {
+	a.pair.mu.Lock()
+	defer a.pair.mu.Unlock()
+
+	if !a.pair.set || a.pair.prev.Day() != time.Now().Day() {
+		x, err := a.getRandomGroupMember(c.Chat().ID)
+		if err != nil {
+			return err
+		}
+		y, err := a.getRandomGroupMember(c.Chat().ID)
+		if err != nil {
+			return err
+		}
+		if x == y {
+			return c.Send("💔")
+		}
+
+		a.pair.x = x
+		a.pair.y = y
+		a.pair.set = true
+		a.pair.prev = time.Now()
+	}
+
+	chatX, err := c.Bot().ChatByID(a.pair.x)
+	if err != nil {
+		return err
+	}
+	chatY, err := c.Bot().ChatByID(a.pair.y)
+	if err != nil {
+		return err
+	}
+
+	return c.Send(fmt.Sprintf("Пара дня ✨\n%s 💘 %s",
+		mention(a.pair.x, getUserName(chatX)),
+		mention(a.pair.y, getUserName(chatY))),
+		tele.ModeMarkdownV2)
+}
+
 // getRandomGroupMember returns the random group member's ID
 func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	userIDs, err := a.store.getUserIDs(groupID)
@@ -204,7 +244,12 @@ func probability(message string) string {
 
 // who returns the mention of the user prepended to the message
 func who(userID int64, name, message string) string {
-	return fmt.Sprintf("[%s](tg://user?id=%d) %s", name, userID, message)
+	return fmt.Sprintf("%s %s", mention(userID, name), message)
+}
+
+// mention returns the mention to the user under the name
+func mention(userID int64, name string) string {
+	return fmt.Sprintf("[%s](tg://user?id=%d)", name, userID)
 }
 
 // fetchPicture returns a picture located at url
