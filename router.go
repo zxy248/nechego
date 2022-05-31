@@ -23,23 +23,23 @@ func (a *app) handleMessage(c tele.Context) error {
 	switch {
 	case strings.HasPrefix(text, "!инфа"):
 		message := getCommandArgument(text, "!инфа")
-		return a.handleInfa(c, message)
+		return a.handleProbability(c, message)
 	case strings.HasPrefix(text, "!кто"):
 		message := getCommandArgument(text, "!кто")
-		return a.handleKto(c, message)
-	case strings.HasPrefix(text, "!кот") || strings.HasPrefix(text, "!кошка"):
-		return a.handleKot(c)
+		return a.handleWho(c, message)
+	case strings.HasPrefix(text, "!кот") || strings.HasPrefix(text, "!кош"):
+		return a.handleCat(c)
 	case strings.HasPrefix(text, "!имя"):
 		message := getCommandArgument(text, "!имя")
-		return a.handleImya(c, message)
+		return a.handleTitle(c, message)
 	case strings.HasPrefix(text, "!аним"):
 		return a.handleAnime(c)
 	case strings.HasPrefix(text, "!фур"):
-		return a.handleFur(c)
+		return a.handleFurry(c)
 	case strings.HasPrefix(text, "!флаг"):
 		return a.handleFlag(c)
 	case strings.HasPrefix(text, "!чел"):
-		return a.handleChel(c)
+		return a.handlePerson(c)
 	case strings.HasPrefix(text, "!лошадь") || strings.HasPrefix(text, "!конь"):
 		return a.handleHorse(c)
 	case strings.HasPrefix(text, "!арт") || strings.HasPrefix(text, "!пик"):

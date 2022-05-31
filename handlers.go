@@ -13,8 +13,8 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-// infaTemplates regexp: "^.*%s.*%d%%\""
-var infaTemplates = []string{
+// probabilityTemplates regexp: "^.*%s.*%d%%\""
+var probabilityTemplates = []string{
 	"Здравый смысл говорит мне о том, что %s с вероятностью %d%%",
 	"Благодаря чувственному опыту я определил, что %s с вероятностью %d%%",
 	"Я думаю, что %s с вероятностью %d%%",
@@ -28,28 +28,27 @@ var infaTemplates = []string{
 	"Уверяю вас в том, что %s с вероятностью %d%%",
 }
 
-const kotURL = "https://thiscatdoesnotexist.com/"
+const catURL = "https://thiscatdoesnotexist.com/"
 const animeFormat = "https://thisanimedoesnotexist.ai/results/psi-%s/seed%s.png"
 const furFormat = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%s.jpg"
 const flagFormat = "https://thisflagdoesnotexist.com/images/%d.png"
-const chelURL = "https://thispersondoesnotexist.com/image"
+const personURL = "https://thispersondoesnotexist.com/image"
 const horseURL = "https://thishorsedoesnotexist.com/"
 const artURL = "https://thisartworkdoesnotexist.com/"
 const carURL = "https://www.thisautomobiledoesnotexist.com/"
-const carImgReStr = "<img id = \"vehicle\" src=\"data:image/png;base64,(.+)\" class=\"center\">"
 
-var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8",
-	"0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5",
-	"1.6", "1.7", "1.8", "2.0"}
-var carImgRe = regexp.MustCompile(carImgReStr)
+var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0",
+	"1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.0"}
+var carImageRe = regexp.MustCompile(
+	"<img id = \"vehicle\" src=\"data:image/png;base64,(.+)\" class=\"center\">")
 
-// handleInfa responds with the probability of message happening
-func (a *app) handleInfa(c tele.Context, message string) error {
-	return c.Send(infa(message))
+// handleProbability responds with the probability of the message
+func (a *app) handleProbability(c tele.Context, message string) error {
+	return c.Send(probability(message))
 }
 
-// handleKto responds with message appended to the random chat member username
-func (a *app) handleKto(c tele.Context, message string) error {
+// handleWho responds with the message appended to the random chat member
+func (a *app) handleWho(c tele.Context, message string) error {
 	userID, err := a.getRandomGroupMember(c.Chat().ID)
 	if err != nil {
 		return err
@@ -60,20 +59,20 @@ func (a *app) handleKto(c tele.Context, message string) error {
 	}
 	name := getUserName(chat)
 	message = escapeMarkdown(message)
-	return c.Send(kto(userID, name, message), tele.ModeMarkdownV2)
+	return c.Send(who(userID, name, message), tele.ModeMarkdownV2)
 }
 
-// handleKot responds with a cat picture
-func (a *app) handleKot(c tele.Context) error {
-	pic, err := fetchPicture(kotURL)
+// handleCat sends a picture of a cat
+func (a *app) handleCat(c tele.Context) error {
+	pic, err := fetchPicture(catURL)
 	if err != nil {
 		return err
 	}
 	return c.Send(pic)
 }
 
-// handleImya sets the user's admin title
-func (a *app) handleImya(c tele.Context, title string) error {
+// handleTitle sets the user's admin title
+func (a *app) handleTitle(c tele.Context, title string) error {
 	if len(title) > 16 {
 		return c.Send("Ошибка: максимальная длина имени 16 символов")
 	}
@@ -83,7 +82,7 @@ func (a *app) handleImya(c tele.Context, title string) error {
 	return nil
 }
 
-// handleAnime responds with an anime picture
+// handleAnime sends an anime picture
 func (a *app) handleAnime(c tele.Context) error {
 	psi := animePsis[rand.Intn(len(animePsis))]
 	seed := getRandomNumbers(5)
@@ -97,8 +96,8 @@ func (a *app) handleAnime(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleFur responds with a furry picture
-func (a *app) handleFur(c tele.Context) error {
+// handleFurry sends a furry picture
+func (a *app) handleFurry(c tele.Context) error {
 	seed := getRandomNumbers(5)
 	url := fmt.Sprintf(furFormat, seed)
 
@@ -110,7 +109,7 @@ func (a *app) handleFur(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleFlag respons with a flag picture
+// handleFlag sends a picture of a flag
 func (a *app) handleFlag(c tele.Context) error {
 	seed := rand.Intn(5000)
 	url := fmt.Sprintf(flagFormat, seed)
@@ -123,16 +122,16 @@ func (a *app) handleFlag(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleChel respons with a human picture
-func (a *app) handleChel(c tele.Context) error {
-	pic, err := fetchPicture(chelURL)
+// handlePerson sends a picture of a person
+func (a *app) handlePerson(c tele.Context) error {
+	pic, err := fetchPicture(personURL)
 	if err != nil {
 		return err
 	}
 	return c.Send(pic)
 }
 
-// handleHorse responds with a horse picture
+// handleHorse sends a picture of a horse
 func (a *app) handleHorse(c tele.Context) error {
 	pic, err := fetchPicture(horseURL)
 	if err != nil {
@@ -141,7 +140,7 @@ func (a *app) handleHorse(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleArt responds with an art picture
+// handleArt sends a picture of an art
 func (a *app) handleArt(c tele.Context) error {
 	pic, err := fetchPicture(artURL)
 	if err != nil {
@@ -150,7 +149,7 @@ func (a *app) handleArt(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleCar responds with a car picture
+// handleCar sends a picture of a car
 func (a *app) handleCar(c tele.Context) error {
 	r, err := http.Get(carURL)
 	if err != nil {
@@ -163,7 +162,7 @@ func (a *app) handleCar(c tele.Context) error {
 		return err
 	}
 
-	b64img := carImgRe.FindStringSubmatch(string(data))[1]
+	b64img := carImageRe.FindStringSubmatch(string(data))[1]
 	img, err := base64.StdEncoding.DecodeString(b64img)
 	if err != nil {
 		return err
@@ -171,7 +170,7 @@ func (a *app) handleCar(c tele.Context) error {
 	return c.Send(byteSliceToPhoto(img))
 }
 
-// getRandomGroupMember returns the random member's ID from the group
+// getRandomGroupMember returns the random group member's ID
 func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	userIDs, err := a.store.getUserIDs(groupID)
 	if err != nil {
@@ -180,7 +179,7 @@ func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	return userIDs[rand.Intn(len(userIDs))], nil
 }
 
-// getRandomNumbers generates a string of random numbers of length c
+// getRandomNumbers returns a string of random numbers of length c
 func getRandomNumbers(c int) string {
 	nums := []string{}
 	for i := 0; i < c; i++ {
@@ -195,20 +194,20 @@ func getUserName(chat *tele.Chat) string {
 	return strings.TrimSpace(strings.Join([]string{chat.FirstName, chat.LastName}, " "))
 }
 
-// infa returns the probability of message happening
-func infa(message string) string {
+// probability returns the probability of the message
+func probability(message string) string {
 	p := rand.Intn(101)
-	i := rand.Intn(len(infaTemplates))
-	t := infaTemplates[i]
+	i := rand.Intn(len(probabilityTemplates))
+	t := probabilityTemplates[i]
 	return fmt.Sprintf(t, message, p)
 }
 
-// kto returns the mention for user together with message
-func kto(userID int64, name, message string) string {
+// who returns the mention of the user prepended to the message
+func who(userID int64, name, message string) string {
 	return fmt.Sprintf("[%s](tg://user?id=%d) %s", name, userID, message)
 }
 
-// fetchPicture returns the picture located at url
+// fetchPicture returns a picture located at url
 func fetchPicture(url string) (*tele.Photo, error) {
 	r, err := http.Get(url)
 	if err != nil {
@@ -222,10 +221,12 @@ func fetchPicture(url string) (*tele.Photo, error) {
 	return byteSliceToPhoto(body), nil
 }
 
+// byteSliceToPhoto converts the byte slice of image data to Photo
 func byteSliceToPhoto(data []byte) *tele.Photo {
 	return &tele.Photo{File: tele.FromReader(bytes.NewReader(data))}
 }
 
+// escapeMarkdown escapes the message for its use in Markdown
 func escapeMarkdown(message string) string {
 	chars := []string{"_", "*", "[", "]", "(", ")", "~", "`", ">",
 		"#", "+", "-", "=", "|", "{", "}", ".", "!"}
