@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
+	"regexp"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
@@ -27,22 +29,19 @@ var infaTemplates = []string{
 }
 
 const kotURL = "https://thiscatdoesnotexist.com/"
-
 const animeFormat = "https://thisanimedoesnotexist.ai/results/psi-%s/seed%s.png"
+const furFormat = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%s.jpg"
+const flagFormat = "https://thisflagdoesnotexist.com/images/%d.png"
+const chelURL = "https://thispersondoesnotexist.com/image"
+const horseURL = "https://thishorsedoesnotexist.com/"
+const artURL = "https://thisartworkdoesnotexist.com/"
+const carURL = "https://www.thisautomobiledoesnotexist.com/"
+const carImgReStr = "<img id = \"vehicle\" src=\"data:image/png;base64,(.+)\" class=\"center\">"
 
 var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8",
 	"0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5",
 	"1.6", "1.7", "1.8", "2.0"}
-
-const furFormat = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%s.jpg"
-
-const flagFormat = "https://thisflagdoesnotexist.com/images/%d.png"
-
-const chelURL = "https://thispersondoesnotexist.com/image"
-
-const horseURL = "https://thishorsedoesnotexist.com/"
-
-const artURL = "https://thisartworkdoesnotexist.com/"
+var carImgRe = regexp.MustCompile(carImgReStr)
 
 // handleInfa responds with the probability of message happening
 func (a *app) handleInfa(c tele.Context, message string) error {
@@ -151,6 +150,27 @@ func (a *app) handleArt(c tele.Context) error {
 	return c.Send(pic)
 }
 
+// handleCar responds with a car picture
+func (a *app) handleCar(c tele.Context) error {
+	r, err := http.Get(carURL)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+
+	b64img := carImgRe.FindStringSubmatch(string(data))[1]
+	img, err := base64.StdEncoding.DecodeString(b64img)
+	if err != nil {
+		return err
+	}
+	return c.Send(byteSliceToPhoto(img))
+}
+
 // getRandomGroupMember returns the random member's ID from the group
 func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	userIDs, err := a.store.getUserIDs(groupID)
@@ -199,11 +219,16 @@ func fetchPicture(url string) (*tele.Photo, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &tele.Photo{File: tele.FromReader(bytes.NewReader(body))}, nil
+	return byteSliceToPhoto(body), nil
+}
+
+func byteSliceToPhoto(data []byte) *tele.Photo {
+	return &tele.Photo{File: tele.FromReader(bytes.NewReader(data))}
 }
 
 func escapeMarkdown(message string) string {
-	chars := []string{"_", "*", "[", "]", "(", ")", "~", "`", ">", "#", "+", "-", "=", "|", "{", "}", ".", "!"}
+	chars := []string{"_", "*", "[", "]", "(", ")", "~", "`", ">",
+		"#", "+", "-", "=", "|", "{", "}", ".", "!"}
 	for _, c := range chars {
 		message = strings.ReplaceAll(message, c, fmt.Sprintf("\\%s", c))
 	}
