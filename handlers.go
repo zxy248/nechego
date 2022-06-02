@@ -3,13 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -173,15 +173,15 @@ func (a *app) handleCar(c tele.Context) error {
 
 // handlePair sends a pair of the day
 func (a *app) handlePair(c tele.Context) error {
-	a.pair.mu.Lock()
-	defer a.pair.mu.Unlock()
+	groupID := c.Chat().ID
 
-	if !a.pair.set || a.pair.prev.Day() != time.Now().Day() {
-		x, err := a.getRandomGroupMember(c.Chat().ID)
+	p, err := a.store.getPair(groupID)
+	if errors.Is(err, errNoPair) {
+		x, err := a.getRandomGroupMember(groupID)
 		if err != nil {
 			return err
 		}
-		y, err := a.getRandomGroupMember(c.Chat().ID)
+		y, err := a.getRandomGroupMember(groupID)
 		if err != nil {
 			return err
 		}
@@ -189,24 +189,26 @@ func (a *app) handlePair(c tele.Context) error {
 			return c.Send("💔")
 		}
 
-		a.pair.x = x
-		a.pair.y = y
-		a.pair.set = true
-		a.pair.prev = time.Now()
+		p = pair{x, y}
+		if err := a.store.insertPair(groupID, p); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
 	}
 
-	chatX, err := c.Bot().ChatByID(a.pair.x)
+	chatX, err := c.Bot().ChatByID(p.x)
 	if err != nil {
 		return err
 	}
-	chatY, err := c.Bot().ChatByID(a.pair.y)
+	chatY, err := c.Bot().ChatByID(p.y)
 	if err != nil {
 		return err
 	}
 
 	return c.Send(fmt.Sprintf("Пара дня ✨\n%s 💘 %s",
-		mention(a.pair.x, getUserName(chatX)),
-		mention(a.pair.y, getUserName(chatY))),
+		mention(p.x, getUserName(chatX)),
+		mention(p.y, getUserName(chatY))),
 		tele.ModeMarkdownV2)
 }
 

@@ -32,7 +32,7 @@ func (a *app) handleMessage(c tele.Context) error {
 	case strings.HasPrefix(text, "!имя"):
 		message := getCommandArgument(text, "!имя")
 		return a.handleTitle(c, message)
-	case strings.HasPrefix(text, "!аним"):
+	case strings.HasPrefix(text, "!аним") || strings.HasPrefix(text, "!мульт"):
 		return a.handleAnime(c)
 	case strings.HasPrefix(text, "!фур"):
 		return a.handleFurry(c)

@@ -4,23 +4,13 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"sync"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-type pairOfTheDay struct {
-	set  bool
-	prev time.Time
-	x    int64
-	y    int64
-	mu   *sync.Mutex
-}
-
 type app struct {
 	store *store
-	pair  *pairOfTheDay
 }
 
 func main() {
@@ -31,17 +21,17 @@ func main() {
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	}
 
-	dsn := "file:store.db"
+	dsn := os.Getenv("STORE")
+	if dsn == "" {
+		log.Fatal("You must provide a database file name in the STORE environment variable.")
+	}
+	dsn = "file:" + dsn
 	store, err := newStore(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	pair := &pairOfTheDay{
-		set: false,
-		mu:  new(sync.Mutex),
-	}
-	app := &app{store, pair}
+	app := &app{store}
 
 	bot, err := tele.NewBot(pref)
 	if err != nil {
