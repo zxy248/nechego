@@ -212,6 +212,33 @@ func (a *app) handlePair(c tele.Context) error {
 		tele.ModeMarkdownV2)
 }
 
+// handleEblan sends a eblan of the day
+func (a *app) handleEblan(c tele.Context) error {
+	groupID := c.Chat().ID
+
+	userID, err := a.store.getEblan(groupID)
+	if errors.Is(err, errNoEblan) {
+		e, err := a.getRandomGroupMember(groupID)
+		if err != nil {
+			return err
+		}
+
+		userID = e
+		if err := a.store.insertEblan(groupID, e); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+
+	chat, err := c.Bot().ChatByID(userID)
+	if err != nil {
+		return err
+	}
+
+	return c.Send(fmt.Sprintf("Е6лан дня: %s 😸", mention(userID, getUserName(chat))), tele.ModeMarkdownV2)
+}
+
 // getRandomGroupMember returns the random group member's ID
 func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	userIDs, err := a.store.getUserIDs(groupID)

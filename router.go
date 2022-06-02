@@ -48,6 +48,8 @@ func (a *app) handleMessage(c tele.Context) error {
 		return a.handleCar(c)
 	case strings.HasPrefix(text, "!пара дня"):
 		return a.handlePair(c)
+	case strings.HasPrefix(text, "!еблан дня") || strings.HasPrefix(text, "!е6лан дня"):
+		return a.handleEblan(c)
 	}
 
 	return nil
