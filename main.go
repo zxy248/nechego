@@ -15,9 +15,12 @@ type app struct {
 	status *status
 }
 
-func main() {
-	rand.Seed(time.Now().Unix())
+func init() {
+	log.Println("Initializing the random number generator...")
+	rand.Seed(time.Now().UnixNano())
+}
 
+func main() {
 	pref := tele.Settings{
 		Token:  os.Getenv("TOKEN"),
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
@@ -28,13 +31,13 @@ func main() {
 		log.Fatal("You must provide a database file name in the STORE environment variable.")
 	}
 
-	log.Printf("Initializing a database at %s...\n", dsn)
+	log.Printf("Connecting to the database at %s...\n", dsn)
 	store, err := newStore(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Creating a bot instance...")
+	log.Println("Building a bot...")
 	bot, err := tele.NewBot(pref)
 	if err != nil {
 		log.Fatal(err)
@@ -44,6 +47,7 @@ func main() {
 		store:  store,
 		status: newStatus(),
 	}
+
 	bot.Handle(tele.OnText, app.handleMessage)
 
 	log.Println("The bot is running.")
