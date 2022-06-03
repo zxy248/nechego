@@ -23,6 +23,16 @@ func (a *app) handleMessage(c tele.Context) error {
 
 	a.cacheGroupMember(c.Chat().ID, c.Sender().ID)
 
+	if !a.status.active() {
+		if strings.HasPrefix(text, "!вкл") {
+			return a.handleTurnOn(c)
+		}
+		return nil
+	}
+	if strings.HasPrefix(text, "!выкл") {
+		return a.handleTurnOff(c)
+	}
+
 	switch {
 	case strings.HasPrefix(text, "!инфа"):
 		message := getCommandArgument(text, "!инфа")
@@ -54,7 +64,6 @@ func (a *app) handleMessage(c tele.Context) error {
 	case eblanRe.MatchString(text):
 		return a.handleEblan(c)
 	}
-
 	return nil
 }
 

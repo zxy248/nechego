@@ -11,7 +11,8 @@ import (
 )
 
 type app struct {
-	store *store
+	store  *store
+	status *status
 }
 
 func main() {
@@ -39,7 +40,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	app := &app{store}
+	app := &app{
+		store:  store,
+		status: newStatus(),
+	}
 	bot.Handle(tele.OnText, app.handleMessage)
 
 	log.Println("The bot is running.")

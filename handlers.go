@@ -239,6 +239,22 @@ func (a *app) handleEblan(c tele.Context) error {
 	return c.Send(fmt.Sprintf("Еблан дня: %s 😸", mention(userID, getUserName(chat))), tele.ModeMarkdownV2)
 }
 
+// handleTurnOn turns the bot on
+func (a *app) handleTurnOn(c tele.Context) error {
+	turnOnEmojis := []string{"🔈", "🔔", "✅", "🆗", "▶️"}
+	emoji := turnOnEmojis[rand.Intn(len(turnOnEmojis))]
+	a.status.turnOn()
+	return c.Send(fmt.Sprintf("Бот включен %s", emoji))
+}
+
+// handleTurnOff turns the bot off
+func (a *app) handleTurnOff(c tele.Context) error {
+	turnOffEmojis := []string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
+	emoji := turnOffEmojis[rand.Intn(len(turnOffEmojis))]
+	a.status.turnOff()
+	return c.Send(fmt.Sprintf("Бот выключен %s", emoji))
+}
+
 // getRandomGroupMember returns the random group member's ID
 func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	userIDs, err := a.store.getUserIDs(groupID)
