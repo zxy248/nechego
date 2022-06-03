@@ -236,7 +236,7 @@ func (a *app) handleEblan(c tele.Context) error {
 		return err
 	}
 
-	return c.Send(fmt.Sprintf("Е6лан дня: %s 😸", mention(userID, getUserName(chat))), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf("Еблан дня: %s 😸", mention(userID, getUserName(chat))), tele.ModeMarkdownV2)
 }
 
 // getRandomGroupMember returns the random group member's ID

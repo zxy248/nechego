@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -21,23 +22,26 @@ func main() {
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	}
 
-	dsn := os.Getenv("STORE")
-	if dsn == "" {
+	dsn := fmt.Sprintf("file:%s", os.Getenv("STORE"))
+	if dsn == "file:" {
 		log.Fatal("You must provide a database file name in the STORE environment variable.")
 	}
-	dsn = "file:" + dsn
+
+	log.Printf("Initializing a database at %s...\n", dsn)
 	store, err := newStore(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	app := &app{store}
-
+	log.Println("Creating a bot instance...")
 	bot, err := tele.NewBot(pref)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	app := &app{store}
 	bot.Handle(tele.OnText, app.handleMessage)
+
+	log.Println("The bot is running.")
 	bot.Start()
 }
