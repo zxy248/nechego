@@ -8,7 +8,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-var eblanRe = regexp.MustCompile("!е[б6п]?лан дня")
+var eblanRe = regexp.MustCompile("![ие][б6п*]?лан дня")
 
 // handleMessage processes the input message and handles it to the corresponding
 // function. Ignores the message if the chat type is not a group. Caches the
@@ -60,7 +60,7 @@ func (a *app) handleMessage(c tele.Context) error {
 		return a.handleHorse(c)
 	case strings.HasPrefix(message, "!арт") || strings.HasPrefix(message, "!пик"):
 		return a.handleArt(c)
-	case strings.HasPrefix(message, "!авто") || strings.HasPrefix(message, "!тачк"):
+	case strings.HasPrefix(message, "!авто") || strings.HasPrefix(message, "!тачк") || strings.HasPrefix(message, "!машин"):
 		return a.handleCar(c)
 	case strings.HasPrefix(message, "!пара дня"):
 		return a.handlePair(c)
