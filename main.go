@@ -18,6 +18,7 @@ type app struct {
 func init() {
 	log.Println("Initializing the random number generator...")
 	rand.Seed(time.Now().UnixNano())
+	initializeKeyboard()
 }
 
 func main() {

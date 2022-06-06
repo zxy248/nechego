@@ -256,6 +256,10 @@ func (a *app) handleMasyunya(c tele.Context) error {
 	return c.Send(&s)
 }
 
+func (a *app) handleKeyboard(c tele.Context) error {
+	return c.Send("Клавиатура ⌨️", keyboard)
+}
+
 // handleTurnOn turns the bot on.
 func (a *app) handleTurnOn(c tele.Context) error {
 	emoji := emojisActive[rand.Intn(len(emojisActive))]

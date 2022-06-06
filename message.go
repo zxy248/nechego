@@ -26,6 +26,7 @@ const (
 	commandPair
 	commandEblan
 	commandMasyunya
+	commandKeyboard
 	commandTurnOn
 	commandTurnOff
 )
@@ -59,8 +60,10 @@ func recognizeCommand(s string) command {
 		return commandPair
 	case eblanRe.MatchString(s):
 		return commandEblan
-	case masyunyaRe.MatchString(s):
+	case masyunyaRe.MatchString(s) || s == "🎀 Масюня 🎀":
 		return commandMasyunya
+	case startsWith(s, "!клавиатура", "!открыть"):
+		return commandKeyboard
 	case startsWith(s, "!вкл"):
 		return commandTurnOn
 	case startsWith(s, "!выкл"):

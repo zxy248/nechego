@@ -62,6 +62,8 @@ func (a *app) routeMessage(c tele.Context, m *message) error {
 		return a.handleEblan(c)
 	case commandMasyunya:
 		return a.handleMasyunya(c)
+	case commandKeyboard:
+		return a.handleKeyboard(c)
 	case commandTurnOff:
 		return a.handleTurnOff(c)
 	}
