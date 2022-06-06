@@ -6,7 +6,7 @@ import (
 )
 
 var eblanRe = regexp.MustCompile("^![ие][б6п*]?лан дня")
-var masyunyaRe = regexp.MustCompile("^!ма[нс]юн")
+var masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")
 
 type command int
 
