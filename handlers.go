@@ -14,7 +14,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-// probabilityTemplates regexp: "^.*%s.*%d%%\""
+// probabilityTemplates regexp: "^.*%s.*%d%%\"".
 var probabilityTemplates = []string{
 	"Здравый смысл говорит мне о том, что %s с вероятностью %d%%",
 	"Благодаря чувственному опыту я определил, что %s с вероятностью %d%%",
@@ -28,6 +28,9 @@ var probabilityTemplates = []string{
 	"Прикинув раз на раз, я определился с тем, что %s с вероятностью %d%%",
 	"Уверяю вас в том, что %s с вероятностью %d%%",
 }
+
+var emojisActive = []string{"🔈", "🔔", "✅", "🆗", "▶️"}
+var emojisInactive = []string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
 
 const catURL = "https://thiscatdoesnotexist.com/"
 const animeFormat = "https://thisanimedoesnotexist.ai/results/psi-%s/seed%s.png"
@@ -43,13 +46,13 @@ var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0",
 var carImageRe = regexp.MustCompile(
 	"<img id = \"vehicle\" src=\"data:image/png;base64,(.+)\" class=\"center\">")
 
-// handleProbability responds with the probability of the message
-func (a *app) handleProbability(c tele.Context, message string) error {
-	return c.Send(probability(message))
+// handleProbability responds with the probability of the message.
+func (a *app) handleProbability(c tele.Context, m *message) error {
+	return c.Send(probability(m.argument()))
 }
 
-// handleWho responds with the message appended to the random chat member
-func (a *app) handleWho(c tele.Context, message string) error {
+// handleWho responds with the message appended to the random chat member.
+func (a *app) handleWho(c tele.Context, m *message) error {
 	userID, err := a.getRandomGroupMember(c.Chat().ID)
 	if err != nil {
 		return err
@@ -59,11 +62,11 @@ func (a *app) handleWho(c tele.Context, message string) error {
 		return err
 	}
 	name := getUserName(chat)
-	message = escapeMarkdown(message)
-	return c.Send(who(userID, name, message), tele.ModeMarkdownV2)
+	text := escapeMarkdown(m.argument())
+	return c.Send(who(userID, name, text), tele.ModeMarkdownV2)
 }
 
-// handleCat sends a picture of a cat
+// handleCat sends a picture of a cat.
 func (a *app) handleCat(c tele.Context) error {
 	pic, err := fetchPicture(catURL)
 	if err != nil {
@@ -72,8 +75,9 @@ func (a *app) handleCat(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleTitle sets the user's admin title
-func (a *app) handleTitle(c tele.Context, title string) error {
+// handleTitle sets the admin title of the sender.
+func (a *app) handleTitle(c tele.Context, m *message) error {
+	title := m.argument()
 	if len(title) > 16 {
 		return c.Send("Ошибка: максимальная длина имени 16 символов")
 	}
@@ -83,7 +87,7 @@ func (a *app) handleTitle(c tele.Context, title string) error {
 	return nil
 }
 
-// handleAnime sends an anime picture
+// handleAnime sends an anime picture.
 func (a *app) handleAnime(c tele.Context) error {
 	psi := animePsis[rand.Intn(len(animePsis))]
 	seed := getRandomNumbers(5)
@@ -97,7 +101,7 @@ func (a *app) handleAnime(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleFurry sends a furry picture
+// handleFurry sends a furry picture.
 func (a *app) handleFurry(c tele.Context) error {
 	seed := getRandomNumbers(5)
 	url := fmt.Sprintf(furFormat, seed)
@@ -110,7 +114,7 @@ func (a *app) handleFurry(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleFlag sends a picture of a flag
+// handleFlag sends a picture of a flag.
 func (a *app) handleFlag(c tele.Context) error {
 	seed := rand.Intn(5000)
 	url := fmt.Sprintf(flagFormat, seed)
@@ -123,7 +127,7 @@ func (a *app) handleFlag(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handlePerson sends a picture of a person
+// handlePerson sends a picture of a person.
 func (a *app) handlePerson(c tele.Context) error {
 	pic, err := fetchPicture(personURL)
 	if err != nil {
@@ -132,7 +136,7 @@ func (a *app) handlePerson(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleHorse sends a picture of a horse
+// handleHorse sends a picture of a horse.
 func (a *app) handleHorse(c tele.Context) error {
 	pic, err := fetchPicture(horseURL)
 	if err != nil {
@@ -141,7 +145,7 @@ func (a *app) handleHorse(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleArt sends a picture of an art
+// handleArt sends a picture of an art.
 func (a *app) handleArt(c tele.Context) error {
 	pic, err := fetchPicture(artURL)
 	if err != nil {
@@ -150,7 +154,7 @@ func (a *app) handleArt(c tele.Context) error {
 	return c.Send(pic)
 }
 
-// handleCar sends a picture of a car
+// handleCar sends a picture of a car.
 func (a *app) handleCar(c tele.Context) error {
 	r, err := http.Get(carURL)
 	if err != nil {
@@ -171,7 +175,8 @@ func (a *app) handleCar(c tele.Context) error {
 	return c.Send(byteSliceToPhoto(img))
 }
 
-// handlePair sends a pair of the day
+// handlePair sends the current pair of the day, randomly choosing a new pair if
+// needed.
 func (a *app) handlePair(c tele.Context) error {
 	groupID := c.Chat().ID
 
@@ -212,7 +217,8 @@ func (a *app) handlePair(c tele.Context) error {
 		tele.ModeMarkdownV2)
 }
 
-// handleEblan sends a eblan of the day
+// handleEblan sends the current eblan of the day, randomly choosing a new one
+// if needed.
 func (a *app) handleEblan(c tele.Context) error {
 	groupID := c.Chat().ID
 
@@ -239,23 +245,32 @@ func (a *app) handleEblan(c tele.Context) error {
 	return c.Send(fmt.Sprintf("Еблан дня: %s 😸", mention(userID, getUserName(chat))), tele.ModeMarkdownV2)
 }
 
-// handleTurnOn turns the bot on
+// handleMasyunya sends a random sticker of Masyunya.
+func (a *app) handleMasyunya(c tele.Context) error {
+	name := "masyunya_vk"
+	ss, err := c.Bot().StickerSet(name)
+	if err != nil {
+		return err
+	}
+	s := ss.Stickers[rand.Intn(len(ss.Stickers))]
+	return c.Send(&s)
+}
+
+// handleTurnOn turns the bot on.
 func (a *app) handleTurnOn(c tele.Context) error {
-	turnOnEmojis := []string{"🔈", "🔔", "✅", "🆗", "▶️"}
-	emoji := turnOnEmojis[rand.Intn(len(turnOnEmojis))]
+	emoji := emojisActive[rand.Intn(len(emojisActive))]
 	a.status.turnOn()
 	return c.Send(fmt.Sprintf("Бот включен %s", emoji))
 }
 
-// handleTurnOff turns the bot off
+// handleTurnOff turns the bot off.
 func (a *app) handleTurnOff(c tele.Context) error {
-	turnOffEmojis := []string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
-	emoji := turnOffEmojis[rand.Intn(len(turnOffEmojis))]
+	emoji := emojisInactive[rand.Intn(len(emojisInactive))]
 	a.status.turnOff()
 	return c.Send(fmt.Sprintf("Бот выключен %s", emoji))
 }
 
-// getRandomGroupMember returns the random group member's ID
+// getRandomGroupMember returns the ID of the random group member.
 func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	userIDs, err := a.store.getUserIDs(groupID)
 	if err != nil {
@@ -264,7 +279,7 @@ func (a *app) getRandomGroupMember(groupID int64) (int64, error) {
 	return userIDs[rand.Intn(len(userIDs))], nil
 }
 
-// getRandomNumbers returns a string of random numbers of length c
+// getRandomNumbers returns a string of random numbers of length c.
 func getRandomNumbers(c int) string {
 	nums := []string{}
 	for i := 0; i < c; i++ {
@@ -274,30 +289,29 @@ func getRandomNumbers(c int) string {
 	return strings.Join(nums, "")
 }
 
-// getUserName returns the displayed user name
+// getUserName returns the displayed user name.
 func getUserName(chat *tele.Chat) string {
-	return strings.TrimSpace(strings.Join([]string{chat.FirstName, chat.LastName}, " "))
+	return strings.TrimSpace(chat.FirstName + " " + chat.LastName)
 }
 
-// probability returns the probability of the message
+// probability returns the probability of the message.
 func probability(message string) string {
 	p := rand.Intn(101)
-	i := rand.Intn(len(probabilityTemplates))
-	t := probabilityTemplates[i]
+	t := probabilityTemplates[rand.Intn(len(probabilityTemplates))]
 	return fmt.Sprintf(t, message, p)
 }
 
-// who returns the mention of the user prepended to the message
+// who returns the mention of the user prepended to the message.
 func who(userID int64, name, message string) string {
 	return fmt.Sprintf("%s %s", mention(userID, name), message)
 }
 
-// mention returns the mention to the user under the name
+// mention returns the mention of the user by the name.
 func mention(userID int64, name string) string {
 	return fmt.Sprintf("[%s](tg://user?id=%d)", name, userID)
 }
 
-// fetchPicture returns a picture located at url
+// fetchPicture returns a picture located at the specified URL.
 func fetchPicture(url string) (*tele.Photo, error) {
 	r, err := http.Get(url)
 	if err != nil {
@@ -311,17 +325,17 @@ func fetchPicture(url string) (*tele.Photo, error) {
 	return byteSliceToPhoto(body), nil
 }
 
-// byteSliceToPhoto converts the byte slice of image data to Photo
+// byteSliceToPhoto converts the byte slice of image data to Photo.
 func byteSliceToPhoto(data []byte) *tele.Photo {
 	return &tele.Photo{File: tele.FromReader(bytes.NewReader(data))}
 }
 
-// escapeMarkdown escapes the message for its use in Markdown
+// escapeMarkdown escapes the message for its use in Markdown.
 func escapeMarkdown(message string) string {
 	chars := []string{"_", "*", "[", "]", "(", ")", "~", "`", ">",
 		"#", "+", "-", "=", "|", "{", "}", ".", "!"}
 	for _, c := range chars {
-		message = strings.ReplaceAll(message, c, fmt.Sprintf("\\%s", c))
+		message = strings.ReplaceAll(message, c, "\\"+c)
 	}
 	return message
 }

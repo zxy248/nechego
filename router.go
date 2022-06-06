@@ -2,81 +2,79 @@ package main
 
 import (
 	"log"
-	"regexp"
-	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-var eblanRe = regexp.MustCompile("![ие][б6п*]?лан дня")
-
-// handleMessage processes the input message and handles it to the corresponding
+// processInput processes the input message and handles it to the corresponding
 // function. Ignores the message if the chat type is not a group. Caches the
 // group ID and the user ID.
-func (a *app) handleMessage(c tele.Context) error {
+func (a *app) processInput(c tele.Context) error {
 	if !chatTypeIsGroup(c.Chat().Type) {
 		return nil
 	}
 
-	message := c.Text()
+	text := c.Text()
 	groupID := c.Chat().ID
 	userID := c.Sender().ID
+	message := newMessage(text)
 
-	log.Printf("%d@%d: %s\n", userID, groupID, message)
-
+	log.Printf("%d@%d: %s\n", userID, groupID, text)
 	a.cacheGroupMember(groupID, userID)
-
 	if !a.status.active() {
-		if strings.HasPrefix(message, "!вкл") {
+		if message.command == commandTurnOn {
 			return a.handleTurnOn(c)
 		}
 		return nil
 	}
-	if strings.HasPrefix(message, "!выкл") {
-		return a.handleTurnOff(c)
-	}
 
-	switch {
-	case strings.HasPrefix(message, "!инфа"):
-		arg := getCommandArgument(message, "!инфа")
-		return a.handleProbability(c, arg)
-	case strings.HasPrefix(message, "!кто"):
-		arg := getCommandArgument(message, "!кто")
-		return a.handleWho(c, arg)
-	case strings.HasPrefix(message, "!кот") || strings.HasPrefix(message, "!кош"):
+	return a.routeMessage(c, message)
+}
+
+// routeMessage routes the input message to the appropriate handler.
+func (a *app) routeMessage(c tele.Context, m *message) error {
+	switch m.command {
+	case commandProbability:
+		return a.handleProbability(c, m)
+	case commandWho:
+		return a.handleWho(c, m)
+	case commandCat:
 		return a.handleCat(c)
-	case strings.HasPrefix(message, "!имя"):
-		arg := getCommandArgument(message, "!имя")
-		return a.handleTitle(c, arg)
-	case strings.HasPrefix(message, "!аним") || strings.HasPrefix(message, "!мульт"):
+	case commandTitle:
+		return a.handleTitle(c, m)
+	case commandAnime:
 		return a.handleAnime(c)
-	case strings.HasPrefix(message, "!фур"):
+	case commandFurry:
 		return a.handleFurry(c)
-	case strings.HasPrefix(message, "!флаг"):
+	case commandFlag:
 		return a.handleFlag(c)
-	case strings.HasPrefix(message, "!чел"):
+	case commandPerson:
 		return a.handlePerson(c)
-	case strings.HasPrefix(message, "!лошадь") || strings.HasPrefix(message, "!конь"):
+	case commandHorse:
 		return a.handleHorse(c)
-	case strings.HasPrefix(message, "!арт") || strings.HasPrefix(message, "!пик"):
+	case commandArt:
 		return a.handleArt(c)
-	case strings.HasPrefix(message, "!авто") || strings.HasPrefix(message, "!тачк") || strings.HasPrefix(message, "!машин"):
+	case commandCar:
 		return a.handleCar(c)
-	case strings.HasPrefix(message, "!пара дня"):
+	case commandPair:
 		return a.handlePair(c)
-	case eblanRe.MatchString(message):
+	case commandEblan:
 		return a.handleEblan(c)
+	case commandMasyunya:
+		return a.handleMasyunya(c)
+	case commandTurnOff:
+		return a.handleTurnOff(c)
 	}
 	return nil
 }
 
-// cacheGroupMember adds the user to the group if he is not already there
+// cacheGroupMember adds the user to the group if he is not already there.
 func (a *app) cacheGroupMember(groupID int64, userID int64) error {
-	userIDs, err := a.store.getUserIDs(groupID)
+	ids, err := a.store.getUserIDs(groupID)
 	if err != nil {
 		return err
 	}
-	for _, id := range userIDs {
+	for _, id := range ids {
 		if id == userID {
 			return nil
 		}
@@ -87,12 +85,8 @@ func (a *app) cacheGroupMember(groupID int64, userID int64) error {
 	return nil
 }
 
-// getCommandArgument returns the part of the message after the prefix
-func getCommandArgument(message, prefix string) string {
-	return strings.TrimSpace(strings.TrimPrefix(message, prefix))
-}
-
-// chatTypeIsGroup returns true if the chat type is one of the group types
+// chatTypeIsGroup returns true if the chat type is one of the group types;
+// false otherwise.
 func chatTypeIsGroup(t tele.ChatType) bool {
 	return t == tele.ChatGroup || t == tele.ChatSuperGroup
 }

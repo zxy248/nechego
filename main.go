@@ -48,7 +48,7 @@ func main() {
 		status: newStatus(),
 	}
 
-	bot.Handle(tele.OnText, app.handleMessage)
+	bot.Handle(tele.OnText, app.processInput)
 
 	log.Println("The bot is running.")
 	bot.Start()
