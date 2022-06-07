@@ -259,8 +259,12 @@ func (a *app) handleMasyunya(c tele.Context) error {
 	return c.Send(&s)
 }
 
-func (a *app) handleKeyboard(c tele.Context) error {
+func (a *app) handleKeyboardOpen(c tele.Context) error {
 	return c.Send("Клавиатура ⌨️", keyboard)
+}
+
+func (a *app) handleKeyboardClose(c tele.Context) error {
+	return c.Send("Клавиатура отключена 😣", tele.RemoveKeyboard)
 }
 
 // handleTurnOn turns the bot on.
