@@ -46,6 +46,8 @@ var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0",
 var carImageRe = regexp.MustCompile(
 	"<img id = \"vehicle\" src=\"data:image/png;base64,(.+)\" class=\"center\">")
 
+var markdownEscaper = newMarkdownEscaper()
+
 // handleProbability responds with the probability of the message.
 func (a *app) handleProbability(c tele.Context, m *message) error {
 	return c.Send(probability(m.argument()))
@@ -62,7 +64,8 @@ func (a *app) handleWho(c tele.Context, m *message) error {
 		return err
 	}
 	name := getUserName(chat)
-	text := escapeMarkdown(m.argument())
+	text := m.argument()
+	text = markdownEscaper.Replace(text)
 	return c.Send(who(userID, name, text), tele.ModeMarkdownV2)
 }
 
@@ -334,12 +337,13 @@ func byteSliceToPhoto(data []byte) *tele.Photo {
 	return &tele.Photo{File: tele.FromReader(bytes.NewReader(data))}
 }
 
-// escapeMarkdown escapes the message for its use in Markdown.
-func escapeMarkdown(message string) string {
-	chars := []string{"_", "*", "[", "]", "(", ")", "~", "`", ">",
-		"#", "+", "-", "=", "|", "{", "}", ".", "!"}
-	for _, c := range chars {
-		message = strings.ReplaceAll(message, c, "\\"+c)
+// newMarkdownEscaper creates a new Markdown replacer. The replacer escapes any
+// character with code between 1 and 126 inclusively with a preceding '\'.
+func newMarkdownEscaper() *strings.Replacer {
+	var table []string
+	for i := 1; i <= 126; i++ {
+		c := string(i)
+		table = append(table, c, "\\"+c)
 	}
-	return message
+	return strings.NewReplacer(table...)
 }
