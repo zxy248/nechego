@@ -19,6 +19,10 @@ func (a *app) processInput(c tele.Context) error {
 	userID := c.Sender().ID
 	message := newMessage(text)
 
+	if !a.whitelist.allow(groupID) {
+		return nil
+	}
+
 	log.Printf("%d@%d: %s\n", userID, groupID, text)
 	a.cacheGroupMember(groupID, userID)
 

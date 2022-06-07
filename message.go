@@ -63,11 +63,11 @@ func recognizeCommand(s string) command {
 		return commandPair
 	case eblanRe.MatchString(s):
 		return commandEblan
-	case masyunyaRe.MatchString(s) || s == "🎀 Масюня 🎀":
+	case masyunyaRe.MatchString(s) || s == strings.ToLower(buttonMasyunyaText):
 		return commandMasyunya
 	case startsWith(s, "!клавиатура", "!открыть"):
 		return commandKeyboardOpen
-	case startsWith(s, "!закрыть"):
+	case startsWith(s, "!закрыть", "!скрыть"):
 		return commandKeyboardClose
 	case startsWith(s, "!вкл"):
 		return commandTurnOn

@@ -28,20 +28,28 @@ func newStore(dsn string) (*store, error) {
 	return &store{db}, nil
 }
 
+const insertUserIDQuery = `
+insert into users (user_id, group_id)
+values (?, ?)
+`
+
 // insertUserID inserts the user ID to the users table.
 func (s *store) insertUserID(groupID, userID int64) error {
-	query := "insert into users (user_id, group_id) values (?, ?)"
-	_, err := s.db.Exec(query, userID, groupID)
+	_, err := s.db.Exec(insertUserIDQuery, userID, groupID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+const getUserIDsQuery = `
+select user_id from users
+where group_id = ?
+`
+
 // getUserIDs gets all the user IDs from the users table.
 func (s *store) getUserIDs(groupID int64) ([]int64, error) {
-	query := "select user_id from users where group_id = ?"
-	rows, err := s.db.Query(query, groupID)
+	rows, err := s.db.Query(getUserIDsQuery, groupID)
 	if err != nil {
 		return nil, err
 	}
@@ -55,21 +63,31 @@ func (s *store) getUserIDs(groupID int64) ([]int64, error) {
 	return userIDs, nil
 }
 
+const insertPairQuery = `
+insert into pairs (group_id, user_id_x, user_id_y, last)
+values (?, ?, ?, datetime('now', 'localtime'))
+`
+
 // insertPair inserts the pair to the pairs table.
 func (s *store) insertPair(groupID int64, p pair) error {
-	query := "insert into pairs (group_id, user_id_x, user_id_y, last) values (?, ?, ?, datetime('now', 'localtime'))"
-	_, err := s.db.Exec(query, groupID, p.x, p.y)
+	_, err := s.db.Exec(insertPairQuery, groupID, p.x, p.y)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+const getPairQuery = `
+select user_id_x, user_id_y from pairs
+where group_id = ? and last > date('now', 'localtime')
+order by last desc
+limit 1
+`
+
 // getPair gets the pair from the pairs table.
 func (s *store) getPair(groupID int64) (pair, error) {
-	query := "select user_id_x, user_id_y from pairs where group_id = ? and last > date('now', 'localtime') order by last desc limit 1"
 	var p pair
-	if err := s.db.QueryRow(query, groupID).Scan(&p.x, &p.y); err != nil {
+	if err := s.db.QueryRow(getPairQuery, groupID).Scan(&p.x, &p.y); err != nil {
 		if err == sql.ErrNoRows {
 			return p, errNoPair
 		}
@@ -78,21 +96,31 @@ func (s *store) getPair(groupID int64) (pair, error) {
 	return p, nil
 }
 
+const insertEblanQuery = `
+insert into eblans (group_id, user_id, last)
+values (?, ?, datetime('now', 'localtime'))
+`
+
 // insertEblan inserts the user to the eblans table.
 func (s *store) insertEblan(groupID, userID int64) error {
-	query := "insert into eblans (group_id, user_id, last) values (?, ?, datetime('now', 'localtime'))"
-	_, err := s.db.Exec(query, groupID, userID)
+	_, err := s.db.Exec(insertEblanQuery, groupID, userID)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+const getEblanQuery = `
+select user_id from eblans
+where group_id = ? and last > date('now', 'localtime')
+order by last desc
+limit 1
+`
+
 // getEblan gets the user from the eblans table.
 func (s *store) getEblan(groupID int64) (int64, error) {
-	query := "select user_id from eblans where group_id = ? and last > date('now', 'localtime') order by last desc limit 1"
 	var userID int64
-	if err := s.db.QueryRow(query, groupID).Scan(&userID); err != nil {
+	if err := s.db.QueryRow(getEblanQuery, groupID).Scan(&userID); err != nil {
 		if err == sql.ErrNoRows {
 			return 0, errNoEblan
 		}

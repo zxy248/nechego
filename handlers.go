@@ -245,7 +245,8 @@ func (a *app) handleEblan(c tele.Context) error {
 		return err
 	}
 
-	return c.Send(fmt.Sprintf("Еблан дня: %s 😸", mention(userID, getUserName(chat))), tele.ModeMarkdownV2)
+	s := mention(userID, getUserName(chat))
+	return c.Send(fmt.Sprintf("Еблан дня: %s 😸", s), tele.ModeMarkdownV2)
 }
 
 // handleMasyunya sends a random sticker of Masyunya.
@@ -260,7 +261,7 @@ func (a *app) handleMasyunya(c tele.Context) error {
 }
 
 func (a *app) handleKeyboardOpen(c tele.Context) error {
-	return c.Send("Клавиатура ⌨️", keyboard)
+	return c.Send("Клавиатура ⌨️", a.keyboard)
 }
 
 func (a *app) handleKeyboardClose(c tele.Context) error {
