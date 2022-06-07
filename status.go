@@ -2,38 +2,67 @@ package main
 
 import "sync"
 
-// status represents the current state of the bot. on is true if the bot is on,
-// and false if it is off.
+// status represents the current state of the bot.
 type status struct {
-	mu *sync.Mutex
-	on bool
+	mu     *sync.Mutex
+	global bool
+	local  map[int64]struct{} // the set of groups where the bot is turned off
 }
 
 // newStatus returns a new status. The bot is turned on by default.
 func newStatus() *status {
-	return &status{mu: &sync.Mutex{}, on: true}
+	return &status{
+		mu:     &sync.Mutex{},
+		global: true,
+		local:  make(map[int64]struct{}),
+	}
 }
 
-// active returns the current state of the bot.
-func (s *status) active() bool {
+// activeGlobal returns the global state of the bot.
+func (s *status) activeGlobal() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.on
+	return s.global
 }
 
-// turnOn turns the bot on.
-func (s *status) turnOn() {
+// turnOnGlobal turns the bot on globally.
+func (s *status) turnOnGlobal() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.on = true
+	s.global = true
 }
 
-// turnOff turns the bot off.
-func (s *status) turnOff() {
+// turnOffGlobal turns the bot off globally.
+func (s *status) turnOffGlobal() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.on = false
+	s.global = false
+}
+
+// activeLocal returns the local group state of the bot.
+func (s *status) activeLocal(groupID int64) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, ok := s.local[groupID]
+	return !ok
+}
+
+// turnOnLocal turns the bot on for the specified group.
+func (s *status) turnOnLocal(groupID int64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.local, groupID)
+}
+
+// turnOffLocal turns the bot off for the specified group.
+func (s *status) turnOffLocal(groupID int64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.local[groupID] = struct{}{}
 }

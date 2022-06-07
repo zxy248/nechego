@@ -21,7 +21,12 @@ func (a *app) processInput(c tele.Context) error {
 
 	log.Printf("%d@%d: %s\n", userID, groupID, text)
 	a.cacheGroupMember(groupID, userID)
-	if !a.status.active() {
+
+	if !a.status.activeGlobal() {
+		return nil
+	}
+
+	if !a.status.activeLocal(groupID) {
 		if message.command == commandTurnOn {
 			return a.handleTurnOn(c)
 		}

@@ -270,15 +270,17 @@ func (a *app) handleKeyboardClose(c tele.Context) error {
 // handleTurnOn turns the bot on.
 func (a *app) handleTurnOn(c tele.Context) error {
 	emoji := emojisActive[rand.Intn(len(emojisActive))]
-	a.status.turnOn()
+	groupID := c.Chat().ID
+	a.status.turnOnLocal(groupID)
 	return c.Send(fmt.Sprintf("Бот включен %s", emoji))
 }
 
 // handleTurnOff turns the bot off.
 func (a *app) handleTurnOff(c tele.Context) error {
 	emoji := emojisInactive[rand.Intn(len(emojisInactive))]
-	a.status.turnOff()
-	return c.Send(fmt.Sprintf("Бот выключен %s", emoji))
+	groupID := c.Chat().ID
+	a.status.turnOffLocal(groupID)
+	return c.Send(fmt.Sprintf("Бот выключен %s", emoji), tele.RemoveKeyboard)
 }
 
 // getRandomGroupMember returns the ID of the random group member.

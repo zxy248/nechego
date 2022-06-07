@@ -34,6 +34,8 @@ const (
 
 // recognizeCommand returns the command contained in the input string.
 func recognizeCommand(s string) command {
+	s = strings.ToLower(s)
+
 	switch {
 	case startsWith(s, "!инф"):
 		return commandProbability
