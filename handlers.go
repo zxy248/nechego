@@ -47,6 +47,8 @@ var carImageRe = regexp.MustCompile(
 	"<img id = \"vehicle\" src=\"data:image/png;base64,(.+)\" class=\"center\">")
 var infaRe = regexp.MustCompile("^!инфа?(.*)")
 
+const helloChance = 0.2
+
 var markdownEscaper = newMarkdownEscaper()
 
 // handleProbability responds with the probability of the message.
@@ -264,8 +266,12 @@ func (a *app) handleMasyunya(c tele.Context) error {
 
 // handleHello sends a hello sticker
 func (a *app) handleHello(c tele.Context) error {
-	s := helloStickers[rand.Intn(len(helloStickers))]
-	return c.Send(s)
+	n := rand.Float64()
+	if n <= helloChance {
+		s := helloStickers[rand.Intn(len(helloStickers))]
+		return c.Send(s)
+	}
+	return nil
 }
 
 func (a *app) handleKeyboardOpen(c tele.Context) error {
