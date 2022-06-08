@@ -45,12 +45,14 @@ var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0",
 	"1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.0"}
 var carImageRe = regexp.MustCompile(
 	"<img id = \"vehicle\" src=\"data:image/png;base64,(.+)\" class=\"center\">")
+var infaRe = regexp.MustCompile("^!инфа?(.*)")
 
 var markdownEscaper = newMarkdownEscaper()
 
 // handleProbability responds with the probability of the message.
 func (a *app) handleProbability(c tele.Context, m *message) error {
-	return c.Send(probability(m.argument()))
+	s := infaRe.FindStringSubmatch(m.text)[1]
+	return c.Send(probability(s))
 }
 
 // handleWho responds with the message appended to the random chat member.
@@ -63,9 +65,8 @@ func (a *app) handleWho(c tele.Context, m *message) error {
 	if err != nil {
 		return err
 	}
-	name := getUserName(chat)
-	text := m.argument()
-	text = markdownEscaper.Replace(text)
+	name := getUserNameEscaped(chat)
+	text := m.argumentEscaped()
 	return c.Send(who(userID, name, text), tele.ModeMarkdownV2)
 }
 
@@ -215,8 +216,8 @@ func (a *app) handlePair(c tele.Context) error {
 	}
 
 	return c.Send(fmt.Sprintf("Пара дня ✨\n%s 💘 %s",
-		mention(p.x, getUserName(chatX)),
-		mention(p.y, getUserName(chatY))),
+		mention(p.x, getUserNameEscaped(chatX)),
+		mention(p.y, getUserNameEscaped(chatY))),
 		tele.ModeMarkdownV2)
 }
 
@@ -245,7 +246,8 @@ func (a *app) handleEblan(c tele.Context) error {
 		return err
 	}
 
-	s := mention(userID, getUserName(chat))
+	eblan := getUserNameEscaped(chat)
+	s := mention(userID, eblan)
 	return c.Send(fmt.Sprintf("Еблан дня: %s 😸", s), tele.ModeMarkdownV2)
 }
 
@@ -258,6 +260,12 @@ func (a *app) handleMasyunya(c tele.Context) error {
 	}
 	s := ss.Stickers[rand.Intn(len(ss.Stickers))]
 	return c.Send(&s)
+}
+
+// handleHello sends a hello sticker
+func (a *app) handleHello(c tele.Context) error {
+	s := helloStickers[rand.Intn(len(helloStickers))]
+	return c.Send(s)
 }
 
 func (a *app) handleKeyboardOpen(c tele.Context) error {
@@ -306,6 +314,12 @@ func getRandomNumbers(c int) string {
 // getUserName returns the displayed user name.
 func getUserName(chat *tele.Chat) string {
 	return strings.TrimSpace(chat.FirstName + " " + chat.LastName)
+}
+
+// getUserNameEscaped returns the displayed user name and escapes it for
+// Markdown.
+func getUserNameEscaped(chat *tele.Chat) string {
+	return markdownEscaper.Replace(getUserName(chat))
 }
 
 // probability returns the probability of the message.

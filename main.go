@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	tokenEnv     = "TOKEN"     // bot token
-	storeEnv     = "STORE"     // database file path
-	whitelistEnv = "WHITELIST" // comma-separated list of group IDs
+	tokenEnv     = "TOKEN"            // bot token
+	storeEnv     = "STORE"            // database file path
+	whitelistEnv = "WHITELIST"        // comma-separated list of group IDs
+	stickersEnv  = "COLLECT_STICKERS" // set it to 1 to collect stickers
 )
 
 type app struct {
@@ -66,6 +67,11 @@ func main() {
 	}
 
 	bot.Handle(tele.OnText, app.processInput)
+	if getCollectStickers() {
+		sc := newStickersCollector()
+		bot.Handle("/write-stickers", sc.writeStickers)
+		bot.Handle(tele.OnSticker, sc.collectStickers)
+	}
 	log.Println("The bot is running.")
 	bot.Start()
 }
@@ -112,4 +118,12 @@ func getWhitelist() (*whitelist, error) {
 		w.add(i)
 	}
 	return w, nil
+}
+
+func getCollectStickers() bool {
+	v := os.Getenv(stickersEnv)
+	if v == "1" {
+		return true
+	}
+	return false
 }

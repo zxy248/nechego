@@ -5,8 +5,14 @@ import (
 	"strings"
 )
 
-var eblanRe = regexp.MustCompile("^![ие][б6п*]?лан дня")
-var masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")
+var (
+	eblanRe    = regexp.MustCompile("^![ие][б6п*]?лан дня")
+	masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")
+	helloRe    = regexp.MustCompile("((^|[^а-я])п[рл]ивет[а-я]*([^а-я]|$))" +
+		"|((^|[^а-я])хай[а-я]*([^а-я]|$))" +
+		"|((^|[^а-я])зд[ао]ров[а-я]*([^а-я]|$))" +
+		"|((^|[^а-я])ку[а-я]*([^а-я]|$))")
+)
 
 type command int
 
@@ -26,6 +32,7 @@ const (
 	commandPair
 	commandEblan
 	commandMasyunya
+	commandHello
 	commandKeyboardOpen
 	commandKeyboardClose
 	commandTurnOn
@@ -65,6 +72,8 @@ func recognizeCommand(s string) command {
 		return commandEblan
 	case masyunyaRe.MatchString(s) || s == strings.ToLower(buttonMasyunyaText):
 		return commandMasyunya
+	case helloRe.MatchString(s):
+		return commandHello
 	case startsWith(s, "!клавиатура", "!открыть"):
 		return commandKeyboardOpen
 	case startsWith(s, "!закрыть", "!скрыть"):
@@ -92,6 +101,12 @@ func newMessage(text string) *message {
 func (m *message) argument() string {
 	_, s, _ := strings.Cut(m.text, " ")
 	return s
+}
+
+// argumentEscaped returns the argument probably contained in the message and
+// escapes it for Markdown.
+func (m *message) argumentEscaped() string {
+	return markdownEscaper.Replace(m.argument())
 }
 
 // startsWith returns true if the input string starts with one of the specified
