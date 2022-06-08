@@ -12,6 +12,7 @@ var (
 		"|((^|[^а-я])хай[а-я]*([^а-я]|$))" +
 		"|((^|[^а-я])зд[ао]ров[а-я]*([^а-я]|$))" +
 		"|((^|[^а-я])ку[а-я]*([^а-я]|$))")
+	weatherRe = regexp.MustCompile("^!погода ([-А-я]+)$")
 )
 
 type command int
@@ -33,6 +34,8 @@ const (
 	commandEblan
 	commandMasyunya
 	commandHello
+	commandMouse
+	commandWeather
 	commandKeyboardOpen
 	commandKeyboardClose
 	commandTurnOn
@@ -74,6 +77,10 @@ func recognizeCommand(s string) command {
 		return commandMasyunya
 	case helloRe.MatchString(s):
 		return commandHello
+	case startsWith(s, "!мыш"):
+		return commandMouse
+	case weatherRe.MatchString(s):
+		return commandWeather
 	case startsWith(s, "!клавиатура", "!открыть"):
 		return commandKeyboardOpen
 	case startsWith(s, "!закрыть", "!скрыть"):

@@ -8,8 +8,10 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -40,6 +42,7 @@ const personURL = "https://thispersondoesnotexist.com/image"
 const horseURL = "https://thishorsedoesnotexist.com/"
 const artURL = "https://thisartworkdoesnotexist.com/"
 const carURL = "https://www.thisautomobiledoesnotexist.com/"
+const weatherFormat = "https://wttr.in/%s?format=3"
 
 var animePsis = []string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0",
 	"1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.0"}
@@ -50,6 +53,8 @@ var infaRe = regexp.MustCompile("^!инфа?(.*)")
 const helloChance = 0.2
 
 var markdownEscaper = newMarkdownEscaper()
+
+var mouseVideo = &tele.Video{File: tele.FromDisk("mouse.mp4")}
 
 // handleProbability responds with the probability of the message.
 func (a *app) handleProbability(c tele.Context, m *message) error {
@@ -272,6 +277,37 @@ func (a *app) handleHello(c tele.Context) error {
 		return c.Send(s)
 	}
 	return nil
+}
+
+// handleMouse sends the mouse video
+func (a *app) handleMouse(c tele.Context) error {
+	return c.Send(mouseVideo)
+}
+
+// handleWeather sends the current weather for a given city
+func (a *app) handleWeather(c tele.Context, m *message) error {
+	client := &http.Client{Timeout: 3 * time.Second}
+
+	r, err := client.Get(fmt.Sprintf(weatherFormat, m.argument()))
+	if err != nil {
+		if err.(*url.Error).Timeout() {
+			return c.Send("Ошибка: время запроса вышло ☔️")
+		}
+		return err
+	}
+	defer r.Body.Close()
+
+	if r.StatusCode == http.StatusNotFound {
+		return c.Send("Ошибка: такого места не существует ☔️")
+	} else if r.StatusCode != http.StatusOK {
+		return c.Send("Ошибка: неудачный запрос ☔️")
+	}
+
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	return c.Send(string(data))
 }
 
 func (a *app) handleKeyboardOpen(c tele.Context) error {
