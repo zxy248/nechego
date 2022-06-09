@@ -3,13 +3,11 @@ package main
 import (
 	"database/sql"
 	"errors"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
-type pair struct {
-	x int64
-	y int64
+type pairOfTheDay struct {
+	userIDx int64
+	userIDy int64
 }
 
 var errNoPair = errors.New("no pair")
@@ -69,8 +67,8 @@ values (?, ?, ?, datetime('now', 'localtime'))
 `
 
 // insertPair inserts the pair to the pairs table.
-func (s *store) insertPair(groupID int64, p pair) error {
-	_, err := s.db.Exec(insertPairQuery, groupID, p.x, p.y)
+func (s *store) insertPair(groupID int64, p pairOfTheDay) error {
+	_, err := s.db.Exec(insertPairQuery, groupID, p.userIDx, p.userIDy)
 	if err != nil {
 		return err
 	}
@@ -85,9 +83,9 @@ limit 1
 `
 
 // getPair gets the pair from the pairs table.
-func (s *store) getPair(groupID int64) (pair, error) {
-	var p pair
-	if err := s.db.QueryRow(getPairQuery, groupID).Scan(&p.x, &p.y); err != nil {
+func (s *store) getPair(groupID int64) (pairOfTheDay, error) {
+	var p pairOfTheDay
+	if err := s.db.QueryRow(getPairQuery, groupID).Scan(&p.userIDx, &p.userIDy); err != nil {
 		if err == sql.ErrNoRows {
 			return p, errNoPair
 		}

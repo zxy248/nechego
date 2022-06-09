@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"sync"
 	"time"
@@ -10,8 +11,9 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const helloStickersPath = "hello-stickers.json"
+const helloStickersPath = "data/hello-stickers.json"
 
+// helloStickers is a list of stickers saying "Hi".
 var helloStickers = func() []*tele.Sticker {
 	f, err := os.Open(helloStickersPath)
 	if err != nil {
@@ -26,34 +28,40 @@ var helloStickers = func() []*tele.Sticker {
 	return ss
 }()
 
-type stickersCollector struct {
+// stickerCollector is a list of stickers to write to the file later.
+type stickerCollector struct {
 	stickers []*tele.Sticker
 	mu       *sync.Mutex
 }
 
-func newStickersCollector() *stickersCollector {
-	return &stickersCollector{
+// newStickersCollector returns a new sticker collector.
+func newStickersCollector() *stickerCollector {
+	return &stickerCollector{
 		[]*tele.Sticker{},
 		&sync.Mutex{},
 	}
 }
 
-func (s *stickersCollector) collectStickers(c tele.Context) error {
+// collectSticker adds the sticker to the sticker list.
+func (s *stickerCollector) collectSticker(c tele.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	v := c.Message().Sticker
 	s.stickers = append(s.stickers, v)
 
-	fmt.Println("Sticker has been collected.")
+	log.Println("Sticker has been collected.")
 	return nil
 }
 
-func (s *stickersCollector) writeStickers(c tele.Context) error {
+const stickersFileFormat = "stickers-%v.json"
+
+// writeStickers writes the sticker list to the file.
+func (s *stickerCollector) writeStickers(c tele.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	f, err := os.Create(fmt.Sprintf("stickers-%v.json", time.Now().Unix()))
+	f, err := os.Create(fmt.Sprintf(stickersFileFormat, time.Now().Unix()))
 	if err != nil {
 		return err
 	}
@@ -61,6 +69,6 @@ func (s *stickersCollector) writeStickers(c tele.Context) error {
 	if err = json.NewEncoder(f).Encode(s.stickers); err != nil {
 		return err
 	}
-	fmt.Println("Stickers have been written.")
+	log.Println("Stickers have been written.")
 	return nil
 }

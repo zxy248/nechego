@@ -7,23 +7,28 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
 	tele "gopkg.in/telebot.v3"
 )
 
 const (
-	tokenEnv     = "TOKEN"            // bot token
-	storeEnv     = "STORE"            // database file path
-	whitelistEnv = "WHITELIST"        // comma-separated list of group IDs
-	stickersEnv  = "COLLECT_STICKERS" // set it to 1 to collect stickers
+	tokenEnv           = "TOKEN"            // bot token
+	dsnEnv             = "DSN"              // data source name
+	whitelistEnv       = "WHITELIST"        // comma-separated list of group IDs
+	ownersEnv          = "OWNERS"           // comma-separated list of user IDs
+	collectStickersEnv = "COLLECT_STICKERS" // set it to 1 to collect stickers
 )
 
 type app struct {
 	store     *store
 	status    *status
 	whitelist *whitelist
+	owners    *owners
 	keyboard  *tele.ReplyMarkup
+	bans      *sync.Map
 }
 
 func init() {
@@ -53,6 +58,12 @@ func main() {
 	}
 	log.Printf("Whitelist: %s\n", whitelist)
 
+	owners, err := getOwners()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Owners: %s\n", owners)
+
 	log.Println("Building a bot...")
 	bot, err := tele.NewBot(pref)
 	if err != nil {
@@ -63,25 +74,25 @@ func main() {
 		store:     store,
 		status:    newStatus(),
 		whitelist: whitelist,
+		owners:    owners,
 		keyboard:  newKeyboard(),
+		bans:      &sync.Map{},
 	}
 
 	bot.Handle(tele.OnText, app.processInput)
 	if getCollectStickers() {
-		sc := newStickersCollector()
-		bot.Handle("/write-stickers", sc.writeStickers)
-		bot.Handle(tele.OnSticker, sc.collectStickers)
+		c := newStickersCollector()
+		bot.Handle("/write-stickers", c.writeStickers)
+		bot.Handle(tele.OnSticker, c.collectSticker)
 	}
 	log.Println("The bot is running.")
 	bot.Start()
 }
 
 func getPref() (tele.Settings, error) {
-	token := os.Getenv("TOKEN")
+	token := os.Getenv(tokenEnv)
 	if token == "" {
-		return tele.Settings{},
-			fmt.Errorf("You must provide a bot token in the %s"+
-				" environment variable.", tokenEnv)
+		return tele.Settings{}, fmt.Errorf("%s must be set", tokenEnv)
 	}
 	pref := tele.Settings{
 		Token:  token,
@@ -91,22 +102,17 @@ func getPref() (tele.Settings, error) {
 }
 
 func getDSN() (string, error) {
-	v := os.Getenv("STORE")
-	if v == "" {
-		return "",
-			fmt.Errorf("You must provide a database file name in the %s"+
-				" environment variable.", storeEnv)
+	dsn := os.Getenv(dsnEnv)
+	if dsn == "" {
+		return "", fmt.Errorf("%s must be set", dsnEnv)
 	}
-	dsn := fmt.Sprintf("file:%s", v)
 	return dsn, nil
 }
 
 func getWhitelist() (*whitelist, error) {
 	v := os.Getenv(whitelistEnv)
 	if v == "" {
-		return nil,
-			fmt.Errorf("You must provide a list of IDs in the %s"+
-				" environment variable.", whitelistEnv)
+		return nil, fmt.Errorf("%s must be set", whitelistEnv)
 	}
 	w := newWhitelist()
 	allowedGroupIDs := strings.Split(v, ",")
@@ -121,9 +127,26 @@ func getWhitelist() (*whitelist, error) {
 }
 
 func getCollectStickers() bool {
-	v := os.Getenv(stickersEnv)
+	v := os.Getenv(collectStickersEnv)
 	if v == "1" {
 		return true
 	}
 	return false
+}
+
+func getOwners() (*owners, error) {
+	v := os.Getenv(ownersEnv)
+	if v == "" {
+		return nil, fmt.Errorf("%s must be set", ownersEnv)
+	}
+	var ids []int64
+	for _, s := range strings.Split(v, ",") {
+		id, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	o := newOwners(ids...)
+	return o, nil
 }

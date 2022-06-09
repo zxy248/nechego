@@ -5,16 +5,6 @@ import (
 	"strings"
 )
 
-var (
-	eblanRe    = regexp.MustCompile("^![ие][б6п*]?лан дня")
-	masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")
-	helloRe    = regexp.MustCompile("((^|[^а-я])п[рл]ивет[а-я]*([^а-я]|$))" +
-		"|((^|[^а-я])хай[а-я]*([^а-я]|$))" +
-		"|((^|[^а-я])зд[ао]ров[а-я]*([^а-я]|$))" +
-		"|((^|[^а-я])ку[а-я]*([^а-я]|$))")
-	weatherRe = regexp.MustCompile("^!погода ([-А-я]+)$")
-)
-
 type command int
 
 const (
@@ -40,13 +30,23 @@ const (
 	commandKeyboardClose
 	commandTurnOn
 	commandTurnOff
+	commandBan
+	commandUnban
+)
+
+var (
+	eblanRe    = regexp.MustCompile("^![ие][б6п*]?лан дня")
+	masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")
+	helloRe    = regexp.MustCompile("((^|[^а-я])п[рл]ивет[а-я]*([^а-я]|$))" +
+		"|((^|[^а-я])хай[а-я]*([^а-я]|$))" +
+		"|((^|[^а-я])зд[ао]ров[а-я]*([^а-я]|$))" +
+		"|((^|[^а-я])ку[а-я]*([^а-я]|$))")
+	weatherRe = regexp.MustCompile("^!погода ([-А-я]+)$")
 )
 
 // recognizeCommand returns the command contained in the input string.
 func recognizeCommand(s string) command {
-	s = strings.ToLower(s)
-
-	switch {
+	switch s = strings.ToLower(s); {
 	case startsWith(s, "!инф"):
 		return commandProbability
 	case startsWith(s, "!кто"):
@@ -89,19 +89,23 @@ func recognizeCommand(s string) command {
 		return commandTurnOn
 	case startsWith(s, "!выкл"):
 		return commandTurnOff
+	case startsWith(s, "!бан"):
+		return commandBan
+	case startsWith(s, "!разбан"):
+		return commandUnban
 	}
 	return commandUnknown
 }
 
-// message represents a message in a group.
+// message represents an input message.
 type message struct {
 	text    string
 	command command
 }
 
-// newMessage creates a new message from the text.
-func newMessage(text string) *message {
-	return &message{text, recognizeCommand(text)}
+// newMessage returns a new message.
+func newMessage(s string) *message {
+	return &message{s, recognizeCommand(s)}
 }
 
 // argument returns the argument probably contained in the message.
@@ -110,14 +114,14 @@ func (m *message) argument() string {
 	return s
 }
 
-// argumentEscaped returns the argument probably contained in the message and
-// escapes it for Markdown.
+// argumentEscaped returns the argument probably contained in the
+// message and escapes it for Markdown.
 func (m *message) argumentEscaped() string {
 	return markdownEscaper.Replace(m.argument())
 }
 
-// startsWith returns true if the input string starts with one of the specified
-// prefixes; false otherwise.
+// startsWith returns true if the input string starts with one of the
+// specified prefixes; false otherwise.
 func startsWith(s string, prefix ...string) bool {
 	for _, p := range prefix {
 		if strings.HasPrefix(s, p) {

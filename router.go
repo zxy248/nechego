@@ -6,9 +6,9 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-// processInput processes the input message and handles it to the corresponding
-// function. Ignores the message if the chat type is not a group. Caches the
-// group ID and the user ID.
+// processInput processes the input message and handles it to the
+// corresponding function. Ignores the message if the chat type is not
+// a group. Caches the group ID and the user ID.
 func (a *app) processInput(c tele.Context) error {
 	if !chatTypeIsGroup(c.Chat().Type) {
 		return nil
@@ -20,6 +20,10 @@ func (a *app) processInput(c tele.Context) error {
 	message := newMessage(text)
 
 	if !a.whitelist.allow(groupID) {
+		return nil
+	}
+
+	if _, ok := a.bans.Load(userID); ok {
 		return nil
 	}
 
@@ -83,6 +87,10 @@ func (a *app) routeMessage(c tele.Context, m *message) error {
 		return a.handleKeyboardClose(c)
 	case commandTurnOff:
 		return a.handleTurnOff(c)
+	case commandBan:
+		return a.handleBan(c)
+	case commandUnban:
+		return a.handleUnban(c)
 	}
 	return nil
 }
