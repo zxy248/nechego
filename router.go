@@ -91,6 +91,8 @@ func (a *app) routeMessage(c tele.Context, m *message) error {
 		return a.handleBan(c)
 	case commandUnban:
 		return a.handleUnban(c)
+	case commandList:
+		return a.handleList(c)
 	}
 	return nil
 }

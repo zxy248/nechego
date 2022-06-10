@@ -32,6 +32,7 @@ const (
 	commandTurnOff
 	commandBan
 	commandUnban
+	commandList
 )
 
 var (
@@ -93,6 +94,8 @@ func recognizeCommand(s string) command {
 		return commandBan
 	case startsWith(s, "!разбан"):
 		return commandUnban
+	case startsWith(s, "!список"):
+		return commandList
 	}
 	return commandUnknown
 }

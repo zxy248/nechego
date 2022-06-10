@@ -362,7 +362,9 @@ func (a *app) handleTurnOff(c tele.Context) error {
 
 const accessRestricted = "Доступ ограничен 🔒"
 const userBlocked = "Пользователь заблокирован 🚫"
+const userAlreadyBlocked = "Пользователь уже заблокирован 🛑"
 const userUnblocked = "Пользователь разблокирован ✅"
+const userAlreadyUnblocked = "Пользователь не заблокирован ❎"
 
 // handleBan adds the user ID of the reply message's sender to the ban list.
 func (a *app) handleBan(c tele.Context) error {
@@ -373,7 +375,10 @@ func (a *app) handleBan(c tele.Context) error {
 		return nil
 	}
 	id := c.Message().ReplyTo.Sender.ID
-	a.bans.Store(id, struct{}{})
+	_, exist := a.bans.LoadOrStore(id, struct{}{})
+	if exist {
+		return c.Send(userAlreadyBlocked)
+	}
 	return c.Send(userBlocked)
 }
 
@@ -386,8 +391,66 @@ func (a *app) handleUnban(c tele.Context) error {
 		return nil
 	}
 	id := c.Message().ReplyTo.Sender.ID
-	a.bans.Delete(id)
+	_, exist := a.bans.LoadAndDelete(id)
+	if !exist {
+		c.Send(userAlreadyUnblocked)
+	}
 	return c.Send(userUnblocked)
+}
+
+const listTemplate = `📝 *Информация* 📌
+
+👤 _Администрация_
+%s
+🛑 _Черный список_
+%s`
+
+// handleList sends a list of useful information.
+func (a *app) handleList(c tele.Context) error {
+	var admins string
+	l := a.owners.list()
+	fmt.Println(l)
+	if len(l) == 0 {
+		admins = "…\n"
+	} else {
+		for _, id := range l {
+			user, err := c.Bot().ChatByID(id)
+			if err != nil {
+				continue
+			}
+			member, err := c.Bot().ChatMemberOf(c.Chat(), user)
+			if err != nil {
+				continue
+			}
+			if member.Role == tele.Left {
+				continue
+			}
+			admins += "— " + mention(id, getUserNameEscaped(user)) + "\n"
+		}
+	}
+
+	var banned string
+	a.bans.Range(func(key, value any) bool {
+		id := key.(int64)
+		user, err := c.Bot().ChatByID(id)
+		if err != nil {
+			return true
+		}
+		member, err := c.Bot().ChatMemberOf(c.Chat(), user)
+		if err != nil {
+			return true
+		}
+		if member.Role == tele.Left {
+			return true
+		}
+		banned += "— " + mention(id, getUserNameEscaped(user)) + "\n"
+		return true
+	})
+	if banned == "" {
+		banned = "…\n"
+	}
+	list := fmt.Sprintf(listTemplate, admins, banned)
+	return c.Send(list, tele.ModeMarkdownV2)
 }
 
 // getRandomGroupMember returns the ID of the random group member.

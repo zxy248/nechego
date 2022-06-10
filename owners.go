@@ -24,6 +24,15 @@ func (o *owners) add(userID int64) {
 	o.userIDs[userID] = struct{}{}
 }
 
+// list returns the list of owners.
+func (o *owners) list() []int64 {
+	var ids []int64
+	for id := range o.userIDs {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
 // check checks if the given user ID is in the list of owners.
 func (o *owners) check(userID int64) bool {
 	_, ok := o.userIDs[userID]
