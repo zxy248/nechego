@@ -1,152 +1,77 @@
 package main
 
 import (
-	"fmt"
+	"database/sql"
 	"log"
 	"math/rand"
+	"nechego/bot"
+	"nechego/model"
 	"os"
 	"strconv"
-	"strings"
-	"sync"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
-	tele "gopkg.in/telebot.v3"
 )
 
 const (
-	tokenEnv           = "TOKEN"            // bot token
-	dsnEnv             = "DSN"              // data source name
-	whitelistEnv       = "WHITELIST"        // comma-separated list of group IDs
-	ownersEnv          = "OWNERS"           // comma-separated list of user IDs
-	collectStickersEnv = "COLLECT_STICKERS" // set it to 1 to collect stickers
+	tokenEnv = "NECHEGO_TOKEN" // bot token
+	dsnEnv   = "NECHEGO_DSN"   // data source name
+	ownerEnv = "NECHEGO_OWNER" // bot owner's id
 )
-
-type app struct {
-	store     *store
-	status    *status
-	whitelist *whitelist
-	owners    *owners
-	keyboard  *tele.ReplyMarkup
-	bans      *sync.Map
-}
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
 func main() {
-	pref, err := getPref()
+	cfg := &bot.Config{
+		Token: token(),
+		DB:    db(),
+		Owner: owner(),
+	}
+	if err := cfg.DB.Setup(); err != nil {
+		log.Fatal(err)
+	}
+	bot, err := bot.NewBot(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	dsn, err := getDSN()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Printf("Connecting to the database at %s...\n", dsn)
-	store, err := newStore(dsn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	whitelist, err := getWhitelist()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Whitelist: %s\n", whitelist)
-
-	owners, err := getOwners()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Owners: %s\n", owners)
-
-	log.Println("Building a bot...")
-	bot, err := tele.NewBot(pref)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	app := &app{
-		store:     store,
-		status:    newStatus(),
-		whitelist: whitelist,
-		owners:    owners,
-		keyboard:  newKeyboard(),
-		bans:      &sync.Map{},
-	}
-
-	bot.Handle(tele.OnText, app.processInput)
-	if getCollectStickers() {
-		c := newStickersCollector()
-		bot.Handle("/write-stickers", c.writeStickers)
-		bot.Handle(tele.OnSticker, c.collectSticker)
-	}
-	log.Println("The bot is running.")
+	log.Println("The bot has started.")
 	bot.Start()
 }
 
-func getPref() (tele.Settings, error) {
-	token := os.Getenv(tokenEnv)
-	if token == "" {
-		return tele.Settings{}, fmt.Errorf("%s must be set", tokenEnv)
+func token() string {
+	t := os.Getenv(tokenEnv)
+	if t == "" {
+		log.Fatalf("%v not set", tokenEnv)
 	}
-	pref := tele.Settings{
-		Token:  token,
-		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
-	}
-	return pref, nil
+	return t
 }
 
-func getDSN() (string, error) {
-	dsn := os.Getenv(dsnEnv)
-	if dsn == "" {
-		return "", fmt.Errorf("%s must be set", dsnEnv)
+func db() *model.DB {
+	db, err := sql.Open("sqlite3", dsn())
+	if err != nil {
+		log.Fatal(err)
 	}
-	return dsn, nil
+	return &model.DB{DB: db}
 }
 
-func getWhitelist() (*whitelist, error) {
-	v := os.Getenv(whitelistEnv)
-	if v == "" {
-		return nil, fmt.Errorf("%s must be set", whitelistEnv)
+func dsn() string {
+	d := os.Getenv(dsnEnv)
+	if d == "" {
+		log.Fatalf("%v not set", dsnEnv)
 	}
-	w := newWhitelist()
-	allowedGroupIDs := strings.Split(v, ",")
-	for _, id := range allowedGroupIDs {
-		i, err := strconv.ParseInt(id, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		w.add(i)
-	}
-	return w, nil
+	return d
 }
 
-func getCollectStickers() bool {
-	v := os.Getenv(collectStickersEnv)
-	if v == "1" {
-		return true
+func owner() int64 {
+	o := os.Getenv(ownerEnv)
+	if o == "" {
+		log.Fatalf("%v not set", ownerEnv)
 	}
-	return false
-}
-
-func getOwners() (*owners, error) {
-	v := os.Getenv(ownersEnv)
-	if v == "" {
-		return nil, fmt.Errorf("%s must be set", ownersEnv)
+	i, err := strconv.ParseInt(o, 10, 64)
+	if err != nil {
+		log.Fatal(err)
 	}
-	var ids []int64
-	for _, s := range strings.Split(v, ",") {
-		id, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
-	}
-	o := newOwners(ids...)
-	return o, nil
+	return i
 }
