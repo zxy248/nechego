@@ -40,6 +40,7 @@ const (
 	CommandBan
 	CommandUnban
 	CommandInfo
+	CommandHelp
 )
 
 var (
@@ -121,6 +122,8 @@ func recognizeCommand(s string) Command {
 		return CommandUnban
 	case startsWith(s, "!инфо"):
 		return CommandInfo
+	case startsWith(s, "!помощь", "!команды"):
+		return CommandHelp
 	}
 	return CommandUnknown
 }

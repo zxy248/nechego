@@ -117,6 +117,8 @@ func (b *Bot) route(c tele.Context) error {
 		return b.handleUnban(c)
 	case input.CommandInfo:
 		return b.handleInfo(c)
+	case input.CommandHelp:
+		return b.handleHelp(c)
 	}
 	return nil
 }
