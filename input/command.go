@@ -48,8 +48,8 @@ var (
 	weatherRe     = regexp.MustCompile("(?i)^!погода ([-А-я]+)$")
 	probabilityRe = regexp.MustCompile("(?i)^!инфа(.*)")
 	whoRe         = regexp.MustCompile("(?i)^!кто(.*)")
-	listRe        = regexp.MustCompile("(?i)^!список (.*)")
-	topRe         = regexp.MustCompile("(?i)^!топ ([1-9]? .*)")
+	listRe        = regexp.MustCompile("(?i)^!список *(.*)")
+	topRe         = regexp.MustCompile("(?i)^!топ *(\\d*) *(.*)")
 )
 
 // recognizeCommand returns the command contained in the input string.

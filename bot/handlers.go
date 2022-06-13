@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"nechego/input"
 	"nechego/model"
 	"net/http"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -330,9 +330,11 @@ func (b *Bot) handleTikTok(c tele.Context) error {
 	return c.Send(tikTokVideo)
 }
 
-const listTemplate = `Список *%s* 📝
-%s
-`
+const (
+	listTemplate = `Список %s 📝
+%s`
+	listLength = 5
+)
 
 func (b *Bot) handleList(c tele.Context) error {
 	message := getMessage(c)
@@ -359,34 +361,48 @@ func (b *Bot) handleList(c tele.Context) error {
 	return c.Send(fmt.Sprintf(listTemplate, argument, list), tele.ModeMarkdownV2)
 }
 
-const topTemplate = `Топ %d *%s* 🏆
-%s
-`
-const topRetries = 5
+const (
+	numberedTopTemplate = `Топ %d %s 🏆
+%s`
+	unnumberedTopTemplate = `Топ %s 🏆
+%s`
+	maxTopNumber = 10
+)
 
 func (b *Bot) handleTop(c tele.Context) error {
-	message := getMessage(c)
-	argument := message.Argument()
-	top, after, ok := strings.Cut(argument, " ")
-	after = markdownEscaper.Replace(after)
-	if !ok {
-		return fmt.Errorf("top separator not found")
-	}
-	x, err := strconv.ParseInt(top, 10, 32)
+	a, err := getMessage(c).DynamicArgument()
 	if err != nil {
 		return err
 	}
-	n := int(x)
-	var uids []int64
-	for i := 0; len(uids) < n && i < n+topRetries; i++ {
-		uid, err := b.users.Random(c.Chat().ID)
-		if err != nil {
-			return err
-		}
-		if !slices.Contains(uids, uid) {
-			uids = append(uids, uid)
+	argument, ok := a.(input.TopArgument)
+	if !ok {
+		return c.Send("Ошибка")
+	}
+
+	uids, err := b.users.List(c.Chat().ID)
+	if err != nil {
+		return err
+	}
+	rand.Shuffle(len(uids), func(i, j int) {
+		uids[i], uids[j] = uids[j], uids[i]
+	})
+
+	var n int
+	if argument.NumberPresent {
+		n = argument.Number
+	} else {
+		if len(uids) > maxTopNumber {
+			n = rand.Intn(maxTopNumber) + 1
+		} else {
+			n = rand.Intn(len(uids)) + 1
 		}
 	}
+
+	if n < 1 || n > len(uids) || n > maxTopNumber {
+		return nil
+	}
+	uids = uids[:n]
+
 	var list string
 	for i, uid := range uids {
 		user, err := c.Bot().ChatByID(uid)
@@ -396,7 +412,15 @@ func (b *Bot) handleTop(c tele.Context) error {
 		name := markdownEscaper.Replace(displayedUsername(user))
 		list = list + fmt.Sprintf("_%d\\._ %s\n", i+1, mention(uid, name))
 	}
-	return c.Send(fmt.Sprintf(topTemplate, n, after, list), tele.ModeMarkdownV2)
+
+	s := markdownEscaper.Replace(argument.String)
+	var result string
+	if argument.NumberPresent {
+		result = fmt.Sprintf(numberedTopTemplate, n, s, list)
+	} else {
+		result = fmt.Sprintf(unnumberedTopTemplate, s, list)
+	}
+	return c.Send(result, tele.ModeMarkdownV2)
 }
 
 // handleKeyboardOpen opens the keyboard.
@@ -517,20 +541,19 @@ func (b *Bot) handleInfo(c tele.Context) error {
 	}
 
 	var admins string
-	if len(l) == 0 {
-		admins = "…\n"
-	} else {
-		for _, uid := range l {
-			user, err := c.Bot().ChatByID(uid)
-			if err != nil {
-				return err
-			}
-			if !b.isGroupMember(c.Chat(), user) {
-				continue
-			}
-			name := markdownEscaper.Replace(displayedUsername(user))
-			admins += "— " + mention(uid, name) + "\n"
+	for _, uid := range l {
+		user, err := c.Bot().ChatByID(uid)
+		if err != nil {
+			return err
 		}
+		if !b.isGroupMember(c.Chat(), user) {
+			continue
+		}
+		name := markdownEscaper.Replace(displayedUsername(user))
+		admins += "— " + mention(uid, name) + "\n"
+	}
+	if admins == "" {
+		admins = "…\n"
 	}
 
 	l, err = b.bans.List()
@@ -539,20 +562,19 @@ func (b *Bot) handleInfo(c tele.Context) error {
 	}
 
 	var banned string
-	if len(l) == 0 {
-		banned = "…\n"
-	} else {
-		for _, uid := range l {
-			user, err := c.Bot().ChatByID(uid)
-			if err != nil {
-				return err
-			}
-			if !b.isGroupMember(c.Chat(), user) {
-				continue
-			}
-			name := markdownEscaper.Replace(displayedUsername(user))
-			banned += "— " + mention(uid, name) + "\n"
+	for _, uid := range l {
+		user, err := c.Bot().ChatByID(uid)
+		if err != nil {
+			return err
 		}
+		if !b.isGroupMember(c.Chat(), user) {
+			continue
+		}
+		name := markdownEscaper.Replace(displayedUsername(user))
+		banned += "— " + mention(uid, name) + "\n"
+	}
+	if banned == "" {
+		banned = "…\n"
 	}
 
 	list := fmt.Sprintf(infoTemplate, admins, banned)
