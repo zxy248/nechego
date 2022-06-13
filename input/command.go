@@ -29,6 +29,9 @@ const (
 	CommandTikTok
 	CommandList
 	CommandTop
+	CommandBasili
+	CommandCasper
+	CommandZeus
 	CommandKeyboardOpen
 	CommandKeyboardClose
 	CommandTurnOn
@@ -49,7 +52,7 @@ var (
 	probabilityRe = regexp.MustCompile("(?i)^!инфа(.*)")
 	whoRe         = regexp.MustCompile("(?i)^!кто(.*)")
 	listRe        = regexp.MustCompile("(?i)^!список *(.*)")
-	topRe         = regexp.MustCompile("(?i)^!топ *(\\d*) *(.*)")
+	topRe         = regexp.MustCompile("(?i)^!топ *(-?\\d*) *(.*)")
 )
 
 // recognizeCommand returns the command contained in the input string.
@@ -59,8 +62,6 @@ func recognizeCommand(s string) Command {
 		return CommandProbability
 	case whoRe.MatchString(s):
 		return CommandWho
-	case startsWith(s, "!кот", "!кош"):
-		return CommandCat
 	case startsWith(s, "!имя"):
 		return CommandTitle
 	case startsWith(s, "!аним", "!мульт"):
@@ -95,6 +96,14 @@ func recognizeCommand(s string) Command {
 		return CommandList
 	case topRe.MatchString(s):
 		return CommandTop
+	case startsWith(s, "!кот василия", "!кошка василия", "!марс", "!муся"):
+		return CommandBasili
+	case startsWith(s, "!каспер"):
+		return CommandCasper
+	case startsWith(s, "!зевс"):
+		return CommandZeus
+	case startsWith(s, "!кот", "!кош"):
+		return CommandCat
 	case startsWith(s, "!клав", "!открыт"):
 		return CommandKeyboardOpen
 	case startsWith(s, "!закрыт", "!скрыт"):

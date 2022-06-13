@@ -97,6 +97,12 @@ func (b *Bot) route(c tele.Context) error {
 		return b.handleList(c)
 	case input.CommandTop:
 		return b.handleTop(c)
+	case input.CommandBasili:
+		return b.handleBasili(c)
+	case input.CommandCasper:
+		return b.handleCasper(c)
+	case input.CommandZeus:
+		return b.handleZeus(c)
 	case input.CommandKeyboardOpen:
 		return b.handleKeyboardOpen(c)
 	case input.CommandKeyboardClose:

@@ -3,11 +3,12 @@ package bot
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-const helloStickersPath = "data/hello-stickers.json"
+var helloStickersPath = filepath.Join(dataPath, "hello-stickers.json")
 
 // helloStickers is a list of stickers saying "Hi".
 var helloStickers = func() []*tele.Sticker {

@@ -12,6 +12,8 @@ import (
 	"nechego/model"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -19,6 +21,8 @@ import (
 	"golang.org/x/exp/slices"
 	tele "gopkg.in/telebot.v3"
 )
+
+const dataPath = "data"
 
 // handleProbability responds with the probability of the message.
 func (b *Bot) handleProbability(c tele.Context) error {
@@ -274,7 +278,10 @@ func (b *Bot) handleHello(c tele.Context) error {
 	return nil
 }
 
-var mouseVideo = &tele.Video{File: tele.FromDisk("data/mouse.mp4")}
+var (
+	mouseVideoPath = filepath.Join(dataPath, "mouse.mp4")
+	mouseVideo     = &tele.Video{File: tele.FromDisk(mouseVideoPath)}
+)
 
 // handleMouse sends the mouse video
 func (b *Bot) handleMouse(c tele.Context) error {
@@ -366,7 +373,7 @@ const (
 %s`
 	unnumberedTopTemplate = `Топ %s 🏆
 %s`
-	maxTopNumber = 10
+	maxTopNumber = 5
 )
 
 func (b *Bot) handleTop(c tele.Context) error {
@@ -376,7 +383,7 @@ func (b *Bot) handleTop(c tele.Context) error {
 	}
 	argument, ok := a.(input.TopArgument)
 	if !ok {
-		return c.Send("Ошибка")
+		return errors.New("the argument is not a TopArgument")
 	}
 
 	uids, err := b.users.List(c.Chat().ID)
@@ -399,7 +406,7 @@ func (b *Bot) handleTop(c tele.Context) error {
 	}
 
 	if n < 1 || n > len(uids) || n > maxTopNumber {
-		return nil
+		return c.Send("Ошибка")
 	}
 	uids = uids[:n]
 
@@ -421,6 +428,37 @@ func (b *Bot) handleTop(c tele.Context) error {
 		result = fmt.Sprintf(unnumberedTopTemplate, s, list)
 	}
 	return c.Send(result, tele.ModeMarkdownV2)
+}
+
+var (
+	albumsPath     = filepath.Join(dataPath, "vk.com-albums")
+	basiliCatsPath = filepath.Join(albumsPath, "basili")
+	casperPath     = filepath.Join(albumsPath, "casper")
+	zeusPath       = filepath.Join(albumsPath, "zeus")
+)
+
+func (b *Bot) handleBasili(c tele.Context) error {
+	path, err := randomFilename(basiliCatsPath)
+	if err != nil {
+		return err
+	}
+	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+}
+
+func (b *Bot) handleCasper(c tele.Context) error {
+	path, err := randomFilename(casperPath)
+	if err != nil {
+		return err
+	}
+	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+}
+
+func (b *Bot) handleZeus(c tele.Context) error {
+	path, err := randomFilename(zeusPath)
+	if err != nil {
+		return err
+	}
+	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
 }
 
 // handleKeyboardOpen opens the keyboard.
@@ -667,4 +705,13 @@ func newMarkdownEscaper() *strings.Replacer {
 		table = append(table, c, "\\"+c)
 	}
 	return strings.NewReplacer(table...)
+}
+
+func randomFilename(path string) (string, error) {
+	ds, err := os.ReadDir(path)
+	if err != nil {
+		return "", err
+	}
+	d := ds[rand.Intn(len(ds))]
+	return filepath.Join(path, d.Name()), nil
 }
