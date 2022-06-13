@@ -435,6 +435,7 @@ var (
 	basiliCatsPath = filepath.Join(albumsPath, "basili")
 	casperPath     = filepath.Join(albumsPath, "casper")
 	zeusPath       = filepath.Join(albumsPath, "zeus")
+	picPath        = filepath.Join(albumsPath, "saved")
 )
 
 func (b *Bot) handleBasili(c tele.Context) error {
@@ -455,6 +456,14 @@ func (b *Bot) handleCasper(c tele.Context) error {
 
 func (b *Bot) handleZeus(c tele.Context) error {
 	path, err := randomFilename(zeusPath)
+	if err != nil {
+		return err
+	}
+	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+}
+
+func (b *Bot) handlePic(c tele.Context) error {
+	path, err := randomFilename(picPath)
 	if err != nil {
 		return err
 	}

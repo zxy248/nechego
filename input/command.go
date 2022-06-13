@@ -32,6 +32,7 @@ const (
 	CommandBasili
 	CommandCasper
 	CommandZeus
+	CommandPic
 	CommandKeyboardOpen
 	CommandKeyboardClose
 	CommandTurnOn
@@ -74,7 +75,7 @@ func recognizeCommand(s string) Command {
 		return CommandPerson
 	case startsWith(s, "!лошадь", "!конь"):
 		return CommandHorse
-	case startsWith(s, "!арт", "!пик"):
+	case startsWith(s, "!арт"):
 		return CommandArt
 	case startsWith(s, "!авто", "!тачк", "!машин"):
 		return CommandCar
@@ -104,6 +105,8 @@ func recognizeCommand(s string) Command {
 		return CommandZeus
 	case startsWith(s, "!кот", "!кош"):
 		return CommandCat
+	case startsWith(s, "!пик"):
+		return CommandPic
 	case startsWith(s, "!клав", "!открыт"):
 		return CommandKeyboardOpen
 	case startsWith(s, "!закрыт", "!скрыт"):
