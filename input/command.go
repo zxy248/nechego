@@ -33,6 +33,8 @@ const (
 	CommandCasper
 	CommandZeus
 	CommandPic
+	CommandDice
+	CommandGame
 	CommandKeyboardOpen
 	CommandKeyboardClose
 	CommandTurnOn
@@ -108,6 +110,10 @@ func recognizeCommand(s string) Command {
 		return CommandCat
 	case startsWith(s, "!пик"):
 		return CommandPic
+	case startsWith(s, "!кости"):
+		return CommandDice
+	case startsWith(s, "!игр"):
+		return CommandGame
 	case startsWith(s, "!клав", "!открыт"):
 		return CommandKeyboardOpen
 	case startsWith(s, "!закрыт", "!скрыт"):

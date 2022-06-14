@@ -17,6 +17,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/exp/slices"
 	tele "gopkg.in/telebot.v3"
@@ -63,14 +64,30 @@ func (b *Bot) handleCat(c tele.Context) error {
 
 // handleTitle sets the admin title of the sender.
 func (b *Bot) handleTitle(c tele.Context) error {
+	group := c.Chat()
+	gid := group.ID
+	uid := c.Sender().ID
 	title := getMessage(c).Argument()
-	if len(title) > 16 {
-		return c.Send("Ошибка: максимальная длина имени 16 символов")
+
+	if utf8.RuneCountInString(title) > 16 {
+		return c.Send(makeError("Максимальная длина имени 16 символов"))
 	}
-	if err := c.Bot().SetAdminTitle(c.Chat(), c.Sender(), title); err != nil {
-		return c.Send("Ошибка")
+
+	m, err := b.chatMember(gid, uid)
+	if err != nil {
+		return err
 	}
-	return nil
+	if m.Role != tele.Administrator {
+		m.Rights.CanBeEdited = true
+		m.Rights.CanManageChat = true
+		if err := c.Bot().Promote(group, m); err != nil {
+			return err
+		}
+	}
+	if err := c.Bot().SetAdminTitle(group, c.Sender(), title); err != nil {
+		return c.Send(makeError("Вам надо перезайти в беседу"))
+	}
+	return c.Send(fmt.Sprintf("Имя *%v* установлено ✅", markdownEscaper.Replace(title)), tele.ModeMarkdownV2)
 }
 
 const animeFormat = "https://thisanimedoesnotexist.ai/results/psi-%s/seed%s.png"
@@ -307,7 +324,7 @@ func (b *Bot) handleWeather(c tele.Context) error {
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
 		if err.(*url.Error).Timeout() {
-			return c.Send("Ошибка: время запроса вышло ☔️")
+			return c.Send(makeError("Время запроса вышло ☔️"))
 		}
 		return err
 	}
@@ -315,9 +332,9 @@ func (b *Bot) handleWeather(c tele.Context) error {
 
 	if r.StatusCode != http.StatusOK {
 		if r.StatusCode == http.StatusNotFound {
-			return c.Send("Ошибка: такого места не существует ☔️")
+			return c.Send(makeError("Такого места не существует ☔️"))
 		}
-		return c.Send("Ошибка: неудачный запрос ☔️")
+		return c.Send(makeError("Неудачный запрос ☔️"))
 	}
 
 	data, err := io.ReadAll(r.Body)
@@ -406,7 +423,7 @@ func (b *Bot) handleTop(c tele.Context) error {
 	}
 
 	if n < 1 || n > len(uids) || n > maxTopNumber {
-		return c.Send("Ошибка")
+		return c.Send(errorSign())
 	}
 	uids = uids[:n]
 
@@ -468,6 +485,16 @@ func (b *Bot) handlePic(c tele.Context) error {
 		return err
 	}
 	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+}
+
+func (b *Bot) handleDice(c tele.Context) error {
+	return c.Send(tele.Cube)
+}
+
+func (b *Bot) handleGame(c tele.Context) error {
+	games := []*tele.Dice{tele.Dart, tele.Ball, tele.Goal, tele.Slot, tele.Bowl}
+	game := games[rand.Intn(len(games))]
+	return c.Send(game)
 }
 
 const randomPhotoChance = 0.02
@@ -836,4 +863,13 @@ func chatMemberName(m *tele.ChatMember) string {
 		name = m.User.FirstName + " " + m.User.LastName
 	}
 	return name
+}
+
+func errorSign() string {
+	errors := []string{"❌", "🚫", "⭕️", "🛑", "⛔️", "📛", "💢", "❗️", "‼️", "⚠️"}
+	return errors[rand.Intn(len(errors))]
+}
+
+func makeError(s string) string {
+	return errorSign() + " " + s
 }

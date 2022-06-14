@@ -26,16 +26,16 @@ func (b *Bot) check(next tele.HandlerFunc) tele.HandlerFunc {
 			return nil
 		}
 
+		text := c.Text()
+		message := input.Parse(text)
+
 		banned, err := b.bans.Banned(uid)
 		if err != nil {
 			return err
 		}
-		if banned {
+		if banned && !(uid == b.config.Owner && message.Command == input.CommandUnban) {
 			return nil
 		}
-
-		text := c.Text()
-		message := input.Parse(text)
 
 		b.cacheGroupMember(gid, uid)
 
@@ -108,6 +108,10 @@ func (b *Bot) route(c tele.Context) error {
 		return b.handleZeus(c)
 	case input.CommandPic:
 		return b.handlePic(c)
+	case input.CommandDice:
+		return b.handleDice(c)
+	case input.CommandGame:
+		return b.handleGame(c)
 	case input.CommandKeyboardOpen:
 		return b.handleKeyboardOpen(c)
 	case input.CommandKeyboardClose:
