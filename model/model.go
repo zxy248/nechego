@@ -105,6 +105,18 @@ func (u *Users) Insert(gid, uid int64) error {
 	return nil
 }
 
+const deleteUserQuery = `
+delete from users where gid = ? and uid = ?
+`
+
+func (u *Users) Delete(gid, uid int64) error {
+	_, err := u.DB.Exec(deleteUserQuery, gid, uid)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 const listUsersQuery = `
 select uid from users where gid = ?
 `

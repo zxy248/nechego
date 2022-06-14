@@ -26,27 +26,26 @@ const dataPath = "data"
 
 // handleProbability responds with the probability of the message.
 func (b *Bot) handleProbability(c tele.Context) error {
-	message := getMessage(c)
-	argument := message.Argument()
+	argument := getMessage(c).Argument()
 	return c.Send(probability(argument))
 }
 
 // handleWho responds with the message appended to the random chat member.
 func (b *Bot) handleWho(c tele.Context) error {
-	message := getMessage(c)
-	argument := message.Argument()
+	argument := getMessage(c).Argument()
+	gid := c.Chat().ID
 
-	uid, err := b.users.Random(c.Chat().ID)
+	uid, err := b.users.Random(gid)
 	if err != nil {
 		return err
 	}
 
-	chat, err := c.Bot().ChatByID(uid)
+	m, err := b.chatMember(gid, uid)
 	if err != nil {
 		return err
 	}
 
-	name := markdownEscaper.Replace(displayedUsername(chat))
+	name := markdownEscaper.Replace(chatMemberName(m))
 	text := markdownEscaper.Replace(argument)
 	return c.Send(who(uid, name, text), tele.ModeMarkdownV2)
 }
@@ -64,8 +63,7 @@ func (b *Bot) handleCat(c tele.Context) error {
 
 // handleTitle sets the admin title of the sender.
 func (b *Bot) handleTitle(c tele.Context) error {
-	message := getMessage(c)
-	title := message.Argument()
+	title := getMessage(c).Argument()
 	if len(title) > 16 {
 		return c.Send("Ошибка: максимальная длина имени 16 символов")
 	}
@@ -210,16 +208,16 @@ func (b *Bot) handlePair(c tele.Context) error {
 		return err
 	}
 
-	chatx, err := c.Bot().ChatByID(uidx)
+	mx, err := b.chatMember(gid, uidx)
 	if err != nil {
 		return err
 	}
-	chaty, err := c.Bot().ChatByID(uidy)
+	my, err := b.chatMember(gid, uidy)
 	if err != nil {
 		return err
 	}
-	namex := markdownEscaper.Replace(displayedUsername(chatx))
-	namey := markdownEscaper.Replace(displayedUsername(chaty))
+	namex := markdownEscaper.Replace(chatMemberName(mx))
+	namey := markdownEscaper.Replace(chatMemberName(my))
 	return c.Send(fmt.Sprintf(pairOfTheDayFormat,
 		mention(uidx, namex), mention(uidy, namey)), tele.ModeMarkdownV2)
 }
@@ -245,12 +243,12 @@ func (b *Bot) handleEblan(c tele.Context) error {
 		return err
 	}
 
-	chat, err := c.Bot().ChatByID(uid)
+	m, err := b.chatMember(gid, uid)
 	if err != nil {
 		return err
 	}
 
-	eblan := markdownEscaper.Replace(displayedUsername(chat))
+	eblan := markdownEscaper.Replace(chatMemberName(m))
 	return c.Send(fmt.Sprintf(eblanOfTheDayFormat, mention(uid, eblan)), tele.ModeMarkdownV2)
 }
 
@@ -294,8 +292,7 @@ const weatherFormat = `?format=%l:+%c+%t+\nОщущается+как+%f\n\nВе�
 
 // handleWeather sends the current weather for a given city
 func (b *Bot) handleWeather(c tele.Context) error {
-	message := getMessage(c)
-	place := message.Argument()
+	place := getMessage(c).Argument()
 
 	ctx, cancel := context.WithTimeout(context.Background(), weatherTimeout)
 	defer cancel()
@@ -344,11 +341,12 @@ const (
 )
 
 func (b *Bot) handleList(c tele.Context) error {
-	message := getMessage(c)
-	argument := markdownEscaper.Replace(message.Argument())
+	argument := markdownEscaper.Replace(getMessage(c).Argument())
+	gid := c.Chat().ID
+
 	var uids []int64
 	for i := 0; i < 5; i++ {
-		uid, err := b.users.Random(c.Chat().ID)
+		uid, err := b.users.Random(gid)
 		if err != nil {
 			return err
 		}
@@ -356,13 +354,14 @@ func (b *Bot) handleList(c tele.Context) error {
 			uids = append(uids, uid)
 		}
 	}
+
 	var list string
 	for _, uid := range uids {
-		user, err := c.Bot().ChatByID(uid)
+		m, err := b.chatMember(gid, uid)
 		if err != nil {
 			return err
 		}
-		name := markdownEscaper.Replace(displayedUsername(user))
+		name := markdownEscaper.Replace(chatMemberName(m))
 		list = list + "— " + mention(uid, name) + "\n"
 	}
 	return c.Send(fmt.Sprintf(listTemplate, argument, list), tele.ModeMarkdownV2)
@@ -377,6 +376,7 @@ const (
 )
 
 func (b *Bot) handleTop(c tele.Context) error {
+	gid := c.Chat().ID
 	a, err := getMessage(c).DynamicArgument()
 	if err != nil {
 		return err
@@ -386,7 +386,7 @@ func (b *Bot) handleTop(c tele.Context) error {
 		return errors.New("the argument is not a TopArgument")
 	}
 
-	uids, err := b.users.List(c.Chat().ID)
+	uids, err := b.users.List(gid)
 	if err != nil {
 		return err
 	}
@@ -412,11 +412,11 @@ func (b *Bot) handleTop(c tele.Context) error {
 
 	var list string
 	for i, uid := range uids {
-		user, err := c.Bot().ChatByID(uid)
+		m, err := b.chatMember(gid, uid)
 		if err != nil {
 			return err
 		}
-		name := markdownEscaper.Replace(displayedUsername(user))
+		name := markdownEscaper.Replace(chatMemberName(m))
 		list = list + fmt.Sprintf("_%d\\._ %s\n", i+1, mention(uid, name))
 	}
 
@@ -582,6 +582,7 @@ const infoTemplate = `ℹ️ *Информация* 📌
 
 // handleInfo sends a list of useful information.
 func (b *Bot) handleInfo(c tele.Context) error {
+	gid := c.Chat().ID
 	l, err := b.admins.List()
 	if err != nil {
 		return err
@@ -589,14 +590,14 @@ func (b *Bot) handleInfo(c tele.Context) error {
 
 	var admins string
 	for _, uid := range l {
-		user, err := c.Bot().ChatByID(uid)
+		m, err := b.chatMember(gid, uid)
 		if err != nil {
 			return err
 		}
-		if !b.isGroupMember(c.Chat(), user) {
+		if !chatMemberPresent(m) {
 			continue
 		}
-		name := markdownEscaper.Replace(displayedUsername(user))
+		name := markdownEscaper.Replace(chatMemberName(m))
 		admins += "— " + mention(uid, name) + "\n"
 	}
 	if admins == "" {
@@ -610,14 +611,14 @@ func (b *Bot) handleInfo(c tele.Context) error {
 
 	var banned string
 	for _, uid := range l {
-		user, err := c.Bot().ChatByID(uid)
+		m, err := b.chatMember(gid, uid)
 		if err != nil {
 			return err
 		}
-		if !b.isGroupMember(c.Chat(), user) {
+		if !chatMemberPresent(m) {
 			continue
 		}
-		name := markdownEscaper.Replace(displayedUsername(user))
+		name := markdownEscaper.Replace(chatMemberName(m))
 		banned += "— " + mention(uid, name) + "\n"
 	}
 	if banned == "" {
@@ -771,4 +772,34 @@ func randomFilename(path string) (string, error) {
 	}
 	d := ds[rand.Intn(len(ds))]
 	return filepath.Join(path, d.Name()), nil
+}
+
+func (b *Bot) chatMember(gid, uid int64) (*tele.ChatMember, error) {
+	group, err := b.bot.ChatByID(gid)
+	if err != nil {
+		return nil, err
+	}
+	member, err := b.bot.ChatMemberOf(group, tele.ChatID(uid))
+	if err != nil {
+		return nil, err
+	}
+	if !chatMemberPresent(member) {
+		b.users.Delete(gid, uid)
+	}
+	return member, nil
+}
+
+func chatMemberPresent(m *tele.ChatMember) bool {
+	if m.Role == tele.Kicked || m.Role == tele.Left {
+		return false
+	}
+	return true
+}
+
+func chatMemberName(m *tele.ChatMember) string {
+	name := m.Title
+	if name == "" {
+		name = m.User.FirstName + " " + m.User.LastName
+	}
+	return name
 }
