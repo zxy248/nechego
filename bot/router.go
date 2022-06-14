@@ -56,6 +56,9 @@ func (b *Bot) check(next tele.HandlerFunc) tele.HandlerFunc {
 
 // routeMessage routes the input message to the appropriate handler.
 func (b *Bot) route(c tele.Context) error {
+	if err := b.handleRandomPhoto(c); err != nil {
+		return err
+	}
 	switch getMessage(c).Command {
 	case input.CommandProbability:
 		return b.handleProbability(c)

@@ -470,6 +470,40 @@ func (b *Bot) handlePic(c tele.Context) error {
 	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
 }
 
+const randomPhotoChance = 0.02
+
+func (b *Bot) handleRandomPhoto(c tele.Context) error {
+	r := rand.Float64()
+	if r <= randomPhotoChance {
+		// Alternative version: sends a large photo.
+		//
+		// ps, err := c.Bot().ProfilePhotosOf(c.Sender())
+		// if err != nil {
+		// 	return err
+		// }
+		// if len(ps) < 1 {
+		// 	return nil
+		// }
+		// return c.Send(&ps[0])
+
+		user, err := c.Bot().ChatByID(c.Sender().ID)
+		if err != nil {
+			return err
+		}
+		file, err := b.bot.FileByID(user.Photo.SmallFileID)
+		if err != nil {
+			return err
+		}
+		f, err := b.bot.File(&file)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		return c.Send(&tele.Photo{File: tele.FromReader(f)})
+	}
+	return nil
+}
+
 // handleKeyboardOpen opens the keyboard.
 func (b *Bot) handleKeyboardOpen(c tele.Context) error {
 	return c.Send("Клавиатура ⌨️", b.keyboard)
