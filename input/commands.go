@@ -47,12 +47,9 @@ const (
 )
 
 var (
-	eblanRe    = regexp.MustCompile("(?i)^![ие][б6п*]?лан[А-я]* дня")
-	masyunyaRe = regexp.MustCompile("(?i)^(!ма[нс]ю[нс][а-я]*[пая])")
-	helloRe    = regexp.MustCompile("(?i)((^|[^а-я])п[рл]ивет[а-я]*([^а-я]|$))" +
-		"|((^|[^а-я])хай[а-я]*([^а-я]|$))" +
-		"|((^|[^а-я])зд[ао]ров[а-я]*([^а-я]|$))" +
-		"|((^|[^а-я])ку[а-я]*([^а-я]|$))")
+	eblanRe       = regexp.MustCompile("(?i)^![ие][б6п*]?лан[А-я]* дня")
+	masyunyaRe    = regexp.MustCompile("(?i)^(!ма[нс]ю[нс][а-я]*[пая])")
+	helloRe       = regexp.MustCompile(constructHelloRe("п[рл]ивет", "хай", "зд[ао]ров", "ку", "здрав"))
 	weatherRe     = regexp.MustCompile("(?i)^!погода ([-А-я]+)")
 	probabilityRe = regexp.MustCompile("(?i)^!инфа *(.*)")
 	whoRe         = regexp.MustCompile("(?i)^!кто *(.*)")
@@ -147,4 +144,17 @@ func startsWith(s string, prefix ...string) bool {
 		}
 	}
 	return false
+}
+
+const (
+	helloPrefix = "((^|[^а-я])"
+	helloSuffix = "[а-я]*([^а-я]|$))"
+)
+
+func constructHelloRe(hello ...string) string {
+	var l []string
+	for _, h := range hello {
+		l = append(l, helloPrefix+h+helloSuffix)
+	}
+	return "(?i)" + strings.Join(l, "|")
 }
