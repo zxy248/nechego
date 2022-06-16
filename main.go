@@ -29,7 +29,7 @@ func main() {
 		DB:    db(),
 		Owner: owner(),
 	}
-	if err := cfg.DB.Setup(); err != nil {
+	if err := cfg.DB.CreateTables(); err != nil {
 		log.Fatal(err)
 	}
 	bot, err := bot.NewBot(cfg)

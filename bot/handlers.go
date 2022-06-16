@@ -62,6 +62,13 @@ func (b *Bot) handleCat(c tele.Context) error {
 	return c.Send(pic)
 }
 
+const (
+	nameTooLong   = "Максимальная длина имени 16 символов"
+	yourName      = "Ваше имя: *%s* 🔖"
+	pleaseReEnter = "Для использования этой функции Вам необходимо перезайти в беседу"
+	nameSet       = "Имя *%v* установлено ✅"
+)
+
 // handleTitle sets the admin title of the sender.
 func (b *Bot) handleTitle(c tele.Context) error {
 	group := c.Chat()
@@ -70,24 +77,21 @@ func (b *Bot) handleTitle(c tele.Context) error {
 	title := getMessage(c).Argument()
 
 	if utf8.RuneCountInString(title) > 16 {
-		return c.Send(makeError("Максимальная длина имени 16 символов"))
+		return c.Send(makeError(nameTooLong))
 	}
 
 	m, err := b.chatMember(gid, uid)
 	if err != nil {
 		return err
 	}
-	if m.Role != tele.Administrator {
-		m.Rights.CanBeEdited = true
-		m.Rights.CanManageChat = true
-		if err := c.Bot().Promote(group, m); err != nil {
-			return err
-		}
+	if title == "" {
+		name := markdownEscaper.Replace(chatMemberName(m))
+		return c.Send(fmt.Sprintf(yourName, name), tele.ModeMarkdownV2)
 	}
 	if err := c.Bot().SetAdminTitle(group, c.Sender(), title); err != nil {
-		return c.Send(makeError("Вам надо перезайти в беседу"))
+		return c.Send(makeError(pleaseReEnter))
 	}
-	return c.Send(fmt.Sprintf("Имя *%v* установлено ✅", markdownEscaper.Replace(title)), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf(nameSet, markdownEscaper.Replace(title)), tele.ModeMarkdownV2)
 }
 
 const animeFormat = "https://thisanimedoesnotexist.ai/results/psi-%s/seed%s.png"
@@ -281,14 +285,28 @@ func (b *Bot) handleMasyunya(c tele.Context) error {
 	return c.Send(&s)
 }
 
+var poppyStickersNames = []string{"pappy2_vk", "poppy_vk"}
+
+func (b *Bot) handlePoppy(c tele.Context) error {
+	var stickers []tele.Sticker
+	for _, sn := range poppyStickersNames {
+		ss, err := c.Bot().StickerSet(sn)
+		if err != nil {
+			return err
+		}
+		stickers = append(stickers, ss.Stickers...)
+	}
+	s := stickers[rand.Intn(len(stickers))]
+	return c.Send(&s)
+}
+
 const helloChance = 0.2
 
 // handleHello sends a hello sticker
 func (b *Bot) handleHello(c tele.Context) error {
 	n := rand.Float64()
 	if n <= helloChance {
-		s := helloStickers[rand.Intn(len(helloStickers))]
-		return c.Send(s)
+		return c.Send(helloSticker())
 	}
 	return nil
 }
@@ -579,7 +597,7 @@ const (
 
 // handleBan adds the user ID of the reply message's sender to the ban list.
 func (b *Bot) handleBan(c tele.Context) error {
-	ok, err := b.admins.Allow(c.Sender().ID)
+	ok, err := b.admins.Authorize(c.Sender().ID)
 	if err != nil {
 		return err
 	}
@@ -608,7 +626,7 @@ func (b *Bot) handleBan(c tele.Context) error {
 
 // handleUnban removes the user ID of the reply message's sender from the ban list.
 func (b *Bot) handleUnban(c tele.Context) error {
-	ok, err := b.admins.Allow(c.Sender().ID)
+	ok, err := b.admins.Authorize(c.Sender().ID)
 	if err != nil {
 		return err
 	}
@@ -738,6 +756,26 @@ func (b *Bot) handleHelp(c tele.Context) error {
 	return c.Send(help, tele.ModeMarkdownV2)
 }
 
+func (b *Bot) handleJoin(c tele.Context) error {
+	group := c.Chat()
+	gid := group.ID
+	uid := c.Message().UserJoined.ID
+
+	m, err := b.chatMember(gid, uid)
+	if err != nil {
+		return err
+	}
+
+	if m.Role != tele.Administrator {
+		m.Rights.CanBeEdited = true
+		m.Rights.CanManageChat = true
+		if err := c.Bot().Promote(group, m); err != nil {
+			return err
+		}
+	}
+	return c.Send(helloSticker())
+}
+
 // randomNumbers returns a string of random numbers of length c.
 func randomNumbers(c int) string {
 	var nums string
@@ -785,7 +823,7 @@ func probability(message string) string {
 
 // who returns the mention of the user prepended to the message.
 func who(uid int64, name, message string) string {
-	return mention(uid, name) + message
+	return mention(uid, name) + " " + message
 }
 
 // mention returns the mention of the user by the name.
@@ -862,7 +900,7 @@ func chatMemberName(m *tele.ChatMember) string {
 	if name == "" {
 		name = m.User.FirstName + " " + m.User.LastName
 	}
-	return name
+	return strings.TrimSpace(name)
 }
 
 func errorSign() string {

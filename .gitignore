@@ -1,4 +1,4 @@
 *.db
 *.sh
-
 /data
+c.out

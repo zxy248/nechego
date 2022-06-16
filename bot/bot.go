@@ -57,5 +57,6 @@ func NewBot(c *Config) (*Bot, error) {
 
 func (b *Bot) Start() {
 	b.bot.Handle(tele.OnText, b.route, b.check)
+	b.bot.Handle(tele.OnUserJoined, b.handleJoin, b.check)
 	b.bot.Start()
 }

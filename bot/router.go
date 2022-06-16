@@ -88,6 +88,8 @@ func (b *Bot) route(c tele.Context) error {
 		return b.handleEblan(c)
 	case input.CommandMasyunya:
 		return b.handleMasyunya(c)
+	case input.CommandPoppy:
+		return b.handlePoppy(c)
 	case input.CommandHello:
 		return b.handleHello(c)
 	case input.CommandMouse:

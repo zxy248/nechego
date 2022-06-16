@@ -23,6 +23,7 @@ const (
 	CommandPair
 	CommandEblan
 	CommandMasyunya
+	CommandPoppy
 	CommandHello
 	CommandMouse
 	CommandWeather
@@ -47,21 +48,21 @@ const (
 
 var (
 	eblanRe    = regexp.MustCompile("(?i)^![ие][б6п*]?лан[А-я]* дня")
-	masyunyaRe = regexp.MustCompile("(?i)^(!ма[нс]ю[нс][а-я]*[пая])|(🎀 Масюня 🎀)")
+	masyunyaRe = regexp.MustCompile("(?i)^(!ма[нс]ю[нс][а-я]*[пая])")
 	helloRe    = regexp.MustCompile("(?i)((^|[^а-я])п[рл]ивет[а-я]*([^а-я]|$))" +
 		"|((^|[^а-я])хай[а-я]*([^а-я]|$))" +
 		"|((^|[^а-я])зд[ао]ров[а-я]*([^а-я]|$))" +
 		"|((^|[^а-я])ку[а-я]*([^а-я]|$))")
-	weatherRe     = regexp.MustCompile("(?i)^!погода ([-А-я]+)$")
-	probabilityRe = regexp.MustCompile("(?i)^!инфа(.*)")
-	whoRe         = regexp.MustCompile("(?i)^!кто(.*)")
+	weatherRe     = regexp.MustCompile("(?i)^!погода ([-А-я]+)")
+	probabilityRe = regexp.MustCompile("(?i)^!инфа *(.*)")
+	whoRe         = regexp.MustCompile("(?i)^!кто *(.*)")
 	listRe        = regexp.MustCompile("(?i)^!список *(.*)")
-	topRe         = regexp.MustCompile("(?i)^!топ *(-?\\d*) *(.*)")
+	topRe         = regexp.MustCompile("(?i)^!топ[- ]*(\\d*) *(.*)")
 )
 
 // recognizeCommand returns the command contained in the input string.
 func recognizeCommand(s string) Command {
-	switch s = strings.ToLower(s); {
+	switch {
 	case probabilityRe.MatchString(s):
 		return CommandProbability
 	case whoRe.MatchString(s):
@@ -86,8 +87,10 @@ func recognizeCommand(s string) Command {
 		return CommandPair
 	case eblanRe.MatchString(s):
 		return CommandEblan
-	case masyunyaRe.MatchString(s):
+	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):
 		return CommandMasyunya
+	case startsWith(s, "!паппи", "Паппи 🦊"):
+		return CommandPoppy
 	case helloRe.MatchString(s):
 		return CommandHello
 	case startsWith(s, "!мыш"):
@@ -102,7 +105,7 @@ func recognizeCommand(s string) Command {
 		return CommandTop
 	case startsWith(s, "!кот василия", "!кошка василия", "!марс", "!муся"):
 		return CommandBasili
-	case startsWith(s, "!каспер"):
+	case startsWith(s, "!касп", "!кот касп"):
 		return CommandCasper
 	case startsWith(s, "!зевс"):
 		return CommandZeus
@@ -136,7 +139,9 @@ func recognizeCommand(s string) Command {
 
 // startsWith returns true if the input string starts with one of the specified prefixes; false otherwise.
 func startsWith(s string, prefix ...string) bool {
+	s = strings.ToLower(s)
 	for _, p := range prefix {
+		p = strings.ToLower(p)
 		if strings.HasPrefix(s, p) {
 			return true
 		}

@@ -2,6 +2,7 @@ package bot
 
 import (
 	"encoding/json"
+	"math/rand"
 	"os"
 	"path/filepath"
 
@@ -24,3 +25,7 @@ var helloStickers = func() []*tele.Sticker {
 	}
 	return ss
 }()
+
+func helloSticker() *tele.Sticker {
+	return helloStickers[rand.Intn(len(helloStickers))]
+}

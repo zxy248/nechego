@@ -2,12 +2,14 @@ package bot
 
 import tele "gopkg.in/telebot.v3"
 
-const buttonMasyunyaText = "🎀 Масюня 🎀"
+const buttonMasyunyaText = "Масюня 🎀"
+const buttonPoppyText = "Паппи 🦊"
 
 // keyboard returns a new keyboard.
 func keyboard() *tele.ReplyMarkup {
-	k := &tele.ReplyMarkup{ResizeKeyboard: true}
-	b := k.Text(buttonMasyunyaText)
-	k.Reply(k.Row(b))
-	return k
+	kb := &tele.ReplyMarkup{ResizeKeyboard: true}
+	masyunyaBtn := kb.Text(buttonMasyunyaText)
+	poppyBtn := kb.Text(buttonPoppyText)
+	kb.Reply(kb.Row(masyunyaBtn, poppyBtn))
+	return kb
 }
