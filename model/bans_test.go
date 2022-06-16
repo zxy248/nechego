@@ -62,7 +62,7 @@ func FuzzBansList(f *testing.F) {
 			t.Fatal(err)
 		}
 		if len(l) != i {
-			t.Errorf("len(l) == %v, want %v", len(l), i)
+			t.Errorf("len(l) = %v, want %v", len(l), i)
 		}
 
 		if err := b.Ban(id); err != nil {
@@ -75,10 +75,10 @@ func FuzzBansList(f *testing.F) {
 			t.Fatal(err)
 		}
 		if len(l) != i {
-			t.Errorf("len(l) == %v, want %v", len(l), i)
+			t.Errorf("len(l) = %v, want %v", len(l), i)
 		}
 		if l[len(l)-1] != id {
-			t.Errorf("last of l == %v, %v expected", l[len(l)-1], id)
+			t.Errorf("l[last] = %v, want %v", l[len(l)-1], id)
 		}
 	})
 }

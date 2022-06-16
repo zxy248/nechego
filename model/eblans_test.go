@@ -20,7 +20,7 @@ func FuzzEblans(f *testing.F) {
 	f.Fuzz(func(t *testing.T, gid, uid int64) {
 		_, err := e.Get(gid)
 		if !errors.Is(err, ErrNoEblan) {
-			t.Errorf("err == %v, want %v", err, ErrNoEblan)
+			t.Errorf("err = %v, want %v", err, ErrNoEblan)
 		}
 
 		if err := e.Insert(gid, uid); err != nil {
@@ -32,7 +32,7 @@ func FuzzEblans(f *testing.F) {
 			t.Fatal(err)
 		}
 		if id != uid {
-			t.Errorf("id == %v, want %v", id, uid)
+			t.Errorf("id = %v, want %v", id, uid)
 		}
 
 		if err := e.Delete(gid); err != nil {

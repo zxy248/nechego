@@ -14,7 +14,7 @@ func TestUsers(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(ids) != 0 {
-		t.Errorf("len(ids) == %v, want empty", len(ids))
+		t.Errorf("len(ids) = %v, want empty", len(ids))
 	}
 
 	if err := u.Insert(gid, uid); err != nil {
@@ -26,9 +26,9 @@ func TestUsers(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(ids) != 1 {
-		t.Errorf("len(ids) == %v, want %v\n", len(ids), 1)
+		t.Errorf("len(ids) = %v, want %v\n", len(ids), 1)
 	}
 	if ids[0] != uid {
-		t.Errorf("ids[0] == %v, want %v\n", ids[0], uid)
+		t.Errorf("ids[0] = %v, want %v\n", ids[0], uid)
 	}
 }

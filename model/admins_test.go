@@ -18,7 +18,7 @@ func TestAdminsList(t *testing.T) {
 				t.Fatal(err)
 			}
 			if len(l) != i {
-				t.Errorf("len(l) == %v, want %v", len(l), i)
+				t.Errorf("len(l) = %v, want %v", len(l), i)
 			}
 
 			if err := a.Insert(tc); err != nil {
@@ -30,10 +30,10 @@ func TestAdminsList(t *testing.T) {
 				t.Fatal(err)
 			}
 			if len(l) != i+1 {
-				t.Errorf("len(l) == %v, want %v", len(l), i+1)
+				t.Errorf("len(l) = %v, want %v", len(l), i+1)
 			}
 			if l[len(l)-1] != tc {
-				t.Errorf("last of l == %v, want %v", l[len(l)-1], tc)
+				t.Errorf("l[last] = %v, want %v", l[len(l)-1], tc)
 			}
 		})
 	}

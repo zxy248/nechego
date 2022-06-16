@@ -2,6 +2,7 @@ package bot
 
 import (
 	"encoding/json"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -15,13 +16,15 @@ var helloStickersPath = filepath.Join(dataPath, "hello-stickers.json")
 var helloStickers = func() []*tele.Sticker {
 	f, err := os.Open(helloStickersPath)
 	if err != nil {
-		panic(err)
+		log.Printf("helloStickers: %v", err)
+		return nil
 	}
 	defer f.Close()
 
 	var ss []*tele.Sticker
 	if err := json.NewDecoder(f).Decode(&ss); err != nil {
-		panic(err)
+		log.Printf("helloStickers: %v", err)
+		return nil
 	}
 	return ss
 }()
