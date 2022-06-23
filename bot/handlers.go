@@ -27,8 +27,8 @@ const dataPath = "data"
 
 // handleProbability responds with the probability of the message.
 func (b *Bot) handleProbability(c tele.Context) error {
-	argument := getMessage(c).Argument()
-	return c.Send(probability(argument))
+	a := getMessage(c).Argument()
+	return c.Send(probability(a))
 }
 
 // handleWho responds with the message appended to the random chat member.
@@ -245,32 +245,35 @@ func (b *Bot) handlePair(c tele.Context) error {
 
 const eblanOfTheDayFormat = "Еблан дня: %s 😸"
 
-// handleEblan sends the current eblan of the day, randomly choosing a new one
-// if needed.
+// handleEblan sends the current eblan of the day, randomly choosing a new one if needed.
 func (b *Bot) handleEblan(c tele.Context) error {
 	gid := c.Chat().ID
-
-	uid, err := b.eblans.Get(gid)
-	if errors.Is(err, model.ErrNoEblan) {
-		id, err := b.users.Random(gid)
-		if err != nil {
-			return err
-		}
-		if err := b.eblans.Insert(gid, id); err != nil {
-			return err
-		}
-		uid = id
-	} else if err != nil {
+	uid, err := b.getDaily(gid, b.eblans.Get, b.eblans.Insert, model.ErrNoEblan)
+	if err != nil {
 		return err
 	}
-
 	m, err := b.chatMember(gid, uid)
 	if err != nil {
 		return err
 	}
+	name := markdownEscaper.Replace(chatMemberName(m))
+	return c.Send(fmt.Sprintf(eblanOfTheDayFormat, mention(uid, name)), tele.ModeMarkdownV2)
+}
 
-	eblan := markdownEscaper.Replace(chatMemberName(m))
-	return c.Send(fmt.Sprintf(eblanOfTheDayFormat, mention(uid, eblan)), tele.ModeMarkdownV2)
+const adminOfTheDayFormat = "Админ дня: %s 👑"
+
+func (b *Bot) handleAdmin(c tele.Context) error {
+	gid := c.Chat().ID
+	uid, err := b.getDaily(gid, b.admins.GetDaily, b.admins.InsertDaily, model.ErrNoAdmin)
+	if err != nil {
+		return err
+	}
+	m, err := b.chatMember(gid, uid)
+	if err != nil {
+		return err
+	}
+	name := markdownEscaper.Replace(chatMemberName(m))
+	return c.Send(fmt.Sprintf(adminOfTheDayFormat, mention(uid, name)), tele.ModeMarkdownV2)
 }
 
 const masyunyaStickersName = "masyunya_vk"
@@ -304,8 +307,7 @@ const helloChance = 0.2
 
 // handleHello sends a hello sticker
 func (b *Bot) handleHello(c tele.Context) error {
-	n := rand.Float64()
-	if n <= helloChance {
+	if strings.HasPrefix(getMessage(c).Raw, "!") || rand.Float64() <= helloChance {
 		return c.Send(helloSticker())
 	}
 	return nil
@@ -588,7 +590,6 @@ func (b *Bot) handleTurnOff(c tele.Context) error {
 }
 
 const (
-	accessRestricted     = "Доступ ограничен 🔒"
 	userBlocked          = "Пользователь заблокирован 🚫"
 	userAlreadyBlocked   = "Пользователь уже заблокирован 🛑"
 	userUnblocked        = "Пользователь разблокирован ✅"
@@ -597,18 +598,6 @@ const (
 
 // handleBan adds the user ID of the reply message's sender to the ban list.
 func (b *Bot) handleBan(c tele.Context) error {
-	ok, err := b.admins.Authorize(c.Sender().ID)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return c.Send(accessRestricted)
-	}
-
-	if !c.Message().IsReply() {
-		return nil
-	}
-
 	uid := c.Message().ReplyTo.Sender.ID
 	banned, err := b.bans.Banned(uid)
 	if err != nil {
@@ -626,17 +615,6 @@ func (b *Bot) handleBan(c tele.Context) error {
 
 // handleUnban removes the user ID of the reply message's sender from the ban list.
 func (b *Bot) handleUnban(c tele.Context) error {
-	ok, err := b.admins.Authorize(c.Sender().ID)
-	if err != nil {
-		return err
-	}
-	if !ok {
-		return c.Send(accessRestricted)
-	}
-
-	if !c.Message().IsReply() {
-		return nil
-	}
 	uid := c.Message().ReplyTo.Sender.ID
 	banned, err := b.bans.Banned(uid)
 	if err != nil {
@@ -657,12 +635,15 @@ const infoTemplate = `ℹ️ *Информация* 📌
 👤 _Администрация_
 %s
 🛑 _Черный список_
-%s`
+%s
+🔒 _Запрещенные команды_
+%s
+`
 
 // handleInfo sends a list of useful information.
 func (b *Bot) handleInfo(c tele.Context) error {
 	gid := c.Chat().ID
-	l, err := b.admins.List()
+	l, err := b.admins.List(gid)
 	if err != nil {
 		return err
 	}
@@ -704,7 +685,20 @@ func (b *Bot) handleInfo(c tele.Context) error {
 		banned = "…\n"
 	}
 
-	list := fmt.Sprintf(infoTemplate, admins, banned)
+	forbiddenCommands, err := b.forbid.List(gid)
+	if err != nil {
+		return err
+	}
+	var forbiddenList string
+	for _, c := range forbiddenCommands {
+		t := markdownEscaper.Replace(input.CommandText(c))
+		forbiddenList += "— " + t + "\n"
+	}
+	if forbiddenList == "" {
+		forbiddenList = "…\n"
+	}
+
+	list := fmt.Sprintf(infoTemplate, admins, banned, forbiddenList)
 	return c.Send(list, tele.ModeMarkdownV2)
 }
 
@@ -722,6 +716,9 @@ const help = `📖 *Команды* 📌
 	"— `!мыш`\n" +
 	"— `!тикток`\n" +
 	"— `!масюня` ||💖||\n" +
+	"— `!паппи`\n" +
+	"— `!игра`\n" +
+	"— `!кости`\n" +
 	`
 🔮 _Нейросети_
 ` +
@@ -747,8 +744,11 @@ const help = `📖 *Команды* 📌
 	"— `!закрыть`\n" +
 	"— `!включить`\n" +
 	"— `!выключить`\n" +
+	"— `!запретить`\n" +
+	"— `!разрешить`\n" +
 	"— `!бан`\n" +
 	"— `!разбан`\n" +
+	"— `!имя`\n" +
 	"— `!информация`\n" +
 	"— `!команды`\n"
 
@@ -774,6 +774,62 @@ func (b *Bot) handleJoin(c tele.Context) error {
 		}
 	}
 	return c.Send(helloSticker())
+}
+
+const (
+	commandForbidden        = "Команда запрещена 🚫"
+	commandPermitted        = "Команда разрешена ✅"
+	commandAlreadyForbidden = "Команда уже запрещена 🛑"
+	commandAlreadyPermitted = "Команда уже разрешена ❎"
+)
+
+// handleForbid forbids a command.
+func (b *Bot) handleForbid(c tele.Context) error {
+	return b.handleCommandAction(c, func(command input.Command) error {
+		if isCommandForbidden(c) {
+			return c.Send(commandAlreadyForbidden)
+		}
+		if err := b.forbid.Forbid(c.Chat().ID, command); err != nil {
+			return err
+		}
+		return c.Send(commandForbidden)
+	})
+}
+
+// handlePermit permits a command.
+func (b *Bot) handlePermit(c tele.Context) error {
+	return b.handleCommandAction(c, func(command input.Command) error {
+		if !isCommandForbidden(c) {
+			return c.Send(commandAlreadyPermitted)
+		}
+		if err := b.forbid.Permit(c.Chat().ID, command); err != nil {
+			return err
+		}
+		return c.Send(commandPermitted)
+	})
+}
+
+// handleCommandAction performs an action on a command.
+func (b *Bot) handleCommandAction(c tele.Context, a func(input.Command) error) error {
+	arg, err := getMessage(c).DynamicArgument()
+	if err != nil {
+		if errors.Is(err, input.ErrNoCommand) {
+			return c.Send(makeError("Укажите команду"))
+		}
+		if errors.Is(err, input.ErrUnknownCommand) {
+			return c.Send(makeError("Неизвестная команда"))
+		}
+		return err
+	}
+	command, ok := arg.(input.Command)
+	if !ok {
+		return errors.New("not a command")
+	}
+	return a(command)
+}
+
+func handleNothing(c tele.Context) error {
+	return nil
 }
 
 // randomNumbers returns a string of random numbers of length c.
@@ -910,4 +966,24 @@ func errorSign() string {
 
 func makeError(s string) string {
 	return errorSign() + " " + s
+}
+
+type getter func(gid int64) (int64, error)
+type inserter func(gid, uid int64) error
+
+func (b *Bot) getDaily(gid int64, get getter, insert inserter, e error) (int64, error) {
+	uid, err := get(gid)
+	if errors.Is(err, e) {
+		id, err := b.users.Random(gid)
+		if err != nil {
+			return 0, err
+		}
+		if err := insert(gid, id); err != nil {
+			return 0, err
+		}
+		uid = id
+	} else if err != nil {
+		return 0, err
+	}
+	return uid, nil
 }

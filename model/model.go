@@ -70,6 +70,25 @@ create table if not exists status (
 )
 `
 
+const createTableForbidQuery = `
+create table if not exists forbid (
+    id integer not null,
+    gid integer not null,
+    command integer not null,
+    primary key (id autoincrement)
+)`
+
+const createTableAdminQuery = `
+create table if not exists admin (
+    id integer not null,
+    gid integer not null,
+    uid integer not null,
+    added text not null,
+    primary key (id autoincrement)
+)
+`
+
+// CreateTables creates the necessary tables.
 func (db *DB) CreateTables() error {
 	queries := []string{
 		createTableUsersQuery,
@@ -79,6 +98,8 @@ func (db *DB) CreateTables() error {
 		createTableAdminsQuery,
 		createTableBansQuery,
 		createTableStatusQuery,
+		createTableForbidQuery,
+		createTableAdminQuery,
 	}
 	for _, q := range queries {
 		_, err := db.Exec(q)
@@ -97,8 +118,11 @@ const (
 	dropTableAdminsQuery    = "drop table admins"
 	dropTableBansQuery      = "drop table bans"
 	dropTableStatusQuery    = "drop table status"
+	dropTableForbidQuery    = "drop table forbid"
+	dropTableAdminQuery     = "drop table admin"
 )
 
+// DropTables deletes all tables from the database.
 func (db *DB) DropTables() error {
 	queries := []string{
 		dropTableUsersQuery,
@@ -108,6 +132,8 @@ func (db *DB) DropTables() error {
 		dropTableAdminsQuery,
 		dropTableBansQuery,
 		dropTableStatusQuery,
+		dropTableForbidQuery,
+		dropTableAdminQuery,
 	}
 	for _, q := range queries {
 		_, err := db.Exec(q)

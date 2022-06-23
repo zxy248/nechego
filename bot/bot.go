@@ -24,6 +24,7 @@ type Bot struct {
 	pairs     *model.Pairs
 	eblans    *model.Eblans
 	bans      *model.Bans
+	forbid    *model.Forbid
 	status    *model.Status
 }
 
@@ -51,6 +52,7 @@ func NewBot(c *Config) (*Bot, error) {
 		pairs:     &model.Pairs{DB: c.DB},
 		eblans:    &model.Eblans{DB: c.DB},
 		bans:      &model.Bans{DB: c.DB},
+		forbid:    &model.Forbid{DB: c.DB},
 		status:    &model.Status{DB: c.DB},
 	}, nil
 }

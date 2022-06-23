@@ -16,7 +16,7 @@ insert into pairs (gid, uidx, uidy, added)
 values (?, ?, ?, datetime('now', 'localtime'))
 `
 
-// Insert inserts the pair to the pairs table.
+// Insert adds a pair of the day.
 func (p *Pairs) Insert(gid int64, uidx, uidy int64) error {
 	_, err := p.DB.Exec(insertPairQuery, gid, uidx, uidy)
 	if err != nil {
@@ -32,7 +32,7 @@ order by added desc
 limit 1
 `
 
-// Get gets the pair from the pairs table.
+// Get returns the current pair of the day. If there is no such one, returns 0, 0, ErrNoPair.
 func (p *Pairs) Get(gid int64) (uidx, uidy int64, err error) {
 	if err := p.DB.QueryRow(getPairQuery, gid).Scan(&uidx, &uidy); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

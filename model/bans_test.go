@@ -41,7 +41,7 @@ func FuzzBansBanned(f *testing.F) {
 			t.Fatal(err)
 		}
 		if banned {
-			t.Error("banned after unban ban")
+			t.Error("banned after unban")
 		}
 	})
 }

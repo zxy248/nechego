@@ -1,16 +1,11 @@
 package input
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
-
-type TopArgument struct {
-	NumberPresent bool
-	Number        int
-	String        string
-}
 
 // Message represents an input Message.
 type Message struct {
@@ -18,9 +13,9 @@ type Message struct {
 	Command Command
 }
 
-// Parse returns a new message.
-func Parse(s string) *Message {
-	return &Message{s, recognizeCommand(s)}
+// ParseMessage returns a new message.
+func ParseMessage(s string) *Message {
+	return &Message{s, ParseCommand(s)}
 }
 
 // Argument returns the argument probably contained in the message.
@@ -53,6 +48,28 @@ func (m *Message) DynamicArgument() (interface{}, error) {
 			return TopArgument{false, 0, s}, nil
 		}
 		return TopArgument{true, int(i), s}, nil
+	case CommandForbid, CommandPermit:
+		s := m.Argument()
+		if s == "" {
+			return nil, ErrNoCommand
+		}
+		c := ParseCommand(s)
+		if c == CommandUnknown {
+			return nil, ErrUnknownCommand
+		}
+		return c, nil
 	}
 	return nil, fmt.Errorf("no dynamic argument for %v", m.Raw)
 }
+
+// TopArgument represents an argument of the CommandTop.
+type TopArgument struct {
+	NumberPresent bool
+	Number        int
+	String        string
+}
+
+var (
+	ErrNoCommand      = errors.New("no command")
+	ErrUnknownCommand = errors.New("unknown command")
+)

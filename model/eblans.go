@@ -11,45 +11,23 @@ type Eblans struct {
 	DB *DB
 }
 
-const insertEblansQuery = `
-insert into eblans (gid, uid, added)
-values (?, ?, datetime('now', 'localtime'))
-`
+const eblansTableName = "eblans"
 
-// Insert inserts the user to the eblans table.
+// Insert adds a user to the eblans table.
 func (e *Eblans) Insert(gid, uid int64) error {
-	_, err := e.DB.Exec(insertEblansQuery, gid, uid)
-	if err != nil {
-		return err
-	}
-	return nil
+	return insertDaily(e.DB.DB, eblansTableName, gid, uid)
 }
 
-const getEblansQuery = `
-select uid from eblans
-where gid = ? and added > date('now', 'localtime')
-order by added desc
-limit 1
-`
-
-// Get gets the user from the eblans table.
+// Get returns the user ID of the eblan of the day. If there is no eblan, returns 0, ErrNoEblan.
 func (e *Eblans) Get(gid int64) (int64, error) {
-	var uid int64
-	if err := e.DB.QueryRow(getEblansQuery, gid).Scan(&uid); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return 0, ErrNoEblan
-		}
-		return 0, err
+	uid, err := getDaily(e.DB.DB, eblansTableName, gid)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, ErrNoEblan
 	}
-	return uid, nil
+	return uid, err
 }
 
-const deleteEblansQuery = `delete from eblans where gid = ?`
-
+// Delete removes the current eblan of the day and all the previous.
 func (e *Eblans) Delete(gid int64) error {
-	_, err := e.DB.Exec(deleteEblansQuery, gid)
-	if err != nil {
-		return err
-	}
-	return nil
+	return deleteDaily(e.DB.DB, eblansTableName, gid)
 }

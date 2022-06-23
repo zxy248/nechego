@@ -5,51 +5,11 @@ import (
 	"strings"
 )
 
-type Command int
-
-const (
-	CommandUnknown Command = iota
-	CommandProbability
-	CommandWho
-	CommandCat
-	CommandTitle
-	CommandAnime
-	CommandFurry
-	CommandFlag
-	CommandPerson
-	CommandHorse
-	CommandArt
-	CommandCar
-	CommandPair
-	CommandEblan
-	CommandMasyunya
-	CommandPoppy
-	CommandHello
-	CommandMouse
-	CommandWeather
-	CommandTikTok
-	CommandList
-	CommandTop
-	CommandBasili
-	CommandCasper
-	CommandZeus
-	CommandPic
-	CommandDice
-	CommandGame
-	CommandKeyboardOpen
-	CommandKeyboardClose
-	CommandTurnOn
-	CommandTurnOff
-	CommandBan
-	CommandUnban
-	CommandInfo
-	CommandHelp
-)
-
 var (
-	eblanRe       = regexp.MustCompile("(?i)^![ие][б6п*]?лан[А-я]* дня")
-	masyunyaRe    = regexp.MustCompile("(?i)^(!ма[нс]ю[нс][а-я]*[пая])")
-	helloRe       = regexp.MustCompile(constructHelloRe("п[рл]ивет", "хай", "зд[ао]ров", "ку", "здрав"))
+	eblanRe    = regexp.MustCompile("(?i)^![ие][б6п*]?л[ап]н[А-я]* дня")
+	masyunyaRe = regexp.MustCompile("(?i)^(!ма[нс]ю[нс][а-я]*[пая])")
+	helloRe    = regexp.MustCompile(
+		constructHelloRe("п[рл]ив[а-я]*", "хай", "зд[ао]ров[а-я]*", "ку", "здрав[а-я]*"))
 	weatherRe     = regexp.MustCompile("(?i)^!погода ([-А-я]+)")
 	probabilityRe = regexp.MustCompile("(?i)^!инфа *(.*)")
 	whoRe         = regexp.MustCompile("(?i)^!кто *(.*)")
@@ -57,8 +17,8 @@ var (
 	topRe         = regexp.MustCompile("(?i)^!топ[- ]*(\\d*) *(.*)")
 )
 
-// recognizeCommand returns the command contained in the input string.
-func recognizeCommand(s string) Command {
+// ParseCommand returns a command corresponding to the input string.
+func ParseCommand(s string) Command {
 	switch {
 	case probabilityRe.MatchString(s):
 		return CommandProbability
@@ -84,6 +44,8 @@ func recognizeCommand(s string) Command {
 		return CommandPair
 	case eblanRe.MatchString(s):
 		return CommandEblan
+	case startsWith(s, "!админ дня"):
+		return CommandAdmin
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):
 		return CommandMasyunya
 	case startsWith(s, "!паппи", "Паппи 🦊"):
@@ -118,9 +80,9 @@ func recognizeCommand(s string) Command {
 		return CommandKeyboardOpen
 	case startsWith(s, "!закрыт", "!скрыт"):
 		return CommandKeyboardClose
-	case startsWith(s, "!вкл"):
+	case startsWith(s, "!вкл", "!подкл", "!подруб"):
 		return CommandTurnOn
-	case startsWith(s, "!выкл"):
+	case startsWith(s, "!выкл", "!откл"):
 		return CommandTurnOff
 	case startsWith(s, "!бан"):
 		return CommandBan
@@ -130,11 +92,15 @@ func recognizeCommand(s string) Command {
 		return CommandInfo
 	case startsWith(s, "!помощь", "!команды"):
 		return CommandHelp
+	case startsWith(s, "!запретить"):
+		return CommandForbid
+	case startsWith(s, "!разрешить"):
+		return CommandPermit
 	}
 	return CommandUnknown
 }
 
-// startsWith returns true if the input string starts with one of the specified prefixes; false otherwise.
+// startsWith returns true if the input string starts with one of the specified prefixes, false otherwise.
 func startsWith(s string, prefix ...string) bool {
 	s = strings.ToLower(s)
 	for _, p := range prefix {
@@ -148,9 +114,10 @@ func startsWith(s string, prefix ...string) bool {
 
 const (
 	helloPrefix = "((^|[^а-я])"
-	helloSuffix = "[а-я]*([^а-я]|$))"
+	helloSuffix = "([^а-я]|$))"
 )
 
+// constructHelloRe combines the given hello regexps.
 func constructHelloRe(hello ...string) string {
 	var l []string
 	for _, h := range hello {

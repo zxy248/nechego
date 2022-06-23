@@ -11,6 +11,7 @@ type Bans struct {
 
 const insertBansQuery = `insert into bans (uid) values (?)`
 
+// Ban adds a user to the ban list.
 func (b *Bans) Ban(uid int64) error {
 	_, err := b.DB.Exec(insertBansQuery, uid)
 	if err != nil {
@@ -21,6 +22,7 @@ func (b *Bans) Ban(uid int64) error {
 
 const deleteBansQuery = `delete from bans where uid = ?`
 
+// Unban removes a user from the ban list.
 func (b *Bans) Unban(uid int64) error {
 	_, err := b.DB.Exec(deleteBansQuery, uid)
 	if err != nil {
@@ -38,7 +40,7 @@ func (b *Bans) List() ([]int64, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	ids := []int64{}
+	var ids []int64
 	for rows.Next() {
 		var id int64
 		if err := rows.Scan(&id); err != nil {
@@ -54,6 +56,7 @@ func (b *Bans) List() ([]int64, error) {
 
 const bannedBansQuery = `select 1 from bans where uid = ?`
 
+// Banned returns true if the given user is banned, false otherwise.
 func (b *Bans) Banned(uid int64) (bool, error) {
 	var i int
 	if err := b.DB.QueryRow(bannedBansQuery, uid).Scan(&i); err != nil {
