@@ -1,6 +1,9 @@
 package bot
 
-import "testing"
+import (
+	"regexp"
+	"testing"
+)
 
 func TestRandomNumbers(t *testing.T) {
 	n := 10
@@ -29,6 +32,15 @@ func TestMarkdownEscaper(t *testing.T) {
 		got := e.Replace(tc.arg)
 		if got != tc.want {
 			t.Errorf("got %v, want %v", got, tc.want)
+		}
+	}
+}
+
+func TestProbabilityTemplates(t *testing.T) {
+	re := regexp.MustCompile("^.*%s.*%d%%")
+	for _, s := range probabilityTemplates {
+		if !re.MatchString(s) {
+			t.Errorf("want %q to match regexp", s)
 		}
 	}
 }

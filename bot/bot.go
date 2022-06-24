@@ -7,6 +7,8 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+const dataPath = "data"
+
 type Config struct {
 	Token string
 	DB    *model.DB
@@ -58,7 +60,7 @@ func NewBot(c *Config) (*Bot, error) {
 }
 
 func (b *Bot) Start() {
-	b.bot.Handle(tele.OnText, b.route, b.check)
-	b.bot.Handle(tele.OnUserJoined, b.handleJoin, b.check)
+	b.bot.Handle(tele.OnText, b.route, b.preprocess)
+	b.bot.Handle(tele.OnUserJoined, b.handleJoin, b.preprocess)
 	b.bot.Start()
 }

@@ -19,36 +19,50 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"golang.org/x/exp/slices"
 	tele "gopkg.in/telebot.v3"
 )
 
-const dataPath = "data"
-
-// handleProbability responds with the probability of the message.
+// handleProbability responds with a probability of the message.
 func (b *Bot) handleProbability(c tele.Context) error {
 	a := getMessage(c).Argument()
 	return c.Send(probability(a))
 }
 
+var probabilityTemplates = []string{
+	"Здравый смысл говорит мне о том, что %s с вероятностью %d%%",
+	"Благодаря чувственному опыту я определил, что %s с вероятностью %d%%",
+	"Я думаю, что %s с вероятностью %d%%",
+	"Используя диалектическую логику, я пришел к выводу, что %s с вероятностью %d%%",
+	"Проведя некие изыскания, я высяснил, что %s с вероятностью %d%%",
+	"Я провел мысленный экперимент и выяснил, что %s с вероятностью %d%%",
+	"Мои интеллектуальные потуги привели меня к тому, что %s с вероятностью %d%%",
+	"С помощью фактов и логики я доказал, что %s с вероятностью %d%%",
+	"Как показывает практика, %s с вероятностью %d%%",
+	"Прикинув раз на раз, я определился с тем, что %s с вероятностью %d%%",
+	"Уверяю вас в том, что %s с вероятностью %d%%",
+}
+
+// probability returns a probability of the message.
+func probability(message string) string {
+	t := probabilityTemplates[rand.Intn(len(probabilityTemplates))]
+	p := rand.Intn(101)
+	return fmt.Sprintf(t, message, p)
+}
+
 // handleWho responds with the message appended to the random chat member.
 func (b *Bot) handleWho(c tele.Context) error {
-	argument := getMessage(c).Argument()
 	gid := c.Chat().ID
-
 	uid, err := b.users.Random(gid)
 	if err != nil {
 		return err
 	}
-
-	m, err := b.chatMember(gid, uid)
+	memb, err := b.chatMember(gid, uid)
 	if err != nil {
 		return err
 	}
-
-	name := markdownEscaper.Replace(chatMemberName(m))
-	text := markdownEscaper.Replace(argument)
-	return c.Send(who(uid, name, text), tele.ModeMarkdownV2)
+	name := markdownEscaper.Replace(chatMemberName(memb))
+	message := markdownEscaper.Replace(getMessage(c).Argument())
+	return c.Send(who(uid, name, message), tele.ModeMarkdownV2)
 }
 
 const catURL = "https://thiscatdoesnotexist.com/"
@@ -63,6 +77,7 @@ func (b *Bot) handleCat(c tele.Context) error {
 }
 
 const (
+	maxNameLength = 16
 	nameTooLong   = "Максимальная длина имени 16 символов"
 	yourName      = "Ваше имя: *%s* 🔖"
 	pleaseReEnter = "Для использования этой функции Вам необходимо перезайти в беседу"
@@ -72,23 +87,23 @@ const (
 // handleTitle sets the admin title of the sender.
 func (b *Bot) handleTitle(c tele.Context) error {
 	group := c.Chat()
+	sender := c.Sender()
 	gid := group.ID
-	uid := c.Sender().ID
+	uid := sender.ID
 	title := getMessage(c).Argument()
 
-	if utf8.RuneCountInString(title) > 16 {
-		return c.Send(makeError(nameTooLong))
-	}
-
-	m, err := b.chatMember(gid, uid)
-	if err != nil {
-		return err
-	}
 	if title == "" {
+		m, err := b.chatMember(gid, uid)
+		if err != nil {
+			return err
+		}
 		name := markdownEscaper.Replace(chatMemberName(m))
 		return c.Send(fmt.Sprintf(yourName, name), tele.ModeMarkdownV2)
 	}
-	if err := c.Bot().SetAdminTitle(group, c.Sender(), title); err != nil {
+	if utf8.RuneCountInString(title) > maxNameLength {
+		return c.Send(makeError(nameTooLong))
+	}
+	if err := c.Bot().SetAdminTitle(group, sender, title); err != nil {
 		return c.Send(makeError(pleaseReEnter))
 	}
 	return c.Send(fmt.Sprintf(nameSet, markdownEscaper.Replace(title)), tele.ModeMarkdownV2)
@@ -104,11 +119,7 @@ func (b *Bot) handleAnime(c tele.Context) error {
 	psi := animePsis[rand.Intn(len(animePsis))]
 	seed := randomNumbers(5)
 	url := fmt.Sprintf(animeFormat, psi, seed)
-	pic, err := fetchPicture(url)
-	if err != nil {
-		return err
-	}
-	return c.Send(pic)
+	return b.fetchAndSend(c, url)
 }
 
 const furFormat = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%s.jpg"
@@ -117,11 +128,7 @@ const furFormat = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%s.jpg"
 func (b *Bot) handleFurry(c tele.Context) error {
 	seed := randomNumbers(5)
 	url := fmt.Sprintf(furFormat, seed)
-	pic, err := fetchPicture(url)
-	if err != nil {
-		return err
-	}
-	return c.Send(pic)
+	return b.fetchAndSend(c, url)
 }
 
 const flagFormat = "https://thisflagdoesnotexist.com/images/%d.png"
@@ -130,44 +137,28 @@ const flagFormat = "https://thisflagdoesnotexist.com/images/%d.png"
 func (b *Bot) handleFlag(c tele.Context) error {
 	seed := rand.Intn(5000)
 	url := fmt.Sprintf(flagFormat, seed)
-	pic, err := fetchPicture(url)
-	if err != nil {
-		return err
-	}
-	return c.Send(pic)
+	return b.fetchAndSend(c, url)
 }
 
 const personURL = "https://thispersondoesnotexist.com/image"
 
 // handlePerson sends a picture of a person.
 func (b *Bot) handlePerson(c tele.Context) error {
-	pic, err := fetchPicture(personURL)
-	if err != nil {
-		return err
-	}
-	return c.Send(pic)
+	return b.fetchAndSend(c, personURL)
 }
 
 const horseURL = "https://thishorsedoesnotexist.com/"
 
 // handleHorse sends a picture of a horse.
 func (b *Bot) handleHorse(c tele.Context) error {
-	pic, err := fetchPicture(horseURL)
-	if err != nil {
-		return err
-	}
-	return c.Send(pic)
+	return b.fetchAndSend(c, horseURL)
 }
 
 const artURL = "https://thisartworkdoesnotexist.com/"
 
 // handleArt sends a picture of an art.
 func (b *Bot) handleArt(c tele.Context) error {
-	pic, err := fetchPicture(artURL)
-	if err != nil {
-		return err
-	}
-	return c.Send(pic)
+	return b.fetchAndSend(c, artURL)
 }
 
 const carURL = "https://www.thisautomobiledoesnotexist.com/"
@@ -188,8 +179,7 @@ func (b *Bot) handleCar(c tele.Context) error {
 		return err
 	}
 
-	ss := carImageRe.FindStringSubmatch(string(data))
-	b64 := ss[1]
+	b64 := carImageRe.FindStringSubmatch(string(data))[1]
 	img, err := base64.StdEncoding.DecodeString(b64)
 	if err != nil {
 		return err
@@ -199,48 +189,29 @@ func (b *Bot) handleCar(c tele.Context) error {
 
 const pairOfTheDayFormat = "Пара дня ✨\n%s 💘 %s"
 
-// handlePair sends the current pair of the day, randomly choosing a new pair if
-// needed.
+// handlePair sends the current pair of the day, randomly choosing a new pair if needed.
 func (b *Bot) handlePair(c tele.Context) error {
 	gid := c.Chat().ID
-
-	uidx, uidy, err := b.pairs.Get(gid)
-	if errors.Is(err, model.ErrNoPair) {
-		x, err := b.users.Random(gid)
-		if err != nil {
-			return err
-		}
-		y, err := b.users.Random(gid)
-		if err != nil {
-			return err
-		}
-
-		if x == y {
+	x, y, err := b.getDailyPair(gid)
+	if err != nil {
+		if errors.Is(err, model.ErrNoPair) {
 			return c.Send("💔")
 		}
-
-		if err := b.pairs.Insert(gid, x, y); err != nil {
-			return err
-		}
-
-		uidx = x
-		uidy = y
-	} else if err != nil {
 		return err
 	}
 
-	mx, err := b.chatMember(gid, uidx)
+	mx, err := b.chatMember(gid, x)
 	if err != nil {
 		return err
 	}
-	my, err := b.chatMember(gid, uidy)
+	my, err := b.chatMember(gid, y)
 	if err != nil {
 		return err
 	}
 	namex := markdownEscaper.Replace(chatMemberName(mx))
 	namey := markdownEscaper.Replace(chatMemberName(my))
 	return c.Send(fmt.Sprintf(pairOfTheDayFormat,
-		mention(uidx, namex), mention(uidy, namey)), tele.ModeMarkdownV2)
+		mention(x, namex), mention(y, namey)), tele.ModeMarkdownV2)
 }
 
 const eblanOfTheDayFormat = "Еблан дня: %s 😸"
@@ -278,29 +249,30 @@ func (b *Bot) handleAdmin(c tele.Context) error {
 
 const masyunyaStickersName = "masyunya_vk"
 
-// handleMasyunya sends a random sticker of Masyunya.
-func (b *Bot) handleMasyunya(c tele.Context) error {
-	ss, err := c.Bot().StickerSet(masyunyaStickersName)
+func (b *Bot) masyunyaHandler() tele.HandlerFunc {
+	set, err := b.bot.StickerSet(masyunyaStickersName)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	s := ss.Stickers[rand.Intn(len(ss.Stickers))]
-	return c.Send(&s)
+	return func(c tele.Context) error {
+		return c.Send(&set.Stickers[rand.Intn(len(set.Stickers))])
+	}
 }
 
 var poppyStickersNames = []string{"pappy2_vk", "poppy_vk"}
 
-func (b *Bot) handlePoppy(c tele.Context) error {
+func (b *Bot) poppyHandler() tele.HandlerFunc {
 	var stickers []tele.Sticker
 	for _, sn := range poppyStickersNames {
-		ss, err := c.Bot().StickerSet(sn)
+		set, err := b.bot.StickerSet(sn)
 		if err != nil {
-			return err
+			panic(err)
 		}
-		stickers = append(stickers, ss.Stickers...)
+		stickers = append(stickers, set.Stickers...)
 	}
-	s := stickers[rand.Intn(len(stickers))]
-	return c.Send(&s)
+	return func(c tele.Context) error {
+		return c.Send(&stickers[rand.Intn(len(stickers))])
+	}
 }
 
 const helloChance = 0.2
@@ -372,26 +344,17 @@ func (b *Bot) handleTikTok(c tele.Context) error {
 }
 
 const (
-	listTemplate = `Список %s 📝
-%s`
-	listLength = 5
+	listTemplate  = "Список %s 📝\n%s"
+	minListLength = 3
+	maxListLength = 5
 )
 
 func (b *Bot) handleList(c tele.Context) error {
-	argument := markdownEscaper.Replace(getMessage(c).Argument())
 	gid := c.Chat().ID
-
-	var uids []int64
-	for i := 0; i < 5; i++ {
-		uid, err := b.users.Random(gid)
-		if err != nil {
-			return err
-		}
-		if !slices.Contains(uids, uid) {
-			uids = append(uids, uid)
-		}
+	uids, err := b.users.NRandom(gid, minListLength+rand.Intn(maxListLength-minListLength))
+	if err != nil {
+		return err
 	}
-
 	var list string
 	for _, uid := range uids {
 		m, err := b.chatMember(gid, uid)
@@ -401,15 +364,14 @@ func (b *Bot) handleList(c tele.Context) error {
 		name := markdownEscaper.Replace(chatMemberName(m))
 		list = list + "— " + mention(uid, name) + "\n"
 	}
-	return c.Send(fmt.Sprintf(listTemplate, argument, list), tele.ModeMarkdownV2)
+	msg := markdownEscaper.Replace(getMessage(c).Argument())
+	return c.Send(fmt.Sprintf(listTemplate, msg, list), tele.ModeMarkdownV2)
 }
 
 const (
-	numberedTopTemplate = `Топ %d %s 🏆
-%s`
-	unnumberedTopTemplate = `Топ %s 🏆
-%s`
-	maxTopNumber = 5
+	numberedTopTemplate   = "Топ %d %s 🏆\n%s"
+	unnumberedTopTemplate = "Топ %s 🏆\n%s"
+	maxTopNumber          = 5
 )
 
 func (b *Bot) handleTop(c tele.Context) error {
@@ -418,51 +380,38 @@ func (b *Bot) handleTop(c tele.Context) error {
 	if err != nil {
 		return err
 	}
-	argument, ok := a.(input.TopArgument)
-	if !ok {
-		return errors.New("the argument is not a TopArgument")
-	}
+	argument := a.(input.TopArgument)
 
-	uids, err := b.users.List(gid)
+	var number int
+	if argument.NumberPresent {
+		number = argument.Number
+	} else {
+		number = maxTopNumber
+	}
+	if number < 1 || number > maxTopNumber {
+		return c.Send(errorSign())
+	}
+	uids, err := b.users.NRandom(gid, number)
 	if err != nil {
 		return err
 	}
-	rand.Shuffle(len(uids), func(i, j int) {
-		uids[i], uids[j] = uids[j], uids[i]
-	})
 
-	var n int
-	if argument.NumberPresent {
-		n = argument.Number
-	} else {
-		if len(uids) > maxTopNumber {
-			n = rand.Intn(maxTopNumber) + 1
-		} else {
-			n = rand.Intn(len(uids)) + 1
-		}
-	}
-
-	if n < 1 || n > len(uids) || n > maxTopNumber {
-		return c.Send(errorSign())
-	}
-	uids = uids[:n]
-
-	var list string
+	var top string
 	for i, uid := range uids {
 		m, err := b.chatMember(gid, uid)
 		if err != nil {
 			return err
 		}
 		name := markdownEscaper.Replace(chatMemberName(m))
-		list = list + fmt.Sprintf("_%d\\._ %s\n", i+1, mention(uid, name))
+		top = top + fmt.Sprintf("_%d\\._ %s\n", i+1, mention(uid, name))
 	}
 
 	s := markdownEscaper.Replace(argument.String)
 	var result string
 	if argument.NumberPresent {
-		result = fmt.Sprintf(numberedTopTemplate, n, s, list)
+		result = fmt.Sprintf(numberedTopTemplate, number, s, top)
 	} else {
-		result = fmt.Sprintf(unnumberedTopTemplate, s, list)
+		result = fmt.Sprintf(unnumberedTopTemplate, s, top)
 	}
 	return c.Send(result, tele.ModeMarkdownV2)
 }
@@ -476,35 +425,19 @@ var (
 )
 
 func (b *Bot) handleBasili(c tele.Context) error {
-	path, err := randomFilename(basiliCatsPath)
-	if err != nil {
-		return err
-	}
-	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+	return b.sendRandomFile(c, basiliCatsPath)
 }
 
 func (b *Bot) handleCasper(c tele.Context) error {
-	path, err := randomFilename(casperPath)
-	if err != nil {
-		return err
-	}
-	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+	return b.sendRandomFile(c, casperPath)
 }
 
 func (b *Bot) handleZeus(c tele.Context) error {
-	path, err := randomFilename(zeusPath)
-	if err != nil {
-		return err
-	}
-	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+	return b.sendRandomFile(c, zeusPath)
 }
 
 func (b *Bot) handlePic(c tele.Context) error {
-	path, err := randomFilename(picPath)
-	if err != nil {
-		return err
-	}
-	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+	return b.sendRandomFile(c, picPath)
 }
 
 func (b *Bot) handleDice(c tele.Context) error {
@@ -520,33 +453,8 @@ func (b *Bot) handleGame(c tele.Context) error {
 const randomPhotoChance = 0.02
 
 func (b *Bot) handleRandomPhoto(c tele.Context) error {
-	r := rand.Float64()
-	if r <= randomPhotoChance {
-		// Alternative version: sends a large photo.
-		//
-		// ps, err := c.Bot().ProfilePhotosOf(c.Sender())
-		// if err != nil {
-		// 	return err
-		// }
-		// if len(ps) < 1 {
-		// 	return nil
-		// }
-		// return c.Send(&ps[0])
-
-		user, err := c.Bot().ChatByID(c.Sender().ID)
-		if err != nil {
-			return err
-		}
-		file, err := b.bot.FileByID(user.Photo.SmallFileID)
-		if err != nil {
-			return err
-		}
-		f, err := b.bot.File(&file)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		return c.Send(&tele.Photo{File: tele.FromReader(f)})
+	if rand.Float64() <= randomPhotoChance {
+		return sendSmallProfilePhoto(c)
 	}
 	return nil
 }
@@ -855,28 +763,6 @@ func (b *Bot) isGroupMember(group tele.Recipient, user tele.Recipient) bool {
 	return true
 }
 
-// probabilityTemplates regexp: "^.*%s.*%d%%\"".
-var probabilityTemplates = []string{
-	"Здравый смысл говорит мне о том, что %s с вероятностью %d%%",
-	"Благодаря чувственному опыту я определил, что %s с вероятностью %d%%",
-	"Я думаю, что %s с вероятностью %d%%",
-	"Используя диалектическую логику, я пришел к выводу, что %s с вероятностью %d%%",
-	"Проведя некие изыскания, я высяснил, что %s с вероятностью %d%%",
-	"Я провел мысленный экперимент и выяснил, что %s с вероятностью %d%%",
-	"Мои интеллектуальные потуги привели меня к тому, что %s с вероятностью %d%%",
-	"С помощью фактов и логики я доказал, что %s с вероятностью %d%%",
-	"Как показывает практика, %s с вероятностью %d%%",
-	"Прикинув раз на раз, я определился с тем, что %s с вероятностью %d%%",
-	"Уверяю вас в том, что %s с вероятностью %d%%",
-}
-
-// probability returns the probability of the message.
-func probability(message string) string {
-	t := probabilityTemplates[rand.Intn(len(probabilityTemplates))]
-	p := rand.Intn(101)
-	return fmt.Sprintf(t, message, p)
-}
-
 // who returns the mention of the user prepended to the message.
 func who(uid int64, name, message string) string {
 	return mention(uid, name) + " " + message
@@ -920,13 +806,13 @@ func newMarkdownEscaper() *strings.Replacer {
 	return strings.NewReplacer(table...)
 }
 
-func randomFilename(path string) (string, error) {
-	ds, err := os.ReadDir(path)
+func randomFilename(dir string) (string, error) {
+	fs, err := os.ReadDir(dir)
 	if err != nil {
 		return "", err
 	}
-	d := ds[rand.Intn(len(ds))]
-	return filepath.Join(path, d.Name()), nil
+	f := fs[rand.Intn(len(fs))]
+	return filepath.Join(dir, f.Name()), nil
 }
 
 func (b *Bot) chatMember(gid, uid int64) (*tele.ChatMember, error) {
@@ -968,10 +854,10 @@ func makeError(s string) string {
 	return errorSign() + " " + s
 }
 
-type getter func(gid int64) (int64, error)
-type inserter func(gid, uid int64) error
+type dailyGet func(gid int64) (int64, error)
+type dailyInsert func(gid, uid int64) error
 
-func (b *Bot) getDaily(gid int64, get getter, insert inserter, e error) (int64, error) {
+func (b *Bot) getDaily(gid int64, get dailyGet, insert dailyInsert, e error) (int64, error) {
 	uid, err := get(gid)
 	if errors.Is(err, e) {
 		id, err := b.users.Random(gid)
@@ -986,4 +872,70 @@ func (b *Bot) getDaily(gid int64, get getter, insert inserter, e error) (int64, 
 		return 0, err
 	}
 	return uid, nil
+}
+
+func (b *Bot) getDailyPair(gid int64) (int64, int64, error) {
+	x, y, err := b.pairs.Get(gid)
+	if errors.Is(err, model.ErrNoPair) {
+		pair, err := b.users.NRandom(gid, 2)
+		if err != nil {
+			return 0, 0, err
+		}
+		if len(pair) != 2 {
+			return 0, 0, model.ErrNoPair
+		}
+		x = pair[0]
+		y = pair[1]
+		if err := b.pairs.Insert(gid, x, y); err != nil {
+			return 0, 0, err
+		}
+	} else if err != nil {
+		return 0, 0, err
+	}
+	return x, y, nil
+}
+
+func (b *Bot) fetchAndSend(c tele.Context, url string) error {
+	pic, err := fetchPicture(url)
+	if err != nil {
+		return err
+	}
+	return c.Send(pic)
+}
+
+func (b *Bot) sendRandomFile(c tele.Context, dir string) error {
+	path, err := randomFilename(dir)
+	if err != nil {
+		return err
+	}
+	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+}
+
+func sendSmallProfilePhoto(c tele.Context) error {
+	user, err := c.Bot().ChatByID(c.Sender().ID)
+	if err != nil {
+		return err
+	}
+	file, err := c.Bot().FileByID(user.Photo.SmallFileID)
+	if err != nil {
+		return err
+	}
+	f, err := c.Bot().File(&file)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(f)})
+}
+
+func sendLargeProfilePhoto(c tele.Context) error {
+	ps, err := c.Bot().ProfilePhotosOf(c.Sender())
+	if err != nil {
+		return err
+	}
+	if len(ps) < 1 {
+		return nil
+	}
+	return c.Send(&ps[0])
+
 }

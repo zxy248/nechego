@@ -83,3 +83,30 @@ func (u *Users) Random(gid int64) (int64, error) {
 	}
 	return uid, nil
 }
+
+const nRandomUserQuery = `
+select uid from users
+where gid = ?
+order by random()
+limit ?`
+
+// NRandom returns n random users. If there is not enough users in the table, returns less than n users.
+func (u *Users) NRandom(gid int64, n int) ([]int64, error) {
+	rows, err := u.DB.Query(nRandomUserQuery, gid, n)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return ids, nil
+}
