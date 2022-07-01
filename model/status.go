@@ -31,7 +31,7 @@ func (s *Status) Active(gid int64) (bool, error) {
 		}
 		return false, err
 	}
-	return !(i == 1), nil
+	return false, nil
 }
 
 const disableStatusQuery = `insert into status (gid) values (?)`

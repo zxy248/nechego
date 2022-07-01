@@ -40,7 +40,7 @@ func (f *Forbid) Forbidden(gid int64, c input.Command) (bool, error) {
 		}
 		return false, err
 	}
-	return i == 1, nil
+	return true, nil
 }
 
 const listForbidQuery = `select command from forbid where gid = ?`

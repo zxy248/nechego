@@ -694,10 +694,15 @@ const (
 // handleForbid forbids a command.
 func (b *Bot) handleForbid(c tele.Context) error {
 	return b.handleCommandAction(c, func(command input.Command) error {
-		if isCommandForbidden(c) {
+		gid := c.Chat().ID
+		f, err := b.forbid.Forbidden(gid, command)
+		if err != nil {
+			return err
+		}
+		if f {
 			return c.Send(commandAlreadyForbidden)
 		}
-		if err := b.forbid.Forbid(c.Chat().ID, command); err != nil {
+		if err := b.forbid.Forbid(gid, command); err != nil {
 			return err
 		}
 		return c.Send(commandForbidden)
@@ -707,10 +712,15 @@ func (b *Bot) handleForbid(c tele.Context) error {
 // handlePermit permits a command.
 func (b *Bot) handlePermit(c tele.Context) error {
 	return b.handleCommandAction(c, func(command input.Command) error {
-		if !isCommandForbidden(c) {
+		gid := c.Chat().ID
+		f, err := b.forbid.Forbidden(gid, command)
+		if err != nil {
+			return err
+		}
+		if !f {
 			return c.Send(commandAlreadyPermitted)
 		}
-		if err := b.forbid.Permit(c.Chat().ID, command); err != nil {
+		if err := b.forbid.Permit(gid, command); err != nil {
 			return err
 		}
 		return c.Send(commandPermitted)

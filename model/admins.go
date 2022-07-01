@@ -93,7 +93,7 @@ func isAdmin(db *sql.DB, uid int64) (bool, error) {
 		}
 		return false, err
 	}
-	return i == 1, nil
+	return true, nil
 }
 
 var ErrNoAdmin = errors.New("no admin")

@@ -65,7 +65,7 @@ func (u *Users) Exists(gid, uid int64) (bool, error) {
 		}
 		return false, err
 	}
-	return i == 1, nil
+	return true, nil
 }
 
 const randomUserQuery = `

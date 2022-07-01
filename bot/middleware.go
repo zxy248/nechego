@@ -51,7 +51,6 @@ func (b *Bot) preprocess(next tele.HandlerFunc) tele.HandlerFunc {
 
 		b.cacheGroupMember(gid, uid)
 		c = addMessage(c, message)
-		c = addCommandForbidden(c, commandForbidden)
 		c = addAdminAuthorized(c, adminAuthorized)
 		return next(c)
 	}
@@ -87,19 +86,6 @@ func addMessage(c tele.Context, m *input.Message) tele.Context {
 // getMessage gets a message from the context.
 func getMessage(c tele.Context) *input.Message {
 	return c.Get(messageKey).(*input.Message)
-}
-
-const commandForbiddenKey = "commandForbidden"
-
-// addCommandForbidden adds a command forbidden flag to the context.
-func addCommandForbidden(c tele.Context, v bool) tele.Context {
-	c.Set(commandForbiddenKey, v)
-	return c
-}
-
-// isCommandForbidden gets a command forbidden flag from the context.
-func isCommandForbidden(c tele.Context) bool {
-	return c.Get(commandForbiddenKey).(bool)
 }
 
 const adminAuthorizedKey = "adminAuthorized"

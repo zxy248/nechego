@@ -65,5 +65,5 @@ func (b *Bans) Banned(uid int64) (bool, error) {
 		}
 		return false, err
 	}
-	return i == 1, nil
+	return true, nil
 }
