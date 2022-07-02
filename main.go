@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"log"
 	"math/rand"
-	"nechego/bot"
-	"nechego/model"
+	"nechego/app"
+	"nechego/model/sqlite"
 	"os"
 	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	tele "gopkg.in/telebot.v3"
 )
 
 const (
@@ -24,20 +25,20 @@ func init() {
 }
 
 func main() {
-	cfg := &bot.Config{
-		Token: token(),
-		DB:    db(),
-		Owner: owner(),
-	}
-	if err := cfg.DB.CreateTables(); err != nil {
-		log.Fatal(err)
-	}
-	bot, err := bot.NewBot(cfg)
+	b, err := tele.NewBot(tele.Settings{
+		Token:  token(),
+		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
+	m, err := sqlite.NewModel(db())
+	if err != nil {
+		log.Fatal(err)
+	}
+	a := app.NewApp(b, m)
 	log.Println("The bot has started.")
-	bot.Start()
+	a.Start()
 }
 
 func token() string {
@@ -48,12 +49,12 @@ func token() string {
 	return t
 }
 
-func db() *model.DB {
+func db() *sql.DB {
 	db, err := sql.Open("sqlite3", dsn())
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &model.DB{DB: db}
+	return db
 }
 
 func dsn() string {

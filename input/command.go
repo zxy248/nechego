@@ -8,6 +8,8 @@ package input
 // Picture		[400, 500)
 type Command int
 
+// TODO: add CommandRating, CommandRatingIncrement, CommandRatingDecrement
+// TODO: add CommandFight
 const (
 	CommandUnknown       Command = 0
 	CommandHelp                  = 1
@@ -94,6 +96,14 @@ var commandText = map[Command]string{
 
 func CommandText(c Command) string {
 	return commandText[c]
+}
+
+func AllCommands() []Command {
+	var l []Command
+	for c := range commandText {
+		l = append(l, c)
+	}
+	return l
 }
 
 func IsManagementCommand(c Command) bool {

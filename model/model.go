@@ -1,145 +1,76 @@
 package model
 
 import (
-	"database/sql"
+	"errors"
+	"nechego/input"
 )
 
-type DB struct {
-	*sql.DB
+var ErrNoEblan = errors.New("no eblan")
+var ErrNoAdmin = errors.New("no admin")
+var ErrNoPair = errors.New("no pair")
+
+type Model struct {
+	Admins    AdminsModel
+	Bans      BansModel
+	Eblans    EblansModel
+	Forbid    ForbidModel
+	Pairs     PairsModel
+	Status    StatusModel
+	Users     UsersModel
+	Whitelist WhitelistModel
 }
 
-const createTableUsersQuery = `
-create table if not exists users (
-    id integer,
-    gid integer not null,
-    uid integer not null,
-    primary key (id autoincrement)
-)
-`
-
-const createTablePairsQuery = `
-create table if not exists pairs (
-    id integer not null,
-    gid integer not null,
-    uidx integer not null,
-    uidy integer not null,
-    added text not null,
-    primary key (id autoincrement)
-)
-`
-
-const createTableEblansQuery = `
-create table if not exists eblans (
-    id integer not null,
-    gid integer not null,
-    uid integer not null,
-    added text not null,
-    primary key (id autoincrement)
-)
-`
-
-const createTableWhitelistQuery = `
-create table if not exists whitelist (
-    id integer not null,
-    gid integer not null,
-    primary key (id autoincrement)
-)
-`
-
-const createTableAdminsQuery = `
-create table if not exists admins (
-    id integer not null,
-    uid integer not null,
-    primary key (id autoincrement)
-)
-`
-
-const createTableBansQuery = `
-create table if not exists bans (
-    id integer not null,
-    uid integer not null,
-    primary key (id autoincrement)
-)
-`
-
-const createTableStatusQuery = `
-create table if not exists status (
-    id integer not null,
-    gid integer not null,
-    primary key (id autoincrement)
-)
-`
-
-const createTableForbidQuery = `
-create table if not exists forbid (
-    id integer not null,
-    gid integer not null,
-    command integer not null,
-    primary key (id autoincrement)
-)`
-
-const createTableAdminQuery = `
-create table if not exists admin (
-    id integer not null,
-    gid integer not null,
-    uid integer not null,
-    added text not null,
-    primary key (id autoincrement)
-)
-`
-
-// CreateTables creates the necessary tables.
-func (db *DB) CreateTables() error {
-	queries := []string{
-		createTableUsersQuery,
-		createTablePairsQuery,
-		createTableEblansQuery,
-		createTableWhitelistQuery,
-		createTableAdminsQuery,
-		createTableBansQuery,
-		createTableStatusQuery,
-		createTableForbidQuery,
-		createTableAdminQuery,
-	}
-	for _, q := range queries {
-		_, err := db.Exec(q)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+type AdminsModel interface {
+	Insert(int64) error
+	Delete(int64) error
+	List(int64) ([]int64, error)
+	Authorize(int64, int64) (bool, error)
+	InsertDaily(int64, int64) error
+	GetDaily(int64) (int64, error)
+	DeleteDaily(int64) error
 }
 
-const (
-	dropTableUsersQuery     = "drop table users"
-	dropTablePairsQuery     = "drop table pairs"
-	dropTableEblansQuery    = "drop table eblans"
-	dropTableWhitelistQuery = "drop table whitelist"
-	dropTableAdminsQuery    = "drop table admins"
-	dropTableBansQuery      = "drop table bans"
-	dropTableStatusQuery    = "drop table status"
-	dropTableForbidQuery    = "drop table forbid"
-	dropTableAdminQuery     = "drop table admin"
-)
+type BansModel interface {
+	Ban(int64) error
+	Unban(int64) error
+	List() ([]int64, error)
+	Banned(int64) (bool, error)
+}
 
-// DropTables deletes all tables from the database.
-func (db *DB) DropTables() error {
-	queries := []string{
-		dropTableUsersQuery,
-		dropTablePairsQuery,
-		dropTableEblansQuery,
-		dropTableWhitelistQuery,
-		dropTableAdminsQuery,
-		dropTableBansQuery,
-		dropTableStatusQuery,
-		dropTableForbidQuery,
-		dropTableAdminQuery,
-	}
-	for _, q := range queries {
-		_, err := db.Exec(q)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+type EblansModel interface {
+	Insert(int64, int64) error
+	Get(int64) (int64, error)
+	Delete(int64) error
+}
+
+type ForbidModel interface {
+	Forbid(int64, input.Command) error
+	Permit(int64, input.Command) error
+	Forbidden(int64, input.Command) (bool, error)
+	List(int64) ([]input.Command, error)
+}
+
+type PairsModel interface {
+	Insert(int64, int64, int64) error
+	Get(int64) (int64, int64, error)
+}
+
+type StatusModel interface {
+	Enable(int64) error
+	Active(int64) (bool, error)
+	Disable(int64) error
+}
+
+type UsersModel interface {
+	Insert(int64, int64) error
+	Delete(int64, int64) error
+	List(int64) ([]int64, error)
+	Exists(int64, int64) (bool, error)
+	Random(int64) (int64, error)
+	NRandom(int64, int) ([]int64, error)
+}
+
+type WhitelistModel interface {
+	Insert(int64) error
+	Allow(int64) (bool, error)
 }
