@@ -2,6 +2,7 @@ package app
 
 import (
 	"nechego/input"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -122,5 +123,17 @@ func requireReply(next tele.HandlerFunc) tele.HandlerFunc {
 			return next(c)
 		}
 		return c.Send(replyRequired)
+	}
+}
+
+func (a *App) logMessage(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		t0 := time.Now()
+		msg := getMessage(c)
+		err := next(c)
+		a.sugar().Infow(msg.Raw,
+			"command", msg.Command,
+			"time", time.Since(t0))
+		return err
 	}
 }

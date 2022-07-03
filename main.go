@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
@@ -25,18 +26,26 @@ func init() {
 }
 
 func main() {
-	b, err := tele.NewBot(tele.Settings{
+	bot, err := tele.NewBot(tele.Settings{
 		Token:  token(),
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	m, err := sqlite.NewModel(db())
+
+	model, err := sqlite.NewModel(db())
 	if err != nil {
 		log.Fatal(err)
 	}
-	a := app.NewApp(b, m)
+
+	logger, err := zap.NewProduction()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer logger.Sync()
+
+	a := app.NewApp(bot, model, logger)
 	log.Println("The bot has started.")
 	a.Start()
 }

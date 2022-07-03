@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"math/rand"
 	"nechego/input"
@@ -383,15 +384,15 @@ const (
 
 func (a *App) handleTop(c tele.Context) error {
 	gid := c.Chat().ID
-	arg, err := getMessage(c).DynamicArgument()
+	arg, err := getMessage(c).Dynamic()
 	if err != nil {
 		return err
 	}
 	argument := arg.(input.TopArgument)
 
 	var number int
-	if argument.NumberPresent {
-		number = argument.Number
+	if argument.Number != nil {
+		number = *argument.Number
 	} else {
 		number = maxTopNumber
 	}
@@ -415,7 +416,7 @@ func (a *App) handleTop(c tele.Context) error {
 
 	s := markdownEscaper.Replace(argument.String)
 	var result string
-	if argument.NumberPresent {
+	if argument.Number != nil {
 		result = fmt.Sprintf(numberedTopTemplate, number, s, top)
 	} else {
 		result = fmt.Sprintf(unnumberedTopTemplate, s, top)
@@ -428,31 +429,37 @@ var (
 	basiliCatsPath = filepath.Join(albumsPath, "basili")
 	casperPath     = filepath.Join(albumsPath, "casper")
 	zeusPath       = filepath.Join(albumsPath, "zeus")
-	picPath        = filepath.Join(albumsPath, "saved")
+	picPath        = filepath.Join(albumsPath, "pic")
 )
 
+// handleBasili sends a photo of the Basili's cat.
 func (a *App) handleBasili(c tele.Context) error {
-	return a.sendRandomFile(c, basiliCatsPath)
+	return sendRandomFile(c, basiliCatsPath)
 }
 
+// handleBasili sends a photo of the Leonid's cat.
 func (a *App) handleCasper(c tele.Context) error {
-	return a.sendRandomFile(c, casperPath)
+	return sendRandomFile(c, casperPath)
 }
 
+// handleZeus sends a photo of the Solar's cat.
 func (a *App) handleZeus(c tele.Context) error {
-	return a.sendRandomFile(c, zeusPath)
+	return sendRandomFile(c, zeusPath)
 }
 
+// handlePic sends a photo from a hierarchy of directories located at picPath.
 func (a *App) handlePic(c tele.Context) error {
-	return a.sendRandomFile(c, picPath)
+	return sendRandomFileWith(c, picPath, randomFileFromHierarchy)
 }
 
+// handleDice rolls a dice.
 func (a *App) handleDice(c tele.Context) error {
 	return c.Send(tele.Cube)
 }
 
+var games = []*tele.Dice{tele.Dart, tele.Ball, tele.Goal, tele.Slot, tele.Bowl}
+
 func (a *App) handleGame(c tele.Context) error {
-	games := []*tele.Dice{tele.Dart, tele.Ball, tele.Goal, tele.Slot, tele.Bowl}
 	game := games[rand.Intn(len(games))]
 	return c.Send(game)
 }
@@ -764,7 +771,7 @@ func (a *App) handlePermit(c tele.Context) error {
 
 // handleCommandAction performs an action on a command.
 func (a *App) handleCommandAction(c tele.Context, action func(input.Command) error) error {
-	arg, err := getMessage(c).DynamicArgument()
+	arg, err := getMessage(c).Dynamic()
 	if err != nil {
 		if errors.Is(err, input.ErrNoCommand) {
 			return c.Send(makeError("Укажите команду"))
@@ -774,10 +781,7 @@ func (a *App) handleCommandAction(c tele.Context, action func(input.Command) err
 		}
 		return err
 	}
-	command, ok := arg.(input.Command)
-	if !ok {
-		return errors.New("not a command")
-	}
+	command := arg.(input.Command)
 	return action(command)
 }
 
@@ -843,15 +847,6 @@ var markdownEscaper = func() *strings.Replacer {
 	}
 	return strings.NewReplacer(table...)
 }()
-
-func randomFilename(dir string) (string, error) {
-	fs, err := os.ReadDir(dir)
-	if err != nil {
-		return "", err
-	}
-	f := fs[rand.Intn(len(fs))]
-	return filepath.Join(dir, f.Name()), nil
-}
 
 func (a *App) chatMember(gid, uid int64) (*tele.ChatMember, error) {
 	group, err := a.bot.ChatByID(gid)
@@ -941,12 +936,52 @@ func (a *App) fetchAndSend(c tele.Context, url string) error {
 	return c.Send(pic)
 }
 
-func (a *App) sendRandomFile(c tele.Context, dir string) error {
-	path, err := randomFilename(dir)
+// sendRandomFile sends a random file from dir.
+func sendRandomFile(c tele.Context, dir string) error {
+	return sendRandomFileWith(c, dir, randomFile)
+}
+
+// sendRandomFileWith sends a random file chosen by f from dir.
+func sendRandomFileWith(c tele.Context, dir string, f randomFileFunc) error {
+	path, err := f(dir)
 	if err != nil {
 		return err
 	}
+	return sendFile(c, path)
+}
+
+// sendFile sends a file located at path.
+func sendFile(c tele.Context, path string) error {
 	return c.Send(&tele.Photo{File: tele.FromDisk(path)})
+}
+
+type randomFileFunc func(dir string) (string, error)
+
+// randomFile returns a random filename from a directory.
+func randomFile(dir string) (string, error) {
+	fs, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+	f := fs[rand.Intn(len(fs))]
+	return filepath.Join(dir, f.Name()), nil
+}
+
+// randomFileFromHierarchy returns a random filename from a hierarchy of directories.
+func randomFileFromHierarchy(root string) (string, error) {
+	var filenames []string
+	if err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.Type().IsRegular() {
+			filenames = append(filenames, path)
+		}
+		return nil
+	}); err != nil {
+		return "", err
+	}
+	return filenames[rand.Intn(len(filenames))], nil
 }
 
 func sendSmallProfilePhoto(c tele.Context) error {

@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"errors"
+	"nechego/model"
 	"testing"
 )
 
@@ -19,8 +20,8 @@ func FuzzEblans(f *testing.F) {
 	}
 	f.Fuzz(func(t *testing.T, gid, uid int64) {
 		_, err := e.Get(gid)
-		if !errors.Is(err, ErrNoEblan) {
-			t.Errorf("err = %v, want %v", err, ErrNoEblan)
+		if !errors.Is(err, model.ErrNoEblan) {
+			t.Errorf("err = %v, want %v", err, model.ErrNoEblan)
 		}
 
 		if err := e.Insert(gid, uid); err != nil {

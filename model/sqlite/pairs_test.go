@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"errors"
+	"nechego/model"
 	"testing"
 )
 
@@ -15,8 +16,8 @@ func TestPairs(t *testing.T) {
 	uidy := int64(234)
 
 	_, _, err := p.Get(gid)
-	if !errors.Is(err, ErrNoPair) {
-		t.Errorf("err = %v, want %v", err, ErrNoPair)
+	if !errors.Is(err, model.ErrNoPair) {
+		t.Errorf("err = %v, want %v", err, model.ErrNoPair)
 	}
 
 	if err := p.Insert(gid, uidx, uidy); err != nil {
