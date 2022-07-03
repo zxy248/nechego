@@ -9,7 +9,6 @@ package input
 type Command int
 
 // TODO: add CommandRating, CommandRatingIncrement, CommandRatingDecrement
-// TODO: add CommandFight
 const (
 	CommandUnknown       Command = 0
 	CommandHelp                  = 1
@@ -29,6 +28,7 @@ const (
 	CommandList                  = 105
 	CommandTop                   = 106
 	CommandAdmin                 = 107
+	CommandFight                 = 108
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -71,6 +71,7 @@ var commandText = map[Command]string{
 	CommandList:          "!список",
 	CommandTop:           "!топ",
 	CommandAdmin:         "!админ",
+	CommandFight:         "!драка",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",

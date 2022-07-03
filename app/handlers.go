@@ -464,32 +464,123 @@ func (a *App) handleGame(c tele.Context) error {
 	return c.Send(game)
 }
 
-// TODO: handleFight conducts a fight between two users.
+const handleFightTemplate = `
+⚔️ Нападает %s, сила в бою ` + "`%.2f`" + `
+🛡 Защищается %s, сила в бою ` + "`%.2f`" + `
+
+🏆 %s выходит победителем и забирает ` + "`%v монет`" + `
+
+⚡️ Энергии осталось: ` + "`%v`" + `
+`
+
+const fightEnergyUpdate = -1
+
+// handleFight conducts a fight between two users.
 func (a *App) handleFight(c tele.Context) error {
-	return nil
+	gid := c.Chat().ID
+	att := c.Sender().ID
+	def := c.Message().ReplyTo.Sender.ID
+
+	if att == def {
+		return c.Send(makeError("Вы не можете напасть на самого себя"))
+	}
+	if c.Message().ReplyTo.Sender.IsBot {
+		return c.Send(makeError("Можно напасть только на пользователя"))
+	}
+	exists, err := a.model.Users.Exists(gid, def)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return c.Send(makeError("Неизвестный пользователь"))
+	}
+	energy0, err := a.model.Energy.Energy(gid, att)
+	if err != nil {
+		return err
+	}
+	if energy0 < 1 {
+		return c.Send(makeError("Недостаточно энергии"))
+	}
+
+	attstr, err := a.userStrength(gid, att)
+	if err != nil {
+		return err
+	}
+	defstr, err := a.userStrength(gid, def)
+	if err != nil {
+		return err
+	}
+
+	attmem, err := a.chatMember(gid, att)
+	if err != nil {
+		return err
+	}
+	defmem, err := a.chatMember(gid, def)
+	if err != nil {
+		return err
+	}
+	attment := mention(att, markdownEscaper.Replace(chatMemberName(attmem)))
+	defment := mention(def, markdownEscaper.Replace(chatMemberName(defmem)))
+
+	var win int64
+	var winment string
+	if attstr > defstr {
+		win = att
+		winment = attment
+	} else {
+		win = def
+		winment = defment
+	}
+	fmt.Println(win)
+
+	// TODO: make use for money
+	money := 0
+	if err := a.model.Energy.Update(gid, att, fightEnergyUpdate); err != nil {
+		return err
+	}
+	energy, err := a.model.Energy.Energy(gid, att)
+	if err != nil {
+		return err
+	}
+	s := fmt.Sprintf(handleFightTemplate,
+		attment, attstr,
+		defment, defstr,
+		winment, money, energy)
+	return c.Send(s, tele.ModeMarkdownV2)
 }
 
-func userStrength(uid, gid int64) (float64, error) {
+// userStrength determines the strength of a user.
+func (a *App) userStrength(gid, uid int64) (float64, error) {
 	chance := rand.Float64()
 	week := time.Hour * 24 * 7
-	c, err := userMessageCount(uid, week)
+	user, err := a.userMessageCount(gid, uid, week)
 	if err != nil {
 		return 0, err
 	}
-	t, err := totalMessageCount(gid, week)
+	total, err := a.totalMessageCount(gid, week)
 	if err != nil {
 		return 0, err
 	}
-	score := 1.0 / (float64(t) / float64(c))
+	score := 1.0 / (float64(1+total) / float64(1+user))
 	return chance * score, nil
 }
 
-func userMessageCount(uid int64, interval ...time.Duration) (int, error) {
-	return 0, nil
+// userMessageCount returns the number of messages sent by the user in the specified interval.
+func (a *App) userMessageCount(gid, uid int64, interval time.Duration) (int, error) {
+	c, err := a.model.Messages.UserCount(gid, uid, time.Now().Add(-interval))
+	if err != nil {
+		return 0, err
+	}
+	return c, nil
 }
 
-func totalMessageCount(gid int64, interval ...time.Duration) (int, error) {
-	return 0, nil
+// totalMessageCount returns the number of messages sent in the specified interval.
+func (a *App) totalMessageCount(gid int64, interval time.Duration) (int, error) {
+	c, err := a.model.Messages.TotalCount(gid, time.Now().Add(-interval))
+	if err != nil {
+		return 0, err
+	}
+	return c, nil
 }
 
 const randomPhotoChance = 0.02

@@ -49,6 +49,8 @@ func (b *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return b.handleEblan
 	case input.CommandAdmin:
 		return b.handleAdmin
+	case input.CommandFight:
+		return requireReply(b.handleFight)
 	case input.CommandMasyunya:
 		return b.masyunyaHandler()
 	case input.CommandPoppy:

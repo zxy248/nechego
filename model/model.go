@@ -3,11 +3,13 @@ package model
 import (
 	"errors"
 	"nechego/input"
+	"time"
 )
 
 var ErrNoEblan = errors.New("no eblan")
 var ErrNoAdmin = errors.New("no admin")
 var ErrNoPair = errors.New("no pair")
+var ErrNoUser = errors.New("no user")
 
 type Model struct {
 	Admins    AdminsModel
@@ -18,6 +20,8 @@ type Model struct {
 	Status    StatusModel
 	Users     UsersModel
 	Whitelist WhitelistModel
+	Messages  MessagesModel
+	Energy    EnergyModel
 }
 
 type AdminsModel interface {
@@ -61,10 +65,17 @@ type StatusModel interface {
 	Disable(int64) error
 }
 
+type User struct {
+	GID    int64
+	UID    int64
+	Energy int
+}
+
 type UsersModel interface {
 	Insert(int64, int64) error
 	Delete(int64, int64) error
 	List(int64) ([]int64, error)
+	All() ([]User, error)
 	Exists(int64, int64) (bool, error)
 	Random(int64) (int64, error)
 	NRandom(int64, int) ([]int64, error)
@@ -73,4 +84,14 @@ type UsersModel interface {
 type WhitelistModel interface {
 	Insert(int64) error
 	Allow(int64) (bool, error)
+}
+
+type MessagesModel interface {
+	UserCount(int64, int64, time.Time) (int, error)
+	TotalCount(int64, time.Time) (int, error)
+}
+
+type EnergyModel interface {
+	Energy(int64, int64) (int, error)
+	Update(int64, int64, int) error
 }

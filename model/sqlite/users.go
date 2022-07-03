@@ -3,13 +3,14 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"nechego/model"
 )
 
 type Users struct {
 	DB *DB
 }
 
-const insertUserQuery = `insert into users (uid, gid) values (?, ?)`
+const insertUserQuery = `insert into users (uid, gid, energy) values (?, ?, 0)`
 
 // Insert adds a user.
 func (u *Users) Insert(gid, uid int64) error {
@@ -33,7 +34,7 @@ func (u *Users) Delete(gid, uid int64) error {
 
 const listUsersQuery = `select uid from users where gid = ?`
 
-// List returns all users.
+// List returns all users from the group.
 func (u *Users) List(gid int64) ([]int64, error) {
 	rows, err := u.DB.Query(listUsersQuery, gid)
 	if err != nil {
@@ -52,6 +53,29 @@ func (u *Users) List(gid int64) ([]int64, error) {
 		return nil, err
 	}
 	return ids, nil
+}
+
+const allUsersQuery = "select gid, uid, energy from users"
+
+// All returns all users.
+func (u *Users) All() ([]model.User, error) {
+	rows, err := u.DB.Query(allUsersQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var users []model.User
+	for rows.Next() {
+		var user model.User
+		if err := rows.Scan(&user.GID, &user.UID, &user.Energy); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 const existsUserQuery = `select 1 from users where gid = ? and uid = ?`

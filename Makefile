@@ -1,4 +1,4 @@
 clean:
-	rm -vf model/testdata/db/* nechego
+	rm -vf model/sqlite/testdata/db/* nechego
 
 .PHONY: clean

@@ -46,6 +46,8 @@ func ParseCommand(s string) Command {
 		return CommandEblan
 	case startsWith(s, "!админ дня"):
 		return CommandAdmin
+	case startsWith(s, "!драка", "!дуэль", "!поединок", "!бой", "!сражение", "!борьба", "!атака", "!битва"):
+		return CommandFight
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):
 		return CommandMasyunya
 	case startsWith(s, "!паппи", "Паппи 🦊"):

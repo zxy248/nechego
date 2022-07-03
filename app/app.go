@@ -2,12 +2,14 @@ package app
 
 import (
 	"nechego/model"
+	"time"
 
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
 const dataPath = "data"
+const restoreEnergyCooldown = time.Minute * 10
 
 type App struct {
 	bot   *tele.Bot
@@ -22,6 +24,7 @@ func NewApp(b *tele.Bot, m *model.Model, l *zap.Logger) *App {
 
 // Start starts the bot, routing all preprocessed text messages to appropriate handlers.
 func (a *App) Start() {
+	go a.restoreEnergyEvery(restoreEnergyCooldown)
 	a.bot.Handle(tele.OnText, a.route, a.preprocess, a.logMessage)
 	a.bot.Handle(tele.OnUserJoined, a.handleJoin, a.preprocess)
 	a.bot.Start()

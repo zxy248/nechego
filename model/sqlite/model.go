@@ -19,6 +19,8 @@ func NewModel(db *sql.DB) (*model.Model, error) {
 		Status:    &Status{d},
 		Users:     &Users{d},
 		Whitelist: &Whitelist{d},
+		Messages:  &Messages{d},
+		Energy:    &Energy{d},
 	}, nil
 }
 
@@ -26,11 +28,13 @@ type DB struct {
 	*sql.DB
 }
 
+// TODO: don't forget to update the prod db
 const createTableUsersQuery = `
 create table if not exists users (
     id integer,
     gid integer not null,
     uid integer not null,
+    energy integer not null,
     primary key (id autoincrement)
 )
 `
@@ -106,6 +110,9 @@ create table if not exists admin (
 )
 `
 
+// TODO: create the query
+const createTableMessagesQuery = ``
+
 // CreateTables creates the necessary tables.
 func (db *DB) CreateTables() error {
 	queries := []string{
@@ -118,6 +125,7 @@ func (db *DB) CreateTables() error {
 		createTableStatusQuery,
 		createTableForbidQuery,
 		createTableAdminQuery,
+		createTableMessagesQuery,
 	}
 	for _, q := range queries {
 		_, err := db.Exec(q)
@@ -138,6 +146,7 @@ const (
 	dropTableStatusQuery    = "drop table status"
 	dropTableForbidQuery    = "drop table forbid"
 	dropTableAdminQuery     = "drop table admin"
+	dropTableMessagesQuery  = "drop table messages"
 )
 
 // DropTables deletes all tables from the database.
@@ -152,6 +161,7 @@ func (db *DB) DropTables() error {
 		dropTableStatusQuery,
 		dropTableForbidQuery,
 		dropTableAdminQuery,
+		dropTableMessagesQuery,
 	}
 	for _, q := range queries {
 		_, err := db.Exec(q)

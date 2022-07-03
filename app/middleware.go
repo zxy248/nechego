@@ -62,6 +62,7 @@ func isGroup(t tele.ChatType) bool {
 	return t == tele.ChatGroup || t == tele.ChatSuperGroup
 }
 
+// TODO: rename b *App to a *App
 // cacheGroupMember adds a user to the users table if it is not there already.
 func (b *App) cacheGroupMember(gid, uid int64) error {
 	exists, err := b.model.Users.Exists(gid, uid)
