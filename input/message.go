@@ -53,6 +53,9 @@ func (m *Message) DynamicArgument() (interface{}, error) {
 		if s == "" {
 			return nil, ErrNoCommand
 		}
+		if !strings.HasPrefix(s, "!") {
+			s = "!" + s
+		}
 		c := ParseCommand(s)
 		if c == CommandUnknown {
 			return nil, ErrUnknownCommand
