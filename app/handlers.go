@@ -580,29 +580,40 @@ func (a *App) handleUnban(c tele.Context) error {
 	return c.Send(userUnblocked)
 }
 
-const infoTemplate = `ℹ️ *Информация* 📌
+const infoTemplate = "ℹ️ *Информация* 📌\n\n%s\n%s\n%s\n"
 
-👤 _Администрация_
-%s
-🛑 _Черный список_
-%s
-🔒 _Запрещенные команды_
-%s
-`
-
-// handleInfo sends a list of useful information.
+// handleInfo sends a few lists of useful information.
 func (a *App) handleInfo(c tele.Context) error {
 	gid := c.Chat().ID
-	l, err := a.model.Admins.List(gid)
+	admins, err := a.adminList(gid)
+	if err != nil {
+		return err
+	}
+	bans, err := a.banList(gid)
+	if err != nil {
+		return err
+	}
+	commands, err := a.forbiddenCommandList(gid)
 	if err != nil {
 		return err
 	}
 
+	lists := fmt.Sprintf(infoTemplate, admins, bans, commands)
+	return c.Send(lists, tele.ModeMarkdownV2)
+}
+
+const adminListTemplate = "👤 _Администрация_\n%s"
+
+func (a *App) adminList(gid int64) (string, error) {
+	l, err := a.model.Admins.List(gid)
+	if err != nil {
+		return "", err
+	}
 	var admins string
 	for _, uid := range l {
 		m, err := a.chatMember(gid, uid)
 		if err != nil {
-			return err
+			return "", err
 		}
 		if !chatMemberPresent(m) {
 			continue
@@ -613,17 +624,21 @@ func (a *App) handleInfo(c tele.Context) error {
 	if admins == "" {
 		admins = "…\n"
 	}
+	return fmt.Sprintf(adminListTemplate, admins), nil
+}
 
-	l, err = a.model.Bans.List()
+const banListTemplate = "🛑 _Черный список_\n%s"
+
+func (a *App) banList(gid int64) (string, error) {
+	l, err := a.model.Bans.List()
 	if err != nil {
-		return err
+		return "", err
 	}
-
 	var banned string
 	for _, uid := range l {
 		m, err := a.chatMember(gid, uid)
 		if err != nil {
-			return err
+			return "", err
 		}
 		if !chatMemberPresent(m) {
 			continue
@@ -634,22 +649,25 @@ func (a *App) handleInfo(c tele.Context) error {
 	if banned == "" {
 		banned = "…\n"
 	}
+	return fmt.Sprintf(banListTemplate, banned), nil
+}
 
-	forbiddenCommands, err := a.model.Forbid.List(gid)
+const forbiddenCommandListTemplate = "🔒 _Запрещенные команды_\n%s"
+
+func (a *App) forbiddenCommandList(gid int64) (string, error) {
+	l, err := a.model.Forbid.List(gid)
 	if err != nil {
-		return err
+		return "", err
 	}
-	var forbiddenList string
-	for _, c := range forbiddenCommands {
+	var commands string
+	for _, c := range l {
 		t := markdownEscaper.Replace(input.CommandText(c))
-		forbiddenList += "— " + t + "\n"
+		commands += "— " + t + "\n"
 	}
-	if forbiddenList == "" {
-		forbiddenList = "…\n"
+	if commands == "" {
+		commands = "…\n"
 	}
-
-	list := fmt.Sprintf(infoTemplate, admins, banned, forbiddenList)
-	return c.Send(list, tele.ModeMarkdownV2)
+	return fmt.Sprintf(forbiddenCommandListTemplate, commands), nil
 }
 
 const help = `📖 *Команды* 📌
