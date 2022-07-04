@@ -2,14 +2,12 @@ package app
 
 import (
 	"nechego/model"
-	"time"
 
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
 const dataPath = "data"
-const restoreEnergyCooldown = time.Minute * 10
 
 type App struct {
 	bot   *tele.Bot

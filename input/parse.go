@@ -52,6 +52,8 @@ func ParseCommand(s string) Command {
 		return CommandBalance
 	case startsWith(s, "!перевод"):
 		return CommandTransfer
+	case startsWith(s, "!профиль", "!статистика", "!обо мне"):
+		return CommandProfile
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):
 		return CommandMasyunya
 	case startsWith(s, "!паппи", "Паппи 🦊"):

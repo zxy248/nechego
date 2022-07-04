@@ -55,6 +55,8 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleBalance
 	case input.CommandTransfer:
 		return requireReply(a.handleTransfer)
+	case input.CommandProfile:
+		return a.handleProfile
 	case input.CommandMasyunya:
 		return a.masyunyaHandler()
 	case input.CommandPoppy:

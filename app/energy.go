@@ -4,7 +4,10 @@ import (
 	"time"
 )
 
-const energyCap = 3
+const (
+	restoreEnergyCooldown = time.Minute * 10
+	energyCap = 3
+)
 
 func (a *App) restoreEnergyEvery(d time.Duration) {
 	for range time.Tick(d) {

@@ -464,7 +464,7 @@ func (a *App) handleGame(c tele.Context) error {
 	return c.Send(game)
 }
 
-const handleBalanceTemplate = "Ваш баланс: `%v 💰`"
+const handleBalanceTemplate = "Ваш баланс: `%s 💰`"
 
 // handleBalance responds with the balance of a user.
 func (a *App) handleBalance(c tele.Context) error {
@@ -472,10 +472,10 @@ func (a *App) handleBalance(c tele.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.Send(fmt.Sprintf(handleBalanceTemplate, amount), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf(handleBalanceTemplate, formatAmount(int(amount))), tele.ModeMarkdownV2)
 }
 
-const handleTransferTemplate = "Вы перевели %s `%v 💰`"
+const handleTransferTemplate = "Вы перевели %s `%s 💰`"
 
 // handleTransfer transfers the specified amount of money from one user to another.
 func (a *App) handleTransfer(c tele.Context) error {
@@ -504,20 +504,20 @@ func (a *App) handleTransfer(c tele.Context) error {
 		return err
 	}
 	ment := mention(recipient, markdownEscaper.Replace(chatMemberName(mem)))
-	return c.Send(fmt.Sprintf(handleTransferTemplate, ment, amount), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf(handleTransferTemplate, ment, formatAmount(int(amount))), tele.ModeMarkdownV2)
 }
 
 const handleFightTemplate = `
-⚔️ Нападает %s, сила в бою ` + "`%.2f`" + `
-🛡 Защищается %s, сила в бою ` + "`%.2f`" + `
+⚔️ Нападает %s, сила в бою ` + "`%.2f (%v*%.1f*%.1f)`" + `
+🛡 Защищается %s, сила в бою ` + "`%.2f (%v*%.1f*%.1f)`" + `
 
-🏆 %s выходит победителем и забирает ` + "`%v 💰`" + `
+🏆 %s выходит победителем и забирает ` + "`%s 💰`" + `
 
 Энергии осталось: ` + "`%v ⚡️`" + `
 `
 
 const (
-	fightEnergyUpdate         = -1
+	fightEnergyDelta          = -1
 	maxMoneyTransfer          = 10
 	displayStrengthMultiplier = 10
 )
@@ -525,91 +525,88 @@ const (
 // handleFight conducts a fight between two users.
 func (a *App) handleFight(c tele.Context) error {
 	gid := c.Chat().ID
-	att := c.Sender().ID
-	def := c.Message().ReplyTo.Sender.ID
+	aUID := c.Sender().ID
+	dUID := c.Message().ReplyTo.Sender.ID
 
-	if att == def {
+	if aUID == dUID {
 		return c.Send(makeError("Вы не можете напасть на самого себя"))
 	}
 	if c.Message().ReplyTo.Sender.IsBot {
 		return c.Send(makeError("Можно напасть только на пользователя"))
 	}
-	exists, err := a.model.Users.Exists(gid, def)
+	exists, err := a.model.Users.Exists(gid, dUID)
 	if err != nil {
 		return err
 	}
 	if !exists {
 		return c.Send(makeError("Неизвестный пользователь"))
 	}
-	energy0, err := a.model.Energy.Energy(gid, att)
+	energy0, err := a.model.Energy.Energy(gid, aUID)
 	if err != nil {
 		return err
 	}
-	if energy0 < 1 {
+	if energy0 <= 0 {
 		return c.Send(makeError("Недостаточно энергии"))
 	}
 
-	attstr, err := a.userStrength(gid, att)
+	aStrength, aStrengthActual, err := a.userStrength(gid, aUID)
 	if err != nil {
 		return err
 	}
-	defstr, err := a.userStrength(gid, def)
+	dStrength, dStrengthActual, err := a.userStrength(gid, dUID)
 	if err != nil {
 		return err
 	}
 
-	attmem, err := a.chatMember(gid, att)
+	aMember, err := a.chatMember(gid, aUID)
 	if err != nil {
 		return err
 	}
-	defmem, err := a.chatMember(gid, def)
+	dMember, err := a.chatMember(gid, dUID)
 	if err != nil {
 		return err
 	}
-	attment := mention(att, markdownEscaper.Replace(chatMemberName(attmem)))
-	defment := mention(def, markdownEscaper.Replace(chatMemberName(defmem)))
+	aMention := mention(aUID, markdownEscaper.Replace(chatMemberName(aMember)))
+	dMention := mention(dUID, markdownEscaper.Replace(chatMemberName(dMember)))
 
-	var win, lose int64
-	var winment string
-	if attstr > defstr {
-		win = att
-		winment = attment
-		lose = def
+	var winnerUID, loserUID int64
+	var winnerMention string
+	if aStrength > dStrength {
+		winnerUID = aUID
+		winnerMention = aMention
+		loserUID = dUID
 	} else {
-		win = def
-		winment = defment
-		lose = att
+		winnerUID = dUID
+		winnerMention = dMention
+		loserUID = aUID
 	}
 
 	amount := 1 + uint(rand.Intn(maxMoneyTransfer-1))
-	money, err := a.transferMoney(gid, lose, win, amount)
+	money, err := a.forceTransferMoney(gid, loserUID, winnerUID, amount)
 	if err != nil {
 		return err
 	}
-	if err := a.model.Energy.Update(gid, att, fightEnergyUpdate); err != nil {
+	if err := a.model.Energy.Update(gid, aUID, fightEnergyDelta); err != nil {
 		return err
 	}
-	energy, err := a.model.Energy.Energy(gid, att)
+	energy, err := a.model.Energy.Energy(gid, aUID)
 	if err != nil {
 		return err
 	}
 	s := fmt.Sprintf(handleFightTemplate,
-		attment, displayStrengthMultiplier*attstr,
-		defment, displayStrengthMultiplier*defstr,
-		winment, money, energy)
+		aMention, displayStrengthMultiplier*aStrength, displayStrengthMultiplier, aStrengthActual, (aStrength / aStrengthActual),
+		dMention, displayStrengthMultiplier*dStrength, displayStrengthMultiplier, dStrengthActual, (dStrength / dStrengthActual),
+		winnerMention, formatAmount(int(money)), energy)
 	return c.Send(s, tele.ModeMarkdownV2)
 }
 
-// TODO: !топ богатых
-// TODO: !топ сильных
-// TODO: модификаторы
 // TODO: рандом для еблана
 // TODO: !кости
 // TODO: !сила
 
-// transferMoney transfers the specified amount of money from one user to another.
+// forceTransferMoney transfers the specified amount of money from one user to another.
 // If the sender has not enough money, transfers all the sender's money to the recipient.
-func (a *App) transferMoney(gid, sender, recipient int64, amount uint) (uint, error) {
+func (a *App) forceTransferMoney(gid, sender, recipient int64, amount uint) (uint, error) {
 	actual, err := a.model.Economy.Balance(gid, sender)
 	if err != nil {
 		return 0, err
@@ -620,15 +617,19 @@ func (a *App) transferMoney(gid, sender, recipient int64, amount uint) (uint, er
 	return amount, a.model.Economy.Transfer(gid, sender, recipient, amount)
 }
 
+const chanceMultiplier = 0.5
+
 // userStrength determines the final strength of a user.
-func (a *App) userStrength(gid, uid int64) (float64, error) {
-	chance := rand.Float64()
+func (a *App) userStrength(gid, uid int64) (final, actual float64, err error) {
+	chance := 0.5 + rand.Float64()
 	strength, err := a.actualUserStrength(gid, uid)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return chance * strength, nil
+	return (chance * chanceMultiplier) * strength, strength, nil
 }
+
+const baseStrength = 1
 
 // actualUserStrength determines the user's stength before randomization.
 func (a *App) actualUserStrength(gid, uid int64) (float64, error) {
@@ -636,8 +637,12 @@ func (a *App) actualUserStrength(gid, uid int64) (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	score := mcc
-	return score, nil
+	mul, err := a.strengthMultiplier(gid, uid)
+	if err != nil {
+		return 0, err
+	}
+	strength := (baseStrength + mcc) * mul
+	return strength, nil
 }
 
 const messageCountCoefficientInterval = time.Hour * 24 * 7
@@ -664,6 +669,104 @@ func (a *App) userMessageCount(gid, uid int64, interval time.Duration) (int, err
 	return c, nil
 }
 
+const (
+	eblanStrengthMultiplier      = -0.2
+	adminStrengthMultiplier      = 0.2
+	fullEnergyStrengthMultiplier = 0.1
+	noEnergyStrengthMultiplier   = -0.3
+)
+
+// strengthMultiplier returns the strength multiplier value.
+func (a *App) strengthMultiplier(gid, uid int64) (float64, error) {
+	multiplier := float64(1)
+	modifiers, err := a.userModifiers(gid, uid)
+	if err != nil {
+		return 0, err
+	}
+	for _, m := range modifiers {
+		switch m {
+		case eblanModifier:
+			multiplier += eblanStrengthMultiplier
+		case adminModifier:
+			multiplier += adminStrengthMultiplier
+		case fullEnergyModifier:
+			multiplier += fullEnergyStrengthMultiplier
+		case noEnergyModifier:
+			multiplier += noEnergyStrengthMultiplier
+		}
+	}
+	return multiplier, nil
+}
+
+type modifier int
+
+const (
+	noModifier modifier = iota
+	adminModifier
+	eblanModifier
+	fullEnergyModifier
+	noEnergyModifier
+)
+
+// userModifiers returns the user's modifiers.
+func (a *App) userModifiers(gid, uid int64) ([]modifier, error) {
+	var modifiers []modifier
+	eblan, err := a.model.Eblans.Get(gid)
+	if err != nil {
+		if !errors.Is(err, model.ErrNoEblan) {
+			return nil, err
+		}
+	} else if eblan == uid {
+		modifiers = append(modifiers, eblanModifier)
+	}
+	admin, err := a.model.Admins.GetDaily(gid)
+	if err != nil {
+		if !errors.Is(err, model.ErrNoAdmin) {
+			return nil, err
+		}
+	} else if admin == uid {
+		modifiers = append(modifiers, adminModifier)
+	}
+	energy, err := a.energyModifier(gid, uid)
+	if err != nil {
+		return nil, err
+	}
+	if energy != noModifier {
+		modifiers = append(modifiers, energy)
+	}
+	return modifiers, nil
+}
+
+// energyModifier returns the user's energy modifier.
+// If there is no modifier, returns noModifier, nil.
+func (a *App) energyModifier(gid, uid int64) (modifier, error) {
+	e, err := a.model.Energy.Energy(gid, uid)
+	if err != nil {
+		return noModifier, err
+	}
+	if e == energyCap {
+		return fullEnergyModifier, nil
+	}
+	if e == 0 {
+		return noEnergyModifier, nil
+	}
+	return noModifier, nil
+}
+
+// formatAmount formats the specified amount of money.
+func formatAmount(n int) string {
+	switch p0 := n % 10; {
+	case n >= 10 && n <= 20:
+		return fmt.Sprintf("%v монет", n)
+	case p0 == 1:
+		return fmt.Sprintf("%v монета", n)
+	case p0 >= 2 && p0 <= 4:
+		return fmt.Sprintf("%v монеты", n)
+	default:
+		return fmt.Sprintf("%v монет", n)
+	}
+}
+
 // totalMessageCount returns the number of messages sent in the specified interval.
 func (a *App) totalMessageCount(gid int64, interval time.Duration) (int, error) {
 	c, err := a.model.Messages.TotalCount(gid, time.Now().Add(-interval))
@@ -678,13 +781,83 @@ func handleEnergy(c tele.Context) error {
 	return nil
 }
 
-// TODO: !профиль
-func handleProfile(c tele.Context) error {
-	return nil
+// TODO: messages per day, messages total
+// TODO: energy restore timeout
+const handleProfileTemplate = `ℹ️ Профиль %s %v %s
+
+Баланс на счете: ` + "`" + `%s 💰` + "`" + `
+Запас энергии: ` + "`" + `%v ⚡️` + "`" + `
+Базовая сила: ` + "`" + `%.1f 💪` + "`" + `
+
+%s
+`
+
+// handleProfile sends the profile of the user.
+func (a *App) handleProfile(c tele.Context) error {
+	gid := c.Chat().ID
+	uid := c.Sender().ID
+	icon := "👤"
+	title := "пользователя"
+
+	member, err := a.chatMember(gid, uid)
+	if err != nil {
+		return err
+	}
+	name := markdownEscaper.Replace(chatMemberName(member))
+	mention := mention(uid, name)
+
+	energy, err := a.model.Energy.Energy(gid, uid)
+	if err != nil {
+		return err
+	}
+	balance, err := a.model.Economy.Balance(gid, uid)
+	if err != nil {
+		return err
+	}
+	strength, err := a.actualUserStrength(gid, uid)
+	if err != nil {
+		return err
+	}
+
+	var status string
+	modifiers, err := a.userModifiers(gid, uid)
+	if err != nil {
+		return err
+	}
+	for _, m := range modifiers {
+		switch m {
+		case eblanModifier:
+			icon, title = "😸", "еблана"
+			status += "Вы чувствуете себя оскорбленным.\n"
+		case adminModifier:
+			icon, title = "👑", "администратора"
+			status += "Вы ощущаете власть над остальными.\n"
+		case fullEnergyModifier:
+			status += "Вы полны сил.\n"
+		case noEnergyModifier:
+			status += "Вы чувствуете себя уставшим.\n"
+		}
+	}
+	if status != "" {
+		status = fmt.Sprintf("_%s_", markdownEscaper.Replace(status))
+	}
+
+	out := fmt.Sprintf(handleProfileTemplate, title, mention, icon, formatAmount(int(balance)), energy, strength, status)
+	return c.Send(out, tele.ModeMarkdownV2)
 }
 
 // TODO: !история
 func handleHistory(c tele.Context) error {
+	return nil
+}
+
+// TODO: handleTopRich sends a top of the richest users.
+func handleTopRich(c tele.Context) error {
+	return nil
+}
+
+// TODO: handleTopStrength sends a top of the strongest users.
+func handleTopStrength(c tele.Context) error {
 	return nil
 }
 
