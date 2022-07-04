@@ -21,6 +21,7 @@ func NewModel(db *sql.DB) (*model.Model, error) {
 		Whitelist: &Whitelist{d},
 		Messages:  &Messages{d},
 		Energy:    &Energy{d},
+		Economy:   &Economy{d},
 	}, nil
 }
 
@@ -35,6 +36,7 @@ create table if not exists users (
     gid integer not null,
     uid integer not null,
     energy integer not null,
+    balance integer not null,
     primary key (id autoincrement)
 )
 `

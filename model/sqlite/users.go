@@ -10,7 +10,7 @@ type Users struct {
 	DB *DB
 }
 
-const insertUserQuery = `insert into users (uid, gid, energy) values (?, ?, 0)`
+const insertUserQuery = `insert into users (uid, gid, energy, balance) values (?, ?, 0, 0)`
 
 // Insert adds a user.
 func (u *Users) Insert(gid, uid int64) error {
@@ -55,7 +55,7 @@ func (u *Users) List(gid int64) ([]int64, error) {
 	return ids, nil
 }
 
-const allUsersQuery = "select gid, uid, energy from users"
+const allUsersQuery = "select gid, uid, energy, balance from users"
 
 // All returns all users.
 func (u *Users) All() ([]model.User, error) {
@@ -67,7 +67,7 @@ func (u *Users) All() ([]model.User, error) {
 	var users []model.User
 	for rows.Next() {
 		var user model.User
-		if err := rows.Scan(&user.GID, &user.UID, &user.Energy); err != nil {
+		if err := rows.Scan(&user.GID, &user.UID, &user.Energy, &user.Balance); err != nil {
 			return nil, err
 		}
 		users = append(users, user)

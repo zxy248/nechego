@@ -464,16 +464,63 @@ func (a *App) handleGame(c tele.Context) error {
 	return c.Send(game)
 }
 
+const handleBalanceTemplate = "Ваш баланс: `%v 💰`"
+
+// handleBalance responds with the balance of a user.
+func (a *App) handleBalance(c tele.Context) error {
+	amount, err := a.model.Economy.Balance(c.Chat().ID, c.Sender().ID)
+	if err != nil {
+		return err
+	}
+	return c.Send(fmt.Sprintf(handleBalanceTemplate, amount), tele.ModeMarkdownV2)
+}
+
+const handleTransferTemplate = "Вы перевели %s `%v 💰`"
+
+// handleTransfer transfers the specified amount of money from one user to another.
+func (a *App) handleTransfer(c tele.Context) error {
+	arg, err := getMessage(c).Dynamic()
+	if err != nil {
+		if errors.Is(err, input.ErrSpecifyAmount) {
+			return c.Send(makeError(input.ErrSpecifyAmount.Error()))
+		}
+		return err
+	}
+	gid := c.Chat().ID
+	amount := arg.(uint)
+	sender := c.Sender().ID
+	recipient := c.Message().ReplyTo.Sender.ID
+	if err := a.model.Economy.Transfer(gid, sender, recipient, amount); err != nil {
+		if errors.Is(err, model.ErrNoUser) {
+			return c.Send(makeError("Пользователь не найден"))
+		}
+		if errors.Is(err, model.ErrNotEnoughMoney) {
+			return c.Send(makeError("Недостаточно средств"))
+		}
+		return err
+	}
+	mem, err := a.chatMember(gid, recipient)
+	if err != nil {
+		return err
+	}
+	ment := mention(recipient, markdownEscaper.Replace(chatMemberName(mem)))
+	return c.Send(fmt.Sprintf(handleTransferTemplate, ment, amount), tele.ModeMarkdownV2)
+}
+
 const handleFightTemplate = `
 ⚔️ Нападает %s, сила в бою ` + "`%.2f`" + `
 🛡 Защищается %s, сила в бою ` + "`%.2f`" + `
 
-🏆 %s выходит победителем и забирает ` + "`%v монет`" + `
+🏆 %s выходит победителем и забирает ` + "`%v 💰`" + `
 
-⚡️ Энергии осталось: ` + "`%v`" + `
+Энергии осталось: ` + "`%v ⚡️`" + `
 `
 
-const fightEnergyUpdate = -1
+const (
+	fightEnergyUpdate         = -1
+	maxMoneyTransfer          = 10
+	displayStrengthMultiplier = 10
+)
 
 // handleFight conducts a fight between two users.
 func (a *App) handleFight(c tele.Context) error {
@@ -522,19 +569,23 @@ func (a *App) handleFight(c tele.Context) error {
 	attment := mention(att, markdownEscaper.Replace(chatMemberName(attmem)))
 	defment := mention(def, markdownEscaper.Replace(chatMemberName(defmem)))
 
-	var win int64
+	var win, lose int64
 	var winment string
 	if attstr > defstr {
 		win = att
 		winment = attment
+		lose = def
 	} else {
 		win = def
 		winment = defment
+		lose = att
 	}
-	fmt.Println(win)
 
-	// TODO: make use for money
-	money := 0
+	amount := 1 + uint(rand.Intn(maxMoneyTransfer-1))
+	money, err := a.transferMoney(gid, lose, win, amount)
+	if err != nil {
+		return err
+	}
 	if err := a.model.Energy.Update(gid, att, fightEnergyUpdate); err != nil {
 		return err
 	}
@@ -543,26 +594,65 @@ func (a *App) handleFight(c tele.Context) error {
 		return err
 	}
 	s := fmt.Sprintf(handleFightTemplate,
-		attment, attstr,
-		defment, defstr,
+		attment, displayStrengthMultiplier*attstr,
+		defment, displayStrengthMultiplier*defstr,
 		winment, money, energy)
 	return c.Send(s, tele.ModeMarkdownV2)
 }
 
-// userStrength determines the strength of a user.
+// TODO: !топ богатых
+// TODO: !топ сильных
+// TODO: модификаторы
+// TODO: рандом для еблана
+// TODO: !кости
+// TODO: !сила
+
+// transferMoney transfers the specified amount of money from one user to another.
+// If the sender has not enough money, transfers all the sender's money to the recipient.
+func (a *App) transferMoney(gid, sender, recipient int64, amount uint) (uint, error) {
+	actual, err := a.model.Economy.Balance(gid, sender)
+	if err != nil {
+		return 0, err
+	}
+	if actual < amount {
+		return actual, a.model.Economy.Transfer(gid, sender, recipient, actual)
+	}
+	return amount, a.model.Economy.Transfer(gid, sender, recipient, amount)
+}
+
+// userStrength determines the final strength of a user.
 func (a *App) userStrength(gid, uid int64) (float64, error) {
 	chance := rand.Float64()
-	week := time.Hour * 24 * 7
-	user, err := a.userMessageCount(gid, uid, week)
+	strength, err := a.actualUserStrength(gid, uid)
 	if err != nil {
 		return 0, err
 	}
-	total, err := a.totalMessageCount(gid, week)
+	return chance * strength, nil
+}
+
+// actualUserStrength determines the user's stength before randomization.
+func (a *App) actualUserStrength(gid, uid int64) (float64, error) {
+	mcc, err := a.messageCountCoefficient(gid, uid)
 	if err != nil {
 		return 0, err
 	}
-	score := 1.0 / (float64(1+total) / float64(1+user))
-	return chance * score, nil
+	score := mcc
+	return score, nil
+}
+
+const messageCountCoefficientInterval = time.Hour * 24 * 7
+
+// messageCountCoefficient is a quotient of the user's message count and the total message count.
+func (a *App) messageCountCoefficient(gid, uid int64) (float64, error) {
+	user, err := a.userMessageCount(gid, uid, messageCountCoefficientInterval)
+	if err != nil {
+		return 0, err
+	}
+	total, err := a.totalMessageCount(gid, messageCountCoefficientInterval)
+	if err != nil {
+		return 0, err
+	}
+	return float64(1+user) / float64(1+total), nil
 }
 
 // userMessageCount returns the number of messages sent by the user in the specified interval.
@@ -581,6 +671,21 @@ func (a *App) totalMessageCount(gid int64, interval time.Duration) (int, error) 
 		return 0, err
 	}
 	return c, nil
+}
+
+// TODO: !стамина, !энергия
+func handleEnergy(c tele.Context) error {
+	return nil
+}
+
+// TODO: !профиль
+func handleProfile(c tele.Context) error {
+	return nil
+}
+
+// TODO: !история
+func handleHistory(c tele.Context) error {
+	return nil
 }
 
 const randomPhotoChance = 0.02
@@ -778,6 +883,9 @@ const help = `📖 *Команды* 📌
 	"— `!паппи`\n" +
 	"— `!игра`\n" +
 	"— `!кости`\n" +
+	"— `!драка`\n" +
+	"— `!баланс`\n" +
+	"— `!перевод`\n" +
 	`
 🔮 _Нейросети_
 ` +

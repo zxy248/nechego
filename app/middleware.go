@@ -9,13 +9,13 @@ import (
 
 // preprocess parses an input message, ignores it on the certain conditions,
 // caches a group member, saves necessary data in the context.
-func (b *App) preprocess(next tele.HandlerFunc) tele.HandlerFunc {
+func (a *App) preprocess(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		if !isGroup(c.Chat().Type) {
 			return nil
 		}
 		gid := c.Chat().ID
-		ok, err := b.model.Whitelist.Allow(gid)
+		ok, err := a.model.Whitelist.Allow(gid)
 		if err != nil {
 			return err
 		}
@@ -26,15 +26,15 @@ func (b *App) preprocess(next tele.HandlerFunc) tele.HandlerFunc {
 		text := c.Text()
 		message := input.ParseMessage(text)
 
-		userBanned, err := b.model.Bans.Banned(uid)
+		userBanned, err := a.model.Bans.Banned(uid)
 		if err != nil {
 			return err
 		}
-		commandForbidden, err := b.model.Forbid.Forbidden(gid, message.Command)
+		commandForbidden, err := a.model.Forbid.Forbidden(gid, message.Command)
 		if err != nil {
 			return err
 		}
-		adminAuthorized, err := b.model.Admins.Authorize(gid, uid)
+		adminAuthorized, err := a.model.Admins.Authorize(gid, uid)
 		if err != nil {
 			return err
 		}
@@ -42,7 +42,7 @@ func (b *App) preprocess(next tele.HandlerFunc) tele.HandlerFunc {
 			!(adminAuthorized && input.IsManagementCommand(message.Command)) {
 			return nil
 		}
-		active, err := b.model.Status.Active(gid)
+		active, err := a.model.Status.Active(gid)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ func (b *App) preprocess(next tele.HandlerFunc) tele.HandlerFunc {
 			return nil
 		}
 
-		b.cacheGroupMember(gid, uid)
+		a.cacheGroupMember(gid, uid)
 		c = addMessage(c, message)
 		c = addAdminAuthorized(c, adminAuthorized)
 		return next(c)
@@ -62,15 +62,14 @@ func isGroup(t tele.ChatType) bool {
 	return t == tele.ChatGroup || t == tele.ChatSuperGroup
 }
 
-// TODO: rename b *App to a *App
 // cacheGroupMember adds a user to the users table if it is not there already.
-func (b *App) cacheGroupMember(gid, uid int64) error {
-	exists, err := b.model.Users.Exists(gid, uid)
+func (a *App) cacheGroupMember(gid, uid int64) error {
+	exists, err := a.model.Users.Exists(gid, uid)
 	if err != nil {
 		return err
 	}
 	if !exists {
-		if err := b.model.Users.Insert(gid, uid); err != nil {
+		if err := a.model.Users.Insert(gid, uid); err != nil {
 			return err
 		}
 	}

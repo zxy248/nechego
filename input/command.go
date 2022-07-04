@@ -29,6 +29,8 @@ const (
 	CommandTop                   = 106
 	CommandAdmin                 = 107
 	CommandFight                 = 108
+	CommandBalance               = 109
+	CommandTransfer              = 110
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -72,6 +74,8 @@ var commandText = map[Command]string{
 	CommandTop:           "!топ",
 	CommandAdmin:         "!админ",
 	CommandFight:         "!драка",
+	CommandBalance:       "!баланс",
+	CommandTransfer:      "!перевод",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",

@@ -6,10 +6,13 @@ import (
 	"time"
 )
 
-var ErrNoEblan = errors.New("no eblan")
-var ErrNoAdmin = errors.New("no admin")
-var ErrNoPair = errors.New("no pair")
-var ErrNoUser = errors.New("no user")
+var (
+	ErrNoEblan        = errors.New("no eblan")
+	ErrNoAdmin        = errors.New("no admin")
+	ErrNoPair         = errors.New("no pair")
+	ErrNoUser         = errors.New("no user")
+	ErrNotEnoughMoney = errors.New("not enough money to send")
+)
 
 type Model struct {
 	Admins    AdminsModel
@@ -22,6 +25,7 @@ type Model struct {
 	Whitelist WhitelistModel
 	Messages  MessagesModel
 	Energy    EnergyModel
+	Economy   EconomyModel
 }
 
 type AdminsModel interface {
@@ -65,10 +69,12 @@ type StatusModel interface {
 	Disable(int64) error
 }
 
+// TODO: convert int to uint wherever acceptable maybe
 type User struct {
-	GID    int64
-	UID    int64
-	Energy int
+	GID     int64
+	UID     int64
+	Energy  int
+	Balance int
 }
 
 type UsersModel interface {
@@ -94,4 +100,9 @@ type MessagesModel interface {
 type EnergyModel interface {
 	Energy(int64, int64) (int, error)
 	Update(int64, int64, int) error
+}
+
+type EconomyModel interface {
+	Transfer(int64, int64, int64, uint) error
+	Balance(int64, int64) (uint, error)
 }

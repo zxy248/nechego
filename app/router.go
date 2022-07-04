@@ -7,11 +7,11 @@ import (
 )
 
 // route routes an input message to a corresponding handler.
-func (b *App) route(c tele.Context) error {
-	if err := b.handleRandomPhoto(c); err != nil {
+func (a *App) route(c tele.Context) error {
+	if err := a.handleRandomPhoto(c); err != nil {
 		return err
 	}
-	f := b.commandHandler(getMessage(c).Command)
+	f := a.commandHandler(getMessage(c).Command)
 	if f == nil {
 		return nil
 	}
@@ -19,86 +19,90 @@ func (b *App) route(c tele.Context) error {
 }
 
 // commandHandler returns a corresponding handler for a command.
-func (b *App) commandHandler(c input.Command) tele.HandlerFunc {
+func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	switch c {
 	case input.CommandProbability:
-		return b.handleProbability
+		return a.handleProbability
 	case input.CommandWho:
-		return b.handleWho
+		return a.handleWho
 	case input.CommandCat:
-		return b.handleCat
+		return a.handleCat
 	case input.CommandTitle:
-		return b.handleTitle
+		return a.handleTitle
 	case input.CommandAnime:
-		return b.handleAnime
+		return a.handleAnime
 	case input.CommandFurry:
-		return b.handleFurry
+		return a.handleFurry
 	case input.CommandFlag:
-		return b.handleFlag
+		return a.handleFlag
 	case input.CommandPerson:
-		return b.handlePerson
+		return a.handlePerson
 	case input.CommandHorse:
-		return b.handleHorse
+		return a.handleHorse
 	case input.CommandArt:
-		return b.handleArt
+		return a.handleArt
 	case input.CommandCar:
-		return b.handleCar
+		return a.handleCar
 	case input.CommandPair:
-		return b.handlePair
+		return a.handlePair
 	case input.CommandEblan:
-		return b.handleEblan
+		return a.handleEblan
 	case input.CommandAdmin:
-		return b.handleAdmin
+		return a.handleAdmin
 	case input.CommandFight:
-		return requireReply(b.handleFight)
+		return requireReply(a.handleFight)
+	case input.CommandBalance:
+		return a.handleBalance
+	case input.CommandTransfer:
+		return requireReply(a.handleTransfer)
 	case input.CommandMasyunya:
-		return b.masyunyaHandler()
+		return a.masyunyaHandler()
 	case input.CommandPoppy:
-		return b.poppyHandler()
+		return a.poppyHandler()
 	case input.CommandHello:
-		return b.handleHello
+		return a.handleHello
 	case input.CommandMouse:
-		return b.handleMouse
+		return a.handleMouse
 	case input.CommandWeather:
-		return b.handleWeather
+		return a.handleWeather
 	case input.CommandTikTok:
-		return b.handleTikTok
+		return a.handleTikTok
 	case input.CommandList:
-		return b.handleList
+		return a.handleList
 	case input.CommandTop:
-		return b.handleTop
+		return a.handleTop
 	case input.CommandBasili:
-		return b.handleBasili
+		return a.handleBasili
 	case input.CommandCasper:
-		return b.handleCasper
+		return a.handleCasper
 	case input.CommandZeus:
-		return b.handleZeus
+		return a.handleZeus
 	case input.CommandPic:
-		return b.handlePic
+		return a.handlePic
 	case input.CommandDice:
-		return b.handleDice
+		return a.handleDice
 	case input.CommandGame:
-		return b.handleGame
+		return a.handleGame
 	case input.CommandKeyboardOpen:
-		return b.handleKeyboardOpen
+		return a.handleKeyboardOpen
 	case input.CommandKeyboardClose:
-		return b.handleKeyboardClose
+		return a.handleKeyboardClose
 	case input.CommandTurnOn:
-		return b.handleTurnOn
+		return a.handleTurnOn
 	case input.CommandTurnOff:
-		return b.handleTurnOff
+		return a.handleTurnOff
 	case input.CommandBan:
-		return requireAdminAccess(requireReply(b.handleBan))
+		return requireAdminAccess(requireReply(a.handleBan))
 	case input.CommandUnban:
-		return requireAdminAccess(requireReply(b.handleUnban))
+		return requireAdminAccess(requireReply(a.handleUnban))
 	case input.CommandInfo:
-		return b.handleInfo
+		return a.handleInfo
 	case input.CommandHelp:
-		return b.handleHelp
+		return a.handleHelp
 	case input.CommandForbid:
-		return requireAdminAccess(b.handleForbid)
+		return requireAdminAccess(a.handleForbid)
 	case input.CommandPermit:
-		return requireAdminAccess(b.handlePermit)
+		return requireAdminAccess(a.handlePermit)
 	}
 	return nil
 }

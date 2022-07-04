@@ -43,6 +43,8 @@ func (m *Message) Dynamic() (interface{}, error) {
 		return m.topArgument()
 	case CommandForbid, CommandPermit:
 		return m.commandActionArgument()
+	case CommandTransfer:
+		return m.transferArgument()
 	}
 	return nil, fmt.Errorf("no dynamic argument for %v", m.Raw)
 }
@@ -73,6 +75,17 @@ func (m *Message) commandActionArgument() (Command, error) {
 		return CommandUnknown, ErrUnknownCommand
 	}
 	return c, nil
+}
+
+var ErrSpecifyAmount = errors.New("Укажите количество средств")
+
+func (m *Message) transferArgument() (uint, error) {
+	s := m.Argument()
+	n, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return 0, ErrSpecifyAmount
+	}
+	return uint(n), nil
 }
 
 // TopArgument represents an argument of the CommandTop.
