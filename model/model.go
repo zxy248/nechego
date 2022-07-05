@@ -80,7 +80,7 @@ type User struct {
 type UsersModel interface {
 	Insert(int64, int64) error
 	Delete(int64, int64) error
-	List(int64) ([]int64, error)
+	List(int64) ([]User, error)
 	All() ([]User, error)
 	Exists(int64, int64) (bool, error)
 	Random(int64) (int64, error)

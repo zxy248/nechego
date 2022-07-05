@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -710,6 +711,8 @@ var (
 	badLuckModifier       = &modifier{-0.10, "Вам не везет."}
 	goodLuckModifier      = &modifier{+0.10, "Вам везет."}
 	excellentLuckModifier = &modifier{+0.30, "Сегодня ваш день."}
+	richModifier          = &modifier{+0.05, "Вы богаты."}
+	poorModifier          = &modifier{-0.35, "Вы бедны."}
 )
 
 // userModifiers returns the user's modifiers.
@@ -741,6 +744,20 @@ func (a *App) userModifiers(gid, uid int64) ([]*modifier, error) {
 	luck := luckModifier(luckLevel(uid))
 	if luck != noModifier {
 		modifiers = append(modifiers, luck)
+	}
+	richest, err := a.richest(gid, uid)
+	if err != nil {
+		return nil, err
+	}
+	if richest {
+		modifiers = append(modifiers, richModifier)
+	}
+	amount, err := a.model.Economy.Balance(gid, uid)
+	if err != nil {
+		return nil, err
+	}
+	if amount < maxMoneyTransfer {
+		modifiers = append(modifiers, poorModifier)
 	}
 	return modifiers, nil
 }
@@ -796,6 +813,42 @@ func luckModifier(luck byte) *modifier {
 	return noModifier
 }
 
+// richest returns true if the user is the richest user in the group.
+func (a *App) richest(gid, uid int64) (bool, error) {
+	users, err := a.richestUsers(gid)
+	if err != nil {
+		return false, err
+	}
+	if uid == users[0].UID {
+		return true, nil
+	}
+	return false, nil
+}
+
+// richestUsers returns a list of users in the group sorted by wealth.
+func (a *App) richestUsers(gid int64) ([]model.User, error) {
+	users, err := a.model.Users.List(gid)
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Balance > users[j].Balance
+	})
+	return users, nil
+}
+
+// poorestUsers returns a list of users in the group sorted by wealth.
+func (a *App) poorestUsers(gid int64) ([]model.User, error) {
+	users, err := a.model.Users.List(gid)
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(users, func(i, j int) bool {
+		return users[i].Balance < users[j].Balance
+	})
+	return users, nil
+}
+
 // totalMessageCount returns the number of messages sent in the specified interval.
 func (a *App) totalMessageCount(gid int64, interval time.Duration) (int, error) {
 	c, err := a.model.Messages.TotalCount(gid, time.Now().Add(-interval))
@@ -818,7 +871,7 @@ const handleProfileTemplate = `ℹ️ Профиль %s %v %s
 
 Баланс на счете: ` + "`" + `%s 💰` + "`" + `
 Запас энергии: ` + "`" + `%v ⚡️` + "`" + `
-Базовая сила: ` + "`" + `%.1f 💪` + "`" + `
+Базовая сила: ` + "`" + `%.2f 💪` + "`" + `
 
 %s
 `
@@ -865,6 +918,8 @@ func (a *App) handleProfile(c tele.Context) error {
 			icon = "☠️"
 		case excellentLuckModifier:
 			icon = "🍀"
+		case richModifier:
+			icon, title = "🎩", "магната"
 		}
 		if m != noModifier {
 			status += m.description + "\n"
@@ -883,9 +938,56 @@ func handleHistory(c tele.Context) error {
 	return nil
 }
 
-// TODO: handleTopRich sends a top of the richest users.
-func handleTopRich(c tele.Context) error {
-	return nil
+const handleTopRichTemplate = "💰 Самые богатые пользователи:\n"
+
+// handleTopRich sends a top of the richest users.
+func (a *App) handleTopRich(c tele.Context) error {
+	gid := c.Chat().ID
+	users, err := a.richestUsers(gid)
+	if err != nil {
+		return err
+	}
+	l := maxTopNumber
+	if len(users) < maxTopNumber {
+		l = len(users)
+	}
+	result := handleTopRichTemplate
+	for i := 0; i < l; i++ {
+		m, err := a.chatMember(gid, users[i].UID)
+		if err != nil {
+			return err
+		}
+		name := markdownEscaper.Replace(chatMemberName(m))
+		result += fmt.Sprintf("_%d\\._ %s, `%s`\n",
+			i+1, mention(users[i].UID, name), formatAmount(users[i].Balance))
+	}
+	return c.Send(result, tele.ModeMarkdownV2)
+}
+
+const handleTopPoorTemplate = "🗑 Самые бедные пользователи:\n"
+
+// handleTopPoor sends a top of the poorest users.
+func (a *App) handleTopPoor(c tele.Context) error {
+	gid := c.Chat().ID
+	users, err := a.poorestUsers(gid)
+	if err != nil {
+		return err
+	}
+	l := maxTopNumber
+	if len(users) < maxTopNumber {
+		l = len(users)
+	}
+	result := handleTopPoorTemplate
+	for i := 0; i < l; i++ {
+		m, err := a.chatMember(gid, users[i].UID)
+		if err != nil {
+			return err
+		}
+		name := markdownEscaper.Replace(chatMemberName(m))
+		result += fmt.Sprintf("_%d\\._ %s, `%s`\n",
+			i+1, mention(users[i].UID, name), formatAmount(users[i].Balance))
+	}
+	return c.Send(result, tele.ModeMarkdownV2)
 }
 
 // TODO: handleTopStrength sends a top of the strongest users.

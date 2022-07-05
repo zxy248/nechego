@@ -32,6 +32,8 @@ const (
 	CommandBalance               = 109
 	CommandTransfer              = 110
 	CommandProfile               = 111
+	CommandTopRich               = 112
+	CommandTopPoor               = 113
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -78,6 +80,8 @@ var commandText = map[Command]string{
 	CommandBalance:       "!баланс",
 	CommandTransfer:      "!перевод",
 	CommandProfile:       "!профиль",
+	CommandTopRich:       "!топ богатых",
+	CommandTopPoor:       "!топ бедных",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",

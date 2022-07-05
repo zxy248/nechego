@@ -46,7 +46,7 @@ func ParseCommand(s string) Command {
 		return CommandEblan
 	case startsWith(s, "!админ дня"):
 		return CommandAdmin
-	case startsWith(s, "!драка", "!дуэль", "!поединок", "!бой", "!сражение", "!борьба", "!атака", "!битва"):
+	case startsWith(s, "!драка", "!дуэль", "!поединок", "!бой", "!сражение", "!борьба", "!атака", "!битва", "!схватка"):
 		return CommandFight
 	case startsWith(s, "!баланс", "!деньги"):
 		return CommandBalance
@@ -54,6 +54,10 @@ func ParseCommand(s string) Command {
 		return CommandTransfer
 	case startsWith(s, "!профиль", "!статистика", "!обо мне"):
 		return CommandProfile
+	case startsWith(s, "!топ богат", "!топ богач"):
+		return CommandTopRich
+	case startsWith(s, "!топ нищих", "!топ бедн"):
+		return CommandTopPoor
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):
 		return CommandMasyunya
 	case startsWith(s, "!паппи", "Паппи 🦊"):

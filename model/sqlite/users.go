@@ -32,27 +32,29 @@ func (u *Users) Delete(gid, uid int64) error {
 	return nil
 }
 
-const listUsersQuery = `select uid from users where gid = ?`
+const listUsersQuery = `
+select gid, uid, energy, balance from users
+where gid = ?`
 
 // List returns all users from the group.
-func (u *Users) List(gid int64) ([]int64, error) {
+func (u *Users) List(gid int64) ([]model.User, error) {
 	rows, err := u.DB.Query(listUsersQuery, gid)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var ids []int64
+	var users []model.User
 	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
+		var user model.User
+		if err := rows.Scan(&user.GID, &user.UID, &user.Energy, &user.Balance); err != nil {
 			return nil, err
 		}
-		ids = append(ids, id)
+		users = append(users, user)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	return ids, nil
+	return users, nil
 }
 
 const allUsersQuery = "select gid, uid, energy, balance from users"
