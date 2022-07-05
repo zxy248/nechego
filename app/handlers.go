@@ -3,6 +3,7 @@ package app
 import (
 	"bytes"
 	"context"
+	"crypto/sha1"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -508,8 +509,8 @@ func (a *App) handleTransfer(c tele.Context) error {
 }
 
 const handleFightTemplate = `
-⚔️ Нападает %s, сила в бою ` + "`%.2f (%v*%.1f*%.1f)`" + `
-🛡 Защищается %s, сила в бою ` + "`%.2f (%v*%.1f*%.1f)`" + `
+⚔️ Нападает %s, сила в бою ` + "`%.1f [%.1f]`" + `
+🛡 Защищается %s, сила в бою ` + "`%.1f [%.1f]`" + `
 
 🏆 %s выходит победителем и забирает ` + "`%s 💰`" + `
 
@@ -549,11 +550,19 @@ func (a *App) handleFight(c tele.Context) error {
 		return c.Send(makeError("Недостаточно энергии"))
 	}
 
-	aStrength, aStrengthActual, err := a.userStrength(gid, aUID)
+	aStrength, _, err := a.userStrength(gid, aUID)
 	if err != nil {
 		return err
 	}
-	dStrength, dStrengthActual, err := a.userStrength(gid, dUID)
+	aStrengthActual, err := a.actualUserStrength(gid, aUID)
+	if err != nil {
+		return err
+	}
+	dStrength, _, err := a.userStrength(gid, dUID)
+	if err != nil {
+		return err
+	}
+	dStrengthActual, err := a.actualUserStrength(gid, dUID)
 	if err != nil {
 		return err
 	}
@@ -594,8 +603,8 @@ func (a *App) handleFight(c tele.Context) error {
 		return err
 	}
 	s := fmt.Sprintf(handleFightTemplate,
-		aMention, displayStrengthMultiplier*aStrength, displayStrengthMultiplier, aStrengthActual, (aStrength / aStrengthActual),
-		dMention, displayStrengthMultiplier*dStrength, displayStrengthMultiplier, dStrengthActual, (dStrength / dStrengthActual),
+		aMention, displayStrengthMultiplier*aStrength, aStrengthActual,
+		dMention, displayStrengthMultiplier*dStrength, dStrengthActual,
 		winnerMention, formatAmount(int(money)), energy)
 	return c.Send(s, tele.ModeMarkdownV2)
 }
@@ -617,16 +626,20 @@ func (a *App) forceTransferMoney(gid, sender, recipient int64, amount uint) (uin
 	return amount, a.model.Economy.Transfer(gid, sender, recipient, amount)
 }
 
-const chanceMultiplier = 0.5
+const chanceRatio = 0.5
 
 // userStrength determines the final strength of a user.
-func (a *App) userStrength(gid, uid int64) (final, actual float64, err error) {
-	chance := 0.5 + rand.Float64()
+func (a *App) userStrength(gid, uid int64) (value float64, chance float64, err error) {
+	chance = rand.Float64()*2 - 1
 	strength, err := a.actualUserStrength(gid, uid)
 	if err != nil {
 		return 0, 0, err
 	}
-	return (chance * chanceMultiplier) * strength, strength, nil
+	result := (strength * (1 - chanceRatio)) + (strength * chance * chanceRatio)
+	a.sugar().Debugf("(%.1f * (1 - %.1f)) + (%.1f * %.1f * %.1f) = %.1f",
+		strength, chanceRatio,
+		strength, chance, chanceRatio, result)
+	return result, chance, nil
 }
 
 const baseStrength = 1
@@ -669,13 +682,6 @@ func (a *App) userMessageCount(gid, uid int64, interval time.Duration) (int, err
 	return c, nil
 }
 
-const (
-	eblanStrengthMultiplier      = -0.2
-	adminStrengthMultiplier      = 0.2
-	fullEnergyStrengthMultiplier = 0.1
-	noEnergyStrengthMultiplier   = -0.3
-)
-
 // strengthMultiplier returns the strength multiplier value.
 func (a *App) strengthMultiplier(gid, uid int64) (float64, error) {
 	multiplier := float64(1)
@@ -684,33 +690,31 @@ func (a *App) strengthMultiplier(gid, uid int64) (float64, error) {
 		return 0, err
 	}
 	for _, m := range modifiers {
-		switch m {
-		case eblanModifier:
-			multiplier += eblanStrengthMultiplier
-		case adminModifier:
-			multiplier += adminStrengthMultiplier
-		case fullEnergyModifier:
-			multiplier += fullEnergyStrengthMultiplier
-		case noEnergyModifier:
-			multiplier += noEnergyStrengthMultiplier
-		}
+		multiplier += m.multiplier
 	}
 	return multiplier, nil
 }
 
-type modifier int
+type modifier struct {
+	multiplier  float64
+	description string
+}
 
-const (
-	noModifier modifier = iota
-	adminModifier
-	eblanModifier
-	fullEnergyModifier
-	noEnergyModifier
+var (
+	noModifier            = &modifier{+0.00, ""}
+	adminModifier         = &modifier{+0.20, "Вы ощущаете власть над остальными."}
+	eblanModifier         = &modifier{-0.20, "Вы чувствуете себя оскорбленным."}
+	fullEnergyModifier    = &modifier{+0.10, "Вы полны сил."}
+	noEnergyModifier      = &modifier{-0.25, "Вы чувствуете себя уставшим."}
+	terribleLuckModifier  = &modifier{-0.50, "Вас преследуют неудачи."}
+	badLuckModifier       = &modifier{-0.10, "Вам не везет."}
+	goodLuckModifier      = &modifier{+0.10, "Вам везет."}
+	excellentLuckModifier = &modifier{+0.30, "Сегодня ваш день."}
 )
 
 // userModifiers returns the user's modifiers.
-func (a *App) userModifiers(gid, uid int64) ([]modifier, error) {
-	var modifiers []modifier
+func (a *App) userModifiers(gid, uid int64) ([]*modifier, error) {
+	var modifiers []*modifier
 	eblan, err := a.model.Eblans.Get(gid)
 	if err != nil {
 		if !errors.Is(err, model.ErrNoEblan) {
@@ -734,12 +738,16 @@ func (a *App) userModifiers(gid, uid int64) ([]modifier, error) {
 	if energy != noModifier {
 		modifiers = append(modifiers, energy)
 	}
+	luck := luckModifier(luckLevel(uid))
+	if luck != noModifier {
+		modifiers = append(modifiers, luck)
+	}
 	return modifiers, nil
 }
 
 // energyModifier returns the user's energy modifier.
 // If there is no modifier, returns noModifier, nil.
-func (a *App) energyModifier(gid, uid int64) (modifier, error) {
+func (a *App) energyModifier(gid, uid int64) (*modifier, error) {
 	e, err := a.model.Energy.Energy(gid, uid)
 	if err != nil {
 		return noModifier, err
@@ -767,6 +775,27 @@ func formatAmount(n int) string {
 	}
 }
 
+func luckLevel(uid int64) byte {
+	now := time.Now()
+	seed := fmt.Sprintf("%v%v%v%v", uid, now.Day(), now.Month(), now.Year())
+	data := sha1.Sum([]byte(seed))
+	return data[0]
+}
+
+func luckModifier(luck byte) *modifier {
+	switch {
+	case luck <= 10:
+		return terribleLuckModifier
+	case luck <= 40:
+		return badLuckModifier
+	case luck <= 70:
+		return goodLuckModifier
+	case luck <= 80:
+		return excellentLuckModifier
+	}
+	return noModifier
+}
+
 // totalMessageCount returns the number of messages sent in the specified interval.
 func (a *App) totalMessageCount(gid int64, interval time.Duration) (int, error) {
 	c, err := a.model.Messages.TotalCount(gid, time.Now().Add(-interval))
@@ -783,6 +812,8 @@ func handleEnergy(c tele.Context) error {
 
 // TODO: messages per day, messages total
 // TODO: energy restore timeout
+// TODO: вы богаче %v пользователей
+// TODO: !капитал - в конференции 1238 монет.
 const handleProfileTemplate = `ℹ️ Профиль %s %v %s
 
 Баланс на счете: ` + "`" + `%s 💰` + "`" + `
@@ -828,14 +859,15 @@ func (a *App) handleProfile(c tele.Context) error {
 		switch m {
 		case eblanModifier:
 			icon, title = "😸", "еблана"
-			status += "Вы чувствуете себя оскорбленным.\n"
 		case adminModifier:
 			icon, title = "👑", "администратора"
-			status += "Вы ощущаете власть над остальными.\n"
-		case fullEnergyModifier:
-			status += "Вы полны сил.\n"
-		case noEnergyModifier:
-			status += "Вы чувствуете себя уставшим.\n"
+		case terribleLuckModifier:
+			icon = "☠️"
+		case excellentLuckModifier:
+			icon = "🍀"
+		}
+		if m != noModifier {
+			status += m.description + "\n"
 		}
 	}
 	if status != "" {

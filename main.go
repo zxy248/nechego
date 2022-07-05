@@ -19,6 +19,7 @@ const (
 	tokenEnv = "NECHEGO_TOKEN" // bot token
 	dsnEnv   = "NECHEGO_DSN"   // data source name
 	ownerEnv = "NECHEGO_OWNER" // bot owner's id
+	debugEnv = "NECHEGO_DEBUG" // set to 1 for debug output
 )
 
 func init() {
@@ -39,7 +40,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logger, err := zap.NewProduction()
+	var logger *zap.Logger
+	if debug() {
+		logger, err = zap.NewDevelopment()
+	} else {
+		logger, err = zap.NewProduction()
+	}
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,4 +90,9 @@ func owner() int64 {
 		log.Fatal(err)
 	}
 	return i
+}
+
+func debug() bool {
+	v := os.Getenv(debugEnv)
+	return v == "1"
 }
