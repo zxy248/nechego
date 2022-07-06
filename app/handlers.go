@@ -215,7 +215,7 @@ func (a *App) handlePair(c tele.Context) error {
 	namex := markdownEscaper.Replace(chatMemberName(mx))
 	namey := markdownEscaper.Replace(chatMemberName(my))
 	return c.Send(fmt.Sprintf(pairOfTheDayFormat,
-		mention(x, namex), mention(y, namey)), tele.ModeMarkdownV2)
+		mentionName(x, namex), mentionName(y, namey)), tele.ModeMarkdownV2)
 }
 
 const eblanOfTheDayFormat = "Еблан дня: %s 😸"
@@ -232,7 +232,7 @@ func (a *App) handleEblan(c tele.Context) error {
 		return err
 	}
 	name := markdownEscaper.Replace(chatMemberName(m))
-	return c.Send(fmt.Sprintf(eblanOfTheDayFormat, mention(uid, name)), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf(eblanOfTheDayFormat, mentionName(uid, name)), tele.ModeMarkdownV2)
 }
 
 const adminOfTheDayFormat = "Админ дня: %s 👑"
@@ -248,7 +248,7 @@ func (a *App) handleAdmin(c tele.Context) error {
 		return err
 	}
 	name := markdownEscaper.Replace(chatMemberName(m))
-	return c.Send(fmt.Sprintf(adminOfTheDayFormat, mention(uid, name)), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf(adminOfTheDayFormat, mentionName(uid, name)), tele.ModeMarkdownV2)
 }
 
 const masyunyaStickersName = "masyunya_vk"
@@ -372,7 +372,7 @@ func (a *App) handleList(c tele.Context) error {
 			return err
 		}
 		name := markdownEscaper.Replace(chatMemberName(m))
-		list = list + "— " + mention(uid, name) + "\n"
+		list = list + "— " + mentionName(uid, name) + "\n"
 	}
 	msg := markdownEscaper.Replace(getMessage(c).Argument())
 	return c.Send(fmt.Sprintf(listTemplate, msg, list), tele.ModeMarkdownV2)
@@ -413,7 +413,7 @@ func (a *App) handleTop(c tele.Context) error {
 			return err
 		}
 		name := markdownEscaper.Replace(chatMemberName(m))
-		top = top + fmt.Sprintf("_%d\\._ %s\n", i+1, mention(uid, name))
+		top = top + fmt.Sprintf("_%d\\._ %s\n", i+1, mentionName(uid, name))
 	}
 
 	s := markdownEscaper.Replace(argument.String)
@@ -500,7 +500,7 @@ func (a *App) handleTransfer(c tele.Context) error {
 	if err != nil {
 		return err
 	}
-	ment := mention(recipient, markdownEscaper.Replace(chatMemberName(mem)))
+	ment := mentionName(recipient, markdownEscaper.Replace(chatMemberName(mem)))
 	return c.Send(fmt.Sprintf(handleTransferTemplate, ment, formatAmount(int(amount))), tele.ModeMarkdownV2)
 }
 
@@ -582,8 +582,8 @@ func (a *App) handleFight(c tele.Context) error {
 	if err != nil {
 		return err
 	}
-	aMention := mention(aUID, markdownEscaper.Replace(chatMemberName(aMember)))
-	dMention := mention(dUID, markdownEscaper.Replace(chatMemberName(dMember)))
+	aMention := mentionName(aUID, markdownEscaper.Replace(chatMemberName(aMember)))
+	dMention := mentionName(dUID, markdownEscaper.Replace(chatMemberName(dMember)))
 
 	var winnerUID, loserUID int64
 	var winnerMention string
@@ -763,7 +763,7 @@ func (a *App) userModifiers(gid, uid int64) ([]*modifier, error) {
 	if luck != noModifier {
 		modifiers = append(modifiers, luck)
 	}
-	richest, err := a.richest(gid, uid)
+	richest, err := a.isRichest(gid, uid)
 	if err != nil {
 		return nil, err
 	}
@@ -831,8 +831,8 @@ func luckModifier(luck byte) *modifier {
 	return noModifier
 }
 
-// richest returns true if the user is the richest user in the group.
-func (a *App) richest(gid, uid int64) (bool, error) {
+// isRichest returns true if the user is the richest user in the group.
+func (a *App) isRichest(gid, uid int64) (bool, error) {
 	users, err := a.richestUsers(gid)
 	if err != nil {
 		return false, err
@@ -841,6 +841,18 @@ func (a *App) richest(gid, uid int64) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+// richestUser returns the richest user in the group.
+func (a *App) richestUser(gid int64) (model.User, error) {
+	users, err := a.richestUsers(gid)
+	if err != nil {
+		return model.User{}, nil
+	}
+	if len(users) < 1 {
+		return model.User{}, errors.New("the list of users is too short")
+	}
+	return users[0], nil
 }
 
 // richestUsers returns a list of users in the group sorted by wealth.
@@ -906,7 +918,7 @@ func (a *App) handleProfile(c tele.Context) error {
 		return err
 	}
 	name := markdownEscaper.Replace(chatMemberName(member))
-	mention := mention(uid, name)
+	mention := mentionName(uid, name)
 
 	energy, err := a.model.Energy.Energy(gid, uid)
 	if err != nil {
@@ -977,7 +989,7 @@ func (a *App) handleTopRich(c tele.Context) error {
 		}
 		name := markdownEscaper.Replace(chatMemberName(m))
 		result += fmt.Sprintf("_%d\\._ %s, `%s`\n",
-			i+1, mention(users[i].UID, name), formatAmount(users[i].Balance))
+			i+1, mentionName(users[i].UID, name), formatAmount(users[i].Balance))
 	}
 	return c.Send(result, tele.ModeMarkdownV2)
 }
@@ -1003,7 +1015,7 @@ func (a *App) handleTopPoor(c tele.Context) error {
 		}
 		name := markdownEscaper.Replace(chatMemberName(m))
 		result += fmt.Sprintf("_%d\\._ %s, `%s`\n",
-			i+1, mention(users[i].UID, name), formatAmount(users[i].Balance))
+			i+1, mentionName(users[i].UID, name), formatAmount(users[i].Balance))
 	}
 	return c.Send(result, tele.ModeMarkdownV2)
 }
@@ -1011,6 +1023,66 @@ func (a *App) handleTopPoor(c tele.Context) error {
 // TODO: handleTopStrength sends a top of the strongest users.
 func handleTopStrength(c tele.Context) error {
 	return nil
+}
+
+const handleCapitalTemplate = "💸 Капитал беседы *%s*: `%s 💰`\n\n" +
+	"_В руках магната %s `%s 💰`,\nили `%.1f%%` от общего количества средств\\._\n\n" +
+	"_В среднем на счету у пользователя: `%s 💰`_\n"
+
+func (a *App) handleCapital(c tele.Context) error {
+	gid := c.Chat().ID
+	title := c.Chat().Title
+	u, err := a.richestUser(gid)
+	if err != nil {
+		return err
+	}
+	mention, err := a.mentionUser(gid, u.UID)
+	if err != nil {
+		return err
+	}
+	balance, err := a.groupBalance(gid)
+	if err != nil {
+		return err
+	}
+	avg, err := a.averageBalance(gid)
+	if err != nil {
+		return err
+	}
+	percentage := float64(u.Balance) / float64(balance) * 100
+	out := fmt.Sprintf(handleCapitalTemplate,
+		title, formatAmount(int(balance)),
+		mention, formatAmount(u.Balance), percentage,
+		formatAmount(int(avg)))
+	return c.Send(out, tele.ModeMarkdownV2)
+}
+
+// groupBalance returns the group's balance.
+func (a *App) groupBalance(gid int64) (uint, error) {
+	users, err := a.model.Users.List(gid)
+	if err != nil {
+		return 0, err
+	}
+	sum := uint(0)
+	for _, u := range users {
+		sum += uint(u.Balance)
+	}
+	return sum, nil
+}
+
+// averageBalance returns the group's average balance.
+func (a *App) averageBalance(gid int64) (float64, error) {
+	users, err := a.model.Users.List(gid)
+	if err != nil {
+		return 0, err
+	}
+	if len(users) < 1 {
+		return 0, errors.New("the list of users is empty")
+	}
+	var sum float64 = 0
+	for _, u := range users {
+		sum += float64(u.Balance)
+	}
+	return sum / float64(len(users)), nil
 }
 
 const randomPhotoChance = 0.02
@@ -1140,7 +1212,7 @@ func (a *App) adminList(gid int64) (string, error) {
 			continue
 		}
 		name := markdownEscaper.Replace(chatMemberName(m))
-		admins += "— " + mention(uid, name) + "\n"
+		admins += "— " + mentionName(uid, name) + "\n"
 	}
 	if admins == "" {
 		admins = "…\n"
@@ -1165,7 +1237,7 @@ func (a *App) banList(gid int64) (string, error) {
 			continue
 		}
 		name := markdownEscaper.Replace(chatMemberName(m))
-		banned += "— " + mention(uid, name) + "\n"
+		banned += "— " + mentionName(uid, name) + "\n"
 	}
 	if banned == "" {
 		banned = "…\n"
@@ -1207,10 +1279,15 @@ const help = `📖 *Команды* 📌
 	"— `!масюня` ||💖||\n" +
 	"— `!паппи`\n" +
 	"— `!игра`\n" +
+	`
+💵 _Экономика_
+` +
 	"— `!кости`\n" +
 	"— `!драка`\n" +
-	"— `!баланс`\n" +
 	"— `!перевод`\n" +
+	"— `!баланс`\n" +
+	"— `!капитал`\n" +
+	"— `!профиль`\n" +
 	`
 🔮 _Нейросети_
 ` +
@@ -1232,17 +1309,20 @@ const help = `📖 *Команды* 📌
 	`
 🔧 _Управление_
 ` +
+	"— `!информация`\n" +
+	"— `!команды`\n" +
 	"— `!открыть`\n" +
 	"— `!закрыть`\n" +
 	"— `!включить`\n" +
 	"— `!выключить`\n" +
+	"— `!имя`\n" +
+	`
+👤 _Администрирование_
+` +
 	"— `!запретить`\n" +
 	"— `!разрешить`\n" +
 	"— `!бан`\n" +
-	"— `!разбан`\n" +
-	"— `!имя`\n" +
-	"— `!информация`\n" +
-	"— `!команды`\n"
+	"— `!разбан`\n"
 
 func (a *App) handleHelp(c tele.Context) error {
 	return c.Send(help, tele.ModeMarkdownV2)
@@ -1352,12 +1432,22 @@ func (a *App) isGroupMember(group tele.Recipient, user tele.Recipient) bool {
 
 // who returns the mention of the user prepended to the message.
 func who(uid int64, name, message string) string {
-	return mention(uid, name) + " " + message
+	return mentionName(uid, name) + " " + message
 }
 
-// mention returns the mention of the user by the name.
-func mention(uid int64, name string) string {
+// mentionName returns the mentionName of the user by the name.
+func mentionName(uid int64, name string) string {
 	return fmt.Sprintf("[%s](tg://user?id=%d)", name, uid)
+}
+
+// mentionUser returns the mention of the user by his name.
+func (a *App) mentionUser(gid, uid int64) (string, error) {
+	m, err := a.chatMember(gid, uid)
+	if err != nil {
+		return "", err
+	}
+	name := markdownEscaper.Replace(chatMemberName(m))
+	return mentionName(uid, name), nil
 }
 
 // fetchPicture returns a picture located at the specified URL.

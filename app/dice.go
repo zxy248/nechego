@@ -71,7 +71,7 @@ func (a *App) handleDice(c tele.Context) error {
 		return err
 	}
 	out := fmt.Sprintf(handleDiceTemplate,
-		mention(uid, markdownEscaper.Replace(chatMemberName(member))),
+		mentionName(uid, markdownEscaper.Replace(chatMemberName(member))),
 		formatAmount(int(amount)),
 		secondsForRoll)
 	return c.Send(out, tele.ModeMarkdownV2)

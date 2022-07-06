@@ -58,6 +58,8 @@ func ParseCommand(s string) Command {
 		return CommandTopRich
 	case startsWith(s, "!топ нищих", "!топ бедн"):
 		return CommandTopPoor
+	case startsWith(s, "!капитал"):
+		return CommandCapital
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):
 		return CommandMasyunya
 	case startsWith(s, "!паппи", "Паппи 🦊"):

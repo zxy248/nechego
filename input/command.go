@@ -34,6 +34,7 @@ const (
 	CommandProfile               = 111
 	CommandTopRich               = 112
 	CommandTopPoor               = 113
+	CommandCapital               = 114
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -82,6 +83,7 @@ var commandText = map[Command]string{
 	CommandProfile:       "!профиль",
 	CommandTopRich:       "!топ богатых",
 	CommandTopPoor:       "!топ бедных",
+	CommandCapital:       "!капитал",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",
