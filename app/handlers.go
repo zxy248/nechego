@@ -454,11 +454,6 @@ func (a *App) handlePic(c tele.Context) error {
 	return sendRandomFileWith(c, picPath, randomFileFromHierarchy)
 }
 
-// handleDice rolls a dice.
-func (a *App) handleDice(c tele.Context) error {
-	return c.Send(tele.Cube)
-}
-
 var games = []*tele.Dice{tele.Dart, tele.Ball, tele.Goal, tele.Slot, tele.Bowl}
 
 func (a *App) handleGame(c tele.Context) error {
@@ -509,7 +504,8 @@ func (a *App) handleTransfer(c tele.Context) error {
 	return c.Send(fmt.Sprintf(handleTransferTemplate, ment, formatAmount(int(amount))), tele.ModeMarkdownV2)
 }
 
-const handleFightTemplate = `
+const (
+	handleFightTemplate = `
 ⚔️ Нападает %s, сила в бою ` + "`%.1f [%.1f]`" + `
 🛡 Защищается %s, сила в бою ` + "`%.1f [%.1f]`" + `
 
@@ -517,10 +513,20 @@ const handleFightTemplate = `
 
 Энергии осталось: ` + "`%v ⚡️`" + `
 `
+	handleFightZeroTemplate = `
+⚔️ Нападает %s, сила в бою ` + "`%.1f [%.1f]`" + `
+🛡 Защищается %s, сила в бою ` + "`%.1f [%.1f]`" + `
+
+🏆 %s выходит победителем и забирает из последних запасов проигравшего ` + "`%s 💰`" + `
+
+Энергии осталось: ` + "`%v ⚡️`" + `
+`
+)
 
 const (
 	fightEnergyDelta          = -1
-	maxMoneyTransfer          = 10
+	maxWinReward              = 10
+	maxPoorWinReward          = 3
 	displayStrengthMultiplier = 10
 )
 
@@ -591,7 +597,7 @@ func (a *App) handleFight(c tele.Context) error {
 		loserUID = aUID
 	}
 
-	amount := 1 + uint(rand.Intn(maxMoneyTransfer-1))
+	amount := 1 + uint(rand.Intn(maxWinReward-1))
 	money, err := a.forceTransferMoney(gid, loserUID, winnerUID, amount)
 	if err != nil {
 		return err
@@ -603,10 +609,22 @@ func (a *App) handleFight(c tele.Context) error {
 	if err != nil {
 		return err
 	}
-	s := fmt.Sprintf(handleFightTemplate,
-		aMention, displayStrengthMultiplier*aStrength, aStrengthActual,
-		dMention, displayStrengthMultiplier*dStrength, dStrengthActual,
-		winnerMention, formatAmount(int(money)), energy)
+	var s string
+	if money == 0 {
+		reward := 1 + rand.Intn(maxPoorWinReward-1)
+		if err := a.model.Economy.Update(gid, winnerUID, reward); err != nil {
+			return err
+		}
+		s = fmt.Sprintf(handleFightZeroTemplate,
+			aMention, displayStrengthMultiplier*aStrength, aStrengthActual,
+			dMention, displayStrengthMultiplier*dStrength, dStrengthActual,
+			winnerMention, formatAmount(reward), energy)
+	} else {
+		s = fmt.Sprintf(handleFightTemplate,
+			aMention, displayStrengthMultiplier*aStrength, aStrengthActual,
+			dMention, displayStrengthMultiplier*dStrength, dStrengthActual,
+			winnerMention, formatAmount(int(money)), energy)
+	}
 	return c.Send(s, tele.ModeMarkdownV2)
 }
 
@@ -712,7 +730,7 @@ var (
 	goodLuckModifier      = &modifier{+0.10, "Вам везет."}
 	excellentLuckModifier = &modifier{+0.30, "Сегодня ваш день."}
 	richModifier          = &modifier{+0.05, "Вы богаты."}
-	poorModifier          = &modifier{-0.35, "Вы бедны."}
+	poorModifier          = &modifier{-0.05, "Вы бедны."}
 )
 
 // userModifiers returns the user's modifiers.
@@ -756,7 +774,7 @@ func (a *App) userModifiers(gid, uid int64) ([]*modifier, error) {
 	if err != nil {
 		return nil, err
 	}
-	if amount < maxMoneyTransfer {
+	if amount < maxWinReward {
 		modifiers = append(modifiers, poorModifier)
 	}
 	return modifiers, nil

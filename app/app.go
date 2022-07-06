@@ -24,6 +24,7 @@ func NewApp(b *tele.Bot, m *model.Model, l *zap.Logger) *App {
 func (a *App) Start() {
 	go a.restoreEnergyEvery(restoreEnergyCooldown)
 	a.bot.Handle(tele.OnText, a.route, a.preprocess, a.logMessage)
+	a.bot.Handle(tele.OnDice, a.handleRoll, a.preprocess)
 	a.bot.Handle(tele.OnUserJoined, a.handleJoin, a.preprocess)
 	a.bot.Start()
 }

@@ -11,7 +11,7 @@ var (
 	ErrNoAdmin        = errors.New("no admin")
 	ErrNoPair         = errors.New("no pair")
 	ErrNoUser         = errors.New("no user")
-	ErrNotEnoughMoney = errors.New("not enough money to send")
+	ErrNotEnoughMoney = errors.New("not enough money")
 )
 
 type Model struct {
@@ -105,4 +105,5 @@ type EnergyModel interface {
 type EconomyModel interface {
 	Transfer(int64, int64, int64, uint) error
 	Balance(int64, int64) (uint, error)
+	Update(int64, int64, int) error
 }

@@ -133,6 +133,8 @@ func (a *App) logMessage(next tele.HandlerFunc) tele.HandlerFunc {
 		err := next(c)
 		a.sugar().Infow(msg.Raw,
 			"command", msg.Command,
+			"uid", c.Sender().ID,
+			"gid", c.Chat().ID,
 			"time", time.Since(t0))
 		return err
 	}

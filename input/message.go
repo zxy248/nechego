@@ -45,6 +45,8 @@ func (m *Message) Dynamic() (interface{}, error) {
 		return m.commandActionArgument()
 	case CommandTransfer:
 		return m.transferArgument()
+	case CommandDice:
+		return m.diceArgument()
 	}
 	return nil, fmt.Errorf("no dynamic argument for %v", m.Raw)
 }
@@ -80,6 +82,15 @@ func (m *Message) commandActionArgument() (Command, error) {
 var ErrSpecifyAmount = errors.New("Укажите количество средств")
 
 func (m *Message) transferArgument() (uint, error) {
+	s := m.Argument()
+	n, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return 0, ErrSpecifyAmount
+	}
+	return uint(n), nil
+}
+
+func (m *Message) diceArgument() (uint, error) {
 	s := m.Argument()
 	n, err := strconv.ParseUint(s, 10, 32)
 	if err != nil {

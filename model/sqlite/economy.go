@@ -13,7 +13,7 @@ type Economy struct {
 const (
 	economyVerifyAmountQuery    = "select balance >= ? from users where gid = ? and uid = ?"
 	economyVerifyRecipientQuery = "select 1 from users where gid = ? and uid = ?"
-	economySetBalanceQuery      = "update users set balance = balance + ? where gid = ? and uid = ?"
+	economyUpdateBalanceQuery   = "update users set balance = balance + ? where gid = ? and uid = ?"
 )
 
 // Transfer sends the specified amount of money from one user to another.
@@ -43,11 +43,11 @@ func (e *Economy) Transfer(gid, sender, recipient int64, amount uint) error {
 		return model.ErrNotEnoughMoney
 	}
 
-	_, err = tx.Exec(economySetBalanceQuery, -amount, gid, sender)
+	_, err = tx.Exec(economyUpdateBalanceQuery, -amount, gid, sender)
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(economySetBalanceQuery, amount, gid, recipient)
+	_, err = tx.Exec(economyUpdateBalanceQuery, amount, gid, recipient)
 	if err != nil {
 		return err
 	}
@@ -70,4 +70,37 @@ func (e *Economy) Balance(gid, uid int64) (uint, error) {
 		return 0, err
 	}
 	return amount, nil
+}
+
+// Update changes the user's balance by delta.
+// Returns model.ErrNotEnoughMoney and does nothing when the user's balance would be less than 0.
+func (e *Economy) Update(gid, uid int64, delta int) error {
+	tx, err := e.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if delta < 0 {
+		var enough bool
+		if err := tx.QueryRow(economyVerifyAmountQuery, -delta, gid, uid).Scan(&enough); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return model.ErrNoUser
+			}
+			return err
+		}
+		if !enough {
+			return model.ErrNotEnoughMoney
+		}
+	}
+
+	_, err = tx.Exec(economyUpdateBalanceQuery, delta, gid, uid)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
 }
