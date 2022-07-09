@@ -21,6 +21,7 @@ func (a *App) pipeline(next tele.HandlerFunc) tele.HandlerFunc {
 		a.injectUser,
 		requireUserUnbanned,
 		a.requireCommandPermitted,
+		a.incrementMessageCount,
 	}
 	for i := len(line) - 1; i >= 0; i-- {
 		next = line[i](next)
@@ -85,6 +86,7 @@ func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
 				Admin:    false,
 				Banned:   false,
 				Messages: 0,
+				CanFish:  false,
 			}
 			a.model.InsertUser(u)
 		} else if err != nil {
@@ -202,5 +204,12 @@ func (a *App) logMessage(next tele.HandlerFunc) tele.HandlerFunc {
 			"gid", c.Chat().ID,
 			"time", time.Since(t0))
 		return err
+	}
+}
+
+func (a *App) incrementMessageCount(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		a.model.IncrementMessages(getUser(c))
+		return next(c)
 	}
 }

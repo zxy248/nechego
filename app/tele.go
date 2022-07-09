@@ -82,9 +82,7 @@ func (a *App) mentionUser(u model.User) (string, error) {
 func (a *App) mustMentionUser(u model.User) string {
 	name, err := a.mentionUser(u)
 	if err != nil {
-		a.SugarLog().Errorw("can't mention the user",
-			"user", u,
-		)
+		a.SugarLog().Errorw("can't mention the user", "user", u)
 		return "Имя не найдено"
 	}
 	return name

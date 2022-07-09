@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"nechego/input"
 	"nechego/model"
 	"sync"
 	"time"
@@ -88,6 +87,10 @@ const (
 	diceBonusChance = 0.2
 	diceRollTime    = time.Second * 25
 	diceMinBet      = 1
+	diceInProgress  = "Игра уже идет"
+	betTooLow       = "Поставьте больше средств"
+	tired           = "_Вы устали от азартных игр\\. Энергии осталось: `%d ⚡️`_"
+	tiredChance     = 0.2
 )
 
 var handleDiceMutex = &sync.Mutex{}
@@ -99,47 +102,55 @@ func (a *App) handleDice(c tele.Context) error {
 	group := getGroup(c)
 	user := getUser(c)
 
-	_, ok := currentDiceGame(group)
-	if ok {
-		return c.Send(makeError("Игра уже идет"))
+	if user.Energy == 0 {
+		return userError(c, notEnoughEnergy)
 	}
 
-	arg, err := getMessage(c).Dynamic()
+	_, ok := currentDiceGame(group)
+	if ok {
+		return userError(c, diceInProgress)
+	}
+
+	bet, err := moneyArgument(c)
 	if err != nil {
-		if errors.Is(err, input.ErrSpecifyAmount) {
-			return c.Send(makeError("Укажите количество средств"))
-		}
-		if errors.Is(err, input.ErrNotPositive) {
-			return c.Send(makeError("Некорректная ставка"))
-		}
 		return err
 	}
-	bet := arg.(int)
+	if bet == 0 {
+		return nil
+	}
 	if bet < diceMinBet {
-		return c.Send(makeError("Поставьте больше средств"))
+		return userError(c, betTooLow)
 	}
 
 	ok = a.model.UpdateMoney(user, -bet)
 	if !ok {
-		return c.Send(makeError("Недостаточно средств"))
+		return userError(c, notEnoughMoney)
 	}
+
+	defer func() {
+		if rand.Float64() < tiredChance {
+			a.model.UpdateEnergy(user, -energyDelta, energyCap)
+			err := c.Send(fmt.Sprintf(tired, user.Energy-1), tele.ModeMarkdownV2)
+			if err != nil {
+				a.SugarLog().Error(err)
+			}
+		}
+	}()
 
 	dice := &tele.Dice{Type: tele.Cube.Type}
 	msg, err := dice.Send(c.Bot(), c.Chat(), &tele.SendOptions{})
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	roll := msg.Dice.Value
 
 	game := makeDiceGame(user, bet, roll)
 	game.startDiceGame(func() {
-		c.Send(fmt.Sprintf(diceTimeout,
-			formatAmount(game.money)),
+		c.Send(fmt.Sprintf(diceTimeout, formatAmount(game.money)),
 			tele.ModeMarkdownV2)
 	})
 
-	out := fmt.Sprintf(diceStart,
-		a.mustMentionUser(user), formatAmount(bet, diceRollTime/time.Second)
+	out := fmt.Sprintf(diceStart, a.mustMentionUser(user), formatAmount(bet), diceRollTime/time.Second)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 

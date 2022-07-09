@@ -48,7 +48,7 @@ func probability(message string) string {
 func (a *App) handleWho(c tele.Context) error {
 	u, err := a.model.RandomUser(getGroup(c))
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	message := markdownEscaper.Replace(getMessage(c).Argument())
 	return c.Send(fmt.Sprintf("%s %s", a.mustMentionUser(u), message), tele.ModeMarkdownV2)
@@ -58,7 +58,7 @@ const (
 	maxNameLength = 16
 	nameTooLong   = "Максимальная длина имени 16 символов"
 	yourNameIs    = "Ваше имя: *%s* 🔖"
-	pleaseReEnter = "Для использования этой функции Вам необходимо перезайти в беседу"
+	pleaseReEnter = "Перезайдите в беседу чтобы использовать эту функцию"
 	nameSet       = "Имя *%s* установлено ✅"
 )
 
@@ -70,10 +70,10 @@ func (a *App) handleTitle(c tele.Context) error {
 		return c.Send(fmt.Sprintf(yourNameIs, a.mustMentionUser(user)), tele.ModeMarkdownV2)
 	}
 	if utf8.RuneCountInString(newName) > maxNameLength {
-		return c.Send(makeError(nameTooLong))
+		return userError(c, nameTooLong)
 	}
 	if err := setName(c, user, newName); err != nil {
-		return c.Send(makeError(pleaseReEnter))
+		return userError(c, pleaseReEnter)
 	}
 	return c.Send(fmt.Sprintf(nameSet, markdownEscaper.Replace(newName)), tele.ModeMarkdownV2)
 }
@@ -95,9 +95,12 @@ func (a *App) handleMouse(c tele.Context) error {
 }
 
 const (
-	weatherTimeout = 10 * time.Second
-	weatherURL     = "https://wttr.in/"
-	weatherFormat  = "?format=%l:+%c+%t+\nОщущается+как+%f\n\nВетер+—+%w\nВлажность+—+%h\nДавление+—+%P\nФаза+луны+—+%m\nУФ-индекс+—+%u\n"
+	weatherTimeout      = 10 * time.Second
+	weatherTimeoutError = "Время запроса вышло ☔️"
+	placeNotExists      = "Такого места не существует ☔️"
+	weatherBadRequest   = "Неудачный запрос ☔️"
+	weatherURL          = "https://wttr.in/"
+	weatherFormat       = "?format=%l:+%c+%t+\nОщущается+как+%f\n\nВетер+—+%w\nВлажность+—+%h\nДавление+—+%P\nФаза+луны+—+%m\nУФ-индекс+—+%u\n"
 )
 
 // handleWeather sends the current weather for a given city
@@ -106,22 +109,22 @@ func (a *App) handleWeather(c tele.Context) error {
 	r, err := fetchWeather(place)
 	if err != nil {
 		if err.(*url.Error).Timeout() {
-			return c.Send(makeError("Время запроса вышло ☔️"))
+			return userError(c, weatherTimeoutError)
 		}
-		return err
+		return internalError(c, err)
 	}
 	defer r.Body.Close()
 
 	if r.StatusCode != http.StatusOK {
 		if r.StatusCode == http.StatusNotFound {
-			return c.Send(makeError("Такого места не существует ☔️"))
+			return userError(c, placeNotExists)
 		}
-		return c.Send(makeError("Неудачный запрос ☔️"))
+		return userError(c, weatherBadRequest)
 	}
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	return c.Send(string(data))
 }
@@ -157,34 +160,26 @@ func (a *App) handleList(c tele.Context) error {
 	n := randInRange(minListLength, maxListLength)
 	users, err := a.model.RandomUsers(getGroup(c), n)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	what := markdownEscaper.Replace(getMessage(c).Argument())
 	out := fmt.Sprintf(handleListTemplate, what, a.formatUnorderedList(users))
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-func (a *App) formatUnorderedList(users []model.User) string {
-	var list string
-	for _, u := range users {
-		list += fmt.Sprintf("— %s\n", a.mustMentionUser(u))
-	}
-	return list
-}
-
 const (
 	numberedTopTemplate   = "Топ %d %s 🏆\n%s"
 	unnumberedTopTemplate = "Топ %s 🏆\n%s"
 	maxTopNumber          = 5
+	badTopNumber          = "Некорректное число"
 )
 
 // !топ
 func (a *App) handleTop(c tele.Context) error {
-	arg, err := getMessage(c).Dynamic()
+	argument, err := getMessage(c).TopArgument()
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
-	argument := arg.(input.TopArgument)
 
 	var number int
 	if argument.Number != nil {
@@ -192,12 +187,12 @@ func (a *App) handleTop(c tele.Context) error {
 	} else {
 		number = maxTopNumber
 	}
-	if number < 1 || number > maxTopNumber {
-		return c.Send(makeError("Некорректное число"))
+	if number <= 0 || number > maxTopNumber {
+		return userError(c, badTopNumber)
 	}
 	users, err := a.model.RandomUsers(getGroup(c), number)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	top := a.formatOrderedList(users)
 	what := markdownEscaper.Replace(argument.String)
@@ -208,14 +203,6 @@ func (a *App) handleTop(c tele.Context) error {
 		out = fmt.Sprintf(unnumberedTopTemplate, what, top)
 	}
 	return c.Send(out, tele.ModeMarkdownV2)
-}
-
-func (a *App) formatOrderedList(users []model.User) string {
-	var list string
-	for i, u := range users {
-		list += fmt.Sprintf("%d\\. %s\n", i+1, a.mustMentionUser(u))
-	}
-	return list
 }
 
 var games = []*tele.Dice{tele.Dart, tele.Ball, tele.Goal, tele.Slot, tele.Bowl}
@@ -260,14 +247,20 @@ const (
 // !включить
 func (a *App) handleTurnOn(c tele.Context) error {
 	emoji := emojisActive[rand.Intn(len(emojisActive))]
-	a.model.EnableGroup(getGroup(c))
+	ok := a.model.EnableGroup(getGroup(c))
+	if !ok {
+		return c.Send(fmt.Sprintf(botAlreadyTurnedOn, emoji))
+	}
 	return c.Send(fmt.Sprintf(botTurnedOn, emoji))
 }
 
 // !выключить
 func (a *App) handleTurnOff(c tele.Context) error {
 	emoji := emojisInactive[rand.Intn(len(emojisInactive))]
-	a.model.DisableGroup(getGroup(c))
+	ok := a.model.DisableGroup(getGroup(c))
+	if !ok {
+		return c.Send(fmt.Sprintf(botAlreadyTurnedOff, emoji))
+	}
 	return c.Send(fmt.Sprintf(botTurnedOff, emoji), tele.RemoveKeyboard)
 }
 
@@ -305,15 +298,15 @@ func (a *App) handleInfo(c tele.Context) error {
 	group := getGroup(c)
 	admins, err := a.adminList(group)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	bans, err := a.banList(group)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	commands, err := a.forbiddenCommandList(group)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	lists := fmt.Sprintf(infoTemplate, admins, bans, commands)
 	return c.Send(lists, tele.ModeMarkdownV2)
@@ -332,11 +325,7 @@ func (a *App) adminList(g model.Group) (string, error) {
 			admins = append(admins, u)
 		}
 	}
-	list := a.formatUnorderedList(admins)
-	if list == "" {
-		list = "…\n"
-	}
-	return fmt.Sprintf(adminListTemplate, list), nil
+	return fmt.Sprintf(adminListTemplate, a.formatUnorderedList(admins)), nil
 }
 
 const banListTemplate = "🛑 _Черный список_\n%s"
@@ -352,11 +341,7 @@ func (a *App) banList(g model.Group) (string, error) {
 			banned = append(banned, u)
 		}
 	}
-	list := a.formatUnorderedList(banned)
-	if list == "" {
-		list = "…\n"
-	}
-	return fmt.Sprintf(banListTemplate, list), nil
+	return fmt.Sprintf(banListTemplate, a.formatUnorderedList(banned)), nil
 }
 
 const forbiddenCommandListTemplate = "🔒 _Запрещенные команды_\n%s"
@@ -366,19 +351,7 @@ func (a *App) forbiddenCommandList(g model.Group) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	list := formatCommandList(commands)
-	if list == "" {
-		list = "…\n"
-	}
-	return fmt.Sprintf(forbiddenCommandListTemplate, list), nil
-}
-
-func formatCommandList(commands []input.Command) string {
-	var list string
-	for _, c := range commands {
-		list += fmt.Sprintf("— %s\n", markdownEscaper.Replace(input.CommandText(c)))
-	}
-	return list
+	return fmt.Sprintf(forbiddenCommandListTemplate, formatCommandList(commands)), nil
 }
 
 const help = `📖 *Команды* 📌
@@ -404,8 +377,12 @@ const help = `📖 *Команды* 📌
 	"— `!драка`\n" +
 	"— `!перевод`\n" +
 	"— `!баланс`\n" +
+	"— `!энергия`\n" +
+	"— `!сила`\n" +
 	"— `!капитал`\n" +
 	"— `!профиль`\n" +
+	"— `!удочка`\n" +
+	"— `!рыбалка`\n" +
 	`
 🔮 _Нейросети_
 ` +
@@ -447,21 +424,24 @@ func (a *App) handleHelp(c tele.Context) error {
 }
 
 func (a *App) handleJoin(c tele.Context) error {
-	u := getUser(c)
-	a.SugarLog().Infow("user joined",
-		"user", u)
-	m, err := a.chatMember(u)
+	u := c.Message().UserJoined
+	m, err := c.Bot().ChatMemberOf(c.Chat(), u)
 	if err != nil {
 		return err
 	}
-	if m.Role != tele.Administrator {
-		m.Rights.CanBeEdited = true
-		m.Rights.CanManageChat = true
-		if err := c.Bot().Promote(c.Chat(), m); err != nil {
-			return err
-		}
+	if err := promoteIfNotAdmin(c, m); err != nil {
+		return err
 	}
 	return c.Send(helloSticker())
+}
+
+func promoteIfNotAdmin(c tele.Context, m *tele.ChatMember) error {
+	if m.Role != tele.Administrator && m.Role != tele.Creator {
+		m.Rights.CanBeEdited = true
+		m.Rights.CanManageChat = true
+		return c.Bot().Promote(c.Chat(), m)
+	}
+	return nil
 }
 
 const (
@@ -493,18 +473,22 @@ func (a *App) handlePermit(c tele.Context) error {
 	})
 }
 
+const (
+	specifyCommand = "Укажите команду"
+	unknownCommand = "Неизвестная команда"
+)
+
 // handleCommandAction performs an action on a command.
 func (a *App) handleCommandAction(c tele.Context, action func(input.Command) error) error {
-	arg, err := getMessage(c).Dynamic()
+	command, err := getMessage(c).CommandActionArgument()
 	if err != nil {
 		if errors.Is(err, input.ErrNoCommand) {
-			return c.Send(makeError("Укажите команду"))
+			return userError(c, specifyCommand)
 		}
 		if errors.Is(err, input.ErrUnknownCommand) {
-			return c.Send(makeError("Неизвестная команда"))
+			return userError(c, unknownCommand)
 		}
-		return err
+		return internalError(c, err)
 	}
-	command := arg.(input.Command)
 	return action(command)
 }

@@ -2,7 +2,6 @@ package input
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -36,77 +35,13 @@ func (m *Message) Argument() string {
 	return s
 }
 
-// Dynamic returns an argument that is not just a string.
-func (m *Message) Dynamic() (interface{}, error) {
-	switch m.Command {
-	case CommandTop:
-		return m.topArgument()
-	case CommandForbid, CommandPermit:
-		return m.commandActionArgument()
-	case CommandTransfer:
-		return m.transferArgument()
-	case CommandDice:
-		return m.diceArgument()
-	}
-	return nil, fmt.Errorf("no dynamic argument for %v", m.Raw)
-}
-
-func (m *Message) topArgument() (TopArgument, error) {
-	match := topRe.FindStringSubmatch(m.Raw)
-	number := match[1]
-	desc := match[2]
-
-	maybe, err := strconv.ParseInt(number, 10, 32)
-	if err != nil {
-		return TopArgument{nil, desc}, nil
-	}
-	i := int(maybe)
-	return TopArgument{&i, desc}, nil
-}
-
-func (m *Message) commandActionArgument() (Command, error) {
-	s := m.Argument()
-	if s == "" {
-		return CommandUnknown, ErrNoCommand
-	}
-	if !strings.HasPrefix(s, "!") {
-		s = "!" + s
-	}
-	c := ParseCommand(s)
-	if c == CommandUnknown {
-		return CommandUnknown, ErrUnknownCommand
-	}
-	return c, nil
-}
-
 var (
-	ErrSpecifyAmount = errors.New("specify amount")
-	ErrNotPositive   = errors.New("not positive")
+	ErrWrongCommand   = errors.New("wrong command")
+	ErrSpecifyAmount  = errors.New("specify amount")
+	ErrNotPositive    = errors.New("not positive")
+	ErrNoCommand      = errors.New("no command")
+	ErrUnknownCommand = errors.New("unknown command")
 )
-
-func (m *Message) transferArgument() (int, error) {
-	s := m.Argument()
-	n, err := strconv.ParseInt(s, 10, 32)
-	if err != nil {
-		return 0, ErrSpecifyAmount
-	}
-	if n <= 0 {
-		return 0, ErrNotPositive
-	}
-	return int(n), nil
-}
-
-func (m *Message) diceArgument() (int, error) {
-	s := m.Argument()
-	n, err := strconv.ParseInt(s, 10, 32)
-	if err != nil {
-		return 0, ErrSpecifyAmount
-	}
-	if n <= 0 {
-		return 0, ErrNotPositive
-	}
-	return int(n), nil
-}
 
 // TopArgument represents an argument of the CommandTop.
 type TopArgument struct {
@@ -114,7 +49,53 @@ type TopArgument struct {
 	String string
 }
 
-var (
-	ErrNoCommand      = errors.New("no command")
-	ErrUnknownCommand = errors.New("unknown command")
-)
+func (m *Message) TopArgument() (TopArgument, error) {
+	a := TopArgument{}
+	if m.Command != CommandTop {
+		return a, ErrWrongCommand
+	}
+	match := topRe.FindStringSubmatch(m.Raw)
+	number := match[1]
+	a.String = match[2]
+	maybe, err := strconv.ParseInt(number, 10, 32)
+	if err != nil {
+		return a, nil
+	}
+	n := int(maybe)
+	a.Number = &n
+	return a, nil
+}
+
+func (m *Message) CommandActionArgument() (Command, error) {
+	c := CommandUnknown
+	if m.Command != CommandForbid && m.Command != CommandPermit {
+		return c, ErrWrongCommand
+	}
+	arg := m.Argument()
+	if arg == "" {
+		return c, ErrNoCommand
+	}
+	if !strings.HasPrefix(arg, "!") {
+		arg = "!" + arg
+	}
+	c = ParseCommand(arg)
+	if c == CommandUnknown {
+		return c, ErrUnknownCommand
+	}
+	return c, nil
+}
+
+func (m *Message) MoneyArgument() (int, error) {
+	if m.Command != CommandTransfer && m.Command != CommandDice {
+		return 0, ErrWrongCommand
+	}
+	arg := m.Argument()
+	n, err := strconv.ParseInt(arg, 10, 32)
+	if err != nil {
+		return 0, ErrSpecifyAmount
+	}
+	if n <= 0 {
+		return 0, ErrNotPositive
+	}
+	return int(n), nil
+}

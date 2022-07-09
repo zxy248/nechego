@@ -46,7 +46,7 @@ func sendRandomPicture(c tele.Context, dir string) error {
 func sendRandomPictureWith(c tele.Context, dir string, f randomFileFunc) error {
 	path, err := f(dir)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	return sendPicture(c, path)
 }

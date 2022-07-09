@@ -26,18 +26,20 @@ create table if not exists users (
     id integer primary key autoincrement,
     gid integer references groups (gid) on delete cascade,
     uid integer not null,
-    energy integer not null check (energy >= 0),
-    balance integer not null check (balance >= 0),
-    admin integer not null,
-    banned integer not null,
-    messages integer not null,
+    energy integer not null default 0 check (energy >= 0),
+    balance integer not null default 0 check (balance >= 0),
+    admin integer not null default 0,
+    banned integer not null default 0,
+    messages integer not null default 0,
+    can_fish integer not null default 0,
+    active integer not null default 1,
     unique (gid, uid)
 );
 
 create table if not exists groups (
     gid integer primary key,
-    whitelisted integer not null,
-    status integer not null
+    whitelisted integer not null default 0,
+    status integer not null default 1
 );
 
 create table if not exists daily_pairs (
@@ -69,6 +71,16 @@ create table if not exists forbidden_commands (
     command integer not null,
     unique (gid, command)
 );
+
+create view if not exists real_users as
+select id, gid, uid, energy, balance, admin
+or exists(select 1 from daily_admins
+    where daily_admins.user_id = users.id
+    and added > date('now', 'localtime'))
+as admin,
+banned, messages, can_fish
+from users
+where active = 1;
 `
 
 // CreateTables creates the necessary tables.

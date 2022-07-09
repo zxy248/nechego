@@ -8,7 +8,6 @@ package input
 // Picture		[400, 500)
 type Command int
 
-// TODO: add CommandRating, CommandRatingIncrement, CommandRatingDecrement
 const (
 	CommandUnknown       Command = 0
 	CommandHelp                  = 1
@@ -35,6 +34,11 @@ const (
 	CommandTopRich               = 112
 	CommandTopPoor               = 113
 	CommandCapital               = 114
+	CommandStrength              = 115
+	CommandEnergy                = 116
+	CommandFishing               = 117
+	CommandFishingRod            = 118
+	CommandTopStrength           = 119
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202

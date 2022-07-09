@@ -17,7 +17,7 @@ const catURL = "https://thiscatdoesnotexist.com/"
 func (a *App) handleCat(c tele.Context) error {
 	pic, err := fetchPicture(catURL)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	return c.Send(pic)
 }
@@ -83,16 +83,16 @@ var carImageRe = regexp.MustCompile(
 func (a *App) handleCar(c tele.Context) error {
 	r, err := http.Get(carURL)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	defer r.Body.Close()
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	car, err := decodeCarImage(data)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	return c.Send(car)
 }
@@ -124,7 +124,7 @@ func fetchPicture(url string) (*tele.Photo, error) {
 func (a *App) fetchAndSend(c tele.Context, url string) error {
 	pic, err := fetchPicture(url)
 	if err != nil {
-		return err
+		return internalError(c, err)
 	}
 	return c.Send(pic)
 }

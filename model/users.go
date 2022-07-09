@@ -14,19 +14,20 @@ type User struct {
 	Admin    bool
 	Banned   bool
 	Messages int
+	CanFish  bool `db:"can_fish"`
 }
 
 const insertUser = `
-insert into users (gid, uid, energy, balance, admin, banned, messages)
-values (?, ?, ?, ?, ?, ?, ?)`
+insert into users (gid, uid, energy, balance, admin, banned, messages, can_fish)
+values (?, ?, ?, ?, ?, ?, ?, ?)`
 
 func (m *Model) InsertUser(u User) {
 	m.db.MustExec(insertUser,
-		u.GID, u.UID, u.Energy, u.Balance, u.Admin, u.Banned, u.Messages)
+		u.GID, u.UID, u.Energy, u.Balance, u.Admin, u.Banned, u.Messages, u.CanFish)
 }
 
 const deleteUser = `
-delete from users
+update users set active = 0
 where gid = ? and uid = ?`
 
 func (m *Model) DeleteUser(u User) {
@@ -34,8 +35,8 @@ func (m *Model) DeleteUser(u User) {
 }
 
 const selectUser = `
-select id, gid, uid, energy, balance, admin, banned, messages
-from users`
+select id, gid, uid, energy, balance, admin, banned, messages, can_fish
+from real_users`
 
 const (
 	userByID   = "id = ?"
@@ -143,6 +144,22 @@ func (m *Model) TransferMoney(sender, recipient User, amount int) error {
 	return tx.Commit()
 }
 
+func (m *Model) ForceTransferMoney(sender, recipient User, amount int) (int, error) {
+	tx := m.db.MustBegin()
+	defer tx.Rollback()
+	user := User{}
+	err := tx.Get(&user, getUserByID, sender.ID)
+	if err != nil {
+		return 0, err
+	}
+	if user.Balance < amount {
+		amount = user.Balance
+	}
+	tx.MustExec(updateBalance, -amount, sender.ID, -amount)
+	tx.MustExec(updateBalance, +amount, recipient.ID, +amount)
+	return amount, tx.Commit()
+}
+
 func (m *Model) UpdateMoney(u User, amount int) (updated bool) {
 	n, err := m.db.MustExec(updateBalance, +amount, u.ID, +amount).RowsAffected()
 	failOn(err)
@@ -155,4 +172,12 @@ where id = ?`
 
 func (m *Model) IncrementMessages(u User) {
 	m.db.MustExec(incrementMessages, u.ID)
+}
+
+const allowFishing = `
+update users set can_fish = 1
+where id = ?`
+
+func (m *Model) AllowFishing(u User) {
+	m.db.MustExec(allowFishing, u.ID)
 }

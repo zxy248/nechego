@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	restoreEnergyCooldown = time.Minute * 10
+	restoreEnergyCooldown = time.Minute * 15
 	energyDelta           = 1
-	energyCap             = 3
+	energyCap             = 4
 )
 
 func (a *App) restoreEnergyEvery(d time.Duration) {

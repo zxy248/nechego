@@ -36,13 +36,21 @@ func (m *Model) GetGroup(g Group) (Group, error) {
 }
 
 const enableGroup = `
-update groups set status = ?
-where gid = ?`
+update groups set status = 1
+where gid = ? and status = 0`
 
-func (m *Model) EnableGroup(g Group) {
-	m.db.MustExec(enableGroup, true, g.GID)
+func (m *Model) EnableGroup(g Group) (updated bool) {
+	n, err := m.db.MustExec(enableGroup, g.GID).RowsAffected()
+	failOn(err)
+	return n == 1
 }
 
-func (m *Model) DisableGroup(g Group) {
-	m.db.MustExec(enableGroup, false, g.GID)
+const disableGroup = `
+update groups set status = 0
+where gid = ? and status = 1`
+
+func (m *Model) DisableGroup(g Group) (updated bool) {
+	n, err := m.db.MustExec(disableGroup, g.GID).RowsAffected()
+	failOn(err)
+	return n == 1
 }

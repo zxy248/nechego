@@ -9,13 +9,11 @@ import (
 
 const messageKey = "message"
 
-// addMessage adds a message to the context.
 func addMessage(c tele.Context, m *input.Message) tele.Context {
 	c.Set(messageKey, m)
 	return c
 }
 
-// getMessage gets a message from the context.
 func getMessage(c tele.Context) *input.Message {
 	return c.Get(messageKey).(*input.Message)
 }
