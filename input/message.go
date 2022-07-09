@@ -79,24 +79,33 @@ func (m *Message) commandActionArgument() (Command, error) {
 	return c, nil
 }
 
-var ErrSpecifyAmount = errors.New("Укажите количество средств")
+var (
+	ErrSpecifyAmount = errors.New("specify amount")
+	ErrNotPositive   = errors.New("not positive")
+)
 
-func (m *Message) transferArgument() (uint, error) {
+func (m *Message) transferArgument() (int, error) {
 	s := m.Argument()
-	n, err := strconv.ParseUint(s, 10, 32)
+	n, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
 		return 0, ErrSpecifyAmount
 	}
-	return uint(n), nil
+	if n <= 0 {
+		return 0, ErrNotPositive
+	}
+	return int(n), nil
 }
 
-func (m *Message) diceArgument() (uint, error) {
+func (m *Message) diceArgument() (int, error) {
 	s := m.Argument()
-	n, err := strconv.ParseUint(s, 10, 32)
+	n, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
 		return 0, ErrSpecifyAmount
 	}
-	return uint(n), nil
+	if n <= 0 {
+		return 0, ErrNotPositive
+	}
+	return int(n), nil
 }
 
 // TopArgument represents an argument of the CommandTop.

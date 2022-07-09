@@ -20,16 +20,18 @@ func NewApp(b *tele.Bot, m *model.Model, l *zap.Logger) *App {
 	return &App{b, m, l}
 }
 
-// Start starts the bot, routing all preprocessed text messages to appropriate handlers.
+// Start starts the bot.
 func (a *App) Start() {
 	go a.restoreEnergyEvery(restoreEnergyCooldown)
-	a.bot.Handle(tele.OnText, a.route, a.preprocess, a.logMessage)
-	a.bot.Handle(tele.OnDice, a.handleRoll, a.preprocess)
-	a.bot.Handle(tele.OnUserJoined, a.handleJoin, a.preprocess)
+	a.bot.Handle(tele.OnText, a.route, a.pipeline)
+	a.bot.Handle(tele.OnDice, a.handleRoll, a.pipeline)
+	a.bot.Handle(tele.OnUserJoined, a.handleJoin, a.pipeline)
+
+	a.SugarLog().Info("The bot has started.")
 	a.bot.Start()
 }
 
-// sugar is a shorthand for a.log.Sugar.
-func (a *App) sugar() *zap.SugaredLogger {
+// SugarLog is a shorthand for a SugaredLogger.
+func (a *App) SugarLog() *zap.SugaredLogger {
 	return a.log.Sugar()
 }

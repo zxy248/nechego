@@ -50,11 +50,11 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandAdmin:
 		return a.handleAdmin
 	case input.CommandFight:
-		return requireReply(a.handleFight)
+		return requireReply(a.injectReplyUser(a.handleFight))
 	case input.CommandBalance:
 		return a.handleBalance
 	case input.CommandTransfer:
-		return requireReply(a.handleTransfer)
+		return requireReply(a.injectReplyUser(a.handleTransfer))
 	case input.CommandProfile:
 		return a.handleProfile
 	case input.CommandTopRich:
@@ -100,17 +100,17 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandTurnOff:
 		return a.handleTurnOff
 	case input.CommandBan:
-		return requireAdminAccess(requireReply(a.handleBan))
+		return requireAdmin(requireReply(a.injectReplyUser(a.handleBan)))
 	case input.CommandUnban:
-		return requireAdminAccess(requireReply(a.handleUnban))
+		return requireAdmin(requireReply(a.injectReplyUser(a.handleUnban)))
 	case input.CommandInfo:
 		return a.handleInfo
 	case input.CommandHelp:
 		return a.handleHelp
 	case input.CommandForbid:
-		return requireAdminAccess(a.handleForbid)
+		return requireAdmin(a.handleForbid)
 	case input.CommandPermit:
-		return requireAdminAccess(a.handlePermit)
+		return requireAdmin(a.handlePermit)
 	}
 	return nil
 }

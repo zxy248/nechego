@@ -1,15 +1,15 @@
 package main
 
 import (
-	"database/sql"
-	"log"
+	"fmt"
 	"math/rand"
 	"nechego/app"
-	"nechego/model/sqlite"
+	"nechego/model"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
@@ -28,71 +28,66 @@ func init() {
 
 func main() {
 	bot, err := tele.NewBot(tele.Settings{
-		Token:  token(),
+		Token:  botToken(),
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	})
-	if err != nil {
-		log.Fatal(err)
-	}
+	fail(err)
 
-	model, err := sqlite.NewModel(db())
-	if err != nil {
-		log.Fatal(err)
-	}
+	mod := model.NewModel(database())
 
 	var logger *zap.Logger
-	if debug() {
+	if debugFlag() {
 		logger, err = zap.NewDevelopment()
 	} else {
 		logger, err = zap.NewProduction()
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
+	fail(err)
 	defer logger.Sync()
 
-	a := app.NewApp(bot, model, logger)
-	log.Println("The bot has started.")
+	a := app.NewApp(bot, mod, logger)
 	a.Start()
 }
 
-func token() string {
-	t := os.Getenv(tokenEnv)
-	if t == "" {
-		log.Fatalf("%v not set", tokenEnv)
+func botToken() string {
+	v := os.Getenv(tokenEnv)
+	if v == "" {
+		fail(fmt.Errorf("%s not set", tokenEnv))
 	}
-	return t
+	return v
 }
 
-func db() *sql.DB {
-	db, err := sql.Open("sqlite3", dsn())
-	if err != nil {
-		log.Fatal(err)
-	}
+func database() *sqlx.DB {
+	db := sqlx.MustConnect("sqlite3", databaseDSN())
 	return db
 }
 
-func dsn() string {
-	d := os.Getenv(dsnEnv)
-	if d == "" {
-		log.Fatalf("%v not set", dsnEnv)
+func databaseDSN() string {
+	v := os.Getenv(dsnEnv)
+	if v == "" {
+		fail(fmt.Errorf("%s not set", dsnEnv))
 	}
-	return d
+	return v
 }
 
-func owner() int64 {
-	o := os.Getenv(ownerEnv)
-	if o == "" {
-		log.Fatalf("%v not set", ownerEnv)
+func ownerUID() int64 {
+	owner := os.Getenv(ownerEnv)
+	if owner == "" {
+		fail(fmt.Errorf("%s not set", ownerEnv))
 	}
-	i, err := strconv.ParseInt(o, 10, 64)
+	id, err := strconv.ParseInt(owner, 10, 64)
 	if err != nil {
-		log.Fatal(err)
+		fail(err)
 	}
-	return i
+	return id
 }
 
-func debug() bool {
+func debugFlag() bool {
 	v := os.Getenv(debugEnv)
 	return v == "1"
+}
+
+func fail(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

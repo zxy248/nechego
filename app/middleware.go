@@ -1,60 +1,31 @@
 package app
 
 import (
+	"errors"
 	"nechego/input"
+	"nechego/model"
 	"time"
 
+	"golang.org/x/exp/slices"
 	tele "gopkg.in/telebot.v3"
 )
 
-// preprocess parses an input message, ignores it on the certain conditions,
-// caches a group member, saves necessary data in the context.
-func (a *App) preprocess(next tele.HandlerFunc) tele.HandlerFunc {
-	return func(c tele.Context) error {
-		if !isGroup(c.Chat().Type) {
-			return nil
-		}
-		gid := c.Chat().ID
-		ok, err := a.model.Whitelist.Allow(gid)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return nil
-		}
-		uid := c.Sender().ID
-		text := c.Text()
-		message := input.ParseMessage(text)
-
-		userBanned, err := a.model.Bans.Banned(uid)
-		if err != nil {
-			return err
-		}
-		commandForbidden, err := a.model.Forbid.Forbidden(gid, message.Command)
-		if err != nil {
-			return err
-		}
-		adminAuthorized, err := a.model.Admins.Authorize(gid, uid)
-		if err != nil {
-			return err
-		}
-		if (userBanned || commandForbidden) &&
-			!(adminAuthorized && input.IsManagementCommand(message.Command)) {
-			return nil
-		}
-		active, err := a.model.Status.Active(gid)
-		if err != nil {
-			return err
-		}
-		if !active && message.Command != input.CommandTurnOn {
-			return nil
-		}
-
-		a.cacheGroupMember(gid, uid)
-		c = addMessage(c, message)
-		c = addAdminAuthorized(c, adminAuthorized)
-		return next(c)
+func (a *App) pipeline(next tele.HandlerFunc) tele.HandlerFunc {
+	line := []tele.MiddlewareFunc{
+		ignoreNotGroup,
+		injectMessage,
+		a.logMessage,
+		a.injectGroup,
+		requireGroupWhitelisted,
+		requireStatusActive,
+		a.injectUser,
+		requireUserUnbanned,
+		a.requireCommandPermitted,
 	}
+	for i := len(line) - 1; i >= 0; i-- {
+		next = line[i](next)
+	}
+	return next
 }
 
 // isGroup returns true if the chat type is a group type, false otherwise.
@@ -62,67 +33,161 @@ func isGroup(t tele.ChatType) bool {
 	return t == tele.ChatGroup || t == tele.ChatSuperGroup
 }
 
-// cacheGroupMember adds a user to the users table if it is not there already.
-func (a *App) cacheGroupMember(gid, uid int64) error {
-	exists, err := a.model.Users.Exists(gid, uid)
-	if err != nil {
-		return err
+func ignoreNotGroup(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		if isGroup(c.Chat().Type) {
+			return next(c)
+		}
+		return nil
 	}
-	if !exists {
-		if err := a.model.Users.Insert(gid, uid); err != nil {
+}
+
+func injectMessage(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		return next(addMessage(c, input.ParseMessage(c.Text())))
+	}
+}
+
+func (a *App) injectGroup(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		gid := c.Chat().ID
+		g, err := a.model.GetGroup(model.Group{
+			GID: gid,
+		})
+		if errors.Is(err, model.ErrGroupNotFound) {
+			g = model.Group{
+				GID:         gid,
+				Whitelisted: false,
+				Status:      true,
+			}
+			a.model.InsertGroup(g)
+		} else if err != nil {
 			return err
 		}
+		return next(addGroup(c, g))
 	}
-	return nil
 }
 
-const messageKey = "nechegoParsedMessage"
-
-// addMessage adds a message to the context.
-func addMessage(c tele.Context, m *input.Message) tele.Context {
-	c.Set(messageKey, m)
-	return c
+func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		gid := c.Chat().ID
+		uid := c.Sender().ID
+		u, err := a.model.GetUser(model.User{
+			GID: gid,
+			UID: uid,
+		})
+		if errors.Is(err, model.ErrUserNotFound) {
+			u = model.User{
+				GID:      gid,
+				UID:      uid,
+				Energy:   0,
+				Balance:  0,
+				Admin:    false,
+				Banned:   false,
+				Messages: 0,
+			}
+			a.model.InsertUser(u)
+		} else if err != nil {
+			return err
+		}
+		return next(addUser(c, u))
+	}
 }
 
-// getMessage gets a message from the context.
-func getMessage(c tele.Context) *input.Message {
-	return c.Get(messageKey).(*input.Message)
-}
+const userNotFound = "Пользователь не найден 🔎"
 
-const adminAuthorizedKey = "adminAuthorized"
-
-// addAdminAuthorized adds an admin authorized flag to the context.
-func addAdminAuthorized(c tele.Context, v bool) tele.Context {
-	c.Set(adminAuthorizedKey, v)
-	return c
-}
-
-// isAdminAuthorized gets an admin authorized flag from the context.
-func isAdminAuthorized(c tele.Context) bool {
-	return c.Get(adminAuthorizedKey).(bool)
+func (a *App) injectReplyUser(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		gid := c.Chat().ID
+		uid := c.Message().ReplyTo.Sender.ID
+		u, err := a.model.GetUser(model.User{
+			GID: gid,
+			UID: uid,
+		})
+		if err != nil {
+			return c.Send(makeError(userNotFound))
+		}
+		return next(addReplyUser(c, u))
+	}
 }
 
 const accessRestricted = "Доступ ограничен 🔒"
 
-// requireAdminAccess returns a closure that requires an admin status to proceed.
-func requireAdminAccess(next tele.HandlerFunc) tele.HandlerFunc {
+func requireAdmin(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		if isAdminAuthorized(c) {
+		if getUser(c).Admin {
 			return next(c)
 		}
-		return c.Send(accessRestricted)
+		return c.Send(makeError(accessRestricted))
 	}
 }
 
-const replyRequired = "Перешлите сообщение ↩️"
+const (
+	replyRequired     = "Перешлите сообщение ↩️"
+	userReplyRequired = "Перешлите сообщение пользователя ↩️"
+)
 
-// requireReply returns a closure that requires the message to be a reply to proceed.
 func requireReply(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		if c.Message().IsReply() {
+			if c.Message().ReplyTo.Sender.IsBot {
+				return c.Send(makeError(userReplyRequired))
+			}
 			return next(c)
 		}
-		return c.Send(replyRequired)
+		return c.Send(makeError(replyRequired))
+	}
+}
+
+func requireGroupWhitelisted(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		if getGroup(c).Whitelisted {
+			return next(c)
+		}
+		return nil
+	}
+}
+
+func requireUserUnbanned(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		user := getUser(c)
+		if user.Admin && input.IsManagementCommand(getMessage(c).Command) {
+			return next(c)
+		}
+		if user.Banned {
+			return nil
+		}
+		return next(c)
+	}
+}
+
+func (a *App) requireCommandPermitted(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		command := getMessage(c).Command
+		if getUser(c).Admin && input.IsManagementCommand(command) {
+			return next(c)
+		}
+		commands, err := a.model.ForbiddenCommands(getGroup(c))
+		if err != nil {
+			return err
+		}
+		if slices.Contains(commands, command) {
+			return nil
+		}
+		return next(c)
+	}
+}
+
+func requireStatusActive(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		command := getMessage(c).Command
+		if command == input.CommandTurnOn || command == input.CommandTurnOff {
+			return next(c)
+		}
+		if getGroup(c).Status {
+			return next(c)
+		}
+		return nil
 	}
 }
 
@@ -131,8 +196,8 @@ func (a *App) logMessage(next tele.HandlerFunc) tele.HandlerFunc {
 		t0 := time.Now()
 		msg := getMessage(c)
 		err := next(c)
-		a.sugar().Infow(msg.Raw,
-			"command", msg.Command,
+		a.SugarLog().Infow(msg.Raw,
+			"cmd", msg.Command,
 			"uid", c.Sender().ID,
 			"gid", c.Chat().ID,
 			"time", time.Since(t0))
