@@ -30,11 +30,8 @@ func (a *App) handleTransfer(c tele.Context) error {
 	sender := getUser(c)
 	recipient := getReplyUser(c)
 	amount, err := moneyArgument(c)
-	if err != nil {
+	if amount == 0 || err != nil {
 		return err
-	}
-	if amount == 0 {
-		return nil
 	}
 
 	if err := a.model.TransferMoney(sender, recipient, amount); err != nil {
@@ -47,6 +44,7 @@ func (a *App) handleTransfer(c tele.Context) error {
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
+// check if int == 0
 func moneyArgument(c tele.Context) (int, error) {
 	amount, err := getMessage(c).MoneyArgument()
 	if err != nil {
@@ -116,11 +114,12 @@ func (a *App) poorestUsers(g model.Group) ([]model.User, error) {
 
 const handleProfileTemplate = `ℹ️ *Профиль %s %v %s*
 
-Баланс на счете: ` + "`" + `%s 💰` + "`" + `
-Запас энергии: ` + "`" + `%d ⚡️` + "`" + `
-Базовая сила: ` + "`" + `%.2f 💪` + "`" + `
-Написано сообщений: ` + "`" + `%d ✍️` + "`" + `
-Имеется рыбы: ` + "`" + `%d 🎣` + "`" + `
+Денег в кошельке: %s
+На счету в банке: %s
+Запас энергии: %s
+Базовая сила: %s
+Написано сообщений: %s
+Имеется рыбы: %s
 
 %s
 `
@@ -165,10 +164,11 @@ func (a *App) handleProfile(c tele.Context) error {
 	out := fmt.Sprintf(handleProfileTemplate,
 		title, a.mustMentionUser(user), icon,
 		formatMoney(user.Balance),
-		user.Energy,
-		strength,
-		user.Messages,
-		user.Fishes,
+		formatMoney(user.Account),
+		formatEnergy(user.Energy),
+		formatStrength(strength),
+		formatMessages(user.Messages),
+		formatFishes(user.Fishes),
 		status)
 	return c.Send(out, tele.ModeMarkdownV2)
 }

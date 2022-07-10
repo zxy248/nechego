@@ -81,6 +81,14 @@ func formatStrength(n float64) string {
 	return fmt.Sprintf("`%.2f 💪`", n)
 }
 
+func formatMessages(n int) string {
+	return fmt.Sprintf("`%d ✍️`", n)
+}
+
+func formatFishes(n int) string {
+	return fmt.Sprintf("`%d 🎣`", n)
+}
+
 func (a *App) formatUnorderedList(users []model.User) string {
 	var list string
 	for _, u := range users {

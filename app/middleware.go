@@ -81,7 +81,7 @@ func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
 			u = model.User{
 				GID:     gid,
 				UID:     uid,
-				Balance: initialBalance,
+				Account: initialBalance,
 			}
 			a.model.InsertUser(u)
 		} else if err != nil {

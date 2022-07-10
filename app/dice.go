@@ -108,11 +108,8 @@ func (a *App) handleDice(c tele.Context) error {
 	}
 
 	bet, err := moneyArgument(c)
-	if err != nil {
+	if bet == 0 || err != nil {
 		return err
-	}
-	if bet == 0 {
-		return nil
 	}
 	if bet < diceMinBet {
 		return userError(c, betTooLow)

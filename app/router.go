@@ -75,6 +75,10 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleTopStrength
 	case input.CommandEatFish:
 		return a.handleEatFish
+	case input.CommandDeposit:
+		return a.handleDeposit
+	case input.CommandWithdraw:
+		return a.handleWithdraw
 	case input.CommandMasyunya:
 		return a.masyunyaHandler()
 	case input.CommandPoppy:

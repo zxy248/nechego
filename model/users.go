@@ -11,6 +11,7 @@ type User struct {
 	UID      int64
 	Energy   int
 	Balance  int
+	Account  int
 	Admin    bool
 	Banned   bool
 	Messages int
@@ -19,12 +20,12 @@ type User struct {
 }
 
 const insertUser = `
-insert into users (gid, uid, energy, balance, admin, banned, messages, fisher, fishes)
-values (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+insert into users (gid, uid, energy, balance, account, admin, banned, messages, fisher, fishes)
+values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 func (m *Model) InsertUser(u User) {
 	m.db.MustExec(insertUser,
-		u.GID, u.UID, u.Energy, u.Balance, u.Admin, u.Banned, u.Messages, u.Fisher, u.Fishes)
+		u.GID, u.UID, u.Energy, u.Balance, u.Account, u.Admin, u.Banned, u.Messages, u.Fisher, u.Fishes)
 }
 
 const deleteUser = `
@@ -36,7 +37,7 @@ func (m *Model) DeleteUser(u User) {
 }
 
 const selectUser = `
-select id, gid, uid, energy, balance, admin, banned, messages, fisher, fishes
+select id, gid, uid, energy, balance, account, admin, banned, messages, fisher, fishes
 from real_users`
 
 const (
@@ -197,6 +198,26 @@ where id = ? and fishes > 0 and energy + ? <= ?`
 
 func (m *Model) EatFish(u User, energyDelta, energyCap int) bool {
 	n, err := m.db.MustExec(eatFish, energyDelta, u.ID, energyDelta, energyCap).RowsAffected()
+	failOn(err)
+	return n == 1
+}
+
+const deposit = `
+update users set account = account + ?, balance = balance - ?
+where id = ? and balance >= ?`
+
+func (m *Model) Deposit(u User, amount, fee int) bool {
+	n, err := m.db.MustExec(deposit, amount, amount+fee, u.ID, amount+fee).RowsAffected()
+	failOn(err)
+	return n == 1
+}
+
+const withdraw = `
+update users set account = account - ?, balance = balance + ?
+where id = ? and account >= ?`
+
+func (m *Model) Withdraw(u User, amount, fee int) bool {
+	n, err := m.db.MustExec(withdraw, amount+fee, amount, u.ID, amount+fee).RowsAffected()
 	failOn(err)
 	return n == 1
 }

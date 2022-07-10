@@ -29,6 +29,7 @@ create table if not exists users (
     uid integer not null,
     energy integer not null default 0 check (energy >= 0),
     balance integer not null default 0 check (balance >= 0),
+    account integer not null default 0 check (account >= 0),
     admin integer not null default 0,
     banned integer not null default 0,
     messages integer not null default 0,
@@ -75,7 +76,7 @@ create table if not exists forbidden_commands (
 );
 
 create view if not exists real_users as
-select id, gid, uid, energy, balance, admin
+select id, gid, uid, energy, balance, account, admin
 or exists(select 1 from daily_admins
     where daily_admins.user_id = users.id
     and added > date('now', 'localtime'))
