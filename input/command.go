@@ -42,6 +42,7 @@ const (
 	CommandEatFish               = 120
 	CommandDeposit               = 121
 	CommandWithdraw              = 122
+	CommandBank                  = 123
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202

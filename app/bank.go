@@ -7,6 +7,18 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+const bank = "🏦 *Банк:* на вашем счете %s\n\n" +
+	"_Снять средства: `!обнал`\\._\n" +
+	"_Пополнить счет: `!депозит`\\._\n" +
+	"_Комиссия за пополнение: %s_"
+
+func (a *App) handleBank(c tele.Context) error {
+	return c.Send(fmt.Sprintf(bank,
+		formatMoney(getUser(c).Account),
+		formatMoney(bankFee)),
+		tele.ModeMarkdownV2)
+}
+
 const deposit = "💳 Вы оплатили налог и положили %s в банк\\.\n\n_Теперь на счету %s_"
 
 func (a *App) handleDeposit(c tele.Context) error {

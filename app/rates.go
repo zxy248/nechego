@@ -2,10 +2,10 @@ package app
 
 const (
 	initialBalance   = 30
-	bankFee          = 10
+	bankFee          = 5
 	fishingRodPrice  = 100
 	fishSellMinPrice = 1
-	fishSellMaxPrice = 40
+	fishSellMaxPrice = 50
 	minWinReward     = 1
 	maxWinReward     = 20
 	maxPoorWinReward = 5
