@@ -75,21 +75,17 @@ func (g diceGame) cancelDiceGame(notify func()) {
 }
 
 const (
-	diceStart       = "🎲 %s играет на `%s 💰`\nУ вас `%d секунд` на то, чтобы кинуть кости\\!"
-	diceWin         = "💥 Вы выиграли `%v 💰`"
+	diceStart       = "🎲 %s играет на %s\nУ вас `%d секунд` на то, чтобы кинуть кости\\!"
+	diceWin         = "💥 Вы выиграли %s"
 	diceDraw        = "Ничья."
 	diceLose        = "Вы проиграли."
-	diceBonus       = "_🎰 *%s* получает бонус за риск: `%s 💰`_"
-	diceTimeout     = "Время вышло: вы потеряли `%s`\\."
-	diceMinBonus    = 1
-	diceMaxBonus    = 5
-	diceBetForBonus = 5
+	diceBonus       = "_🎰 %s получает бонус за риск: %s_"
+	diceTimeout     = "_Время вышло: вы потеряли %s_"
 	diceBonusChance = 0.2
 	diceRollTime    = time.Second * 25
-	diceMinBet      = 1
-	diceInProgress  = "Игра уже идет"
-	betTooLow       = "Поставьте больше средств"
-	tired           = "_Вы устали от азартных игр\\. Энергии осталось: `%d ⚡️`_"
+	diceInProgress  = "Игра уже идет."
+	betTooLow       = "Поставьте больше средств."
+	tired           = "_Вы устали от азартных игр\\. Энергии осталось: %s_"
 	tiredChance     = 0.2
 )
 
@@ -130,7 +126,8 @@ func (a *App) handleDice(c tele.Context) error {
 	defer func() {
 		if rand.Float64() < tiredChance {
 			a.model.UpdateEnergy(user, -energyDelta, energyCap)
-			err := c.Send(fmt.Sprintf(tired, user.Energy-1), tele.ModeMarkdownV2)
+			err := c.Send(fmt.Sprintf(tired, formatEnergy(user.Energy-energyDelta)),
+				tele.ModeMarkdownV2)
 			if err != nil {
 				a.SugarLog().Error(err)
 			}
@@ -146,11 +143,10 @@ func (a *App) handleDice(c tele.Context) error {
 
 	game := makeDiceGame(user, bet, roll)
 	game.startDiceGame(func() {
-		c.Send(fmt.Sprintf(diceTimeout, formatAmount(game.money)),
-			tele.ModeMarkdownV2)
+		c.Send(fmt.Sprintf(diceTimeout, formatMoney(game.money)), tele.ModeMarkdownV2)
 	})
 
-	out := fmt.Sprintf(diceStart, a.mustMentionUser(user), formatAmount(bet), diceRollTime/time.Second)
+	out := fmt.Sprintf(diceStart, a.mustMentionUser(user), formatMoney(bet), diceRollTime/time.Second)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
@@ -171,8 +167,7 @@ func (a *App) handleRoll(c tele.Context) error {
 		if rand.Float64() <= diceBonusChance && game.money >= diceBetForBonus {
 			bonus := randInRange(diceMinBonus, diceMaxBonus)
 			a.model.UpdateMoney(user, bonus)
-			c.Send(fmt.Sprintf(diceBonus,
-				a.mustMentionUser(user), formatAmount(bonus)),
+			c.Send(fmt.Sprintf(diceBonus, a.mustMentionUser(user), formatMoney(bonus)),
 				tele.ModeMarkdownV2)
 		}
 	}()
@@ -181,7 +176,7 @@ func (a *App) handleRoll(c tele.Context) error {
 	case roll > game.roll:
 		win := game.money * 2
 		a.model.UpdateMoney(user, win)
-		return c.Send(fmt.Sprintf(diceWin, formatAmount(win)), tele.ModeMarkdownV2)
+		return c.Send(fmt.Sprintf(diceWin, formatMoney(win)), tele.ModeMarkdownV2)
 	case roll == game.roll:
 		a.model.UpdateMoney(user, game.money)
 		return c.Send(diceDraw)

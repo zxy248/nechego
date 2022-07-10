@@ -18,7 +18,7 @@ func (a *App) handlePair(c tele.Context) error {
 		tele.ModeMarkdownV2)
 }
 
-const dailyEblan = "Еблан дня: %s 😸"
+const dailyEblan = "Еблан дня — %s 😸"
 
 // !еблан дня
 func (a *App) handleEblan(c tele.Context) error {
@@ -30,7 +30,7 @@ func (a *App) handleEblan(c tele.Context) error {
 		tele.ModeMarkdownV2)
 }
 
-const dailyAdmin = "Админ дня: %s 👑"
+const dailyAdmin = "Админ дня — %s 👑"
 
 // !админ дня
 func (a *App) handleAdmin(c tele.Context) error {

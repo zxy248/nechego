@@ -56,9 +56,9 @@ func (a *App) handleWho(c tele.Context) error {
 
 const (
 	maxNameLength = 16
-	nameTooLong   = "Максимальная длина имени 16 символов"
+	nameTooLong   = "Максимальная длина имени 16 символов."
 	yourNameIs    = "Ваше имя: *%s* 🔖"
-	pleaseReEnter = "Перезайдите в беседу чтобы использовать эту функцию"
+	pleaseReEnter = "Перезайдите в беседу чтобы использовать эту функцию."
 	nameSet       = "Имя *%s* установлено ✅"
 )
 
@@ -171,7 +171,7 @@ const (
 	numberedTopTemplate   = "Топ %d %s 🏆\n%s"
 	unnumberedTopTemplate = "Топ %s 🏆\n%s"
 	maxTopNumber          = 5
-	badTopNumber          = "Некорректное число"
+	badTopNumber          = "Некорректное число."
 )
 
 // !топ
@@ -474,8 +474,8 @@ func (a *App) handlePermit(c tele.Context) error {
 }
 
 const (
-	specifyCommand = "Укажите команду"
-	unknownCommand = "Неизвестная команда"
+	specifyCommand = "Укажите команду."
+	unknownCommand = "Неизвестная команда."
 )
 
 // handleCommandAction performs an action on a command.

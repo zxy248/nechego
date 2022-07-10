@@ -49,21 +49,15 @@ func (f fight) loser() fighter {
 }
 
 const (
-	fightersTemplate = "⚔️ Нападает %s, сила в бою `%.2f [%.2f]`\n" +
-		"🛡 Защищается %s, сила в бою `%.2f [%.2f]`\n\n"
-	winnerTemplate          = "🏆 %s выходит победителем и забирает `%s 💰`\n\n"
-	poorWinnerTemplate      = "🏆 %s выходит победителем и забирает из последних запасов проигравшего `%s 💰`\n\n"
-	energyRemainingTemplate = "Энергии осталось: `%v ⚡️`"
-	handleFightTemplate     = fightersTemplate + winnerTemplate + energyRemainingTemplate
-	handleFightPoorTemplate = fightersTemplate + poorWinnerTemplate + energyRemainingTemplate
-
-	minWinReward              = 1
-	maxWinReward              = 20
-	maxPoorWinReward          = 5
+	fightersTemplate          = "⚔️ Нападает %s, сила в бою `%.2f [%.2f]`\n🛡 Защищается %s, сила в бою `%.2f [%.2f]`\n\n"
+	winnerTemplate            = "🏆 %s выходит победителем и забирает %s\n\n"
+	poorWinnerTemplate        = "🏆 %s выходит победителем и забирает из последних запасов проигравшего %s\n\n"
+	energyRemainingTemplate   = "Энергии осталось: %s"
+	handleFightTemplate       = fightersTemplate + winnerTemplate + energyRemainingTemplate
+	handleFightPoorTemplate   = fightersTemplate + poorWinnerTemplate + energyRemainingTemplate
 	displayStrengthMultiplier = 10
-
-	cannotAttackYourself = "Вы не можете напасть на самого себя"
-	notEnoughEnergy      = "Недостаточно энергии"
+	cannotAttackYourself      = "Вы не можете напасть на самого себя."
+	notEnoughEnergy           = "Недостаточно энергии."
 )
 
 // handleFight conducts a fight between two users.
@@ -108,8 +102,8 @@ func (a *App) handleFight(c tele.Context) error {
 		displayStrengthMultiplier*f.defender.finalStrength,
 		f.defender.actualStrength,
 		a.mustMentionUser(f.winner().User),
-		formatAmount(reward),
-		f.attacker.Energy-energyDelta)
+		formatMoney(reward),
+		formatEnergy(f.attacker.Energy-energyDelta))
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
@@ -181,7 +175,7 @@ func (a *App) strengthMultiplier(u model.User) (float64, error) {
 	return multiplier, nil
 }
 
-const handleTopStrength = "💪 Топ сильных:\n%s"
+const handleTopStrength = "💪 *Самые сильные пользователи*\n%s"
 
 // !топ силы
 func (a *App) handleTopStrength(c tele.Context) error {
@@ -225,16 +219,16 @@ func (a *App) strongestUsers(g model.Group) ([]model.User, error) {
 
 // !стамина, !энергия
 func (a *App) handleEnergy(c tele.Context) error {
-	return c.Send(fmt.Sprintf("У вас `%v энергии ⚡️`", getUser(c).Energy), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf("Осталось энергии: %s", formatEnergy(getUser(c).Energy)), tele.ModeMarkdownV2)
 }
 
 // !сила
 func (a *App) handleStrength(c tele.Context) error {
-	str, err := a.actualUserStrength(getUser(c))
+	strength, err := a.actualUserStrength(getUser(c))
 	if err != nil {
 		return internalError(c, err)
 	}
-	return c.Send(fmt.Sprintf("Ваша сила: `%.2f`", str), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf("Ваша сила: %s", formatStrength(strength)), tele.ModeMarkdownV2)
 }
 
 type modifier struct {

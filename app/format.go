@@ -57,18 +57,28 @@ func randInRange(min, max int) int {
 	return min + rand.Intn(max-min+1)
 }
 
-// formatAmount formats the specified amount of money.
-func formatAmount(n int) string {
+// formatMoney formats the specified amount of money.
+func formatMoney(n int) string {
+	var out string
 	switch p0 := n % 10; {
 	case n >= 10 && n <= 20:
-		return fmt.Sprintf("%v монет", n)
+		out = fmt.Sprintf("%v монет", n)
 	case p0 == 1:
-		return fmt.Sprintf("%v монета", n)
+		out = fmt.Sprintf("%v монета", n)
 	case p0 >= 2 && p0 <= 4:
-		return fmt.Sprintf("%v монеты", n)
+		out = fmt.Sprintf("%v монеты", n)
 	default:
-		return fmt.Sprintf("%v монет", n)
+		out = fmt.Sprintf("%v монет", n)
 	}
+	return fmt.Sprintf("`%s 💰`", out)
+}
+
+func formatEnergy(n int) string {
+	return fmt.Sprintf("`%v ⚡️`", n)
+}
+
+func formatStrength(n float64) string {
+	return fmt.Sprintf("`%.2f 💪`", n)
 }
 
 func (a *App) formatUnorderedList(users []model.User) string {
@@ -111,8 +121,8 @@ func (a *App) formatTopStrength(users []model.User) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		top += fmt.Sprintf("_%d\\._ %s, `%.2f`\n",
-			i+1, a.mustMentionUser(u), s)
+		top += fmt.Sprintf("_%d\\._ %s, %s\n",
+			i+1, a.mustMentionUser(u), formatStrength(s))
 	}
 	return top, nil
 }
@@ -120,8 +130,8 @@ func (a *App) formatTopStrength(users []model.User) (string, error) {
 func (a *App) formatRichTop(users []model.User) string {
 	var top string
 	for i := 0; i < len(users); i++ {
-		top += fmt.Sprintf("_%d\\._ %s, `%s`\n",
-			i+1, a.mustMentionUser(users[i]), formatAmount(users[i].Balance))
+		top += fmt.Sprintf("_%d\\._ %s, %s\n",
+			i+1, a.mustMentionUser(users[i]), formatMoney(users[i].Balance))
 	}
 	return top
 }

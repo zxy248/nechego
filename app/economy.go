@@ -10,19 +10,19 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const handleBalanceTemplate = "Ваш баланс: `%s 💰`"
+const handleBalanceTemplate = "Ваш баланс: %s"
 
 // handleBalance responds with the balance of a user.
 func (a *App) handleBalance(c tele.Context) error {
-	return c.Send(fmt.Sprintf(handleBalanceTemplate, formatAmount(getUser(c).Balance)),
+	return c.Send(fmt.Sprintf(handleBalanceTemplate, formatMoney(getUser(c).Balance)),
 		tele.ModeMarkdownV2)
 }
 
 const (
-	handleTransferTemplate = "Вы перевели %s `%s 💰`"
-	notEnoughMoney         = "Недостаточно средств"
-	specifyAmount          = "Укажите количество средств"
-	incorrectAmount        = "Некорректная сумма"
+	handleTransferTemplate = "Вы перевели %s %s"
+	notEnoughMoney         = "Недостаточно средств."
+	specifyAmount          = "Укажите количество средств."
+	incorrectAmount        = "Некорректная сумма."
 )
 
 // handleTransfer transfers the specified amount of money from one user to another.
@@ -43,7 +43,7 @@ func (a *App) handleTransfer(c tele.Context) error {
 		}
 		return internalError(c, err)
 	}
-	out := fmt.Sprintf(handleTransferTemplate, a.mustMentionUser(recipient), formatAmount(amount))
+	out := fmt.Sprintf(handleTransferTemplate, a.mustMentionUser(recipient), formatMoney(amount))
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
@@ -114,7 +114,7 @@ func (a *App) poorestUsers(g model.Group) ([]model.User, error) {
 	return users, nil
 }
 
-const handleProfileTemplate = `ℹ️ Профиль %s %v %s
+const handleProfileTemplate = `ℹ️ *Профиль %s %v %s*
 
 Баланс на счете: ` + "`" + `%s 💰` + "`" + `
 Запас энергии: ` + "`" + `%d ⚡️` + "`" + `
@@ -164,7 +164,7 @@ func (a *App) handleProfile(c tele.Context) error {
 
 	out := fmt.Sprintf(handleProfileTemplate,
 		title, a.mustMentionUser(user), icon,
-		formatAmount(user.Balance),
+		formatMoney(user.Balance),
 		user.Energy,
 		strength,
 		user.Messages,
@@ -173,7 +173,7 @@ func (a *App) handleProfile(c tele.Context) error {
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-const handleTopRichTemplate = "💰 Самые богатые пользователи:\n%s"
+const handleTopRichTemplate = "💰 *Самые богатые пользователи*\n%s"
 
 // handleTopRich sends a top of the richest users.
 func (a *App) handleTopRich(c tele.Context) error {
@@ -189,7 +189,7 @@ func (a *App) handleTopRich(c tele.Context) error {
 		tele.ModeMarkdownV2)
 }
 
-const handleTopPoorTemplate = "🗑 Самые бедные пользователи:\n%s"
+const handleTopPoorTemplate = "🗑 *Самые бедные пользователи*\n%s"
 
 // handleTopPoor sends a top of the poorest users.
 func (a *App) handleTopPoor(c tele.Context) error {
@@ -205,9 +205,9 @@ func (a *App) handleTopPoor(c tele.Context) error {
 		tele.ModeMarkdownV2)
 }
 
-const handleCapitalTemplate = "💸 Капитал беседы *%s*: `%s 💰`\n\n" +
-	"_В руках магната %s `%s 💰`,\nили `%.1f%%` от общего количества средств\\._\n\n" +
-	"_В среднем на счету у пользователя: `%s 💰`_\n"
+const handleCapitalTemplate = "💸 Капитал беседы *%s*: %s\n\n" +
+	"_В руках магната %s %s,\nили `%.1f%%` от общего количества средств\\._\n\n" +
+	"_В среднем на счету у пользователя: %s_\n"
 
 func (a *App) handleCapital(c tele.Context) error {
 	group := getGroup(c)
@@ -226,9 +226,9 @@ func (a *App) handleCapital(c tele.Context) error {
 	}
 	percentage := float64(richest.Balance) / float64(balance) * 100
 	out := fmt.Sprintf(handleCapitalTemplate,
-		title, formatAmount(balance),
-		a.mustMentionUser(richest), formatAmount(richest.Balance), percentage,
-		formatAmount(int(avg)))
+		title, formatMoney(balance),
+		a.mustMentionUser(richest), formatMoney(richest.Balance), percentage,
+		formatMoney(int(avg)))
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 

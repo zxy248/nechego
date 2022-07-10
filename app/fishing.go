@@ -10,12 +10,6 @@ import (
 )
 
 const (
-	boughtFishingRod = "🎣 Вы приобрели удочку за `%s 💰`"
-	alreadyCanFish   = "Вы уже приобрели удочку"
-	fishingRodCost   = 100
-)
-
-const (
 	notEnoughFish = "🐟 Недостаточно рыбы."
 	fishEaten     = "🐟 Вы съели рыбу."
 	youAreFull    = "🐟 Вы не хотите есть."
@@ -33,7 +27,11 @@ func (a *App) handleEatFish(c tele.Context) error {
 	return c.Send(fishEaten)
 }
 
-const notEnoughMoneyFishingRod = "Вам не хватает `%s 💰`"
+const (
+	boughtFishingRod         = "🎣 Вы приобрели удочку за %s"
+	alreadyCanFish           = "Вы уже приобрели удочку."
+	notEnoughMoneyFishingRod = "Вам не хватает %s"
+)
 
 // !удочка
 func (a *App) handleFishingRod(c tele.Context) error {
@@ -41,13 +39,13 @@ func (a *App) handleFishingRod(c tele.Context) error {
 	if user.Fisher {
 		return userError(c, alreadyCanFish)
 	}
-	ok := a.model.UpdateMoney(user, -fishingRodCost)
+	ok := a.model.UpdateMoney(user, -fishingRodPrice)
 	if !ok {
 		return userErrorMarkdown(c, fmt.Sprintf(notEnoughMoneyFishingRod,
-			formatAmount(fishingRodCost-user.Balance)))
+			formatMoney(fishingRodPrice-user.Balance)))
 	}
 	a.model.AllowFishing(user)
-	return c.Send(fmt.Sprintf(boughtFishingRod, formatAmount(fishingRodCost)),
+	return c.Send(fmt.Sprintf(boughtFishingRod, formatMoney(fishingRodPrice)),
 		tele.ModeMarkdownV2)
 }
 
@@ -64,13 +62,11 @@ const (
 
 const (
 	buyFishingRod           = "Приобретите удочку, прежде чем рыбачить."
-	catchFishSellMessage    = "🎣 Вы поймали рыбу `%v` и продали ее за `%v 💰`"
+	catchFishSellMessage    = "🎣 Вы поймали рыбу `%v` и продали ее за %s"
 	catchFishReleaseMessage = "🎣 Вы поймали рыбу `%v`, но решили отпустили ее\\."
 	catchFishLostMessage    = "🎣 Вы не смогли выудить рыбу из воды\\."
 	catchFishEatMessage     = "🎣 Вы поймали рыбу `%v` и съели ее\\."
 	catchFishRetainMessage  = "🎣 Вы поймали рыбу `%v` и оставили ее себе\\."
-	fishSellMinPrice        = 1
-	fishSellMaxPrice        = 40
 )
 
 // !рыбалка
@@ -104,7 +100,7 @@ func (a *App) handleFishing(c tele.Context) error {
 func (a *App) sellFish(c tele.Context, u model.User, fish string) error {
 	reward := randInRange(fishSellMinPrice, fishSellMaxPrice)
 	a.model.UpdateMoney(u, reward)
-	return c.Send(fmt.Sprintf(catchFishSellMessage, fish, formatAmount(reward)), tele.ModeMarkdownV2)
+	return c.Send(fmt.Sprintf(catchFishSellMessage, fish, formatMoney(reward)), tele.ModeMarkdownV2)
 }
 
 func releaseFish(c tele.Context, fish string) error {
