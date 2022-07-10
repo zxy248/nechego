@@ -81,6 +81,7 @@ func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
 			u = model.User{
 				GID:     gid,
 				UID:     uid,
+				Energy:  energyCap,
 				Account: initialBalance,
 			}
 			a.model.InsertUser(u)

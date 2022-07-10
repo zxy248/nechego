@@ -173,7 +173,7 @@ func (a *App) handleProfile(c tele.Context) error {
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-const handleTopRichTemplate = "💰 *Самые богатые пользователи*\n%s"
+const handleTopRichTemplate = "💵 *Самые богатые пользователи*\n%s"
 
 // handleTopRich sends a top of the richest users.
 func (a *App) handleTopRich(c tele.Context) error {

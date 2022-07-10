@@ -175,7 +175,7 @@ func (a *App) strengthMultiplier(u model.User) (float64, error) {
 	return multiplier, nil
 }
 
-const handleTopStrength = "💪 *Самые сильные пользователи*\n%s"
+const handleTopStrength = "🏋️‍♀️ *Самые сильные пользователи*\n%s"
 
 // !топ силы
 func (a *App) handleTopStrength(c tele.Context) error {

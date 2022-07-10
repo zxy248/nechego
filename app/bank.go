@@ -7,7 +7,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const deposit = "Вы оплатили налог и положили %s в банк\\.\n\n_Теперь на счету %s_"
+const deposit = "💳 Вы оплатили налог и положили %s в банк\\.\n\n_Теперь на счету %s_"
 
 func (a *App) handleDeposit(c tele.Context) error {
 	user := getUser(c)
@@ -27,7 +27,7 @@ func (a *App) handleDeposit(c tele.Context) error {
 		tele.ModeMarkdownV2)
 }
 
-const withdraw = "Вы сняли %s со счета\\.\n\n_Теперь в кошельке %s_"
+const withdraw = "💳 Вы сняли %s со счета\\.\n\n_Теперь в кошельке %s_"
 
 func (a *App) handleWithdraw(c tele.Context) error {
 	user := getUser(c)
