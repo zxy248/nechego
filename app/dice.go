@@ -98,7 +98,7 @@ func (a *App) handleDice(c tele.Context) error {
 	group := getGroup(c)
 	user := getUser(c)
 
-	if user.Energy == 0 {
+	if hasNoEnergy(user) {
 		return userError(c, notEnoughEnergy)
 	}
 
