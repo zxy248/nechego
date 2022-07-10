@@ -21,6 +21,7 @@ func NewModel(db *sqlx.DB) *Model {
 	return &Model{d}
 }
 
+// don't forget to update views when updating tables
 const schema = `
 create table if not exists users (
     id integer primary key autoincrement,
@@ -31,7 +32,8 @@ create table if not exists users (
     admin integer not null default 0,
     banned integer not null default 0,
     messages integer not null default 0,
-    can_fish integer not null default 0,
+    fisher integer not null default 0,
+    fishes integer not null default 0,
     active integer not null default 1,
     unique (gid, uid)
 );
@@ -78,7 +80,7 @@ or exists(select 1 from daily_admins
     where daily_admins.user_id = users.id
     and added > date('now', 'localtime'))
 as admin,
-banned, messages, can_fish
+banned, messages, fisher, fishes
 from users
 where active = 1;
 `

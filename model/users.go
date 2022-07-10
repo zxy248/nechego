@@ -14,16 +14,17 @@ type User struct {
 	Admin    bool
 	Banned   bool
 	Messages int
-	CanFish  bool `db:"can_fish"`
+	Fisher   bool
+	Fishes   int
 }
 
 const insertUser = `
-insert into users (gid, uid, energy, balance, admin, banned, messages, can_fish)
-values (?, ?, ?, ?, ?, ?, ?, ?)`
+insert into users (gid, uid, energy, balance, admin, banned, messages, fisher, fishes)
+values (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 func (m *Model) InsertUser(u User) {
 	m.db.MustExec(insertUser,
-		u.GID, u.UID, u.Energy, u.Balance, u.Admin, u.Banned, u.Messages, u.CanFish)
+		u.GID, u.UID, u.Energy, u.Balance, u.Admin, u.Banned, u.Messages, u.Fisher, u.Fishes)
 }
 
 const deleteUser = `
@@ -35,7 +36,7 @@ func (m *Model) DeleteUser(u User) {
 }
 
 const selectUser = `
-select id, gid, uid, energy, balance, admin, banned, messages, can_fish
+select id, gid, uid, energy, balance, admin, banned, messages, fisher, fishes
 from real_users`
 
 const (
@@ -175,9 +176,27 @@ func (m *Model) IncrementMessages(u User) {
 }
 
 const allowFishing = `
-update users set can_fish = 1
+update users set fisher = 1
 where id = ?`
 
 func (m *Model) AllowFishing(u User) {
 	m.db.MustExec(allowFishing, u.ID)
+}
+
+const addFish = `
+update users set fishes = fishes + 1
+where id = ?`
+
+func (m *Model) AddFish(u User) {
+	m.db.MustExec(addFish, u.ID)
+}
+
+const eatFish = `
+update users set fishes = fishes - 1, energy = energy + ?
+where id = ? and fishes > 0 and energy + ? <= ?`
+
+func (m *Model) EatFish(u User, energyDelta, energyCap int) bool {
+	n, err := m.db.MustExec(eatFish, energyDelta, u.ID, energyDelta, energyCap).RowsAffected()
+	failOn(err)
+	return n == 1
 }

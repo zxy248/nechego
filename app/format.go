@@ -48,6 +48,10 @@ func userError(c tele.Context, msg string) error {
 	return c.Send(makeError(msg))
 }
 
+func userErrorMarkdown(c tele.Context, msg string) error {
+	return c.Send(makeError(msg), tele.ModeMarkdownV2)
+}
+
 // randInRange returns a random value in range [min, max].
 func randInRange(min, max int) int {
 	return min + rand.Intn(max-min+1)

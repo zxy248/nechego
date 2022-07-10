@@ -68,6 +68,8 @@ func ParseCommand(s string) Command {
 		return CommandFishing
 	case startsWith(s, "!топ сил"):
 		return CommandTopStrength
+	case startsWith(s, "!поесть", "!еда"):
+		return CommandEatFish
 	case startsWith(s, "!сила"):
 		return CommandStrength
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):

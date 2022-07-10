@@ -280,10 +280,10 @@ func (a *App) addEnergyModifier(u model.User, m []*modifier) ([]*modifier, error
 // energyModifier returns the user's energy modifier.
 // If there is no modifier, returns noModifier, nil.
 func (a *App) energyModifier(u model.User) (*modifier, error) {
-	if u.Energy == energyCap {
+	if hasFullEnergy(u) {
 		return fullEnergyModifier, nil
 	}
-	if u.Energy == 0 {
+	if hasNoEnergy(u) {
 		return noEnergyModifier, nil
 	}
 	return noModifier, nil
@@ -316,7 +316,7 @@ func (a *App) addPoorModifier(u model.User, m []*modifier) ([]*modifier, error) 
 }
 
 func (a *App) addFisherModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	if u.CanFish {
+	if u.Fisher {
 		return append(m, fisherModifier), nil
 	}
 	return m, nil

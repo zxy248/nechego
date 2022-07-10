@@ -39,6 +39,7 @@ const (
 	CommandFishing               = 117
 	CommandFishingRod            = 118
 	CommandTopStrength           = 119
+	CommandEatFish               = 120
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202

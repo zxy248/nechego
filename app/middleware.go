@@ -79,14 +79,9 @@ func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
 		})
 		if errors.Is(err, model.ErrUserNotFound) {
 			u = model.User{
-				GID:      gid,
-				UID:      uid,
-				Energy:   0,
-				Balance:  0,
-				Admin:    false,
-				Banned:   false,
-				Messages: 0,
-				CanFish:  false,
+				GID:     gid,
+				UID:     uid,
+				Balance: 30,
 			}
 			a.model.InsertUser(u)
 		} else if err != nil {

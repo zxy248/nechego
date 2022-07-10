@@ -120,6 +120,7 @@ const handleProfileTemplate = `ℹ️ Профиль %s %v %s
 Запас энергии: ` + "`" + `%d ⚡️` + "`" + `
 Базовая сила: ` + "`" + `%.2f 💪` + "`" + `
 Написано сообщений: ` + "`" + `%d ✍️` + "`" + `
+Имеется рыбы: ` + "`" + `%d 🎣` + "`" + `
 
 %s
 `
@@ -167,6 +168,7 @@ func (a *App) handleProfile(c tele.Context) error {
 		user.Energy,
 		strength,
 		user.Messages,
+		user.Fishes,
 		status)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
