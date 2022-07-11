@@ -284,7 +284,7 @@ func (a *App) energyModifier(u model.User) (*modifier, error) {
 }
 
 func (a *App) addLuckModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	luck := luckModifier(luckLevel(u))
+	luck := luckModifier(u)
 	if luck != noModifier {
 		return append(m, luck), nil
 	}
@@ -369,8 +369,8 @@ func luckLevel(u model.User) byte {
 	return data[0]
 }
 
-func luckModifier(luck byte) *modifier {
-	switch {
+func luckModifier(u model.User) *modifier {
+	switch luck := luckLevel(u); {
 	case luck <= 10:
 		return terribleLuckModifier
 	case luck <= 40:

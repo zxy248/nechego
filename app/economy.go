@@ -218,19 +218,19 @@ func (a *App) handleCapital(c tele.Context) error {
 	if err != nil {
 		return internalError(c, err)
 	}
-	balance, err := a.groupBalance(group)
+	total, err := a.groupBalance(group)
 	if err != nil {
 		return internalError(c, err)
 	}
-	avg, err := a.averageBalance(group)
+	average, err := a.averageBalance(group)
 	if err != nil {
 		return internalError(c, err)
 	}
-	percentage := float64(richest.Balance) / float64(balance) * 100
+	percentage := float64(richest.Summary()) / float64(total) * 100
 	out := fmt.Sprintf(handleCapitalTemplate,
-		title, formatMoney(balance),
-		a.mustMentionUser(richest), formatMoney(richest.Balance), percentage,
-		formatMoney(int(avg)))
+		title, formatMoney(total),
+		a.mustMentionUser(richest), formatMoney(richest.Summary()), percentage,
+		formatMoney(int(average)))
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
@@ -242,7 +242,7 @@ func (a *App) groupBalance(g model.Group) (int, error) {
 	}
 	sum := 0
 	for _, u := range users {
-		sum += u.Balance
+		sum += u.Summary()
 	}
 	return sum, nil
 }
@@ -258,7 +258,7 @@ func (a *App) averageBalance(g model.Group) (float64, error) {
 	}
 	sum := 0
 	for _, u := range users {
-		sum += u.Balance
+		sum += u.Summary()
 	}
 	return float64(sum) / float64(len(users)), nil
 }

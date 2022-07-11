@@ -11,7 +11,7 @@ import (
 
 const (
 	notEnoughFish = "🐟 Недостаточно рыбы."
-	fishEaten     = "🐟 Вы съели рыбу."
+	fishEaten     = "🐟 Вы съели рыбу\\."
 	youAreFull    = "🐟 Вы не хотите есть."
 )
 
@@ -20,11 +20,12 @@ func (a *App) handleEatFish(c tele.Context) error {
 	if hasFullEnergy(user) {
 		return c.Send(youAreFull)
 	}
-	ok := a.model.EatFish(user, energyDelta, energyCap)
+	ok := a.model.EatFish(user, eatFishEnergyDelta, energySuperCap)
 	if !ok {
 		return c.Send(notEnoughFish)
 	}
-	return c.Send(fishEaten)
+	out := appendEnergyRemaining(fishEaten, user.Energy+eatFishEnergyDelta)
+	return c.Send(out, tele.ModeMarkdownV2)
 }
 
 const (
@@ -52,21 +53,22 @@ func (a *App) handleFishingRod(c tele.Context) error {
 type catchFishType int
 
 const (
-	catchFishSell catchFishType = iota
-	catchFishRelease
+	catchFishRelease catchFishType = iota
 	catchFishLost
+	catchFishSell
 	catchFishEat
 	catchFishRetain
-	catchFishCount
 )
 
 const (
-	buyFishingRod           = "Приобретите удочку, прежде чем рыбачить."
-	catchFishSellMessage    = "🎣 Вы поймали рыбу `%v` и продали ее за %s"
-	catchFishReleaseMessage = "🎣 Вы поймали рыбу `%v`, но решили отпустить ее\\."
-	catchFishLostMessage    = "🎣 Вы не смогли выудить рыбу из воды\\."
-	catchFishEatMessage     = "🎣 Вы поймали рыбу `%v` и съели ее\\."
-	catchFishRetainMessage  = "🎣 Вы поймали рыбу `%v` и оставили ее себе\\."
+	buyFishingRod             = "Приобретите удочку, прежде чем рыбачить."
+	catchFishSellMessage      = "🎣 Вы поймали рыбу `%v` и продали ее за %s"
+	catchFishReleaseMessage   = "🎣 Вы поймали рыбу `%v`, но решили отпустить ее\\."
+	catchFishLostMessage      = "🎣 Вы не смогли выудить рыбу из воды\\."
+	catchFishEatMessage       = "🎣 Вы поймали рыбу `%v` и съели ее\\."
+	catchFishRetainMessage    = "🎣 Вы поймали рыбу `%v` и оставили ее себе\\."
+	catchFishSuccessThreshold = 0.5
+	eatFishEnergyDelta        = 2
 )
 
 // !рыбалка
@@ -79,50 +81,78 @@ func (a *App) handleFishing(c tele.Context) error {
 	if !ok {
 		return userError(c, notEnoughEnergy)
 	}
-	fish := randomFish()
 
-	switch catchFishType(rand.Intn(int(catchFishCount))) {
+	switch randomFishType(user) {
 	case catchFishSell:
-		return a.sellFish(c, user, fish)
+		return a.sellFish(c, user)
 	case catchFishRelease:
-		return releaseFish(c, fish)
+		return releaseFish(c, user)
 	case catchFishLost:
-		return lostFish(c)
+		return lostFish(c, user)
 	case catchFishEat:
-		return a.eatFish(c, user, fish)
+		return a.eatFish(c, user)
 	case catchFishRetain:
-		return a.retainFish(c, user, fish)
+		return a.retainFish(c, user)
 	default:
 		return internalError(c, errors.New("unknown fish type"))
 	}
 }
 
-func (a *App) sellFish(c tele.Context, u model.User, fish string) error {
+func randomFishType(u model.User) catchFishType {
+	success := []catchFishType{catchFishSell, catchFishEat, catchFishRetain}
+	failure := []catchFishType{catchFishRelease, catchFishLost}
+	r := rand.Float64()
+	switch luckModifier(u) {
+	case terribleLuckModifier:
+		r -= .20
+	case badLuckModifier:
+		r -= .10
+	case goodLuckModifier:
+		r += .05
+	case excellentLuckModifier:
+		r += .10
+	}
+	if r >= catchFishSuccessThreshold {
+		return success[rand.Intn(len(success))]
+	}
+	return failure[rand.Intn(len(failure))]
+}
+
+func (a *App) sellFish(c tele.Context, u model.User) error {
 	reward := randInRange(fishSellMinPrice, fishSellMaxPrice)
 	a.model.UpdateMoney(u, reward)
-	return c.Send(fmt.Sprintf(catchFishSellMessage, fish, formatMoney(reward)), tele.ModeMarkdownV2)
+	out := fmt.Sprintf(catchFishSellMessage, randomFish(), formatMoney(reward))
+	out = appendEnergyRemaining(out, u.Energy-energyDelta)
+	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-func releaseFish(c tele.Context, fish string) error {
-	return c.Send(fmt.Sprintf(catchFishReleaseMessage, fish), tele.ModeMarkdownV2)
+func releaseFish(c tele.Context, u model.User) error {
+	out := fmt.Sprintf(catchFishReleaseMessage, randomFish())
+	out = appendEnergyRemaining(out, u.Energy-energyDelta)
+	return c.Send(out, tele.ModeMarkdownV2)
 
 }
 
-func lostFish(c tele.Context) error {
-	return c.Send(catchFishLostMessage, tele.ModeMarkdownV2)
+func lostFish(c tele.Context, u model.User) error {
+	out := appendEnergyRemaining(catchFishLostMessage, u.Energy-energyDelta)
+	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-func (a *App) eatFish(c tele.Context, u model.User, fish string) error {
+func (a *App) eatFish(c tele.Context, u model.User) error {
 	if hasFullEnergy(u) {
-		return a.retainFish(c, u, fish)
+		return a.retainFish(c, u)
 	}
-	a.model.UpdateEnergy(u, energyDelta, energyCap)
-	return c.Send(fmt.Sprintf(catchFishEatMessage, fish), tele.ModeMarkdownV2)
+	a.model.UpdateEnergy(u, eatFishEnergyDelta, energySuperCap)
+	out := fmt.Sprintf(catchFishEatMessage, randomFish())
+	out = appendEnergyRemaining(out, u.Energy-energyDelta+eatFishEnergyDelta)
+	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-func (a *App) retainFish(c tele.Context, u model.User, fish string) error {
+func (a *App) retainFish(c tele.Context, u model.User) error {
 	a.model.AddFish(u)
-	return c.Send(fmt.Sprintf(catchFishRetainMessage, fish), tele.ModeMarkdownV2)
+	out := fmt.Sprintf(catchFishRetainMessage, randomFish())
+	out = appendEnergyRemaining(out, u.Energy-energyDelta)
+	return c.Send(out, tele.ModeMarkdownV2)
 }
 
 var fishes = []string{

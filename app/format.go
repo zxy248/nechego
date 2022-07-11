@@ -147,3 +147,7 @@ func (a *App) formatRichTop(users []model.User) string {
 	}
 	return top
 }
+
+func appendEnergyRemaining(s string, energy int) string {
+	return fmt.Sprintf("%s\n\n_Энергии осталось: %s_", s, formatEnergy(energy))
+}

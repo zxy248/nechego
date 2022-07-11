@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	restoreEnergyCooldown = time.Minute * 15
+	restoreEnergyCooldown = time.Minute * 12
 	energyDelta           = 1
-	energyCap             = 4
+	energyCap             = 5
+	energySuperCap        = 50
 )
 
 func (a *App) restoreEnergyEvery(d time.Duration) {
@@ -18,7 +19,7 @@ func (a *App) restoreEnergyEvery(d time.Duration) {
 }
 
 func hasFullEnergy(u model.User) bool {
-	return u.Energy == energyCap
+	return u.Energy >= energyCap
 }
 
 func hasNoEnergy(u model.User) bool {
