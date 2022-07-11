@@ -86,7 +86,7 @@ const (
 	diceInProgress  = "Игра уже идет."
 	betTooLow       = "Поставьте больше средств."
 	tired           = "_Вы устали от азартных игр\\. Энергии осталось: %s_"
-	tiredChance     = 0.2
+	tiredChance     = 0.12
 )
 
 var handleDiceMutex = &sync.Mutex{}

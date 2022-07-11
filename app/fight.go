@@ -316,6 +316,13 @@ func (a *App) addFisherModifier(u model.User, m []*modifier) ([]*modifier, error
 	return m, nil
 }
 
+func (a *App) addDebtorModifier(u model.User, m []*modifier) ([]*modifier, error) {
+	if u.Debtor() {
+		return append(m, debtorModifier), nil
+	}
+	return m, nil
+}
+
 var (
 	noModifier            = &modifier{+0.00, ""}
 	adminModifier         = &modifier{+0.20, "Вы ощущаете власть над остальными."}
@@ -329,6 +336,7 @@ var (
 	richModifier          = &modifier{+0.05, "Вы богаты."}
 	poorModifier          = &modifier{-0.05, "Вы бедны."}
 	fisherModifier        = &modifier{+0.05, "Вы можете рыбачить."}
+	debtorModifier        = &modifier{-0.25, "У вас есть кредит."}
 )
 
 // userModifiers returns the user's modifiers.
@@ -341,6 +349,7 @@ func (a *App) userModifiers(u model.User) ([]*modifier, error) {
 		a.addRichModifier,
 		a.addPoorModifier,
 		a.addFisherModifier,
+		a.addDebtorModifier,
 	}
 	var modifiers []*modifier
 	var err error

@@ -89,6 +89,10 @@ func formatFishes(n int) string {
 	return fmt.Sprintf("`%d 🎣`", n)
 }
 
+func formatRatio(v float64) string {
+	return fmt.Sprintf("`%d%%`", int(v*100))
+}
+
 func (a *App) formatUnorderedList(users []model.User) string {
 	var list string
 	for _, u := range users {
@@ -139,7 +143,7 @@ func (a *App) formatRichTop(users []model.User) string {
 	var top string
 	for i := 0; i < len(users); i++ {
 		top += fmt.Sprintf("_%d\\._ %s, %s\n",
-			i+1, a.mustMentionUser(users[i]), formatMoney(users[i].Balance))
+			i+1, a.mustMentionUser(users[i]), formatMoney(users[i].Summary()))
 	}
 	return top
 }

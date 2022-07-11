@@ -13,4 +13,6 @@ const (
 	diceBetForBonus  = 5
 	diceMinBonus     = 1
 	diceMaxBonus     = 5
+	minDebt          = 10
+	debtFee          = 0.2
 )

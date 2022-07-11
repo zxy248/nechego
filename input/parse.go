@@ -76,6 +76,10 @@ func ParseCommand(s string) Command {
 		return CommandWithdraw
 	case startsWith(s, "!банк"):
 		return CommandBank
+	case startsWith(s, "!кредит"):
+		return CommandDebt
+	case startsWith(s, "!погасить"):
+		return CommandRepay
 	case startsWith(s, "!сила"):
 		return CommandStrength
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):

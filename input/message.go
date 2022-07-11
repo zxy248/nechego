@@ -89,7 +89,9 @@ func (m *Message) MoneyArgument() (int, error) {
 	if m.Command != CommandTransfer &&
 		m.Command != CommandDice &&
 		m.Command != CommandDeposit &&
-		m.Command != CommandWithdraw {
+		m.Command != CommandWithdraw &&
+		m.Command != CommandDebt &&
+		m.Command != CommandRepay {
 		return 0, ErrWrongCommand
 	}
 	arg := m.Argument()

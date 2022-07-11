@@ -6,26 +6,36 @@ import (
 )
 
 type User struct {
-	ID       int
-	GID      int64
-	UID      int64
-	Energy   int
-	Balance  int
-	Account  int
-	Admin    bool
-	Banned   bool
-	Messages int
-	Fisher   bool
-	Fishes   int
+	ID        int
+	GID       int64
+	UID       int64
+	Energy    int
+	Balance   int
+	Account   int
+	Debt      int
+	DebtLimit int `db:"debt_limit"`
+	Admin     bool
+	Banned    bool
+	Messages  int
+	Fisher    bool
+	Fishes    int
+}
+
+func (u User) Summary() int {
+	return u.Balance + u.Account - u.Debt
+}
+
+func (u User) Debtor() bool {
+	return u.Debt != 0
 }
 
 const insertUser = `
-insert into users (gid, uid, energy, balance, account, admin, banned, messages, fisher, fishes)
-values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+insert into users (gid, uid, energy, balance, account, debt, debt_limit, admin, banned, messages, fisher, fishes)
+values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 func (m *Model) InsertUser(u User) {
 	m.db.MustExec(insertUser,
-		u.GID, u.UID, u.Energy, u.Balance, u.Account, u.Admin, u.Banned, u.Messages, u.Fisher, u.Fishes)
+		u.GID, u.UID, u.Energy, u.Balance, u.Account, u.Debt, u.DebtLimit, u.Admin, u.Banned, u.Messages, u.Fisher, u.Fishes)
 }
 
 const deleteUser = `
@@ -37,7 +47,7 @@ func (m *Model) DeleteUser(u User) {
 }
 
 const selectUser = `
-select id, gid, uid, energy, balance, account, admin, banned, messages, fisher, fishes
+select id, gid, uid, energy, balance, account, debt, debt_limit, admin, banned, messages, fisher, fishes
 from real_users`
 
 const (
@@ -220,4 +230,32 @@ func (m *Model) Withdraw(u User, amount, fee int) bool {
 	n, err := m.db.MustExec(withdraw, amount+fee, amount, u.ID, amount+fee).RowsAffected()
 	failOn(err)
 	return n == 1
+}
+
+const loan = `
+update users set balance = balance + ?, debt = debt + ?
+where id = ? and debt = 0 and debt_limit >= ?`
+
+func (m *Model) Loan(u User, amount, fee int) bool {
+	n, err := m.db.MustExec(loan, amount, amount+fee, u.ID, amount).RowsAffected()
+	failOn(err)
+	return n == 1
+}
+
+const repay = `
+update users set account = account - ?, debt = debt - ?
+where id = ? and account >= ? and debt >= ?`
+
+func (m *Model) Repay(u User, amount int) bool {
+	n, err := m.db.MustExec(repay, amount, amount, u.ID, amount, amount).RowsAffected()
+	failOn(err)
+	return n == 1
+}
+
+const raiseLimit = `
+update users set debt_limit = ?
+where id = ? and debt_limit < ?`
+
+func (m *Model) RaiseLimit(u User, limit int) {
+	m.db.MustExec(raiseLimit, limit, u.ID, limit)
 }

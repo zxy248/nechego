@@ -62,7 +62,7 @@ func moneyArgument(c tele.Context) (int, error) {
 }
 
 func isPoor(u model.User) bool {
-	return u.Balance < maxWinReward
+	return u.Summary() < maxWinReward
 }
 
 // isRichest returns true if the user is the richest user in the group.
@@ -97,7 +97,7 @@ func (a *App) richestUsers(g model.Group) ([]model.User, error) {
 		return nil, err
 	}
 	sort.Slice(users, func(i, j int) bool {
-		return users[i].Balance > users[j].Balance
+		return users[i].Summary() > users[j].Summary()
 	})
 	return users, nil
 }
@@ -109,7 +109,7 @@ func (a *App) poorestUsers(g model.Group) ([]model.User, error) {
 		return nil, err
 	}
 	sort.Slice(users, func(i, j int) bool {
-		return users[i].Balance < users[j].Balance
+		return users[i].Summary() < users[j].Summary()
 	})
 	return users, nil
 }

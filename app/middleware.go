@@ -19,6 +19,7 @@ func (a *App) pipeline(next tele.HandlerFunc) tele.HandlerFunc {
 		requireGroupWhitelisted,
 		requireStatusActive,
 		a.injectUser,
+		a.raiseLimit,
 		requireUserUnbanned,
 		a.requireCommandPermitted,
 		a.incrementMessageCount,
@@ -87,6 +88,18 @@ func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
 			a.model.InsertUser(u)
 		} else if err != nil {
 			return err
+		}
+		return next(addUser(c, u))
+	}
+}
+
+func (a *App) raiseLimit(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		u := getUser(c)
+		sum := u.Summary()
+		if u.DebtLimit < sum {
+			u.DebtLimit = sum
+			a.model.RaiseLimit(u, sum)
 		}
 		return next(addUser(c, u))
 	}

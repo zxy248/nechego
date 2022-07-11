@@ -43,6 +43,8 @@ const (
 	CommandDeposit               = 121
 	CommandWithdraw              = 122
 	CommandBank                  = 123
+	CommandDebt                  = 124
+	CommandRepay                 = 125
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -92,6 +94,17 @@ var commandText = map[Command]string{
 	CommandTopRich:       "!топ богатых",
 	CommandTopPoor:       "!топ бедных",
 	CommandCapital:       "!капитал",
+	CommandStrength:      "!сила",
+	CommandEnergy:        "!энергия",
+	CommandFishing:       "!рыбалка",
+	CommandFishingRod:    "!удочка",
+	CommandTopStrength:   "!топ сильных",
+	CommandEatFish:       "!еда",
+	CommandDeposit:       "!депозит",
+	CommandWithdraw:      "!обнал",
+	CommandBank:          "!банк",
+	CommandDebt:          "!кредит",
+	CommandRepay:         "!погасить",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",
