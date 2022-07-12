@@ -45,6 +45,7 @@ const (
 	CommandBank                  = 123
 	CommandDebt                  = 124
 	CommandRepay                 = 125
+	CommandTopWeak               = 126
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -105,6 +106,7 @@ var commandText = map[Command]string{
 	CommandBank:          "!банк",
 	CommandDebt:          "!кредит",
 	CommandRepay:         "!погасить",
+	CommandTopWeak:       "!топ слабых",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",

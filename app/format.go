@@ -151,3 +151,11 @@ func (a *App) formatRichTop(users []model.User) string {
 func appendEnergyRemaining(s string, energy int) string {
 	return fmt.Sprintf("%s\n\n_Энергии осталось: %s_", s, formatEnergy(energy))
 }
+
+// topNumber returns l if l < maxTopNumber; otherwise returns maxTopNumber.
+func topNumber(l int) int {
+	if l < maxTopNumber {
+		return l
+	}
+	return maxTopNumber
+}

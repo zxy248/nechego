@@ -18,7 +18,7 @@ type fighter struct {
 }
 
 func (a *App) makeFighter(u model.User) (fighter, error) {
-	final, _, err := a.userStrength(u)
+	final, err := a.userStrength(u)
 	if err != nil {
 		return fighter{}, err
 	}
@@ -100,17 +100,23 @@ func (a *App) handleFight(c tele.Context) error {
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
+func fightChance() float64 {
+	return rand.Float64()*2 - 1
+}
+
 const chanceRatio = 0.5
 
+func fightFormula(strength, chance float64) float64 {
+	return (strength * (1 - chanceRatio)) + (strength * chance * chanceRatio)
+}
+
 // userStrength determines the final strength of a user.
-func (a *App) userStrength(u model.User) (value float64, chance float64, err error) {
-	chance = rand.Float64()*2 - 1
+func (a *App) userStrength(u model.User) (float64, error) {
 	strength, err := a.actualUserStrength(u)
 	if err != nil {
-		return 0, 0, err
+		return 0, err
 	}
-	result := (strength * (1 - chanceRatio)) + (strength * chance * chanceRatio)
-	return result, chance, nil
+	return fightFormula(strength, fightChance()), nil
 }
 
 const baseStrength = 1
@@ -143,6 +149,7 @@ func (a *App) messageCountCoefficient(u model.User) (float64, error) {
 	return float64(1+user) / float64(1+total), nil
 }
 
+// totalMessageCount returns a total message count in the group.
 func (a *App) totalMessageCount(g model.Group) (int, error) {
 	users, err := a.model.ListUsers(g)
 	if err != nil {
@@ -185,6 +192,26 @@ func (a *App) handleTopStrength(c tele.Context) error {
 		return internalError(c, err)
 	}
 	return c.Send(fmt.Sprintf(handleTopStrength, top), tele.ModeMarkdownV2)
+}
+
+const topWeak = "🤕 *Самые слабые пользователи*\n"
+
+// !топ слабых
+func (a *App) handleTopWeak(c tele.Context) error {
+	users, err := a.strongestUsers(getGroup(c))
+	if err != nil {
+		return internalError(c, err)
+	}
+	n := topNumber(len(users))
+	weak := []model.User{}
+	for i := 0; i < n; i++ {
+		weak = append(weak, users[len(users)-1-i])
+	}
+	top, err := a.formatTopStrength(weak)
+	if err != nil {
+		return internalError(c, err)
+	}
+	return c.Send(topWeak+top, tele.ModeMarkdownV2)
 }
 
 func (a *App) strongestUsers(g model.Group) ([]model.User, error) {
