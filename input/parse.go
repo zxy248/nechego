@@ -67,7 +67,7 @@ func ParseCommand(s string) Command {
 	case startsWith(s, "!рыбалка", "!ловля рыб", "!закинуть удочку"):
 		return CommandFishing
 	case startsWith(s, "!топ сил"):
-		return CommandTopStrength
+		return CommandTopStrong
 	case startsWith(s, "!поесть", "!еда"):
 		return CommandEatFish
 	case startsWith(s, "!депозит"):

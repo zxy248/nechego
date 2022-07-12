@@ -139,7 +139,7 @@ func (a *App) formatTopStrength(users []model.User) (string, error) {
 	return top, nil
 }
 
-func (a *App) formatRichTop(users []model.User) string {
+func (a *App) formatTopRich(users []model.User) string {
 	var top string
 	for i := 0; i < len(users); i++ {
 		top += fmt.Sprintf("_%d\\._ %s, %s\n",

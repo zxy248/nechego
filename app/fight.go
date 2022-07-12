@@ -175,23 +175,21 @@ func (a *App) strengthMultiplier(u model.User) (float64, error) {
 	return multiplier, nil
 }
 
-const handleTopStrength = "🏋️‍♀️ *Самые сильные пользователи*\n%s"
+const topStrong = "🏋️‍♀️ *Самые сильные пользователи*\n"
 
-// !топ силы
-func (a *App) handleTopStrength(c tele.Context) error {
+// !топ сильных
+func (a *App) handleTopStrong(c tele.Context) error {
 	users, err := a.strongestUsers(getGroup(c))
 	if err != nil {
 		return internalError(c, err)
 	}
-	n := maxTopNumber
-	if len(users) < maxTopNumber {
-		n = len(users)
-	}
-	top, err := a.formatTopStrength(users[:n])
+	n := topNumber(len(users))
+	strong := users[:n]
+	top, err := a.formatTopStrength(strong)
 	if err != nil {
 		return internalError(c, err)
 	}
-	return c.Send(fmt.Sprintf(handleTopStrength, top), tele.ModeMarkdownV2)
+	return c.Send(topStrong+top, tele.ModeMarkdownV2)
 }
 
 const topWeak = "🤕 *Самые слабые пользователи*\n"
@@ -223,16 +221,16 @@ func (a *App) strongestUsers(g model.Group) ([]model.User, error) {
 		if err != nil {
 			return false
 		}
-		var is, js float64
-		is, err = a.actualUserStrength(users[i])
+		var x, y float64
+		x, err = a.actualUserStrength(users[i])
 		if err != nil {
 			return false
 		}
-		js, err := a.actualUserStrength(users[j])
+		y, err = a.actualUserStrength(users[j])
 		if err != nil {
 			return false
 		}
-		return is > js
+		return x > y
 	})
 	return users, err
 }
@@ -307,7 +305,7 @@ func (a *App) addLuckModifier(u model.User, m []*modifier) ([]*modifier, error) 
 }
 
 func (a *App) addRichModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	rich, err := a.isRichest(u)
+	rich, err := a.isRich(u)
 	if err != nil {
 		return nil, err
 	}

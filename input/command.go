@@ -38,7 +38,7 @@ const (
 	CommandEnergy                = 116
 	CommandFishing               = 117
 	CommandFishingRod            = 118
-	CommandTopStrength           = 119
+	CommandTopStrong             = 119
 	CommandEatFish               = 120
 	CommandDeposit               = 121
 	CommandWithdraw              = 122
@@ -99,7 +99,7 @@ var commandText = map[Command]string{
 	CommandEnergy:        "!энергия",
 	CommandFishing:       "!рыбалка",
 	CommandFishingRod:    "!удочка",
-	CommandTopStrength:   "!топ сильных",
+	CommandTopStrong:     "!топ сильных",
 	CommandEatFish:       "!еда",
 	CommandDeposit:       "!депозит",
 	CommandWithdraw:      "!обнал",

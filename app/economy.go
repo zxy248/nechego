@@ -73,12 +73,13 @@ func moneyArgument(c tele.Context) (int, error) {
 	return amount, nil
 }
 
+// isPoor returns true if the user's wealth is less than the maximum win reward.
 func isPoor(u model.User) bool {
 	return u.Summary() < maxWinReward
 }
 
-// isRichest returns true if the user is the richest user in the group.
-func (a *App) isRichest(u model.User) (bool, error) {
+// isRich returns true if the user is the richest user in the group.
+func (a *App) isRich(u model.User) (bool, error) {
 	group, err := a.model.GetGroup(model.Group{GID: u.GID})
 	if err != nil {
 		return false, err
@@ -110,18 +111,6 @@ func (a *App) richestUsers(g model.Group) ([]model.User, error) {
 	}
 	sort.Slice(users, func(i, j int) bool {
 		return users[i].Summary() > users[j].Summary()
-	})
-	return users, nil
-}
-
-// poorestUsers returns a list of users in the group sorted by wealth.
-func (a *App) poorestUsers(g model.Group) ([]model.User, error) {
-	users, err := a.model.ListUsers(g)
-	if err != nil {
-		return nil, err
-	}
-	sort.Slice(users, func(i, j int) bool {
-		return users[i].Summary() < users[j].Summary()
 	})
 	return users, nil
 }
@@ -187,7 +176,7 @@ func (a *App) handleProfile(c tele.Context) error {
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-const handleTopRichTemplate = "💵 *Самые богатые пользователи*\n%s"
+const topRich = "💵 *Самые богатые пользователи*\n"
 
 // handleTopRich sends a top of the richest users.
 func (a *App) handleTopRich(c tele.Context) error {
@@ -195,28 +184,27 @@ func (a *App) handleTopRich(c tele.Context) error {
 	if err != nil {
 		return internalError(c, err)
 	}
-	n := maxTopNumber
-	if len(users) < maxTopNumber {
-		n = len(users)
-	}
-	return c.Send(fmt.Sprintf(handleTopRichTemplate, a.formatRichTop(users[:n])),
-		tele.ModeMarkdownV2)
+	n := topNumber(len(users))
+	rich := users[:n]
+	top := a.formatTopRich(rich)
+	return c.Send(topRich+top, tele.ModeMarkdownV2)
 }
 
-const handleTopPoorTemplate = "🗑 *Самые бедные пользователи*\n%s"
+const topPoor = "🗑 *Самые бедные пользователи*\n"
 
 // handleTopPoor sends a top of the poorest users.
 func (a *App) handleTopPoor(c tele.Context) error {
-	users, err := a.poorestUsers(getGroup(c))
+	users, err := a.richestUsers(getGroup(c))
 	if err != nil {
 		return internalError(c, err)
 	}
-	n := maxTopNumber
-	if len(users) < maxTopNumber {
-		n = len(users)
+	n := topNumber(len(users))
+	poor := []model.User{}
+	for i := 0; i < n; i++ {
+		poor = append(poor, users[len(users)-1-i])
 	}
-	return c.Send(fmt.Sprintf(handleTopPoorTemplate, a.formatRichTop(users[:n])),
-		tele.ModeMarkdownV2)
+	top := a.formatTopRich(poor)
+	return c.Send(topPoor+top, tele.ModeMarkdownV2)
 }
 
 const handleCapitalTemplate = "💸 Капитал беседы *%s*: %s\n\n" +
