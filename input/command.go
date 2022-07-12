@@ -91,7 +91,7 @@ var commandText = map[Command]string{
 	CommandWeather:       "!погода",
 	CommandList:          "!список",
 	CommandTop:           "!топ",
-	CommandAdmin:         "!админ",
+	CommandAdmin:         "!админ дня",
 	CommandFight:         "!драка",
 	CommandBalance:       "!баланс",
 	CommandTransfer:      "!перевод",
