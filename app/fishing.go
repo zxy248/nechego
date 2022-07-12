@@ -20,7 +20,7 @@ func (a *App) handleEatFish(c tele.Context) error {
 	if hasFullEnergy(user) {
 		return c.Send(youAreFull)
 	}
-	ok := a.model.EatFish(user, eatFishEnergyDelta, energySuperCap)
+	ok := a.model.EatFish(user, eatFishEnergyDelta, energyTrueCap)
 	if !ok {
 		return c.Send(notEnoughFish)
 	}
@@ -142,7 +142,7 @@ func (a *App) eatFish(c tele.Context, u model.User) error {
 	if hasFullEnergy(u) {
 		return a.retainFish(c, u)
 	}
-	a.model.UpdateEnergy(u, eatFishEnergyDelta, energySuperCap)
+	a.model.UpdateEnergy(u, eatFishEnergyDelta, energyTrueCap)
 	out := fmt.Sprintf(catchFishEatMessage, randomFish())
 	out = appendEnergyRemaining(out, u.Energy-energyDelta+eatFishEnergyDelta)
 	return c.Send(out, tele.ModeMarkdownV2)

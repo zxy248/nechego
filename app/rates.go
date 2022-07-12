@@ -7,7 +7,7 @@ const (
 	fishSellMinPrice = 1
 	fishSellMaxPrice = 50
 	minWinReward     = 1
-	maxWinReward     = 20
+	maxWinReward     = 30
 	maxPoorWinReward = 5
 	diceMinBet       = 1
 	diceBetForBonus  = 5

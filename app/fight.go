@@ -34,6 +34,10 @@ type fight struct {
 	defender fighter
 }
 
+func (f fight) sameIDs() bool {
+	return f.attacker.ID == f.defender.ID
+}
+
 func (f fight) winner() fighter {
 	if f.attacker.finalStrength > f.defender.finalStrength {
 		return f.attacker
@@ -49,15 +53,9 @@ func (f fight) loser() fighter {
 }
 
 const (
-	fightersTemplate          = "⚔️ Нападает %s, сила в бою `%.2f [%.2f]`\n🛡 Защищается %s, сила в бою `%.2f [%.2f]`\n\n"
-	winnerTemplate            = "🏆 %s выходит победителем и забирает %s\n\n"
-	poorWinnerTemplate        = "🏆 %s выходит победителем и забирает из последних запасов проигравшего %s\n\n"
-	energyRemainingTemplate   = "Энергии осталось: %s"
-	handleFightTemplate       = fightersTemplate + winnerTemplate + energyRemainingTemplate
-	handleFightPoorTemplate   = fightersTemplate + poorWinnerTemplate + energyRemainingTemplate
-	displayStrengthMultiplier = 10
-	cannotAttackYourself      = "Вы не можете напасть на самого себя."
-	notEnoughEnergy           = "Недостаточно энергии."
+	fightCollect         = "⚔️ *%s* `[%.2f]` _против_ *%s* `[%.2f]`\n\n🏆 Побеждает %s и забирает %s"
+	fightNoMoney         = "⚔️ *%s* `[%.2f]` _против_ *%s* `[%.2f]`\n\n🏆 Побеждает %s\\. У проигравшего нечего отнять\\."
+	cannotAttackYourself = "Вы не можете напасть на самого себя."
 )
 
 // handleFight conducts a fight between two users.
@@ -70,10 +68,10 @@ func (a *App) handleFight(c tele.Context) error {
 	if err != nil {
 		return internalError(c, err)
 	}
-	if attacker.ID == defender.ID {
+	f := fight{attacker, defender}
+	if f.sameIDs() {
 		return userError(c, cannotAttackYourself)
 	}
-	f := fight{attacker, defender}
 
 	ok := a.model.UpdateEnergy(f.attacker.User, -energyDelta, energyCap)
 	if !ok {
@@ -86,24 +84,19 @@ func (a *App) handleFight(c tele.Context) error {
 		return internalError(c, err)
 	}
 
-	var template string
-	if reward == 0 {
-		reward = randInRange(minWinReward, maxPoorWinReward)
-		a.model.UpdateMoney(f.winner().User, reward)
-		template = handleFightPoorTemplate
-	} else {
-		template = handleFightTemplate
-	}
-	out := fmt.Sprintf(template,
-		a.mustMentionUser(f.attacker.User),
-		displayStrengthMultiplier*f.attacker.finalStrength,
+	template := fightNoMoney
+	args := []interface{}{a.mustMentionUser(f.attacker.User),
 		f.attacker.actualStrength,
 		a.mustMentionUser(f.defender.User),
-		displayStrengthMultiplier*f.defender.finalStrength,
 		f.defender.actualStrength,
 		a.mustMentionUser(f.winner().User),
-		formatMoney(reward),
-		formatEnergy(f.attacker.Energy-energyDelta))
+	}
+	if reward > 0 {
+		template = fightCollect
+		args = append(args, formatMoney(reward))
+	}
+	out := fmt.Sprintf(template, args...)
+	out = appendEnergyRemaining(out, f.attacker.Energy-energyDelta)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
@@ -215,11 +208,6 @@ func (a *App) strongestUsers(g model.Group) ([]model.User, error) {
 		return is > js
 	})
 	return users, err
-}
-
-// !стамина, !энергия
-func (a *App) handleEnergy(c tele.Context) error {
-	return c.Send(fmt.Sprintf("Осталось энергии: %s", formatEnergy(getUser(c).Energy)), tele.ModeMarkdownV2)
 }
 
 // !сила

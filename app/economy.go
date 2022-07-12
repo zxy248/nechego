@@ -10,14 +10,26 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const handleBalanceTemplate = "💵 В кошельке: %s\n💳 На банковском счете: %s"
-
 // handleBalance responds with the balance of a user.
 func (a *App) handleBalance(c tele.Context) error {
-	return c.Send(fmt.Sprintf(handleBalanceTemplate,
-		formatMoney(getUser(c).Balance),
-		formatMoney(getUser(c).Account)),
-		tele.ModeMarkdownV2)
+	user := getUser(c)
+	out := inTheWallet(user.Balance) + onTheAccount(user.Account)
+	if user.Debtor() {
+		out += debtValue(user.Debt)
+	}
+	return c.Send(out, tele.ModeMarkdownV2)
+}
+
+func inTheWallet(n int) string {
+	return fmt.Sprintf("💵 В кошельке: %s\n", formatMoney(n))
+}
+
+func onTheAccount(n int) string {
+	return fmt.Sprintf("💳 На банковском счете: %s\n", formatMoney(n))
+}
+
+func debtValue(n int) string {
+	return fmt.Sprintf("🏦 Кредит: %s\n", formatMoney(n))
 }
 
 const (
