@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"nechego/input"
 	"nechego/model"
 	"sync"
 	"time"
@@ -107,9 +108,11 @@ func (a *App) handleDice(c tele.Context) error {
 		return userError(c, diceInProgress)
 	}
 
-	bet, err := moneyArgument(c)
-	if bet == 0 || err != nil {
-		return err
+	bet, err := getMessage(c).MoneyArgument()
+	if errors.Is(err, input.ErrAllIn) {
+		bet = user.Balance
+	} else if err != nil {
+		return userError(c, specifyAmount)
 	}
 	if bet < diceMinBet {
 		return userError(c, betTooLow)

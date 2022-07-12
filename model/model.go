@@ -25,7 +25,7 @@ func NewModel(db *sqlx.DB) *Model {
 const schema = `
 create table if not exists users (
     id integer primary key autoincrement,
-    gid integer references groups (gid) on delete cascade,
+    gid integer not null references groups (gid) on delete cascade,
     uid integer not null,
     energy integer not null default 0 check (energy >= 0),
     balance integer not null default 0 check (balance >= 0),
@@ -49,30 +49,30 @@ create table if not exists groups (
 
 create table if not exists daily_pairs (
     id integer primary key autoincrement,
-    gid integer references groups (gid) on delete cascade,
-    user_id_x integer references users (id) on delete cascade,
-    user_id_y integer references users (id) on delete cascade,
+    gid integer not null references groups (gid) on delete cascade,
+    user_id_x integer not null references users (id) on delete cascade,
+    user_id_y integer not null references users (id) on delete cascade,
     added datetime not null,
     check (user_id_x != user_id_y)
 );
 
 create table if not exists daily_eblans (
     id integer primary key autoincrement,
-    gid integer references groups (gid) on delete cascade,
-    user_id integer references users (id) on delete cascade,
+    gid integer not null references groups (gid) on delete cascade,
+    user_id integer not null references users (id) on delete cascade,
     added datetime not null
 );
 
 create table if not exists daily_admins (
     id integer primary key autoincrement,
-    gid integer references groups (gid) on delete cascade,
-    user_id integer references users (id) on delete cascade,
+    gid integer not null references groups (gid) on delete cascade,
+    user_id integer not null references users (id) on delete cascade,
     added datetime not null
 );
 
 create table if not exists forbidden_commands (
     id integer primary key autoincrement,
-    gid integer references groups (gid) on delete cascade,
+    gid integer not null references groups (gid) on delete cascade,
     command integer not null,
     unique (gid, command)
 );
@@ -86,6 +86,14 @@ as admin,
 banned, messages, fisher, fishes
 from users
 where active = 1;
+
+create table if not exists events (
+    id integer primary key autoincrement,
+    gid integer not null references groups (gid) on delete cascade,
+    user_id integer not null references users (id) on delete cascade,
+    event integer not null,
+    happen datetime not null
+);
 `
 
 // CreateTables creates the necessary tables.

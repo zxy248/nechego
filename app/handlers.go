@@ -458,6 +458,13 @@ _См\. также: ` + "`" + `банк` + "`" + `, ` + "`" + `кредиты` +
 Забанить/разбанить пользователя:
 ` + "`" + `!бан` + "`" + ` или ` + "`" + `!разбан` + "`" + ` в ответ на сообщение пользователя\.
 `,
+	"парламент": `
+Если админ дня вас не устраивает, существует способ его сменить\.
+
+Если вы состоите в ` + "`" + `!парламенте` + "`" + `, для вас становится доступной команда ` + "`" + `!импичмент` + "`" + `\.
+
+При ее использовании вы отдаете свой голос за смену власти\. Если проголосуют три четвери парламента, можно будет выбрать нового ` + "`" + `!админа дня` + "`" + `\.
+`,
 }
 
 const help = `
@@ -531,11 +538,15 @@ const (
 	commandPermitted        = "Команда разрешена ✅"
 	commandAlreadyForbidden = "Команда уже запрещена 🛑"
 	commandAlreadyPermitted = "Команда уже разрешена ❎"
+	commandNotForbiddable   = "Эту команду нельзя запретить."
 )
 
-// handleForbid forbids a command.
+// !запретить
 func (a *App) handleForbid(c tele.Context) error {
 	return a.handleCommandAction(c, func(command input.Command) error {
+		if input.IsImmune(command) {
+			return userError(c, commandNotForbiddable)
+		}
 		ok := a.model.ForbidCommand(getGroup(c), command)
 		if !ok {
 			return c.Send(commandAlreadyForbidden)
@@ -544,7 +555,7 @@ func (a *App) handleForbid(c tele.Context) error {
 	})
 }
 
-// handlePermit permits a command.
+// !разрешить
 func (a *App) handlePermit(c tele.Context) error {
 	return a.handleCommandAction(c, func(command input.Command) error {
 		ok := a.model.PermitCommand(getGroup(c), command)

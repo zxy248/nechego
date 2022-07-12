@@ -217,6 +217,9 @@ update users set account = account + ?, balance = balance - ?
 where id = ? and balance >= ?`
 
 func (m *Model) Deposit(u User, amount, fee int) bool {
+	if amount <= 0 || fee < 0 {
+		return false
+	}
 	n, err := m.db.MustExec(deposit, amount, amount+fee, u.ID, amount+fee).RowsAffected()
 	failOn(err)
 	return n == 1
@@ -227,6 +230,9 @@ update users set account = account - ?, balance = balance + ?
 where id = ? and account >= ?`
 
 func (m *Model) Withdraw(u User, amount, fee int) bool {
+	if amount <= 0 || fee < 0 {
+		return false
+	}
 	n, err := m.db.MustExec(withdraw, amount+fee, amount, u.ID, amount+fee).RowsAffected()
 	failOn(err)
 	return n == 1

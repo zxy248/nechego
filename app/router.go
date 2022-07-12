@@ -87,6 +87,10 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleRepay
 	case input.CommandTopWeak:
 		return a.handleTopWeak
+	case input.CommandParliament:
+		return a.handleParliament
+	case input.CommandImpeachment:
+		return a.handleImpeachment
 	case input.CommandMasyunya:
 		return a.masyunyaHandler()
 	case input.CommandPoppy:

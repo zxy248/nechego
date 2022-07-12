@@ -35,7 +35,7 @@ func debtValue(n int) string {
 const (
 	handleTransferTemplate = "Вы перевели %s %s"
 	notEnoughMoney         = "Недостаточно средств."
-	specifyAmount          = "Укажите количество средств."
+	specifyAmount          = "Укажите корректное количество средств."
 	incorrectAmount        = "Некорректная сумма."
 )
 
@@ -43,9 +43,11 @@ const (
 func (a *App) handleTransfer(c tele.Context) error {
 	sender := getUser(c)
 	recipient := getReplyUser(c)
-	amount, err := moneyArgument(c)
-	if amount == 0 || err != nil {
-		return err
+	amount, err := getMessage(c).MoneyArgument()
+	if errors.Is(err, input.ErrAllIn) {
+		amount = sender.Balance
+	} else if err != nil {
+		return userError(c, specifyAmount)
 	}
 
 	if err := a.model.TransferMoney(sender, recipient, amount); err != nil {
@@ -56,21 +58,6 @@ func (a *App) handleTransfer(c tele.Context) error {
 	}
 	out := fmt.Sprintf(handleTransferTemplate, a.mustMentionUser(recipient), formatMoney(amount))
 	return c.Send(out, tele.ModeMarkdownV2)
-}
-
-// check if int == 0
-func moneyArgument(c tele.Context) (int, error) {
-	amount, err := getMessage(c).MoneyArgument()
-	if err != nil {
-		if errors.Is(err, input.ErrSpecifyAmount) {
-			return 0, userError(c, specifyAmount)
-		}
-		if errors.Is(err, input.ErrNotPositive) {
-			return 0, userError(c, incorrectAmount)
-		}
-		return 0, internalError(c, err)
-	}
-	return amount, nil
 }
 
 // isPoor returns true if the user's wealth is less than the maximum win reward.

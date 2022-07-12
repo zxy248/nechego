@@ -1,5 +1,7 @@
 package input
 
+import "golang.org/x/exp/slices"
+
 // Command is an integer in one of the intervals:
 // Management		[001, 100)
 // General		[100, 200)
@@ -46,6 +48,8 @@ const (
 	CommandDebt                  = 124
 	CommandRepay                 = 125
 	CommandTopWeak               = 126
+	CommandParliament            = 127
+	CommandImpeachment           = 128
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -107,6 +111,8 @@ var commandText = map[Command]string{
 	CommandDebt:          "!кредит",
 	CommandRepay:         "!погасить",
 	CommandTopWeak:       "!топ слабых",
+	CommandParliament:    "!парламент",
+	CommandImpeachment:   "!импичмент",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",
@@ -160,4 +166,17 @@ func IsFunCommand(c Command) bool {
 
 func IsPictureCommand(c Command) bool {
 	return c >= 400 && c < 500
+}
+
+var immuneCommands = []Command{
+	CommandUnban,
+	CommandTurnOn,
+	CommandPermit,
+	CommandParliament,
+	CommandImpeachment,
+	CommandAdmin,
+}
+
+func IsImmune(c Command) bool {
+	return slices.Contains(immuneCommands, c)
 }

@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"nechego/input"
 	"nechego/model"
 
 	tele "gopkg.in/telebot.v3"
@@ -38,52 +39,49 @@ func debtStatus(u model.User) string {
 
 const deposit = "💳 Вы оплатили налог и положили %s в банк\\.\n\n_Теперь на счету %s_"
 
+// !депозит
 func (a *App) handleDeposit(c tele.Context) error {
 	user := getUser(c)
-	amount, err := moneyArgument(c)
-	if amount == 0 || err != nil {
-		return err
+	amount, err := getMessage(c).MoneyArgument()
+	if errors.Is(err, input.ErrAllIn) {
+		amount = user.Balance
+	} else if err != nil {
+		return userError(c, specifyAmount)
 	}
-	amount, err = amountAfterBankFee(amount)
-	if err != nil {
-		return userError(c, err.Error())
-	}
-	ok := a.model.Deposit(user, amount, bankFee)
-	if !ok {
+	amount = amountAfterBankFee(amount)
+	if ok := a.model.Deposit(user, amount, bankFee); !ok {
 		return userError(c, notEnoughMoney)
 	}
-	return c.Send(fmt.Sprintf(deposit, formatMoney(amount), formatMoney(user.Account+amount)),
-		tele.ModeMarkdownV2)
+	out := fmt.Sprintf(deposit, formatMoney(amount), formatMoney(user.Account+amount))
+	return c.Send(out, tele.ModeMarkdownV2)
+}
+
+func amountAfterBankFee(amount int) int {
+	return amount - bankFee
 }
 
 const (
-	withdraw     = "💳 Вы сняли %s со счета\\.\n\n_Теперь в кошельке %s_"
-	withdrawDebt = "Вы не можете снимать средства со счета, пока у вас есть непогашенные кредиты.\n"
+	withdraw       = "💳 Вы сняли %s со счета\\.\n\n_Теперь в кошельке %s_"
+	withdrawDebtor = "Вы не можете снимать средства со счета, пока у вас есть непогашенные кредиты.\n"
 )
 
+// !обнал
 func (a *App) handleWithdraw(c tele.Context) error {
 	user := getUser(c)
 	if user.Debtor() {
-		return userError(c, withdrawDebt)
+		return userError(c, withdrawDebtor)
 	}
-	amount, err := moneyArgument(c)
-	if amount == 0 || err != nil {
-		return err
+	amount, err := getMessage(c).MoneyArgument()
+	if errors.Is(err, input.ErrAllIn) {
+		amount = user.Account
+	} else if err != nil {
+		return userError(c, specifyAmount)
 	}
-	ok := a.model.Withdraw(user, amount, 0)
-	if !ok {
+	if ok := a.model.Withdraw(user, amount, 0); !ok {
 		return userError(c, notEnoughMoney)
 	}
-	return c.Send(fmt.Sprintf(withdraw, formatMoney(amount), formatMoney(user.Balance+amount)),
-		tele.ModeMarkdownV2)
-}
-
-func amountAfterBankFee(amount int) (int, error) {
-	amount = amount - bankFee
-	if amount <= 0 {
-		return 0, errors.New(notEnoughMoney)
-	}
-	return amount, nil
+	out := fmt.Sprintf(withdraw, formatMoney(amount), formatMoney(user.Balance+amount))
+	return c.Send(out, tele.ModeMarkdownV2)
 }
 
 const (
@@ -99,20 +97,25 @@ func (a *App) handleDebt(c tele.Context) error {
 	if user.Debtor() {
 		return userError(c, debtorCannotLoan)
 	}
-	amount, err := moneyArgument(c)
-	if amount == 0 || err != nil {
-		return err
+	amount, err := getMessage(c).MoneyArgument()
+	if errors.Is(err, input.ErrAllIn) {
+		amount = user.DebtLimit
+	} else if err != nil {
+		return userError(c, specifyAmount)
 	}
 	if amount < minDebt {
 		return userErrorMarkdown(c, fmt.Sprintf(debtTooLow, formatMoney(minDebt)))
 	}
-	fee := int(float64(amount) * debtFee)
-	ok := a.model.Loan(user, amount, fee)
-	if !ok {
+	fee := calculateDebtFee(amount)
+	if ok := a.model.Loan(user, amount, fee); !ok {
 		return userErrorMarkdown(c, fmt.Sprintf(limitTooLow, formatMoney(user.DebtLimit)))
 	}
-	return c.Send(fmt.Sprintf(debtSuccess, formatMoney(amount), formatMoney(amount+fee)),
-		tele.ModeMarkdownV2)
+	out := fmt.Sprintf(debtSuccess, formatMoney(amount), formatMoney(amount+fee))
+	return c.Send(out, tele.ModeMarkdownV2)
+}
+
+func calculateDebtFee(amount int) int {
+	return int(float64(amount) * debtFee)
 }
 
 const (
@@ -127,20 +130,21 @@ func (a *App) handleRepay(c tele.Context) error {
 	if !user.Debtor() {
 		return userError(c, notDebtor)
 	}
-	amount, err := moneyArgument(c)
-	if amount == 0 || err != nil {
-		return err
+	amount, err := getMessage(c).MoneyArgument()
+	if errors.Is(err, input.ErrAllIn) {
+		amount = user.Account
+	} else if err != nil {
+		return userError(c, specifyAmount)
 	}
 	if user.Debt <= amount {
 		amount = user.Debt
 	}
-	ok := a.model.Repay(user, amount)
-	if !ok {
+	if ok := a.model.Repay(user, amount); !ok {
 		return userError(c, notEnoughOnBankAccount)
 	}
 	if amount == user.Debt {
 		return c.Send(repayFullSuccess)
 	}
-	return c.Send(fmt.Sprintf(repayPartialSuccess, formatMoney(amount), formatMoney(user.Debt-amount)),
-		tele.ModeMarkdownV2)
+	out := fmt.Sprintf(repayPartialSuccess, formatMoney(amount), formatMoney(user.Debt-amount))
+	return c.Send(out, tele.ModeMarkdownV2)
 }

@@ -82,6 +82,10 @@ func ParseCommand(s string) Command {
 		return CommandRepay
 	case startsWith(s, "!топ слабых"):
 		return CommandTopWeak
+	case startsWith(s, "!парламент"):
+		return CommandParliament
+	case startsWith(s, "!импичмент"):
+		return CommandImpeachment
 	case startsWith(s, "!сила"):
 		return CommandStrength
 	case masyunyaRe.MatchString(s) || startsWith(s, "Масюня 🎀"):

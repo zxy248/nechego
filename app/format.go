@@ -187,3 +187,20 @@ func formatIcons(icon ...string) string {
 	icons := strings.Join(icon, "·")
 	return "`" + icons + "`"
 }
+
+func itemize(s ...string) string {
+	var out string
+	for _, ss := range s {
+		out += "· " + ss + "\n"
+	}
+	return out
+}
+
+func (a *App) itemizeUsers(u ...model.User) string {
+	mentions := []string{}
+	for _, uu := range u {
+		m := a.mustMentionUser(uu)
+		mentions = append(mentions, m)
+	}
+	return itemize(mentions...)
+}

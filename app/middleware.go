@@ -6,7 +6,6 @@ import (
 	"nechego/model"
 	"time"
 
-	"golang.org/x/exp/slices"
 	tele "gopkg.in/telebot.v3"
 )
 
@@ -161,10 +160,12 @@ func requireGroupWhitelisted(next tele.HandlerFunc) tele.HandlerFunc {
 
 func requireUserUnbanned(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		user := getUser(c)
-		if user.Admin && input.IsManagementCommand(getMessage(c).Command) {
+		command := getMessage(c).Command
+		if input.IsImmune(command) {
 			return next(c)
 		}
+
+		user := getUser(c)
 		if user.Banned {
 			return nil
 		}
@@ -175,14 +176,15 @@ func requireUserUnbanned(next tele.HandlerFunc) tele.HandlerFunc {
 func (a *App) requireCommandPermitted(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		command := getMessage(c).Command
-		if getUser(c).Admin && input.IsManagementCommand(command) {
+		if input.IsImmune(command) {
 			return next(c)
 		}
-		commands, err := a.model.ForbiddenCommands(getGroup(c))
+
+		forbidden, err := a.isCommandForbidden(getGroup(c), command)
 		if err != nil {
 			return err
 		}
-		if slices.Contains(commands, command) {
+		if forbidden {
 			return nil
 		}
 		return next(c)
