@@ -1,12 +1,10 @@
 package app
 
 import (
-	"crypto/sha1"
 	"fmt"
 	"math/rand"
 	"nechego/model"
 	"sort"
-	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -165,13 +163,11 @@ func (a *App) totalMessageCount(g model.Group) (int, error) {
 // strengthMultiplier returns the strength multiplier value.
 func (a *App) strengthMultiplier(u model.User) (float64, error) {
 	multiplier := float64(1)
-	modifiers, err := a.userModifiers(u)
+	ms, err := a.userModset(u)
 	if err != nil {
 		return 0, err
 	}
-	for _, m := range modifiers {
-		multiplier += m.multiplier
-	}
+	multiplier += ms.sum()
 	return multiplier, nil
 }
 
@@ -212,6 +208,7 @@ func (a *App) handleTopWeak(c tele.Context) error {
 	return c.Send(topWeak+top, tele.ModeMarkdownV2)
 }
 
+// strongestUsers returns a list of strongest users in the group.
 func (a *App) strongestUsers(g model.Group) ([]model.User, error) {
 	users, err := a.model.ListUsers(g)
 	if err != nil {
@@ -242,156 +239,4 @@ func (a *App) handleStrength(c tele.Context) error {
 		return internalError(c, err)
 	}
 	return c.Send(fmt.Sprintf("Ваша сила: %s", formatStrength(strength)), tele.ModeMarkdownV2)
-}
-
-type modifier struct {
-	multiplier  float64
-	description string
-}
-
-type modifierAdder func(u model.User, m []*modifier) ([]*modifier, error)
-
-func (a *App) addAdminModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	if u.Admin {
-		return append(m, adminModifier), nil
-	}
-	return m, nil
-}
-
-func (a *App) addEblanModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	group, err := a.model.GetGroup(model.Group{GID: u.GID})
-	if err != nil {
-		return nil, err
-	}
-	eblan, err := a.model.GetDailyEblan(group)
-	if err != nil {
-		return nil, err
-	}
-	if eblan.ID == u.ID {
-		return append(m, eblanModifier), nil
-	}
-	return m, nil
-}
-
-func (a *App) addEnergyModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	energy, err := a.energyModifier(u)
-	if err != nil {
-		return nil, err
-	}
-	if energy != noModifier {
-		return append(m, energy), nil
-	}
-	return m, nil
-}
-
-// energyModifier returns the user's energy modifier.
-// If there is no modifier, returns noModifier, nil.
-func (a *App) energyModifier(u model.User) (*modifier, error) {
-	if hasFullEnergy(u) {
-		return fullEnergyModifier, nil
-	}
-	if hasNoEnergy(u) {
-		return noEnergyModifier, nil
-	}
-	return noModifier, nil
-}
-
-func (a *App) addLuckModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	luck := luckModifier(u)
-	if luck != noModifier {
-		return append(m, luck), nil
-	}
-	return m, nil
-}
-
-func (a *App) addRichModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	rich, err := a.isRich(u)
-	if err != nil {
-		return nil, err
-	}
-	if rich {
-		return append(m, richModifier), nil
-	}
-	return m, nil
-}
-
-func (a *App) addPoorModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	if isPoor(u) {
-		return append(m, poorModifier), nil
-	}
-	return m, nil
-}
-
-func (a *App) addFisherModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	if u.Fisher {
-		return append(m, fisherModifier), nil
-	}
-	return m, nil
-}
-
-func (a *App) addDebtorModifier(u model.User, m []*modifier) ([]*modifier, error) {
-	if u.Debtor() {
-		return append(m, debtorModifier), nil
-	}
-	return m, nil
-}
-
-var (
-	noModifier            = &modifier{+0.00, ""}
-	adminModifier         = &modifier{+0.20, "Вы ощущаете власть над остальными."}
-	eblanModifier         = &modifier{-0.20, "Вы чувствуете себя оскорбленным."}
-	fullEnergyModifier    = &modifier{+0.10, "Вы полны сил."}
-	noEnergyModifier      = &modifier{-0.25, "Вы чувствуете себя уставшим."}
-	terribleLuckModifier  = &modifier{-0.50, "Вас преследуют неудачи."}
-	badLuckModifier       = &modifier{-0.10, "Вам не везет."}
-	goodLuckModifier      = &modifier{+0.10, "Вам везет."}
-	excellentLuckModifier = &modifier{+0.30, "Сегодня ваш день."}
-	richModifier          = &modifier{+0.05, "Вы богаты."}
-	poorModifier          = &modifier{-0.05, "Вы бедны."}
-	fisherModifier        = &modifier{+0.05, "Вы можете рыбачить."}
-	debtorModifier        = &modifier{-0.25, "У вас есть кредит."}
-)
-
-// userModifiers returns the user's modifiers.
-func (a *App) userModifiers(u model.User) ([]*modifier, error) {
-	adders := []modifierAdder{
-		a.addAdminModifier,
-		a.addEblanModifier,
-		a.addEnergyModifier,
-		a.addLuckModifier,
-		a.addRichModifier,
-		a.addPoorModifier,
-		a.addFisherModifier,
-		a.addDebtorModifier,
-	}
-	var modifiers []*modifier
-	var err error
-	for _, add := range adders {
-		modifiers, err = add(u, modifiers)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return modifiers, nil
-}
-
-func luckLevel(u model.User) byte {
-	now := time.Now()
-	seed := fmt.Sprintf("%v%v%v%v%v", u.UID, u.GID, now.Day(), now.Month(), now.Year())
-	data := sha1.Sum([]byte(seed))
-	return data[0]
-}
-
-func luckModifier(u model.User) *modifier {
-	switch luck := luckLevel(u); {
-	case luck <= 10:
-		return terribleLuckModifier
-	case luck <= 40:
-		return badLuckModifier
-	case luck <= 70:
-		return goodLuckModifier
-	case luck <= 80:
-		return excellentLuckModifier
-	}
-	return noModifier
 }

@@ -5,6 +5,7 @@ import (
 	"nechego/model"
 
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )

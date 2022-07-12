@@ -115,7 +115,7 @@ func (a *App) richestUsers(g model.Group) ([]model.User, error) {
 	return users, nil
 }
 
-const handleProfileTemplate = `ℹ️ *Профиль %s %v %s*
+const profile = `📇 *%s %s*
 
 Денег в кошельке: %s
 На счету в банке: %s
@@ -125,54 +125,50 @@ const handleProfileTemplate = `ℹ️ *Профиль %s %v %s*
 Имеется рыбы: %s
 
 %s
+
+%s
 `
 
 // handleProfile sends the profile of the user.
 func (a *App) handleProfile(c tele.Context) error {
 	user := getUser(c)
-	icon := "👤"
-	title := "пользователя"
 
 	strength, err := a.actualUserStrength(user)
 	if err != nil {
 		return internalError(c, err)
 	}
 
-	var status string
-	modifiers, err := a.userModifiers(user)
+	icons, titles, descs := []string{}, []string{}, []string{}
+	ms, err := a.userModset(user)
 	if err != nil {
 		return internalError(c, err)
 	}
-	for _, m := range modifiers {
+	for _, m := range ms.list() {
 		switch m {
 		case eblanModifier:
-			icon, title = "😸", "еблана"
+			titles = append(titles, "еблан")
 		case adminModifier:
-			icon, title = "👑", "администратора"
-		case terribleLuckModifier:
-			icon = "☠️"
-		case excellentLuckModifier:
-			icon = "🍀"
+			titles = append(titles, "администратор")
 		case richModifier:
-			icon, title = "🎩", "магната"
+			titles = append(titles, "магнат")
 		}
-		if m != noModifier {
-			status += m.description + "\n"
+		if m.icon != "" {
+			icons = append(icons, m.icon)
 		}
-	}
-	if status != "" {
-		status = fmt.Sprintf("_%s_", markdownEscaper.Replace(status))
+		descs = append(descs, m.description)
 	}
 
-	out := fmt.Sprintf(handleProfileTemplate,
-		title, a.mustMentionUser(user), icon,
+	out := fmt.Sprintf(profile,
+		formatTitles(titles...), a.mustMentionUser(user),
 		formatMoney(user.Balance),
 		formatMoney(user.Account),
 		formatEnergy(user.Energy),
 		formatStrength(strength),
 		formatMessages(user.Messages),
 		formatFishes(user.Fishes),
-		status)
+		formatStatus(descs...),
+		formatIcons(icons...),
+	)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 

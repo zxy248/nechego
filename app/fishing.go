@@ -62,11 +62,11 @@ const (
 
 const (
 	buyFishingRod             = "Приобретите удочку, прежде чем рыбачить."
-	catchFishSellMessage      = "🎣 Вы поймали рыбу `%v` и продали ее за %s"
-	catchFishReleaseMessage   = "🎣 Вы поймали рыбу `%v`, но решили отпустить ее\\."
+	catchFishSellMessage      = "🎣 Вы поймали рыбу %s и продали ее за %s"
+	catchFishReleaseMessage   = "🎣 Вы поймали рыбу %s, но решили отпустить ее\\."
 	catchFishLostMessage      = "🎣 Вы не смогли выудить рыбу из воды\\."
-	catchFishEatMessage       = "🎣 Вы поймали рыбу `%v` и съели ее\\."
-	catchFishRetainMessage    = "🎣 Вы поймали рыбу `%v` и оставили ее себе\\."
+	catchFishEatMessage       = "🎣 Вы поймали рыбу %s и съели ее\\."
+	catchFishRetainMessage    = "🎣 Вы поймали рыбу %s и оставили ее себе\\."
 	catchFishSuccessThreshold = 0.5
 	eatFishEnergyDelta        = 2
 )
@@ -119,15 +119,16 @@ func randomFishType(u model.User) catchFishType {
 }
 
 func (a *App) sellFish(c tele.Context, u model.User) error {
-	reward := randInRange(fishSellMinPrice, fishSellMaxPrice)
-	a.model.UpdateMoney(u, reward)
-	out := fmt.Sprintf(catchFishSellMessage, randomFish(), formatMoney(reward))
+	fish := randomFish()
+	a.model.UpdateMoney(u, fish.price())
+	out := fmt.Sprintf(catchFishSellMessage, fish, formatMoney(fish.price()))
 	out = appendEnergyRemaining(out, u.Energy-energyDelta)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
 func releaseFish(c tele.Context, u model.User) error {
-	out := fmt.Sprintf(catchFishReleaseMessage, randomFish())
+	fish := randomFish()
+	out := fmt.Sprintf(catchFishReleaseMessage, fish)
 	out = appendEnergyRemaining(out, u.Energy-energyDelta)
 	return c.Send(out, tele.ModeMarkdownV2)
 
@@ -142,20 +143,22 @@ func (a *App) eatFish(c tele.Context, u model.User) error {
 	if hasFullEnergy(u) {
 		return a.retainFish(c, u)
 	}
+	fish := randomFish()
 	a.model.UpdateEnergy(u, eatFishEnergyDelta, energyTrueCap)
-	out := fmt.Sprintf(catchFishEatMessage, randomFish())
+	out := fmt.Sprintf(catchFishEatMessage, fish)
 	out = appendEnergyRemaining(out, u.Energy-energyDelta+eatFishEnergyDelta)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
 func (a *App) retainFish(c tele.Context, u model.User) error {
+	fish := randomFish()
 	a.model.AddFish(u)
-	out := fmt.Sprintf(catchFishRetainMessage, randomFish())
+	out := fmt.Sprintf(catchFishRetainMessage, fish)
 	out = appendEnergyRemaining(out, u.Energy-energyDelta)
 	return c.Send(out, tele.ModeMarkdownV2)
 }
 
-var fishes = []string{
+var fishNames = []string{
 	"Щука",
 	"Окунь",
 	"Судак",
@@ -187,6 +190,29 @@ var fishes = []string{
 	"Таймень",
 }
 
-func randomFish() string {
-	return fishes[rand.Intn(len(fishes))]
+const (
+	fishPricePerKg = 10
+	minFishWeight  = 100
+	maxFishWeight  = 5000
+)
+
+type fish struct {
+	weight int // in grams
+	name   string
+}
+
+func (f *fish) String() string {
+	weight := float64(f.weight) / 1000
+	return fmt.Sprintf("`%s (%.2f кг)`", f.name, weight)
+}
+
+func (f *fish) price() int {
+	return int(float64(f.weight) / 1000 * fishPricePerKg)
+}
+
+func randomFish() *fish {
+	return &fish{
+		weight: randInRange(minFishWeight, maxFishWeight),
+		name:   fishNames[rand.Intn(len(fishNames))],
+	}
 }

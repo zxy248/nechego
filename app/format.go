@@ -148,8 +148,12 @@ func (a *App) formatTopRich(users []model.User) string {
 	return top
 }
 
+func energyRemaining(energy int) string {
+	return fmt.Sprintf("_Энергии осталось: %s_", formatEnergy(energy))
+}
+
 func appendEnergyRemaining(s string, energy int) string {
-	return fmt.Sprintf("%s\n\n_Энергии осталось: %s_", s, formatEnergy(energy))
+	return s + "\n\n" + energyRemaining(energy)
 }
 
 // topNumber returns l if l < maxTopNumber; otherwise returns maxTopNumber.
@@ -158,4 +162,28 @@ func topNumber(l int) int {
 		return l
 	}
 	return maxTopNumber
+}
+
+func formatStatus(desc ...string) string {
+	status := strings.Join(desc, "\n")
+	if status != "" {
+		status = fmt.Sprintf("_%s_", markdownEscaper.Replace(status))
+	}
+	return status
+}
+
+func formatTitles(title ...string) string {
+	if len(title) > 0 {
+		title[0] = strings.Title(title[0])
+	}
+	titles := strings.Join(title, " ")
+	if titles == "" {
+		titles = "Пользователь"
+	}
+	return titles
+}
+
+func formatIcons(icon ...string) string {
+	icons := strings.Join(icon, "·")
+	return "`" + icons + "`"
 }
