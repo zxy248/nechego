@@ -17,7 +17,7 @@ type Daily struct {
 const getDaily = `
 select id, gid, user_id, added
 from %s
-where gid = ? and added > date('now', 'localtime')
+where gid = ? and added >= date('now', 'localtime')
 limit 1
 `
 
@@ -76,7 +76,7 @@ type DailyPair struct {
 const getDailyPair = `
 select id, gid, user_id_x, user_id_y, added
 from daily_pairs
-where gid = ? and added > date('now', 'localtime')
+where gid = ? and added >= date('now', 'localtime')
 limit 1`
 
 const insertDailyPair = `

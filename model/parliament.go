@@ -52,7 +52,7 @@ and happen >= date('now', 'localtime')`
 const cancelAdmin = `
 delete from daily_admins
 where gid = ?
-and added > date('now', 'localtime')`
+and added >= date('now', 'localtime')`
 
 var (
 	ErrNotInParliament  = errors.New("not a parliament member")

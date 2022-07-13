@@ -81,7 +81,7 @@ create view if not exists real_users as
 select id, gid, uid, energy, balance, account, debt, debt_limit, admin
 or exists(select 1 from daily_admins
     where daily_admins.user_id = users.id
-    and added > date('now', 'localtime'))
+    and added >= date('now', 'localtime'))
 as admin,
 banned, messages, fisher, fishes
 from users
