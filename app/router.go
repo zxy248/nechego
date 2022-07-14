@@ -91,6 +91,16 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleParliament
 	case input.CommandImpeachment:
 		return a.handleImpeachment
+	case input.CommandFishList:
+		return a.handleFish
+	case input.CommandFreezeFish:
+		return a.handleFreeze
+	case input.CommandFreezer:
+		return a.handleFreezer
+	case input.CommandUnfreezeFish:
+		return a.handleUnfreeze
+	case input.CommandSellFish:
+		return a.handleSellFish
 	case input.CommandMasyunya:
 		return a.masyunyaHandler()
 	case input.CommandPoppy:

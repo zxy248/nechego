@@ -87,3 +87,28 @@ func (a *App) mustMentionUser(u model.User) string {
 	}
 	return name
 }
+
+func respondPlain(c tele.Context, out string) error {
+	return c.Send(out)
+}
+
+func respondMarkdown(c tele.Context, out string) error {
+	return c.Send(out, tele.ModeMarkdownV2)
+}
+
+func respondHTML(c tele.Context, out string) error {
+	return c.Send(out, tele.ModeHTML)
+}
+
+func internalError(c tele.Context, err error) error {
+	respondPlain(c, makeError("Ошибка сервера"))
+	return err
+}
+
+func userError(c tele.Context, out string) error {
+	return respondPlain(c, makeError(out))
+}
+
+func userErrorMarkdown(c tele.Context, out string) error {
+	return respondMarkdown(c, makeError(out))
+}

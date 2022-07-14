@@ -72,7 +72,7 @@ func (a *App) handleFight(c tele.Context) error {
 		return userError(c, cannotAttackYourself)
 	}
 
-	ok := a.model.UpdateEnergy(f.attacker.User, -energyDelta, energyCap)
+	ok := a.model.UpdateEnergy(f.attacker.User, -energyDelta, energyLimit)
 	if !ok {
 		return userError(c, notEnoughEnergy)
 	}
@@ -94,9 +94,8 @@ func (a *App) handleFight(c tele.Context) error {
 		template = fightCollect
 		args = append(args, formatMoney(reward))
 	}
-	out := fmt.Sprintf(template, args...)
-	out = appendEnergyRemaining(out, f.attacker.Energy-energyDelta)
-	return c.Send(out, tele.ModeMarkdownV2)
+	out := joinSections(fmt.Sprintf(template, args...), energyRemaining(f.attacker.Energy-energyDelta))
+	return respondMarkdown(c, out)
 }
 
 func fightChance() float64 {

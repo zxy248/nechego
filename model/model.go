@@ -94,6 +94,14 @@ create table if not exists events (
     event integer not null,
     happen datetime not null
 );
+
+create table if not exists fishing (
+    id integer primary key autoincrement,
+    user_id integer not null references users (id) on delete cascade,
+    fish text not null,
+    sold integer not null,
+    frozen integer not null
+)
 `
 
 // CreateTables creates the necessary tables.
@@ -108,6 +116,9 @@ drop table daily_pairs;
 drop table daily_eblans;
 drop table daily_admins;
 drop table forbidden_commands;
+drop view real_users;
+drop table events;
+drop table fishing;
 `
 
 // DropTables deletes all tables from the database.

@@ -1,38 +1,53 @@
 package app
 
 import (
-	"errors"
 	"fmt"
-	"math/rand"
+	"nechego/fishing"
 	"nechego/model"
+	"nechego/numbers"
 
 	tele "gopkg.in/telebot.v3"
 )
 
 const (
+	// fish
 	notEnoughFish = "🐟 Недостаточно рыбы."
-	fishEaten     = "🐟 Вы съели рыбу\\."
+	fishEaten     = "🐟 Вы съели рыбу."
 	youAreFull    = "🐟 Вы не хотите есть."
-)
 
-func (a *App) handleEatFish(c tele.Context) error {
-	user := getUser(c)
-	if hasFullEnergy(user) {
-		return c.Send(youAreFull)
-	}
-	ok := a.model.EatFish(user, eatFishEnergyDelta, energyTrueCap)
-	if !ok {
-		return c.Send(notEnoughFish)
-	}
-	out := appendEnergyRemaining(fishEaten, user.Energy+eatFishEnergyDelta)
-	return c.Send(out, tele.ModeMarkdownV2)
-}
-
-const (
+	// rod
 	boughtFishingRod         = "🎣 Вы приобрели удочку за %s"
 	alreadyCanFish           = "Вы уже приобрели удочку."
 	notEnoughMoneyFishingRod = "Вам не хватает %s"
+	buyFishingRod            = "Приобретите удочку, прежде чем рыбачить."
+
+	// energy
+	eatFishMinEnergy = 1
+	eatFishMaxEnergy = 2
 )
+
+// !еда
+func (a *App) handleEatFish(c tele.Context) error {
+	user := getUser(c)
+	if hasFullEnergy(user) {
+		return respondPlain(c, youAreFull)
+	}
+	energyRestored, ok := a.eatFish(user)
+	if !ok {
+		return respondPlain(c, notEnoughFish)
+	}
+	return respondPlain(c, eatFishResponse(user, energyRestored))
+}
+
+func (a *App) eatFish(u model.User) (energyRestored int, enoughFish bool) {
+	energyRestored = numbers.InRange(eatFishMinEnergy, eatFishMaxEnergy)
+	enoughFish = a.model.EatFish(u, energyRestored, energyLimit)
+	return
+}
+
+func eatFishResponse(u model.User, energyRestored int) string {
+	return joinSections(fishEaten, energyRemaining(u.Energy+energyRestored))
+}
 
 // !удочка
 func (a *App) handleFishingRod(c tele.Context) error {
@@ -40,36 +55,27 @@ func (a *App) handleFishingRod(c tele.Context) error {
 	if user.Fisher {
 		return userError(c, alreadyCanFish)
 	}
-	ok := a.model.UpdateMoney(user, -fishingRodPrice)
-	if !ok {
-		return userErrorMarkdown(c, fmt.Sprintf(notEnoughMoneyFishingRod,
-			formatMoney(fishingRodPrice-user.Balance)))
+	if ok := a.fishingRod(user); !ok {
+		return userErrorMarkdown(c, fishingRodNotEnoughMoney(user))
 	}
-	a.model.AllowFishing(user)
-	return c.Send(fmt.Sprintf(boughtFishingRod, formatMoney(fishingRodPrice)),
-		tele.ModeMarkdownV2)
+	return respondPlain(c, fishingRodSuccessResponse())
 }
 
-type catchFishType int
+func (a *App) fishingRod(u model.User) bool {
+	ok := a.model.UpdateMoney(u, -fishingRodPrice)
+	if ok {
+		a.model.AllowFishing(u)
+	}
+	return ok
+}
 
-const (
-	catchFishRelease catchFishType = iota
-	catchFishLost
-	catchFishSell
-	catchFishEat
-	catchFishRetain
-)
+func fishingRodNotEnoughMoney(u model.User) string {
+	return fmt.Sprintf(notEnoughMoneyFishingRod, formatMoney(fishingRodPrice-u.Balance))
+}
 
-const (
-	buyFishingRod             = "Приобретите удочку, прежде чем рыбачить."
-	catchFishSellMessage      = "🎣 Вы поймали рыбу %s и продали ее за %s"
-	catchFishReleaseMessage   = "🎣 Вы поймали рыбу %s, но решили отпустить ее\\."
-	catchFishLostMessage      = "🎣 Вы не смогли выудить рыбу из воды\\."
-	catchFishEatMessage       = "🎣 Вы поймали рыбу %s и съели ее\\."
-	catchFishRetainMessage    = "🎣 Вы поймали рыбу %s и оставили ее себе\\."
-	catchFishSuccessThreshold = 0.5
-	eatFishEnergyDelta        = 2
-)
+func fishingRodSuccessResponse() string {
+	return fmt.Sprintf(boughtFishingRod, formatMoney(fishingRodPrice))
+}
 
 // !рыбалка
 func (a *App) handleFishing(c tele.Context) error {
@@ -77,142 +83,192 @@ func (a *App) handleFishing(c tele.Context) error {
 	if !user.Fisher {
 		return userError(c, buyFishingRod)
 	}
-	ok := a.model.UpdateEnergy(user, -energyDelta, energyCap)
+	session, ok := a.fishing(user)
 	if !ok {
 		return userError(c, notEnoughEnergy)
 	}
-
-	switch randomFishType(user) {
-	case catchFishSell:
-		return a.sellFish(c, user)
-	case catchFishRelease:
-		return releaseFish(c, user)
-	case catchFishLost:
-		return lostFish(c, user)
-	case catchFishEat:
-		return a.eatFish(c, user)
-	case catchFishRetain:
-		return a.retainFish(c, user)
-	default:
-		return internalError(c, errors.New("unknown fish type"))
+	if session.Success() {
+		respondPlain(c, a.catchFishResponse(user, session.Fish))
 	}
+	return respondPlain(c, session.Outcome.String())
 }
 
-func randomFishType(u model.User) catchFishType {
-	success := []catchFishType{catchFishSell, catchFishEat, catchFishRetain}
-	failure := []catchFishType{catchFishRelease, catchFishLost}
-	r := rand.Float64()
+func (a *App) fishing(u model.User) (fishing.Session, bool) {
+	ok := a.model.UpdateEnergy(u, -energyDelta, energyLimit)
+	if !ok {
+		return fishing.Session{}, false
+	}
+	session := fishing.CastChance(fisherWinChance(u))
+	if session.Outcome.Success() {
+		a.collectFish(u, session.Fish)
+	}
+	return session, ok
+}
+
+func (a *App) collectFish(u model.User, f fishing.Fish) {
+	if f.Weight < f.NormalWeight() {
+		a.model.AddFish(u)
+		return
+	}
+	a.model.InsertFish(model.MakeCatch(u, f))
+}
+
+func fisherWinChance(u model.User) float64 {
+	r := fishing.SuccessChance
 	switch luckModifier(u) {
 	case terribleLuckModifier:
-		r -= .20
+		r -= .12
 	case badLuckModifier:
-		r -= .10
+		r -= .06
 	case goodLuckModifier:
-		r += .05
+		r += .04
 	case excellentLuckModifier:
-		r += .10
+		r += .08
 	}
-	if r >= catchFishSuccessThreshold {
-		return success[rand.Intn(len(success))]
+	return r
+}
+
+const catchFish = "%s получает рыбу: %s"
+
+func (a *App) catchFishResponse(u model.User, f fishing.Fish) string {
+	return fmt.Sprintf(catchFish, a.mustMentionUser(u), f)
+}
+
+// !рыба
+func (a *App) handleFish(c tele.Context) error {
+	user := getUser(c)
+	fishes, err := a.freshFishList(user)
+	if err != nil {
+		return internalError(c, err)
 	}
-	return failure[rand.Intn(len(failure))]
+	out := a.freshFishResponse(user, fishes)
+	return respondPlain(c, out)
 }
 
-func (a *App) sellFish(c tele.Context, u model.User) error {
-	fish := randomFish()
-	a.model.UpdateMoney(u, fish.price())
-	out := fmt.Sprintf(catchFishSellMessage, fish, formatMoney(fish.price()))
-	out = appendEnergyRemaining(out, u.Energy-energyDelta)
-	return c.Send(out, tele.ModeMarkdownV2)
-}
-
-func releaseFish(c tele.Context, u model.User) error {
-	fish := randomFish()
-	out := fmt.Sprintf(catchFishReleaseMessage, fish)
-	out = appendEnergyRemaining(out, u.Energy-energyDelta)
-	return c.Send(out, tele.ModeMarkdownV2)
-
-}
-
-func lostFish(c tele.Context, u model.User) error {
-	out := appendEnergyRemaining(catchFishLostMessage, u.Energy-energyDelta)
-	return c.Send(out, tele.ModeMarkdownV2)
-}
-
-func (a *App) eatFish(c tele.Context, u model.User) error {
-	if hasFullEnergy(u) {
-		return a.retainFish(c, u)
+func (a *App) freshFishList(u model.User) ([]fishing.Fish, error) {
+	catch, err := a.model.SelectFish(u)
+	if err != nil {
+		return nil, err
 	}
-	fish := randomFish()
-	a.model.UpdateEnergy(u, eatFishEnergyDelta, energyTrueCap)
-	out := fmt.Sprintf(catchFishEatMessage, fish)
-	out = appendEnergyRemaining(out, u.Energy-energyDelta+eatFishEnergyDelta)
-	return c.Send(out, tele.ModeMarkdownV2)
+	fishes := []fishing.Fish{}
+	for _, c := range catch {
+		if !c.Frozen {
+			fishes = append(fishes, c.Fish)
+		}
+	}
+	return fishes, nil
 }
 
-func (a *App) retainFish(c tele.Context, u model.User) error {
-	fish := randomFish()
-	a.model.AddFish(u)
-	out := fmt.Sprintf(catchFishRetainMessage, fish)
-	out = appendEnergyRemaining(out, u.Energy-energyDelta)
-	return c.Send(out, tele.ModeMarkdownV2)
+func (a *App) freshFishResponse(u model.User, f []fishing.Fish) string {
+	return joinLines(fmt.Sprintf(freshFish, a.mustMentionUser(u)), formatFishList(f...))
 }
 
-var fishNames = []string{
-	"Щука",
-	"Окунь",
-	"Судак",
-	"Ерш",
-	"Берш",
-	"Жерех",
-	"Голавль",
-	"Змееголов",
-	"Налим",
-	"Угорь",
-	"Сом",
-	"Лосось",
-	"Хариус",
-	"Форель",
-	"Голец",
-	"Осетр",
-	"Стерлядь",
-	"Карп",
-	"Карась",
-	"Линь",
-	"Лещ",
-	"Язь",
-	"Плотва",
-	"Толстолобик",
-	"Белоглазка",
-	"Красноперка",
-	"Уклейка",
-	"Подуст",
-	"Таймень",
+func formatFishList(f ...fishing.Fish) string {
+	lines := []string{}
+	for _, ff := range f {
+		lines = append(lines, fmt.Sprint(ff))
+	}
+	return joinLines(lines...)
+}
+
+// !продажа
+func (a *App) handleSellFish(c tele.Context) error {
+	user := getUser(c)
+	price, err := a.sellFreshFish(user)
+	if err != nil {
+		return internalError(c, err)
+	}
+	out := sellFishResponse(price)
+	return respondPlain(c, out)
+}
+
+func (a *App) sellFreshFish(u model.User) (int, error) {
+	fishes, err := a.fishForSell(u)
+	if err != nil {
+		return 0, err
+	}
+	price := fishPrice(fishes...)
+	a.model.UpdateMoney(u, price)
+	return price, nil
+}
+
+func (a *App) fishForSell(u model.User) ([]fishing.Fish, error) {
+	catch, err := a.model.SellFish(u)
+	if err != nil {
+		return nil, err
+	}
+	fishes := []fishing.Fish{}
+	for _, c := range catch {
+		fishes = append(fishes, c.Fish)
+	}
+	return fishes, nil
+}
+
+func fishPrice(f ...fishing.Fish) int {
+	sum := 0
+	for _, ff := range f {
+		sum += ff.Price()
+	}
+	return sum
+}
+
+func sellFishResponse(price int) string {
+	return fmt.Sprintf(soldFish, formatMoney(price))
 }
 
 const (
-	fishPricePerKg = 10
-	minFishWeight  = 100
-	maxFishWeight  = 5000
+	freshFish    = "Улов %s"
+	freezerFish  = "Холодильник %s"
+	fishFrozen   = "Рыба заморожена."
+	fishUnfrozen = "Рыба разморожена."
+	soldFish     = "Рыбы продано на %s"
 )
 
-type fish struct {
-	weight int // in grams
-	name   string
+func (a *App) handleFreeze(c tele.Context) error {
+	user := getUser(c)
+	a.freezeFish(user)
+	return respondPlain(c, fishFrozen)
 }
 
-func (f *fish) String() string {
-	weight := float64(f.weight) / 1000
-	return fmt.Sprintf("`%s (%.2f кг)`", f.name, weight)
+func (a *App) freezeFish(u model.User) {
+	a.model.FreezeFish(u)
 }
 
-func (f *fish) price() int {
-	return int(float64(f.weight) / 1000 * fishPricePerKg)
+func (a *App) handleUnfreeze(c tele.Context) error {
+	user := getUser(c)
+	a.unfreezeFish(user)
+	return respondPlain(c, fishUnfrozen)
 }
 
-func randomFish() *fish {
-	return &fish{
-		weight: randInRange(minFishWeight, maxFishWeight),
-		name:   fishNames[rand.Intn(len(fishNames))],
+func (a *App) unfreezeFish(u model.User) {
+	a.model.UnfreezeFish(u)
+}
+
+// !холодильник
+func (a *App) handleFreezer(c tele.Context) error {
+	user := getUser(c)
+	fishes, err := a.frozenFishList(user)
+	if err != nil {
+		return internalError(c, err)
 	}
+	out := a.freezerFishResponse(user, fishes)
+	return respondPlain(c, out)
+}
+
+func (a *App) frozenFishList(u model.User) ([]fishing.Fish, error) {
+	catch, err := a.model.SelectFish(u)
+	if err != nil {
+		return nil, err
+	}
+	fishes := []fishing.Fish{}
+	for _, c := range catch {
+		if c.Frozen {
+			fishes = append(fishes, c.Fish)
+		}
+	}
+	return fishes, nil
+}
+
+func (a *App) freezerFishResponse(u model.User, f []fishing.Fish) string {
+	return joinLines(fmt.Sprintf(freezerFish, a.mustMentionUser(u)), formatFishList(f...))
 }

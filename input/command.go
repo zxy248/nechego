@@ -50,6 +50,11 @@ const (
 	CommandTopWeak               = 126
 	CommandParliament            = 127
 	CommandImpeachment           = 128
+	CommandFishList              = 129
+	CommandFreezeFish            = 130
+	CommandFreezer               = 131
+	CommandUnfreezeFish          = 132
+	CommandSellFish              = 133
 	CommandCat                   = 200
 	CommandAnime                 = 201
 	CommandFurry                 = 202
@@ -113,6 +118,11 @@ var commandText = map[Command]string{
 	CommandTopWeak:       "!топ слабых",
 	CommandParliament:    "!парламент",
 	CommandImpeachment:   "!импичмент",
+	CommandFishList:      "!рыба",
+	CommandFreezeFish:    "!заморозка",
+	CommandFreezer:       "!холодильник",
+	CommandUnfreezeFish:  "!разморозка",
+	CommandSellFish:      "!продажа",
 	CommandCat:           "!кот",
 	CommandAnime:         "!аниме",
 	CommandFurry:         "!фурри",

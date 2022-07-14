@@ -126,7 +126,7 @@ func (a *App) handleDice(c tele.Context) error {
 
 	defer func() {
 		if rand.Float64() < tiredChance {
-			a.model.UpdateEnergy(user, -energyDelta, energyCap)
+			a.model.UpdateEnergy(user, -energyDelta, energyLimit)
 			err := c.Send(fmt.Sprintf(tired, formatEnergy(user.Energy-energyDelta)),
 				tele.ModeMarkdownV2)
 			if err != nil {

@@ -27,6 +27,10 @@ var markdownEscaper = func() *strings.Replacer {
 	return strings.NewReplacer(table...)
 }()
 
+func sanitizeMarkdown(s string) string {
+	return markdownEscaper.Replace(s)
+}
+
 var errorSigns = []string{"❌", "🚫", "⭕️", "🛑", "⛔️", "📛", "💢", "❗️", "‼️", "⚠️"}
 
 // errorSign returns a random error sign.
@@ -39,18 +43,6 @@ func makeError(s string) string {
 	return errorSign() + " " + s
 }
 
-func internalError(c tele.Context, err error) error {
-	c.Send(makeError("Ошибка сервера"))
-	return err
-}
-
-func userError(c tele.Context, msg string) error {
-	return c.Send(makeError(msg))
-}
-
-func userErrorMarkdown(c tele.Context, msg string) error {
-	return c.Send(makeError(msg), tele.ModeMarkdownV2)
-}
 // formatMoney formats the specified amount of money.
 func formatMoney(n int) string {
 	var out string
@@ -146,10 +138,6 @@ func energyRemaining(energy int) string {
 	return fmt.Sprintf("_Энергии осталось: %s_", formatEnergy(energy))
 }
 
-func appendEnergyRemaining(s string, energy int) string {
-	return s + "\n\n" + energyRemaining(energy)
-}
-
 // topNumber returns l if l < maxTopNumber; otherwise returns maxTopNumber.
 func topNumber(l int) int {
 	if l < maxTopNumber {
@@ -197,4 +185,12 @@ func (a *App) itemizeUsers(u ...model.User) string {
 		mentions = append(mentions, m)
 	}
 	return itemize(mentions...)
+}
+
+func joinSections(s ...string) string {
+	return strings.Join(s, "\n\n")
+}
+
+func joinLines(s ...string) string {
+	return strings.Join(s, "\n")
 }

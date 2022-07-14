@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	restoreEnergyCooldown = time.Minute * 12
+	notEnoughEnergy       = "Недостаточно энергии."
+	restoreEnergyCooldown = time.Minute * 20
 	energyDelta           = 1
-	energyCap             = 5
-	energyTrueCap         = 1000
+	energyCap             = 6
+	energyLimit           = 1_000_000
 )
 
 type muTime struct {
@@ -56,18 +57,19 @@ func hasNoEnergy(u model.User) bool {
 	return u.Energy == 0
 }
 
-const (
-	energyRestoreAfter = "Осталось энергии: %s\n\n" +
-		"_Энергия будет восстановлена через %d минут %d секунд\\._"
-	notEnoughEnergy = "Недостаточно энергии."
-)
-
 // !стамина, !энергия
 func (a *App) handleEnergy(c tele.Context) error {
-	t := energyCooldown.when()
-	now := time.Now()
-	mins := int(t.Sub(now).Minutes())
-	secs := int(t.Sub(now).Seconds()) % 60
-	out := fmt.Sprintf(energyRestoreAfter, formatEnergy(getUser(c).Energy), mins, secs)
-	return c.Send(out, tele.ModeMarkdownV2)
+	t := energyCooldown.when().Sub(time.Now())
+	e := getUser(c).Energy
+	return respondHTML(c, energyCooldownResponse(t, e))
+}
+
+const energyCooldownFormat = "⏰ До восстановления энергии: <code>%d минут %d секунд</code>."
+
+func energyCooldownResponse(t time.Duration, energy int) string {
+	mins := int(t.Minutes())
+	secs := int(t.Seconds()) % 60
+	return joinSections(
+		fmt.Sprintf(energyCooldownFormat, mins, secs),
+		energyRemaining(energy))
 }
