@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"nechego/input"
 	"nechego/model"
+	"nechego/numbers"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -158,7 +159,7 @@ const (
 
 // !список
 func (a *App) handleList(c tele.Context) error {
-	n := randInRange(minListLength, maxListLength)
+	n := numbers.InRange(minListLength, maxListLength)
 	users, err := a.model.RandomUsers(getGroup(c), n)
 	if err != nil {
 		return internalError(c, err)

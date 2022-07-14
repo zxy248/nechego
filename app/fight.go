@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/model"
+	"nechego/numbers"
 	"sort"
 
 	tele "gopkg.in/telebot.v3"
@@ -76,7 +77,7 @@ func (a *App) handleFight(c tele.Context) error {
 		return userError(c, notEnoughEnergy)
 	}
 
-	win := randInRange(minWinReward, maxWinReward)
+	win := numbers.InRange(minWinReward, maxWinReward)
 	reward, err := a.model.ForceTransferMoney(f.loser().User, f.winner().User, win)
 	if err != nil {
 		return internalError(c, err)

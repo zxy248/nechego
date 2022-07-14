@@ -51,12 +51,6 @@ func userError(c tele.Context, msg string) error {
 func userErrorMarkdown(c tele.Context, msg string) error {
 	return c.Send(makeError(msg), tele.ModeMarkdownV2)
 }
-
-// randInRange returns a random value in range [min, max].
-func randInRange(min, max int) int {
-	return min + rand.Intn(max-min+1)
-}
-
 // formatMoney formats the specified amount of money.
 func formatMoney(n int) string {
 	var out string

@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"nechego/input"
 	"nechego/model"
+	"nechego/numbers"
 	"sync"
 	"time"
 
@@ -165,7 +166,7 @@ func (a *App) handleRoll(c tele.Context) error {
 
 	defer func() {
 		if rand.Float64() <= diceBonusChance && game.money >= diceBetForBonus {
-			bonus := randInRange(diceMinBonus, diceMaxBonus)
+			bonus := numbers.InRange(diceMinBonus, diceMaxBonus)
 			a.model.UpdateMoney(user, bonus)
 			c.Send(fmt.Sprintf(diceBonus, a.mustMentionUser(user), formatMoney(bonus)),
 				tele.ModeMarkdownV2)
