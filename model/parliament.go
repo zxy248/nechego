@@ -55,18 +55,17 @@ where gid = ?
 and added >= date('now', 'localtime')`
 
 var (
-	ErrNotInParliament  = errors.New("not a parliament member")
-	ErrAlreadyImpeached = errors.New("already impeached")
-	ErrImpeachedToday   = errors.New("already impeached today")
+	ErrNotParliamentMember = errors.New("not a parliament member")
+	ErrAlreadyVoted        = errors.New("already voted")
+	ErrAlreadyImpeached    = errors.New("already impeached")
 )
 
-func (m *Model) Impeachment(g Group, u User, threshold int) (int, error) {
+func (m *Model) Impeachment(g Group, u User, threshold int) (votes int, err error) {
 	tx := m.db.MustBegin()
 	defer tx.Rollback()
 
 	parliament := []User{}
-	err := tx.Select(&parliament, selectParliament, parliamentMemberEvent, g.GID)
-	if err != nil {
+	if err := tx.Select(&parliament, selectParliament, parliamentMemberEvent, g.GID); err != nil {
 		return 0, err
 	}
 	e := false
@@ -77,7 +76,7 @@ func (m *Model) Impeachment(g Group, u User, threshold int) (int, error) {
 		}
 	}
 	if !e {
-		return 0, ErrNotInParliament
+		return 0, ErrNotParliamentMember
 	}
 
 	var test int
@@ -86,7 +85,7 @@ func (m *Model) Impeachment(g Group, u User, threshold int) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		return 0, ErrAlreadyImpeached
+		return 0, ErrAlreadyVoted
 	}
 
 	tx.MustExec(insertEvent, g.GID, u.ID, impeachmentEvent)
@@ -99,7 +98,7 @@ func (m *Model) Impeachment(g Group, u User, threshold int) (int, error) {
 		tx.MustExec(cancelAdmin, g.GID)
 	}
 	if c > threshold {
-		return 0, ErrImpeachedToday
+		return 0, ErrAlreadyImpeached
 	}
 	return c, tx.Commit()
 }

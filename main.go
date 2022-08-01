@@ -4,7 +4,12 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/app"
+	"nechego/dice"
+	"nechego/fight"
 	"nechego/model"
+	"nechego/numbers"
+	"nechego/service"
+	"nechego/statistics"
 	"os"
 	"strconv"
 	"time"
@@ -27,24 +32,60 @@ func init() {
 }
 
 func main() {
-	bot, err := tele.NewBot(tele.Settings{
+	b, err := tele.NewBot(tele.Settings{
 		Token:  botToken(),
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	})
 	fail(err)
 
-	mod := model.NewModel(database())
-
-	var logger *zap.Logger
+	var l *zap.Logger
 	if debugFlag() {
-		logger, err = zap.NewDevelopment()
+		l, err = zap.NewDevelopment()
 	} else {
-		logger, err = zap.NewProduction()
+		l, err = zap.NewProduction()
 	}
 	fail(err)
-	defer logger.Sync()
+	defer l.Sync()
 
-	a := app.NewApp(bot, mod, logger)
+	m := model.New(database())
+
+	t := statistics.New(m, statistics.Settings{
+		EnergyRange:   numbers.MakeInterval(0, 5),
+		PoorThreshold: 1000,
+	})
+
+	d := dice.New(dice.Settings{
+		RollTime: time.Second * 25,
+	})
+
+	s := service.New(m, t, d, service.Config{
+		EatEnergyRestore:   numbers.MakeInterval(1, 2),
+		FishingRodPrice:    2990,
+		FishingEnergyDrain: 1,
+		FightSettings: fight.Settings{
+			ChanceRatio:  0.5,
+			StrengthFunc: t.Strength,
+		},
+		FightEnergyDrain:   1,
+		WinReward:          numbers.MakeInterval(50, 2000),
+		ParliamentMembers:  5,
+		ParliamentMajority: 4,
+		DepositFee:         50,
+		WithdrawFee:        0,
+		MinDebt:            1000,
+		DebtPercentage:     0.2,
+		InitialBalance:     1500,
+		MinBet:             50,
+		EnergyRestoreDelta: 1,
+	})
+
+	a := app.New(b, l, t, s, app.Preferences{
+		DataPath:     "data",
+		EnergyPeriod: time.Hour * 2 / 5,
+		ListLength:   numbers.MakeInterval(3, 5),
+		HelloChance:  0.2,
+	})
+	fail(a.InitStickers())
 	a.Start()
 }
 

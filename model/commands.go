@@ -32,3 +32,15 @@ func (m *Model) ForbiddenCommands(g Group) ([]input.Command, error) {
 	err := m.db.Select(&commands, forbiddenCommands, g.GID)
 	return commands, err
 }
+
+const isCommandForbidden = `
+select exists(
+select 1 from forbidden_commands
+where gid = ? and command = ?
+limit 1)`
+
+func (m *Model) IsCommandForbidden(g Group, c input.Command) (bool, error) {
+	var flag bool
+	err := m.db.Get(&flag, isCommandForbidden, g.GID, c)
+	return flag, err
+}

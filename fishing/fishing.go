@@ -92,8 +92,27 @@ func (f Fish) Price() int {
 	return int(f.Weight * speciesData[f.Species].pricePerKg)
 }
 
+func (f Fish) Light() bool {
+	return f.Weight < f.NormalWeight()
+}
+
+func (f Fish) Heavy() bool {
+	return f.Weight >= f.NormalWeight()
+}
+
 func (f Fish) String() string {
-	return fmt.Sprintf("%s (%.2f кг)", f.Species, f.Weight)
+	var length, weight string
+	if f.Length < 1. {
+		length = fmt.Sprintf("%.1f см", f.Length*100.)
+	} else {
+		length = fmt.Sprintf("%.2f м", f.Length)
+	}
+	if f.Weight < 1. {
+		weight = fmt.Sprintf("%.1f г", f.Weight*1000.)
+	} else {
+		weight = fmt.Sprintf("%.2f кг", f.Weight)
+	}
+	return fmt.Sprintf("%s (%s, %s)", f.Species, weight, length)
 }
 
 func lengthFromWeight(w float64) float64 {
@@ -105,6 +124,24 @@ func randomLength(w float64) float64 {
 	l := lengthFromWeight(w)
 	l += rand.NormFloat64() * l * (1.0 / 12)
 	return l
+}
+
+type Fishes []Fish
+
+func (f Fishes) Price() int {
+	sum := 0
+	for _, ff := range f {
+		sum += ff.Price()
+	}
+	return sum
+}
+
+func (f Fishes) Weight() float64 {
+	sum := 0.0
+	for _, ff := range f {
+		sum += ff.Weight
+	}
+	return sum
 }
 
 type Outcome int

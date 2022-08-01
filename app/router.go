@@ -54,7 +54,7 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandBalance:
 		return a.handleBalance
 	case input.CommandTransfer:
-		return requireReply(a.injectReplyUser(a.handleTransfer))
+		return requireNonDebtor(requireReply(a.injectReplyUser(a.handleTransfer)))
 	case input.CommandProfile:
 		return a.handleProfile
 	case input.CommandTopRich:
@@ -66,7 +66,7 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandStrength:
 		return a.handleStrength
 	case input.CommandEnergy:
-		return a.handleEnergy
+		return handleEnergy
 	case input.CommandFishingRod:
 		return a.handleFishingRod
 	case input.CommandFishing:
@@ -74,17 +74,17 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandTopStrong:
 		return a.handleTopStrong
 	case input.CommandEatFish:
-		return a.handleEatFish
+		return a.handleEatFood
 	case input.CommandDeposit:
 		return a.handleDeposit
 	case input.CommandWithdraw:
-		return a.handleWithdraw
+		return requireNonDebtor(a.handleWithdraw)
 	case input.CommandBank:
 		return a.handleBank
 	case input.CommandDebt:
-		return a.handleDebt
+		return requireNonDebtor(a.handleDebt)
 	case input.CommandRepay:
-		return a.handleRepay
+		return requireDebtor(a.handleRepay)
 	case input.CommandTopWeak:
 		return a.handleTopWeak
 	case input.CommandParliament:
@@ -102,15 +102,15 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandSellFish:
 		return a.handleSellFish
 	case input.CommandMasyunya:
-		return a.masyunyaHandler()
+		return a.handleMasyunya
 	case input.CommandPoppy:
-		return a.poppyHandler()
+		return a.handlePoppy
 	case input.CommandHello:
 		return a.handleHello
 	case input.CommandMouse:
 		return a.handleMouse
 	case input.CommandWeather:
-		return a.handleWeather
+		return technicalMaintenance(a.handleWeather)
 	case input.CommandTikTok:
 		return a.handleTikTok
 	case input.CommandList:

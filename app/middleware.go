@@ -4,6 +4,7 @@ import (
 	"errors"
 	"nechego/input"
 	"nechego/model"
+	"nechego/service"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -51,18 +52,8 @@ func injectMessage(next tele.HandlerFunc) tele.HandlerFunc {
 
 func (a *App) injectGroup(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		gid := c.Chat().ID
-		g, err := a.model.GetGroup(model.Group{
-			GID: gid,
-		})
-		if errors.Is(err, model.ErrGroupNotFound) {
-			g = model.Group{
-				GID:         gid,
-				Whitelisted: false,
-				Status:      true,
-			}
-			a.model.InsertGroup(g)
-		} else if err != nil {
+		g, err := a.service.Group(model.Group{GID: c.Chat().ID})
+		if err != nil {
 			return err
 		}
 		return next(addGroup(c, g))
@@ -71,21 +62,8 @@ func (a *App) injectGroup(next tele.HandlerFunc) tele.HandlerFunc {
 
 func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		gid := c.Chat().ID
-		uid := c.Sender().ID
-		u, err := a.model.GetUser(model.User{
-			GID: gid,
-			UID: uid,
-		})
-		if errors.Is(err, model.ErrUserNotFound) {
-			u = model.User{
-				GID:     gid,
-				UID:     uid,
-				Energy:  energyCap,
-				Account: initialBalance,
-			}
-			a.model.InsertUser(u)
-		} else if err != nil {
+		u, err := a.service.User(model.User{GID: c.Chat().ID, UID: c.Sender().ID})
+		if err != nil {
 			return err
 		}
 		return next(addUser(c, u))
@@ -95,57 +73,45 @@ func (a *App) injectUser(next tele.HandlerFunc) tele.HandlerFunc {
 func (a *App) raiseLimit(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		u := getUser(c)
-		sum := u.Summary()
-		if u.DebtLimit < sum {
-			u.DebtLimit = sum
-			a.model.RaiseLimit(u, sum)
-		}
+		u.DebtLimit = a.service.RaiseLimit(u, u.Summary())
 		return next(addUser(c, u))
 	}
 }
 
-const userNotFound = "Пользователь не найден 🔎"
+const userNotFound = UserError("Пользователь не найден.")
 
 func (a *App) injectReplyUser(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		gid := c.Chat().ID
-		uid := c.Message().ReplyTo.Sender.ID
-		u, err := a.model.GetUser(model.User{
-			GID: gid,
-			UID: uid,
-		})
+		u, err := a.service.FindUser(model.User{GID: c.Chat().ID, UID: c.Message().ReplyTo.Sender.ID})
 		if err != nil {
-			return c.Send(makeError(userNotFound))
+			if errors.Is(err, service.ErrUserNotFound) {
+				return respondUserError(c, userNotFound)
+			}
+			return respondInternalError(c, err)
 		}
 		return next(addReplyUser(c, u))
 	}
 }
 
-const accessRestricted = "Доступ ограничен 🔒"
+const accessRestricted = UserError("Недостаточно прав.")
 
 func requireAdmin(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		if getUser(c).Admin {
 			return next(c)
 		}
-		return c.Send(makeError(accessRestricted))
+		return respondUserError(c, accessRestricted)
 	}
 }
 
-const (
-	replyRequired     = "Перешлите сообщение ↩️"
-	userReplyRequired = "Перешлите сообщение пользователя ↩️"
-)
+const replyRequired = UserError("Перешлите сообщение пользователя.")
 
 func requireReply(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		if c.Message().IsReply() {
-			if c.Message().ReplyTo.Sender.IsBot {
-				return c.Send(makeError(userReplyRequired))
-			}
-			return next(c)
+		if !c.Message().IsReply() || c.Message().ReplyTo.Sender.IsBot {
+			return respondUserError(c, replyRequired)
 		}
-		return c.Send(makeError(replyRequired))
+		return next(c)
 	}
 }
 
@@ -160,18 +126,17 @@ func requireGroupWhitelisted(next tele.HandlerFunc) tele.HandlerFunc {
 
 func requireUserUnbanned(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		command := getMessage(c).Command
-		if input.IsImmune(command) {
+		if input.IsImmune(getMessage(c).Command) {
 			return next(c)
 		}
-
-		user := getUser(c)
-		if user.Banned {
+		if getUser(c).Banned {
 			return nil
 		}
 		return next(c)
 	}
 }
+
+const commandForbidden = UserError("Эта команда запрещена администратором.")
 
 func (a *App) requireCommandPermitted(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
@@ -179,13 +144,12 @@ func (a *App) requireCommandPermitted(next tele.HandlerFunc) tele.HandlerFunc {
 		if input.IsImmune(command) {
 			return next(c)
 		}
-
-		forbidden, err := a.isCommandForbidden(getGroup(c), command)
+		forbidden, err := a.service.IsCommandForbidden(getGroup(c), command)
 		if err != nil {
 			return err
 		}
 		if forbidden {
-			return nil
+			return respondUserError(c, commandForbidden)
 		}
 		return next(c)
 	}
@@ -204,12 +168,41 @@ func requireStatusActive(next tele.HandlerFunc) tele.HandlerFunc {
 	}
 }
 
+const (
+	debtor    = UserError("Вы не можете использовать эту функцию, пока у вас есть непогашенные кредиты.")
+	notDebtor = UserError("У вас нет непогашенных кредитов.")
+)
+
+func requireNonDebtor(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		if getUser(c).Debtor() {
+			return respondUserError(c, debtor)
+		}
+		return next(c)
+	}
+}
+
+func requireDebtor(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		if !getUser(c).Debtor() {
+			return respondUserError(c, notDebtor)
+		}
+		return next(c)
+	}
+}
+
+func technicalMaintenance(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		return respondUserError(c, UserError("Технические работы."))
+	}
+}
+
 func (a *App) logMessage(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		t0 := time.Now()
 		msg := getMessage(c)
 		err := next(c)
-		a.SugarLog().Infow(msg.Raw,
+		a.log.Sugar().Infow(msg.Raw,
 			"cmd", msg.Command,
 			"uid", c.Sender().ID,
 			"gid", c.Chat().ID,
@@ -220,7 +213,7 @@ func (a *App) logMessage(next tele.HandlerFunc) tele.HandlerFunc {
 
 func (a *App) incrementMessageCount(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		a.model.IncrementMessages(getUser(c))
+		a.service.IncrementMessages(getUser(c))
 		return next(c)
 	}
 }

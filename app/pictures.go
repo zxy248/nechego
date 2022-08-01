@@ -10,31 +10,30 @@ import (
 )
 
 var (
-	albumsPath     = filepath.Join(dataPath, "vk.com-albums")
-	basiliCatsPath = filepath.Join(albumsPath, "basili")
-	casperPath     = filepath.Join(albumsPath, "casper")
-	zeusPath       = filepath.Join(albumsPath, "zeus")
-	picPath        = filepath.Join(albumsPath, "pic")
+	basiliPath = "basili"
+	casperPath = "casper"
+	zeusPath   = "zeus"
+	picPath    = "pic"
 )
 
 // handleBasili sends a photo of the Basili's cat.
 func (a *App) handleBasili(c tele.Context) error {
-	return sendRandomPicture(c, basiliCatsPath)
+	return sendRandomPicture(c, a.Locate(basiliPath))
 }
 
 // handleBasili sends a photo of the Leonid's cat.
 func (a *App) handleCasper(c tele.Context) error {
-	return sendRandomPicture(c, casperPath)
+	return sendRandomPicture(c, a.Locate(casperPath))
 }
 
 // handleZeus sends a photo of the Solar's cat.
 func (a *App) handleZeus(c tele.Context) error {
-	return sendRandomPicture(c, zeusPath)
+	return sendRandomPicture(c, a.Locate(zeusPath))
 }
 
 // handlePic sends a photo from a hierarchy of directories located at picPath.
 func (a *App) handlePic(c tele.Context) error {
-	return sendRandomPictureWith(c, picPath, randomFileFromHierarchy)
+	return sendRandomPictureWith(c, a.Locate(picPath), randomFileFromHierarchy)
 }
 
 // sendRandomPicture sends a random picture from the directory.
@@ -46,7 +45,7 @@ func sendRandomPicture(c tele.Context, dir string) error {
 func sendRandomPictureWith(c tele.Context, dir string, f randomFileFunc) error {
 	path, err := f(dir)
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
 	return sendPicture(c, path)
 }

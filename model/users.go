@@ -80,6 +80,14 @@ func (m *Model) ListUsers(g Group) ([]User, error) {
 	return users, err
 }
 
+const countUsers = "select count(1) from real_users where gid = ?"
+
+func (m *Model) CountUsers(g Group) (int, error) {
+	var c int
+	err := m.db.Get(&c, countUsers, g.GID)
+	return c, err
+}
+
 const randomUser = selectUser + `
 where gid = ?
 order by random()
@@ -137,7 +145,8 @@ update users set balance = balance + ?
 where id = ? and (balance + ? >= 0)`
 
 var (
-	ErrNotEnoughMoney = errors.New("sender has not enough money")
+	ErrNotEnoughMoney  = errors.New("sender has not enough money")
+	ErrIncorrectAmount = errors.New("incorrect amount")
 )
 
 func (m *Model) TransferMoney(sender, recipient User, amount int) error {
@@ -208,52 +217,6 @@ where id = ? and fishes > 0 and energy + ? <= ?`
 
 func (m *Model) EatFish(u User, energyDelta, energyCap int) bool {
 	n, err := m.db.MustExec(eatFish, energyDelta, u.ID, energyDelta, energyCap).RowsAffected()
-	failOn(err)
-	return n == 1
-}
-
-const deposit = `
-update users set account = account + ?, balance = balance - ?
-where id = ? and balance >= ?`
-
-func (m *Model) Deposit(u User, amount, fee int) bool {
-	if amount <= 0 || fee < 0 {
-		return false
-	}
-	n, err := m.db.MustExec(deposit, amount, amount+fee, u.ID, amount+fee).RowsAffected()
-	failOn(err)
-	return n == 1
-}
-
-const withdraw = `
-update users set account = account - ?, balance = balance + ?
-where id = ? and account >= ?`
-
-func (m *Model) Withdraw(u User, amount, fee int) bool {
-	if amount <= 0 || fee < 0 {
-		return false
-	}
-	n, err := m.db.MustExec(withdraw, amount+fee, amount, u.ID, amount+fee).RowsAffected()
-	failOn(err)
-	return n == 1
-}
-
-const loan = `
-update users set balance = balance + ?, debt = debt + ?
-where id = ? and debt = 0 and debt_limit >= ?`
-
-func (m *Model) Loan(u User, amount, fee int) bool {
-	n, err := m.db.MustExec(loan, amount, amount+fee, u.ID, amount).RowsAffected()
-	failOn(err)
-	return n == 1
-}
-
-const repay = `
-update users set account = account - ?, debt = debt - ?
-where id = ? and account >= ? and debt >= ?`
-
-func (m *Model) Repay(u User, amount int) bool {
-	n, err := m.db.MustExec(repay, amount, amount, u.ID, amount, amount).RowsAffected()
 	failOn(err)
 	return n == 1
 }

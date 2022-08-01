@@ -3,188 +3,151 @@ package app
 import (
 	"bytes"
 	"fmt"
+	"html"
 	"math/rand"
 	"nechego/input"
 	"nechego/model"
+	"nechego/numbers"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-// photoFromBytes converts the image data to Photo.
 func photoFromBytes(data []byte) *tele.Photo {
 	return &tele.Photo{File: tele.FromReader(bytes.NewReader(data))}
 }
 
-// markdownEscaper escapes any character with the code between 1 and 126
-// inclusively with a preceding backslash.
-var markdownEscaper = func() *strings.Replacer {
-	var table []string
-	for i := 1; i <= 126; i++ {
-		c := string(rune(i))
-		table = append(table, c, "\\"+c)
-	}
-	return strings.NewReplacer(table...)
-}()
-
-func sanitizeMarkdown(s string) string {
-	return markdownEscaper.Replace(s)
+func formatError(s string) string {
+	return "⭕️ " + s
 }
 
-var errorSigns = []string{"❌", "🚫", "⭕️", "🛑", "⛔️", "📛", "💢", "❗️", "‼️", "⚠️"}
-
-// errorSign returns a random error sign.
-func errorSign() string {
-	return errorSigns[rand.Intn(len(errorSigns))]
+func formatWarning(s string) string {
+	return "⚠️ " + s
 }
 
-// makeError formats the error message.
-func makeError(s string) string {
-	return errorSign() + " " + s
-}
-
-// formatMoney formats the specified amount of money.
-func formatMoney(n int) string {
-	var out string
+func formatMoney(n int) HTML {
+	var s string
 	switch p0 := n % 10; {
 	case n >= 10 && n <= 20:
-		out = fmt.Sprintf("%v монет", n)
+		s = fmt.Sprintf("%d рублей", n)
 	case p0 == 1:
-		out = fmt.Sprintf("%v монета", n)
+		s = fmt.Sprintf("%d рубль", n)
 	case p0 >= 2 && p0 <= 4:
-		out = fmt.Sprintf("%v монеты", n)
+		s = fmt.Sprintf("%d рубля", n)
 	default:
-		out = fmt.Sprintf("%v монет", n)
+		s = fmt.Sprintf("%d рублей", n)
 	}
-	return fmt.Sprintf("`%s 💰`", out)
+	return HTML(fmt.Sprintf("<code>%s 🪙</code>", s))
 }
 
-func formatEnergy(n int) string {
-	return fmt.Sprintf("`%v ⚡️`", n)
+func formatWeight(n float64) HTML {
+	return HTML(fmt.Sprintf("<code>%.2f кг ⚖️</code>", n))
 }
 
-func formatStrength(n float64) string {
-	return fmt.Sprintf("`%.2f 💪`", n)
+func formatEnergy(n int) HTML {
+	return HTML(fmt.Sprintf("<code>%d ⚡️</code>", n))
 }
 
-func formatMessages(n int) string {
-	return fmt.Sprintf("`%d ✍️`", n)
+func formatStrength(n float64) HTML {
+	return HTML(fmt.Sprintf("<code>%.2f 💪</code>", n))
 }
 
-func formatFishes(n int) string {
-	return fmt.Sprintf("`%d 🎣`", n)
+func formatMessages(n int) HTML {
+	return HTML(fmt.Sprintf("<code>%d ✉️</code>", n))
 }
 
-func formatRatio(v float64) string {
-	return fmt.Sprintf("`%d%%`", int(v*100))
+func formatFood(n int) HTML {
+	return HTML(fmt.Sprintf("<code>%d 🍊</code>", n))
 }
 
-func (a *App) formatUnorderedList(users []model.User) string {
-	var list string
-	for _, u := range users {
-		list += fmt.Sprintf("— %s\n", a.mustMentionUser(u))
+func formatPercentage(v float64) HTML {
+	return HTML(fmt.Sprintf("<code>%d%%</code>", int(v*100)))
+}
+
+func formatStatus(s ...string) HTML {
+	var out string
+	for _, t := range s {
+		out += "<i>" + t + "</i>\n"
 	}
-	if list == "" {
-		list = "…\n"
-	}
-	return list
+	return HTML(strings.TrimSpace(out))
 }
 
-func (a *App) formatOrderedList(users []model.User) string {
-	var list string
-	for i, u := range users {
-		list += fmt.Sprintf("_%d\\._ %s\n", i+1, a.mustMentionUser(u))
-	}
-	if list == "" {
-		list = "…\n"
-	}
-	return list
+func formatCommand(c input.Command) HTML {
+	return HTML("<code>" + input.CommandText(c) + "</code>")
 }
 
-func formatCommandList(commands []input.Command) string {
-	var list string
-	for _, c := range commands {
-		list += fmt.Sprintf("— `%s`\n", markdownEscaper.Replace(input.CommandText(c)))
+func formatTitles(s ...string) string {
+	if len(s) > 0 {
+		s[0] = strings.Title(s[0])
 	}
-	if list == "" {
-		list = "…\n"
-	}
-	return list
-}
-
-func (a *App) formatTopStrength(users []model.User) (string, error) {
-	var top string
-	for i, u := range users {
-		s, err := a.actualUserStrength(u)
-		if err != nil {
-			return "", err
-		}
-		top += fmt.Sprintf("_%d\\._ %s, %s\n",
-			i+1, a.mustMentionUser(u), formatStrength(s))
-	}
-	return top, nil
-}
-
-func (a *App) formatTopRich(users []model.User) string {
-	var top string
-	for i := 0; i < len(users); i++ {
-		top += fmt.Sprintf("_%d\\._ %s, %s\n",
-			i+1, a.mustMentionUser(users[i]), formatMoney(users[i].Summary()))
-	}
-	return top
-}
-
-func energyRemaining(energy int) string {
-	return fmt.Sprintf("_Энергии осталось: %s_", formatEnergy(energy))
-}
-
-// topNumber returns l if l < maxTopNumber; otherwise returns maxTopNumber.
-func topNumber(l int) int {
-	if l < maxTopNumber {
-		return l
-	}
-	return maxTopNumber
-}
-
-func formatStatus(desc ...string) string {
-	status := strings.Join(desc, "\n")
-	if status != "" {
-		status = fmt.Sprintf("_%s_", markdownEscaper.Replace(status))
-	}
-	return status
-}
-
-func formatTitles(title ...string) string {
-	if len(title) > 0 {
-		title[0] = strings.Title(title[0])
-	}
-	titles := strings.Join(title, " ")
+	titles := joinWords(s...)
 	if titles == "" {
 		titles = "Пользователь"
 	}
 	return titles
 }
 
-func formatIcons(icon ...string) string {
+func formatIcons(icon ...string) HTML {
 	icons := strings.Join(icon, "·")
-	return "`" + icons + "`"
+	return HTML("<code>" + icons + "</code>")
 }
 
-func itemize(s ...string) string {
+func itemize(s ...string) HTML {
 	var out string
-	for _, ss := range s {
-		out += "· " + ss + "\n"
+	for _, t := range s {
+		out += "<b>•</b> " + t + "\n"
 	}
-	return out
+	return ellipsizeEmpty(strings.TrimSpace(out))
 }
 
-func (a *App) itemizeUsers(u ...model.User) string {
+func enumerate(s ...string) HTML {
+	var out string
+	for i, t := range s {
+		out += fmt.Sprintf("<i>%d.</i> %s\n", i+1, t)
+	}
+	return ellipsizeEmpty(strings.TrimSpace(out))
+}
+
+func energyRemaining(n int) HTML {
+	return HTML(fmt.Sprintf("<i>Энергии осталось: %s</i>", formatEnergy(n)))
+}
+
+const maxTopNumber = 5
+
+// clampTopNumber returns x if x < maxTopNumber; otherwise returns maxTopNumber.
+func clampTopNumber(x int) int {
+	return numbers.Min(x, maxTopNumber)
+}
+
+func (a *App) itemizeUsers(u ...model.User) HTML {
 	mentions := []string{}
 	for _, uu := range u {
-		m := a.mustMentionUser(uu)
-		mentions = append(mentions, m)
+		mentions = append(mentions, string(a.mustMentionUser(uu)))
 	}
 	return itemize(mentions...)
+}
+
+func (a *App) enumerateUsers(u ...model.User) HTML {
+	mentions := []string{}
+	for _, uu := range u {
+		mentions = append(mentions, string(a.mustMentionUser(uu)))
+	}
+	return enumerate(mentions...)
+}
+
+func itemizeCommands(c ...input.Command) HTML {
+	s := []string{}
+	for _, cc := range c {
+		s = append(s, input.CommandText(cc))
+	}
+	return itemize(s...)
+}
+
+func ellipsizeEmpty(s string) HTML {
+	if s == "" {
+		return HTML("<code>. . .</code>")
+	}
+	return HTML(s)
 }
 
 func joinSections(s ...string) string {
@@ -193,4 +156,31 @@ func joinSections(s ...string) string {
 
 func joinLines(s ...string) string {
 	return strings.Join(s, "\n")
+}
+
+func joinWords(s ...string) string {
+	return strings.Join(s, " ")
+}
+
+func mention(uid int64, name string) HTML {
+	return HTML(fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, html.EscapeString(name)))
+}
+
+var (
+	emojisActive   = []string{"🔈", "🔔", "✅", "🆗", "▶️"}
+	emojisInactive = []string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
+)
+
+func activeEmoji() string {
+	return emojisActive[rand.Intn(len(emojisActive))]
+}
+
+func inactiveEmoji() string {
+	return emojisInactive[rand.Intn(len(emojisInactive))]
+}
+
+var meals = []string{"завтрак", "полдник", "обед", "ужин", "перекус"}
+
+func randomMeal() string {
+	return meals[rand.Intn(len(meals))]
 }

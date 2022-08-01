@@ -1,242 +1,142 @@
 package app
 
 import (
+	"errors"
 	"fmt"
-	"math/rand"
 	"nechego/model"
-	"nechego/numbers"
-	"sort"
+	"nechego/service"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-type fighter struct {
-	model.User
-	finalStrength  float64
-	actualStrength float64
-}
+const profile = Response(`📇 <b>%s %s</b>
+<code>%s  %s  %s  %s</code>
 
-func (a *App) makeFighter(u model.User) (fighter, error) {
-	final, err := a.userStrength(u)
+💵 Денег в кошельке: %s
+💳 На счету в банке: %s
+
+%s
+
+%s`)
+
+// !профиль
+func (a *App) handleProfile(c tele.Context) error {
+	user := getUser(c)
+	strength, err := a.stat.Strength(user)
 	if err != nil {
-		return fighter{}, err
+		return respondInternalError(c, err)
 	}
-	actual, err := a.actualUserStrength(u)
+	modset, err := a.stat.UserModset(user)
 	if err != nil {
-		return fighter{}, err
+		return respondInternalError(c, err)
 	}
-	return fighter{u, final, actual}, nil
-}
-
-type fight struct {
-	attacker fighter
-	defender fighter
-}
-
-func (f fight) sameIDs() bool {
-	return f.attacker.ID == f.defender.ID
-}
-
-func (f fight) winner() fighter {
-	if f.attacker.finalStrength > f.defender.finalStrength {
-		return f.attacker
-	}
-	return f.defender
-}
-
-func (f fight) loser() fighter {
-	if f.attacker.finalStrength <= f.defender.finalStrength {
-		return f.attacker
-	}
-	return f.defender
+	return respond(c, profile.Fill(
+		formatTitles(modset.Titles()...),
+		a.mustMentionUser(user),
+		formatEnergy(user.Energy),
+		formatStrength(strength),
+		formatMessages(user.Messages),
+		formatFood(user.Fishes),
+		formatMoney(user.Balance),
+		formatMoney(user.Account),
+		formatStatus(modset.Descriptions()...),
+		formatIcons(modset.Icons()...),
+	))
 }
 
 const (
-	fightCollect         = "⚔️ *%s* `[%.2f]` _против_ *%s* `[%.2f]`\n\n🏆 Побеждает %s и забирает %s"
-	fightNoMoney         = "⚔️ *%s* `[%.2f]` _против_ *%s* `[%.2f]`\n\n🏆 Побеждает %s\\. У проигравшего нечего отнять\\."
-	cannotAttackYourself = "Вы не можете напасть на самого себя."
+	versus               = "⚔️ <b>%s</b> <code>[%.2f]</code> <i>против</i> <b>%s</b> <code>[%.2f]</code>"
+	fightCollect         = "🏆 Побеждает %s и забирает %s"
+	fightNoMoney         = "🏆 Побеждает %s. У проигравшего нечего отнять."
+	cannotAttackYourself = UserError("Вы не можете напасть на самого себя.")
 )
 
-// handleFight conducts a fight between two users.
+// !драка
 func (a *App) handleFight(c tele.Context) error {
-	attacker, err := a.makeFighter(getUser(c))
+	outcome, err := a.service.Fight(getUser(c), getReplyUser(c))
 	if err != nil {
-		return internalError(c, err)
+		if errors.Is(err, service.ErrSameUser) {
+			return respondUserError(c, cannotAttackYourself)
+		}
+		if errors.Is(err, service.ErrNotEnoughEnergy) {
+			return respondUserError(c, notEnoughEnergy)
+		}
+		return respondInternalError(c, err)
 	}
-	defender, err := a.makeFighter(getReplyUser(c))
-	if err != nil {
-		return internalError(c, err)
-	}
-	f := fight{attacker, defender}
-	if f.sameIDs() {
-		return userError(c, cannotAttackYourself)
-	}
-
-	ok := a.model.UpdateEnergy(f.attacker.User, -energyDelta, energyLimit)
-	if !ok {
-		return userError(c, notEnoughEnergy)
-	}
-
-	win := numbers.InRange(minWinReward, maxWinReward)
-	reward, err := a.model.ForceTransferMoney(f.loser().User, f.winner().User, win)
-	if err != nil {
-		return internalError(c, err)
-	}
-
-	template := fightNoMoney
-	args := []interface{}{a.mustMentionUser(f.attacker.User),
-		f.attacker.actualStrength,
-		a.mustMentionUser(f.defender.User),
-		f.defender.actualStrength,
-		a.mustMentionUser(f.winner().User),
-	}
-	if reward > 0 {
-		template = fightCollect
-		args = append(args, formatMoney(reward))
-	}
-	out := joinSections(fmt.Sprintf(template, args...), energyRemaining(f.attacker.Energy-energyDelta))
-	return respondMarkdown(c, out)
+	return respond(c, a.fightResponse(outcome))
 }
 
-func fightChance() float64 {
-	return rand.Float64()*2 - 1
+func (a *App) fightResponse(o *service.FightOutcome) Response {
+	sections := []string{versus}
+	args := []any{
+		a.mustMentionUser(o.Attacker.User),
+		o.Attacker.Strength,
+		a.mustMentionUser(o.Defender.User),
+		o.Defender.Strength,
+		a.mustMentionUser(o.Winner().User),
+	}
+	if o.Reward > 0 {
+		args = append(args, formatMoney(o.Reward))
+		sections = append(sections, fightCollect)
+	} else {
+		sections = append(sections, fightNoMoney)
+	}
+	sections = append(sections, string(energyRemaining(o.Attacker.Energy)))
+	return Response(joinSections(sections...)).Fill(args...)
 }
 
-const chanceRatio = 0.5
-
-func fightFormula(strength, chance float64) float64 {
-	return (strength * (1 - chanceRatio)) + (strength * chance * chanceRatio)
-}
-
-// userStrength determines the final strength of a user.
-func (a *App) userStrength(u model.User) (float64, error) {
-	strength, err := a.actualUserStrength(u)
-	if err != nil {
-		return 0, err
-	}
-	return fightFormula(strength, fightChance()), nil
-}
-
-const baseStrength = 1
-
-// actualUserStrength determines the user's stength before randomization.
-func (a *App) actualUserStrength(u model.User) (float64, error) {
-	mcc, err := a.messageCountCoefficient(u)
-	if err != nil {
-		return 0, err
-	}
-	mul, err := a.strengthMultiplier(u)
-	if err != nil {
-		return 0, err
-	}
-	strength := (baseStrength + mcc) * mul
-	return strength, nil
-}
-
-// messageCountCoefficient is a quotient of the user's message count and the total message count.
-func (a *App) messageCountCoefficient(u model.User) (float64, error) {
-	user := u.Messages
-	group, err := a.model.GetGroup(model.Group{GID: u.GID})
-	if err != nil {
-		return 0, err
-	}
-	total, err := a.totalMessageCount(group)
-	if err != nil {
-		return 0, err
-	}
-	return float64(1+user) / float64(1+total), nil
-}
-
-// totalMessageCount returns a total message count in the group.
-func (a *App) totalMessageCount(g model.Group) (int, error) {
-	users, err := a.model.ListUsers(g)
-	if err != nil {
-		return 0, err
-	}
-	total := 0
-	for _, u := range users {
-		total += u.Messages
-	}
-	return total / len(users), nil
-}
-
-// strengthMultiplier returns the strength multiplier value.
-func (a *App) strengthMultiplier(u model.User) (float64, error) {
-	multiplier := float64(1)
-	ms, err := a.userModset(u)
-	if err != nil {
-		return 0, err
-	}
-	multiplier += ms.sum()
-	return multiplier, nil
-}
-
-const topStrong = "🏋️‍♀️ *Самые сильные пользователи*\n"
+const (
+	topStrong = Response(`🏋️‍♀️ <b>Самые сильные пользователи</b>
+%s`)
+	topWeak = Response(`🤕 <b>Самые слабые пользователи</b>
+%s`)
+)
 
 // !топ сильных
 func (a *App) handleTopStrong(c tele.Context) error {
-	users, err := a.strongestUsers(getGroup(c))
+	users, err := a.stat.SortedUsers(getGroup(c), a.stat.ByStrengthDesc)
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	n := topNumber(len(users))
-	strong := users[:n]
-	top, err := a.formatTopStrength(strong)
+	n := clampTopNumber(len(users))
+	top, err := a.topStrength(users[:n])
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	return c.Send(topStrong+top, tele.ModeMarkdownV2)
+	return respond(c, topStrong.Fill(top))
 }
-
-const topWeak = "🤕 *Самые слабые пользователи*\n"
 
 // !топ слабых
 func (a *App) handleTopWeak(c tele.Context) error {
-	users, err := a.strongestUsers(getGroup(c))
+	users, err := a.stat.SortedUsers(getGroup(c), a.stat.ByStrengthAsc)
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	n := topNumber(len(users))
-	weak := []model.User{}
-	for i := 0; i < n; i++ {
-		weak = append(weak, users[len(users)-1-i])
-	}
-	top, err := a.formatTopStrength(weak)
+	n := clampTopNumber(len(users))
+	top, err := a.topStrength(users[:n])
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	return c.Send(topWeak+top, tele.ModeMarkdownV2)
+	return respond(c, topWeak.Fill(top))
 }
 
-// strongestUsers returns a list of strongest users in the group.
-func (a *App) strongestUsers(g model.Group) ([]model.User, error) {
-	users, err := a.model.ListUsers(g)
-	if err != nil {
-		return nil, err
+func (a *App) topStrength(u []model.User) (HTML, error) {
+	s := []string{}
+	for _, uu := range u {
+		str, err := a.stat.Strength(uu)
+		if err != nil {
+			return "", err
+		}
+		s = append(s, fmt.Sprintf("%s %s", a.mustMentionUser(uu), formatStrength(str)))
 	}
-	sort.Slice(users, func(i, j int) bool {
-		if err != nil {
-			return false
-		}
-		var x, y float64
-		x, err = a.actualUserStrength(users[i])
-		if err != nil {
-			return false
-		}
-		y, err = a.actualUserStrength(users[j])
-		if err != nil {
-			return false
-		}
-		return x > y
-	})
-	return users, err
+	return enumerate(s...), nil
 }
 
 // !сила
 func (a *App) handleStrength(c tele.Context) error {
-	strength, err := a.actualUserStrength(getUser(c))
+	str, err := a.stat.Strength(getUser(c))
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	return c.Send(fmt.Sprintf("Ваша сила: %s", formatStrength(strength)), tele.ModeMarkdownV2)
+	return respond(c, Response("Ваша сила: %s").Fill(formatStrength(str)))
 }

@@ -1,75 +1,33 @@
 package app
 
 import (
-	"fmt"
-	"nechego/model"
-	"sync"
+	"nechego/service"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
 
 const (
-	notEnoughEnergy       = "Недостаточно энергии."
-	restoreEnergyCooldown = time.Minute * 20
-	energyDelta           = 1
-	energyCap             = 6
-	energyLimit           = 1_000_000
+	notEnoughEnergy      = UserError("Недостаточно энергии.")
+	energyCooldownFormat = Response("⏰ До восстановления энергии: <code>%d минут %d секунд</code>.")
 )
 
-type muTime struct {
-	sync.RWMutex
-	time time.Time
-}
-
-func (e *muTime) when() time.Time {
-	e.RLock()
-	defer e.RUnlock()
-	return e.time
-}
-
-func (e *muTime) set(t time.Time) {
-	e.Lock()
-	defer e.Unlock()
-	e.time = t
-}
-
-var energyCooldown *muTime
-
-func (a *App) restoreEnergyEvery(d time.Duration) {
-	a.model.RestoreEnergy(energyDelta, energyCap)
-	energyCooldown = &muTime{time: time.Now().Add(d)}
-	for t := range time.Tick(d) {
-		energyCooldown.set(t.Add(d))
-		a.model.RestoreEnergy(energyDelta, energyCap)
+// !стамина, !энергия
+func (a *App) energyHandler() tele.HandlerFunc {
+	a.service.RestoreEnergy()
+	next := service.PeriodicallyRun(a.service.RestoreEnergy, a.pref.EnergyPeriod)
+	return func(c tele.Context) error {
+		return respond(c, energyCooldownResponse(time.Until(next()), getUser(c).Energy))
 	}
 }
 
-func hasMuchEnergy(u model.User) bool {
-	return u.Energy > energyCap
-}
+var handleEnergy tele.HandlerFunc
 
-func hasFullEnergy(u model.User) bool {
-	return u.Energy >= energyCap
-}
-
-func hasNoEnergy(u model.User) bool {
-	return u.Energy == 0
-}
-
-// !стамина, !энергия
-func (a *App) handleEnergy(c tele.Context) error {
-	t := energyCooldown.when().Sub(time.Now())
-	e := getUser(c).Energy
-	return respondHTML(c, energyCooldownResponse(t, e))
-}
-
-const energyCooldownFormat = "⏰ До восстановления энергии: <code>%d минут %d секунд</code>."
-
-func energyCooldownResponse(t time.Duration, energy int) string {
+func energyCooldownResponse(t time.Duration, energy int) Response {
 	mins := int(t.Minutes())
 	secs := int(t.Seconds()) % 60
-	return joinSections(
-		fmt.Sprintf(energyCooldownFormat, mins, secs),
-		energyRemaining(energy))
+	return Response(joinSections(
+		string(energyCooldownFormat.Fill(mins, secs)),
+		string(energyRemaining(energy)),
+	))
 }

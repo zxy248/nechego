@@ -2,9 +2,12 @@ package numbers
 
 import (
 	crand "crypto/rand"
+	"crypto/sha1"
 	"encoding/binary"
 	"errors"
 	"math/rand"
+
+	"golang.org/x/exp/constraints"
 )
 
 func Normal(min, max float64) float64 {
@@ -28,6 +31,48 @@ func UniNormal(min, mid, max float64) float64 {
 
 func InRange(min, max int) int {
 	return rand.Intn(max-min+1) + min
+}
+
+func Min[T constraints.Ordered](x T, n ...T) T {
+	for _, v := range n {
+		if v < x {
+			x = v
+		}
+	}
+	return x
+}
+
+func Max[T constraints.Ordered](x T, n ...T) T {
+	for _, v := range n {
+		if v > x {
+			x = v
+		}
+	}
+	return x
+}
+
+type Interval struct {
+	a, b int
+}
+
+func MakeInterval(a, b int) Interval {
+	return Interval{a, b}
+}
+
+func (i Interval) Min() int {
+	return Min(i.a, i.b)
+}
+
+func (i Interval) Max() int {
+	return Max(i.a, i.b)
+}
+
+func (i Interval) Random() int {
+	return InRange(i.Min(), i.Max())
+}
+
+func LuckyByte(data []byte) byte {
+	return sha1.Sum(data)[0]
 }
 
 type cryptSource struct{}

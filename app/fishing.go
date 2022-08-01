@@ -1,274 +1,162 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"nechego/fishing"
 	"nechego/model"
-	"nechego/numbers"
+	"nechego/service"
 
 	tele "gopkg.in/telebot.v3"
 )
 
 const (
-	// fish
-	notEnoughFish = "🐟 Недостаточно рыбы."
-	fishEaten     = "🐟 Вы съели рыбу."
-	youAreFull    = "🐟 Вы не хотите есть."
-
-	// rod
-	boughtFishingRod         = "🎣 Вы приобрели удочку за %s"
-	alreadyCanFish           = "Вы уже приобрели удочку."
-	notEnoughMoneyFishingRod = "Вам не хватает %s"
-	buyFishingRod            = "Приобретите удочку, прежде чем рыбачить."
-
-	// energy
-	eatFishMinEnergy = 1
-	eatFishMaxEnergy = 2
+	foodEaten        = HTML("🍊 Вы поели.")
+	boughtFishingRod = Response("🎣 Вы приобрели удочку за %s")
+	notEnoughFood    = UserError("Недостаточно еды.")
+	youAreFull       = UserError("Вы не хотите есть.")
+	alreadyCanFish   = UserError("Вы уже приобрели удочку.")
+	buyFishingRod    = UserError("Приобретите удочку, прежде чем рыбачить.")
 )
 
 // !еда
-func (a *App) handleEatFish(c tele.Context) error {
+func (a *App) handleEatFood(c tele.Context) error {
 	user := getUser(c)
-	if hasFullEnergy(user) {
-		return respondPlain(c, youAreFull)
+	energyRestored, err := a.service.EatFish(user)
+	if err != nil {
+		if errors.Is(err, service.ErrNotHungry) {
+			return respondUserError(c, youAreFull)
+		}
+		if errors.Is(err, service.ErrNotEnoughFish) {
+			return respondUserError(c, notEnoughFood)
+		}
+		return respondInternalError(c, err)
 	}
-	energyRestored, ok := a.eatFish(user)
-	if !ok {
-		return respondPlain(c, notEnoughFish)
-	}
-	return respondPlain(c, eatFishResponse(user, energyRestored))
+	return respond(c, eatFoodResponse(user, energyRestored))
 }
 
-func (a *App) eatFish(u model.User) (energyRestored int, enoughFish bool) {
-	energyRestored = numbers.InRange(eatFishMinEnergy, eatFishMaxEnergy)
-	enoughFish = a.model.EatFish(u, energyRestored, energyLimit)
-	return
-}
-
-func eatFishResponse(u model.User, energyRestored int) string {
-	return joinSections(fishEaten, energyRemaining(u.Energy+energyRestored))
+func eatFoodResponse(u model.User, energyRestored int) Response {
+	return Response(joinSections(
+		string(foodEaten),
+		string(energyRemaining(u.Energy+energyRestored))))
 }
 
 // !удочка
 func (a *App) handleFishingRod(c tele.Context) error {
-	user := getUser(c)
-	if user.Fisher {
-		return userError(c, alreadyCanFish)
+	if err := a.service.BuyFishingRod(getUser(c)); err != nil {
+		if errors.Is(err, service.ErrAlreadyFisher) {
+			return respondUserError(c, alreadyCanFish)
+		}
+		var moneyErr service.NotEnoughMoneyError
+		if errors.As(err, &moneyErr) {
+			return respondUserError(c, notEnoughMoneyDelta.Fill(formatMoney(moneyErr.Delta)))
+		}
+		return respondInternalError(c, err)
 	}
-	if ok := a.fishingRod(user); !ok {
-		return userErrorMarkdown(c, fishingRodNotEnoughMoney(user))
-	}
-	return respondPlain(c, fishingRodSuccessResponse())
+	return respond(c, boughtFishingRod.Fill(formatMoney(a.service.Config.FishingRodPrice)))
 }
 
-func (a *App) fishingRod(u model.User) bool {
-	ok := a.model.UpdateMoney(u, -fishingRodPrice)
-	if ok {
-		a.model.AllowFishing(u)
-	}
-	return ok
-}
-
-func fishingRodNotEnoughMoney(u model.User) string {
-	return fmt.Sprintf(notEnoughMoneyFishingRod, formatMoney(fishingRodPrice-u.Balance))
-}
-
-func fishingRodSuccessResponse() string {
-	return fmt.Sprintf(boughtFishingRod, formatMoney(fishingRodPrice))
-}
+const (
+	catchFish = Response("<i>%s получает рыбу: <code>%s</code></i>")
+	foodFish  = HTML("<i>🍊 Вы отложили улов на %s.</i>")
+)
 
 // !рыбалка
 func (a *App) handleFishing(c tele.Context) error {
 	user := getUser(c)
-	if !user.Fisher {
-		return userError(c, buyFishingRod)
+	session, err := a.service.Fish(user)
+	if err != nil {
+		if errors.Is(err, service.ErrNotFisher) {
+			return respondUserError(c, buyFishingRod)
+		}
+		if errors.Is(err, service.ErrNotEnoughEnergy) {
+			return respondUserError(c, notEnoughEnergy)
+		}
+		return respondInternalError(c, err)
 	}
-	session, ok := a.fishing(user)
-	if !ok {
-		return userError(c, notEnoughEnergy)
-	}
-	if session.Success() {
-		respondPlain(c, a.catchFishResponse(user, session.Fish))
-	}
-	return respondPlain(c, session.Outcome.String())
+	return respond(c, a.fishingResponse(user, session))
 }
 
-func (a *App) fishing(u model.User) (fishing.Session, bool) {
-	ok := a.model.UpdateEnergy(u, -energyDelta, energyLimit)
-	if !ok {
-		return fishing.Session{}, false
+func (a *App) fishingResponse(u model.User, s fishing.Session) Response {
+	out := s.Outcome.String()
+	sections := []string{out, string(catchFish.Fill(a.mustMentionUser(u), s.Fish))}
+	if s.Fish.Light() {
+		sections = append(sections, fmt.Sprintf(string(foodFish), randomMeal()))
 	}
-	session := fishing.CastChance(fisherWinChance(u))
-	if session.Outcome.Success() {
-		a.collectFish(u, session.Fish)
+	if s.Success() {
+		out = joinSections(sections...)
 	}
-	return session, ok
-}
-
-func (a *App) collectFish(u model.User, f fishing.Fish) {
-	if f.Weight < f.NormalWeight() {
-		a.model.AddFish(u)
-		return
-	}
-	a.model.InsertFish(model.MakeCatch(u, f))
-}
-
-func fisherWinChance(u model.User) float64 {
-	r := fishing.SuccessChance
-	switch luckModifier(u) {
-	case terribleLuckModifier:
-		r -= .12
-	case badLuckModifier:
-		r -= .06
-	case goodLuckModifier:
-		r += .04
-	case excellentLuckModifier:
-		r += .08
-	}
-	return r
-}
-
-const catchFish = "%s получает рыбу: %s"
-
-func (a *App) catchFishResponse(u model.User, f fishing.Fish) string {
-	return fmt.Sprintf(catchFish, a.mustMentionUser(u), f)
+	return Response(out)
 }
 
 // !рыба
 func (a *App) handleFish(c tele.Context) error {
 	user := getUser(c)
-	fishes, err := a.freshFishList(user)
+	fishes, err := a.service.FreshFish(user)
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	out := a.freshFishResponse(user, fishes)
-	return respondPlain(c, out)
-}
-
-func (a *App) freshFishList(u model.User) ([]fishing.Fish, error) {
-	catch, err := a.model.SelectFish(u)
-	if err != nil {
-		return nil, err
-	}
-	fishes := []fishing.Fish{}
-	for _, c := range catch {
-		if !c.Frozen {
-			fishes = append(fishes, c.Fish)
-		}
-	}
-	return fishes, nil
-}
-
-func (a *App) freshFishResponse(u model.User, f []fishing.Fish) string {
-	return joinLines(fmt.Sprintf(freshFish, a.mustMentionUser(u)), formatFishList(f...))
-}
-
-func formatFishList(f ...fishing.Fish) string {
-	lines := []string{}
-	for _, ff := range f {
-		lines = append(lines, fmt.Sprint(ff))
-	}
-	return joinLines(lines...)
+	return respond(c, freshFish.Fill(a.mustMentionUser(user), formatFish(fishes)))
 }
 
 // !продажа
 func (a *App) handleSellFish(c tele.Context) error {
-	user := getUser(c)
-	price, err := a.sellFreshFish(user)
+	fishes, err := a.service.SellFish(getUser(c))
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	out := sellFishResponse(price)
-	return respondPlain(c, out)
-}
-
-func (a *App) sellFreshFish(u model.User) (int, error) {
-	fishes, err := a.fishForSell(u)
-	if err != nil {
-		return 0, err
+	price := fishes.Price()
+	if price > 0 {
+		return respond(c, soldFish.Fill(formatMoney(price)))
 	}
-	price := fishPrice(fishes...)
-	a.model.UpdateMoney(u, price)
-	return price, nil
-}
-
-func (a *App) fishForSell(u model.User) ([]fishing.Fish, error) {
-	catch, err := a.model.SellFish(u)
-	if err != nil {
-		return nil, err
-	}
-	fishes := []fishing.Fish{}
-	for _, c := range catch {
-		fishes = append(fishes, c.Fish)
-	}
-	return fishes, nil
-}
-
-func fishPrice(f ...fishing.Fish) int {
-	sum := 0
-	for _, ff := range f {
-		sum += ff.Price()
-	}
-	return sum
-}
-
-func sellFishResponse(price int) string {
-	return fmt.Sprintf(soldFish, formatMoney(price))
+	return respondUserError(c, noFish)
 }
 
 const (
-	freshFish    = "Улов %s"
-	freezerFish  = "Холодильник %s"
-	fishFrozen   = "Рыба заморожена."
-	fishUnfrozen = "Рыба разморожена."
-	soldFish     = "Рыбы продано на %s"
+	freshFish    = Response("<b>🐟 Улов %s</b>\n%s")
+	freezerFish  = Response("<b>🧊 Холодильник %s</b>\n%s")
+	fishFrozen   = Response("❄️ Рыба заморожена.")
+	fishUnfrozen = Response("💧 Рыба разморожена.")
+	soldFish     = Response("🐟 Рыбы продано на %s")
+	noFish       = UserError("У вас нет свежей рыбы.")
 )
 
 func (a *App) handleFreeze(c tele.Context) error {
-	user := getUser(c)
-	a.freezeFish(user)
-	return respondPlain(c, fishFrozen)
-}
-
-func (a *App) freezeFish(u model.User) {
-	a.model.FreezeFish(u)
+	a.service.FreezeFish(getUser(c))
+	return respond(c, fishFrozen)
 }
 
 func (a *App) handleUnfreeze(c tele.Context) error {
-	user := getUser(c)
-	a.unfreezeFish(user)
-	return respondPlain(c, fishUnfrozen)
-}
-
-func (a *App) unfreezeFish(u model.User) {
-	a.model.UnfreezeFish(u)
+	a.service.UnfreezeFish(getUser(c))
+	return respond(c, fishUnfrozen)
 }
 
 // !холодильник
 func (a *App) handleFreezer(c tele.Context) error {
 	user := getUser(c)
-	fishes, err := a.frozenFishList(user)
+	fishes, err := a.service.Freezer(user)
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	out := a.freezerFishResponse(user, fishes)
-	return respondPlain(c, out)
+	return respond(c, freezerFish.Fill(a.mustMentionUser(user), formatFish(fishes)))
 }
 
-func (a *App) frozenFishList(u model.User) ([]fishing.Fish, error) {
-	catch, err := a.model.SelectFish(u)
-	if err != nil {
-		return nil, err
+func formatFish(f fishing.Fishes) HTML {
+	lines := []string{}
+	for _, ff := range f {
+		lines = append(lines, "<code>"+ff.String()+"</code>")
 	}
-	fishes := []fishing.Fish{}
-	for _, c := range catch {
-		if c.Frozen {
-			fishes = append(fishes, c.Fish)
-		}
+	sections := []string{string(itemize(lines...))}
+	if len(f) > 0 {
+		sections = append(sections, string(formatFishSum(f)))
 	}
-	return fishes, nil
+	return HTML(joinSections(sections...))
 }
 
-func (a *App) freezerFishResponse(u model.User, f []fishing.Fish) string {
-	return joinLines(fmt.Sprintf(freezerFish, a.mustMentionUser(u)), formatFishList(f...))
+func formatFishSum(f fishing.Fishes) HTML {
+	lines := []string{
+		string("<i>Стоимость: </i>" + formatMoney(f.Price())),
+		string("<i>Вес: </i>" + formatWeight(f.Weight())),
+	}
+	return HTML(joinLines(lines...))
 }

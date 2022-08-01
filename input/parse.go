@@ -86,7 +86,7 @@ func ParseCommand(s string) Command {
 		return CommandParliament
 	case startsWith(s, "!импичмент"):
 		return CommandImpeachment
-	case startsWith(s, "!рыба"):
+	case startsWith(s, "!рыба", "!улов"):
 		return CommandFishList
 	case startsWith(s, "!замороз"):
 		return CommandFreezeFish

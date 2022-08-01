@@ -1,37 +1,59 @@
 package app
 
 import (
-	"nechego/model"
+	"nechego/numbers"
+	"nechego/service"
+	"nechego/statistics"
+	"path/filepath"
+	"time"
 
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
-const dataPath = "data"
+type Preferences struct {
+	DataPath     string
+	EnergyPeriod time.Duration
+	ListLength   numbers.Interval
+	HelloChance  float64
+}
 
 type App struct {
-	bot   *tele.Bot
-	model *model.Model
-	log   *zap.Logger
+	bot      *tele.Bot
+	log      *zap.Logger
+	stat     *statistics.Statistics
+	service  *service.Service
+	stickers *Stickers
+	pref     Preferences
 }
 
-// NewApp returns a new app.
-func NewApp(b *tele.Bot, m *model.Model, l *zap.Logger) *App {
-	return &App{b, m, l}
+func New(
+	b *tele.Bot,
+	l *zap.Logger,
+	t *statistics.Statistics,
+	s *service.Service,
+	p Preferences,
+) *App {
+	a := &App{
+		bot:     b,
+		log:     l,
+		service: s,
+		stat:    t,
+		pref:    p,
+	}
+	return a
 }
 
-// Start starts the bot.
 func (a *App) Start() {
-	go a.restoreEnergyEvery(restoreEnergyCooldown)
 	a.bot.Handle(tele.OnText, a.route, a.pipeline)
 	a.bot.Handle(tele.OnDice, a.handleRoll, a.pipeline)
 	a.bot.Handle(tele.OnUserJoined, a.handleJoin, a.pipeline)
+	handleEnergy = a.energyHandler()
 
-	a.SugarLog().Info("The bot has started.")
+	a.log.Sugar().Info("The bot has started.")
 	a.bot.Start()
 }
 
-// SugarLog is a shorthand for a SugaredLogger.
-func (a *App) SugarLog() *zap.SugaredLogger {
-	return a.log.Sugar()
+func (a *App) Locate(path string) string {
+	return filepath.Join(a.pref.DataPath, path)
 }

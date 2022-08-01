@@ -1,43 +1,38 @@
 package app
 
 import (
-	"fmt"
-
 	tele "gopkg.in/telebot.v3"
 )
 
-const dailyPair = "Пара дня ✨\n%s 💘 %s"
+const dailyPair = Response("<b>✨ Пара дня</b> — %s 💘 %s")
 
 // !пара дня
 func (a *App) handlePair(c tele.Context) error {
-	u1, u2, err := a.model.GetDailyPair(getGroup(c))
+	x, y, err := a.service.DailyPair(getGroup(c))
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	return c.Send(fmt.Sprintf(dailyPair, a.mustMentionUser(u1), a.mustMentionUser(u2)),
-		tele.ModeMarkdownV2)
+	return respond(c, dailyPair.Fill(a.mustMentionUser(x), a.mustMentionUser(y)))
 }
 
-const dailyEblan = "Еблан дня — %s 😸"
+const dailyEblan = Response("<b>Еблан дня</b> — %s 😸")
 
 // !еблан дня
 func (a *App) handleEblan(c tele.Context) error {
-	u, err := a.model.GetDailyEblan(getGroup(c))
+	user, err := a.service.DailyEblan(getGroup(c))
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	return c.Send(fmt.Sprintf(dailyEblan, a.mustMentionUser(u)),
-		tele.ModeMarkdownV2)
+	return respond(c, dailyEblan.Fill(a.mustMentionUser(user)))
 }
 
-const dailyAdmin = "Админ дня — %s 👑"
+const dailyAdmin = Response("<b>Админ дня</b> — %s 👑")
 
 // !админ дня
 func (a *App) handleAdmin(c tele.Context) error {
-	u, err := a.model.GetDailyAdmin(getGroup(c))
+	user, err := a.service.DailyAdmin(getGroup(c))
 	if err != nil {
-		return internalError(c, err)
+		return respondInternalError(c, err)
 	}
-	return c.Send(fmt.Sprintf(dailyAdmin, a.mustMentionUser(u)),
-		tele.ModeMarkdownV2)
+	return respond(c, dailyAdmin.Fill(a.mustMentionUser(user)))
 }

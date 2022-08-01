@@ -54,3 +54,23 @@ func (m *Model) DisableGroup(g Group) (updated bool) {
 	failOn(err)
 	return n == 1
 }
+
+const groupMessageCount = `
+select sum(messages) from real_users
+where gid = ?`
+
+func (m *Model) GroupMessageCount(g Group) (int, error) {
+	var c int
+	err := m.db.Get(&c, groupMessageCount, g.GID)
+	return c, err
+}
+
+const groupAverageMessageCount = `
+select avg(messages) from real_users
+where gid = ?`
+
+func (m *Model) AverageMessageCount(g Group) (float64, error) {
+	var c float64
+	err := m.db.Get(&c, groupAverageMessageCount, g.GID)
+	return c, err
+}

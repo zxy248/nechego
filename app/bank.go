@@ -5,39 +5,45 @@ import (
 	"fmt"
 	"nechego/input"
 	"nechego/model"
+	"nechego/service"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-const bank = "🏦 *Банк:* на вашем счете %s\n\n" +
-	"_Снять средства: `!обнал`\\._\n" +
-	"_Пополнить счет: `!депозит`\\._\n\n" +
-	"_%s_\n\n" +
-	"_Взять кредит: `!кредит`\\._\n" +
-	"_Погасить кредит: `!погасить`\\._\n" +
-	"_Процентная ставка: %s_\n" +
-	"_Кредитный лимит: %s_\n" +
-	"_Комиссия за пополнение: %s_\n"
+const bank = Response(`🏦 <b>Банк:</b> на вашем счете %s
 
+<i>Снять средства: <code>!обнал</code></i>
+<i>Пополнить счет: <code>!депозит</code></i>
+<i>Комиссия на пополнение: %s</i>
+
+<i>%s</i>
+
+<i>Взять кредит: <code>!кредит</code></i>
+<i>Погасить кредит: <code>!погасить</code></i>
+<i>Процентная ставка: %s</i>
+<i>Кредитный лимит: %s</i>`)
+
+// !банк
 func (a *App) handleBank(c tele.Context) error {
 	user := getUser(c)
-	return c.Send(fmt.Sprintf(bank,
+	return respond(c, bank.Fill(
 		formatMoney(user.Account),
+		formatMoney(a.service.Config.DepositFee),
 		debtStatus(user),
-		formatRatio(debtFee),
-		formatMoney(user.DebtLimit),
-		formatMoney(bankFee)),
-		tele.ModeMarkdownV2)
+		formatPercentage(a.service.Config.DebtPercentage),
+		formatMoney(user.DebtLimit)))
 }
 
-func debtStatus(u model.User) string {
-	if !u.Debtor() {
-		return "У вас нет кредитов\\."
+func debtStatus(u model.User) HTML {
+	if u.Debtor() {
+		return "У вас нет кредитов."
 	}
-	return fmt.Sprintf("Вы должны банку %s", formatMoney(u.Debt))
+	return HTML(fmt.Sprintf("Вы должны банку %s", formatMoney(u.Debt)))
 }
 
-const deposit = "💳 Вы оплатили налог и положили %s в банк\\.\n\n_Теперь на счету %s_"
+const deposit = Response(`💳 Вы оплатили комиссию и положили %s в банк.
+
+<i>Теперь на счету %s</i>`)
 
 // !депозит
 func (a *App) handleDeposit(c tele.Context) error {
@@ -46,105 +52,105 @@ func (a *App) handleDeposit(c tele.Context) error {
 	if errors.Is(err, input.ErrAllIn) {
 		amount = user.Balance
 	} else if err != nil {
-		return userError(c, specifyAmount)
+		return respondUserError(c, specifyAmount)
 	}
-	amount = amountAfterBankFee(amount)
-	if ok := a.model.Deposit(user, amount, bankFee); !ok {
-		return userError(c, notEnoughMoney)
+	transfered, err := a.service.Deposit(user, amount)
+	if err != nil {
+		if errors.Is(err, service.ErrIncorrectAmount) {
+			return respondUserError(c, incorrectAmount)
+		}
+		var moneyErr service.NotEnoughMoneyError
+		if errors.As(err, &moneyErr) {
+			return respondUserError(c, notEnoughMoneyDelta.Fill(formatMoney(moneyErr.Delta)))
+		}
+		return respondInternalError(c, err)
 	}
-	out := fmt.Sprintf(deposit, formatMoney(amount), formatMoney(user.Account+amount))
-	return c.Send(out, tele.ModeMarkdownV2)
+	return respond(c, deposit.Fill(formatMoney(transfered), formatMoney(user.Account+transfered)))
 }
 
-func amountAfterBankFee(amount int) int {
-	return amount - bankFee
-}
+const withdraw = Response(`💳 Вы оплатили комиссию и сняли %s со счета.
 
-const (
-	withdraw       = "💳 Вы сняли %s со счета\\.\n\n_Теперь в кошельке %s_"
-	withdrawDebtor = "Вы не можете снимать средства со счета, пока у вас есть непогашенные кредиты.\n"
-)
+<i>Теперь в кошельке %s</i>`)
 
 // !обнал
 func (a *App) handleWithdraw(c tele.Context) error {
 	user := getUser(c)
-	if user.Debtor() {
-		return userError(c, withdrawDebtor)
-	}
 	amount, err := getMessage(c).MoneyArgument()
 	if errors.Is(err, input.ErrAllIn) {
 		amount = user.Account
 	} else if err != nil {
-		return userError(c, specifyAmount)
+		return respondUserError(c, specifyAmount)
 	}
-	if ok := a.model.Withdraw(user, amount, 0); !ok {
-		return userError(c, notEnoughMoney)
+	transfered, err := a.service.Withdraw(user, amount)
+	if err != nil {
+		if errors.Is(err, service.ErrIncorrectAmount) {
+			return respondUserError(c, incorrectAmount)
+		}
+		var moneyErr service.NotEnoughMoneyError
+		if errors.As(err, &moneyErr) {
+			return respondUserError(c, notEnoughMoneyDelta.Fill(formatMoney(moneyErr.Delta)))
+		}
+		return respondInternalError(c, err)
 	}
-	out := fmt.Sprintf(withdraw, formatMoney(amount), formatMoney(user.Balance+amount))
-	return c.Send(out, tele.ModeMarkdownV2)
+	return respond(c, withdraw.Fill(formatMoney(transfered), formatMoney(user.Balance+transfered)))
 }
 
 const (
-	debtorCannotLoan = "Вы не можете взять средства в долг, пока у вас есть непогашенные кредиты."
-	debtTooLow       = "Минимальный кредит — %s"
-	limitTooLow      = "Ваш кредитный лимит — %s"
-	debtSuccess      = "💳 Вы взяли в кредит %s\n\n_Вам необходимо вернуть %s_"
+	minDebt     = UserError("Минимальный кредит — %s")
+	debtLimit   = UserError("Ваш кредитный лимит — %s")
+	debtSuccess = Response(`💳 Вы взяли в кредит %s
+
+<i>Вам необходимо вернуть %s</i>`)
 )
 
-// !долг, !кредит
+// !кредит
 func (a *App) handleDebt(c tele.Context) error {
 	user := getUser(c)
-	if user.Debtor() {
-		return userError(c, debtorCannotLoan)
-	}
 	amount, err := getMessage(c).MoneyArgument()
 	if errors.Is(err, input.ErrAllIn) {
 		amount = user.DebtLimit
 	} else if err != nil {
-		return userError(c, specifyAmount)
+		return respondUserError(c, specifyAmount)
 	}
-	if amount < minDebt {
-		return userErrorMarkdown(c, fmt.Sprintf(debtTooLow, formatMoney(minDebt)))
+	debt, err := a.service.Debt(user, amount)
+	if err != nil {
+		if errors.Is(err, service.ErrDebtLimit) {
+			return respondUserError(c, debtLimit.Fill(formatMoney(user.DebtLimit)))
+		}
+		if errors.Is(err, service.ErrMinDebt) {
+			return respondUserError(c, minDebt.Fill(formatMoney(a.service.Config.MinDebt)))
+		}
+		return respondInternalError(c, err)
 	}
-	fee := calculateDebtFee(amount)
-	if ok := a.model.Loan(user, amount, fee); !ok {
-		return userErrorMarkdown(c, fmt.Sprintf(limitTooLow, formatMoney(user.DebtLimit)))
-	}
-	out := fmt.Sprintf(debtSuccess, formatMoney(amount), formatMoney(amount+fee))
-	return c.Send(out, tele.ModeMarkdownV2)
-}
-
-func calculateDebtFee(amount int) int {
-	return int(float64(amount) * debtFee)
+	return respond(c, debtSuccess.Fill(formatMoney(amount), formatMoney(debt)))
 }
 
 const (
-	notDebtor              = "У вас нет непогашенных кредитов."
-	notEnoughOnBankAccount = "Недостаточно средств на банковском счете."
-	repayFullSuccess       = "💳 Вы погасили кредит."
-	repayPartialSuccess    = "💳 Вы погасили %s\n\n_Осталось погасить: %s_"
+	repayTotalSuccess   = Response("💳 Вы погасили кредит.")
+	repayPartialSuccess = Response(`💳 Вы погасили %s
+
+<i>Осталось погасить: %s</i>`)
 )
 
+// !погасить
 func (a *App) handleRepay(c tele.Context) error {
 	user := getUser(c)
-	if !user.Debtor() {
-		return userError(c, notDebtor)
-	}
 	amount, err := getMessage(c).MoneyArgument()
 	if errors.Is(err, input.ErrAllIn) {
 		amount = user.Account
 	} else if err != nil {
-		return userError(c, specifyAmount)
+		return respondUserError(c, specifyAmount)
 	}
-	if user.Debt <= amount {
-		amount = user.Debt
+	debt, err := a.service.Repay(user, amount)
+	if err != nil {
+		var moneyErr service.NotEnoughMoneyError
+		if errors.As(err, &moneyErr) {
+			return respondUserError(c, notEnoughMoneyDelta.Fill(formatMoney(moneyErr.Delta)))
+		}
+		return respondInternalError(c, err)
 	}
-	if ok := a.model.Repay(user, amount); !ok {
-		return userError(c, notEnoughOnBankAccount)
+	if debt > 0 {
+		return respond(c, repayPartialSuccess.Fill(formatMoney(amount), formatMoney(debt)))
 	}
-	if amount == user.Debt {
-		return c.Send(repayFullSuccess)
-	}
-	out := fmt.Sprintf(repayPartialSuccess, formatMoney(amount), formatMoney(user.Debt-amount))
-	return c.Send(out, tele.ModeMarkdownV2)
+	return respond(c, repayTotalSuccess)
 }

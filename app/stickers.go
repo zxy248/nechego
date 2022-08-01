@@ -2,78 +2,95 @@ package app
 
 import (
 	"encoding/json"
-	"log"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-var helloStickersPath = filepath.Join(dataPath, "hello-stickers.json")
+type Stickers struct {
+	Hello, Masyunya, Poppy StickerPack
+}
 
-// helloStickers is a list of stickers saying "Hi".
-var helloStickers = func() []*tele.Sticker {
-	f, err := os.Open(helloStickersPath)
+func (a *App) InitStickers() error {
+	a.stickers = &Stickers{}
+	var err error
+	a.stickers.Hello, err = a.helloStickers()
 	if err != nil {
-		log.Printf("helloStickers: %v", err)
-		return nil
+		return err
+	}
+	a.stickers.Masyunya, err = a.masyunyaStickers()
+	if err != nil {
+		return err
+	}
+	a.stickers.Poppy, err = a.poppyStickers()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type StickerPack []tele.Sticker
+
+func (s StickerPack) Random() *tele.Sticker {
+	return &s[rand.Intn(len(s))]
+}
+
+const helloStickersPath = "hello-stickers.json"
+
+func (a *App) helloStickers() (StickerPack, error) {
+	f, err := os.Open(a.Locate(helloStickersPath))
+	if err != nil {
+		return nil, err
 	}
 	defer f.Close()
 
-	var ss []*tele.Sticker
-	if err := json.NewDecoder(f).Decode(&ss); err != nil {
-		log.Printf("helloStickers: %v", err)
-		return nil
+	var s []tele.Sticker
+	if err := json.NewDecoder(f).Decode(&s); err != nil {
+		return nil, err
 	}
-	return ss
-}()
-
-func helloSticker() *tele.Sticker {
-	return helloStickers[rand.Intn(len(helloStickers))]
+	return s, nil
 }
 
 const masyunyaStickersName = "masyunya_vk"
 
-func (a *App) masyunyaHandler() tele.HandlerFunc {
+func (a *App) masyunyaStickers() (StickerPack, error) {
 	set, err := a.bot.StickerSet(masyunyaStickersName)
 	if err != nil {
-		log.Println("masyunyaHandler unavailable: ", err)
-		return func(c tele.Context) error {
-			return nil
-		}
+		return nil, err
 	}
-	return func(c tele.Context) error {
-		return c.Send(&set.Stickers[rand.Intn(len(set.Stickers))])
-	}
+	return set.Stickers, nil
 }
 
 var poppyStickersNames = []string{"pappy2_vk", "poppy_vk"}
 
-func (a *App) poppyHandler() tele.HandlerFunc {
+func (a *App) poppyStickers() (StickerPack, error) {
 	var stickers []tele.Sticker
-	for _, sn := range poppyStickersNames {
-		set, err := a.bot.StickerSet(sn)
+	for _, s := range poppyStickersNames {
+		set, err := a.bot.StickerSet(s)
 		if err != nil {
-			log.Println("poppyHandler unavailable: ", err)
-			return func(c tele.Context) error {
-				return nil
-			}
+			return nil, err
 		}
 		stickers = append(stickers, set.Stickers...)
 	}
-	return func(c tele.Context) error {
-		return c.Send(&stickers[rand.Intn(len(stickers))])
-	}
+	return stickers, nil
 }
 
-const helloChance = 0.2
-
-// handleHello sends a hello sticker
+// !привет
 func (a *App) handleHello(c tele.Context) error {
-	if strings.HasPrefix(getMessage(c).Raw, "!") || rand.Float64() <= helloChance {
-		return c.Send(helloSticker())
+	if strings.HasPrefix(getMessage(c).Raw, "!") || rand.Float64() <= a.pref.HelloChance {
+		return c.Send(a.stickers.Hello.Random())
 	}
 	return nil
+}
+
+// !масюня
+func (a *App) handleMasyunya(c tele.Context) error {
+	return c.Send(a.stickers.Masyunya.Random())
+}
+
+// !паппи
+func (a *App) handlePoppy(c tele.Context) error {
+	return c.Send(a.stickers.Poppy.Random())
 }

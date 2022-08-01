@@ -15,7 +15,7 @@ type Model struct {
 	db *DB
 }
 
-func NewModel(db *sqlx.DB) *Model {
+func New(db *sqlx.DB) *Model {
 	d := &DB{db}
 	d.CreateTables()
 	return &Model{d}

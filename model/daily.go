@@ -57,11 +57,11 @@ func (m *Model) dailyUser(g Group, tableName string) (User, error) {
 
 }
 
-func (m *Model) GetDailyEblan(g Group) (User, error) {
+func (m *Model) DailyEblan(g Group) (User, error) {
 	return m.dailyUser(g, "daily_eblans")
 }
 
-func (m *Model) GetDailyAdmin(g Group) (User, error) {
+func (m *Model) DailyAdmin(g Group) (User, error) {
 	return m.dailyUser(g, "daily_admins")
 }
 
@@ -83,7 +83,7 @@ const insertDailyPair = `
 insert into daily_pairs (gid, user_id_x, user_id_y, added)
 values (?, ?, ?, datetime('now', 'localtime'))`
 
-func (m *Model) GetDailyPair(g Group) (User, User, error) {
+func (m *Model) DailyPair(g Group) (User, User, error) {
 	var user1, user2 User
 	var pair DailyPair
 	tx := m.db.MustBegin()

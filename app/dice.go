@@ -2,186 +2,89 @@ package app
 
 import (
 	"errors"
-	"fmt"
-	"math/rand"
+	"nechego/dice"
 	"nechego/input"
-	"nechego/model"
-	"nechego/numbers"
-	"sync"
+	"nechego/service"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-// map[int64]diceGame
-var diceGames = &sync.Map{}
-
-type diceGame struct {
-	id    time.Time
-	user  model.User
-	money int
-	roll  int
-}
-
-func makeDiceGame(u model.User, money, roll int) diceGame {
-	return diceGame{
-		id:    time.Now(),
-		user:  u,
-		money: money,
-		roll:  roll,
-	}
-}
-
-func (g diceGame) key() int64 {
-	return g.user.GID
-}
-
-func currentDiceGame(g model.Group) (diceGame, bool) {
-	return loadDiceGame(g.GID)
-}
-
-func loadDiceGame(key int64) (diceGame, bool) {
-	game, ok := diceGames.Load(key)
-	if !ok {
-		return diceGame{}, false
-	}
-	return game.(diceGame), true
-}
-
-func (g diceGame) storeDiceGame() (ok bool) {
-	_, loaded := diceGames.LoadOrStore(g.key(), g)
-	return !loaded
-}
-
-func (g diceGame) finish() {
-	diceGames.Delete(g.key())
-}
-
-func (g diceGame) startDiceGame(notify func()) error {
-	ok := g.storeDiceGame()
-	if !ok {
-		return errors.New("game already going")
-	}
-	time.AfterFunc(diceRollTime, func() { g.cancelDiceGame(notify) })
-	return nil
-}
-
-func (g diceGame) cancelDiceGame(notify func()) {
-	game, ok := loadDiceGame(g.key())
-	if ok {
-		if g.id == game.id {
-			g.finish()
-			notify()
-		}
-	}
-}
-
 const (
-	diceStart       = "🎲 %s играет на %s\nУ вас `%d секунд` на то, чтобы кинуть кости\\!"
-	diceWin         = "💥 Вы выиграли %s"
-	diceDraw        = "Ничья."
-	diceLose        = "Вы проиграли."
-	diceBonus       = "_🎰 %s получает бонус за риск: %s_"
-	diceTimeout     = "_Время вышло: вы потеряли %s_"
-	diceBonusChance = 0.2
-	diceRollTime    = time.Second * 25
-	diceInProgress  = "Игра уже идет."
-	betTooLow       = "Поставьте больше средств."
-	tired           = "_Вы устали от азартных игр\\. Энергии осталось: %s_"
-	tiredChance     = 0.12
+	diceStart      = Response("🎲 %s играет на %s\nУ вас <code>%d секунд</code> на то, чтобы кинуть кости!")
+	diceWin        = Response("💥 Вы выиграли %s")
+	diceDraw       = Response("Ничья.")
+	diceLose       = Response("Вы проиграли.")
+	diceBonus      = Response("<i>🎰 %s получает бонус за риск: %s</i>")
+	diceTimeout    = Response("<i>Время вышло: вы потеряли %s</i>")
+	diceInProgress = UserError("Игра уже идет.")
+	betTooLow      = UserError("Поставьте больше средств.")
+	tired          = UserError("<i>Вы устали от азартных игр.</i>")
 )
 
-var handleDiceMutex = &sync.Mutex{}
-
-// handleDice rolls a dice.
 func (a *App) handleDice(c tele.Context) error {
-	handleDiceMutex.Lock()
-	defer handleDiceMutex.Unlock()
-	group := getGroup(c)
 	user := getUser(c)
-
-	if hasNoEnergy(user) {
-		return userError(c, notEnoughEnergy)
-	}
-
-	_, ok := currentDiceGame(group)
-	if ok {
-		return userError(c, diceInProgress)
-	}
-
+	group := getGroup(c)
 	bet, err := getMessage(c).MoneyArgument()
 	if errors.Is(err, input.ErrAllIn) {
 		bet = user.Balance
 	} else if err != nil {
-		return userError(c, specifyAmount)
+		return respondUserError(c, specifyAmount)
 	}
-	if bet < diceMinBet {
-		return userError(c, betTooLow)
-	}
-
-	ok = a.model.UpdateMoney(user, -bet)
-	if !ok {
-		return userError(c, notEnoughMoney)
-	}
-
-	defer func() {
-		if rand.Float64() < tiredChance {
-			a.model.UpdateEnergy(user, -energyDelta, energyLimit)
-			err := c.Send(fmt.Sprintf(tired, formatEnergy(user.Energy-energyDelta)),
-				tele.ModeMarkdownV2)
+	act := dice.Actions{
+		Throw: func() (int, error) {
+			message, err := tele.Cube.Send(c.Bot(), c.Chat(), &tele.SendOptions{})
 			if err != nil {
-				a.SugarLog().Error(err)
+				return 0, err
 			}
-		}
-	}()
-
-	dice := &tele.Dice{Type: tele.Cube.Type}
-	msg, err := dice.Send(c.Bot(), c.Chat(), &tele.SendOptions{})
-	if err != nil {
-		return internalError(c, err)
+			return message.Dice.Value, nil
+		},
+		Timeout: func() {
+			respond(c, diceTimeout.Fill(formatMoney(bet)))
+		},
 	}
-	roll := msg.Dice.Value
-
-	game := makeDiceGame(user, bet, roll)
-	game.startDiceGame(func() {
-		c.Send(fmt.Sprintf(diceTimeout, formatMoney(game.money)), tele.ModeMarkdownV2)
-	})
-
-	out := fmt.Sprintf(diceStart, a.mustMentionUser(user), formatMoney(bet), diceRollTime/time.Second)
-	return c.Send(out, tele.ModeMarkdownV2)
+	if err := a.service.Dice(group, user, bet, act); err != nil {
+		if errors.Is(err, service.ErrNotEnoughEnergy) {
+			return respondUserError(c, notEnoughEnergy)
+		}
+		if errors.Is(err, service.ErrNotEnoughMoney) {
+			return respondUserError(c, notEnoughMoney)
+		}
+		if errors.Is(err, service.ErrBetTooLow) {
+			return respondUserError(c, betTooLow)
+		}
+		if errors.Is(err, dice.ErrGameInProgress) {
+			return respondUserError(c, diceInProgress)
+		}
+		return respondInternalError(c, err)
+	}
+	return respond(c, diceStart.Fill(
+		a.mustMentionUser(user),
+		formatMoney(bet),
+		a.service.Casino.Settings.RollTime/time.Second,
+	))
 }
 
 func (a *App) handleRoll(c tele.Context) error {
 	group := getGroup(c)
 	user := getUser(c)
-
-	game, ok := currentDiceGame(group)
-	if !ok {
-		return nil
-	}
-	if game.user.ID != user.ID {
-		return nil
-	}
-	game.finish()
-
-	defer func() {
-		if rand.Float64() <= diceBonusChance && game.money >= diceBetForBonus {
-			bonus := numbers.InRange(diceMinBonus, diceMaxBonus)
-			a.model.UpdateMoney(user, bonus)
-			c.Send(fmt.Sprintf(diceBonus, a.mustMentionUser(user), formatMoney(bonus)),
-				tele.ModeMarkdownV2)
+	result, err := a.service.Roll(group, user, c.Message().Dice.Value)
+	if err != nil {
+		if errors.Is(err, dice.ErrNoGame) {
+			return nil
 		}
-	}()
-
-	switch roll := c.Message().Dice.Value; {
-	case roll > game.roll:
-		win := game.money * 2
-		a.model.UpdateMoney(user, win)
-		return c.Send(fmt.Sprintf(diceWin, formatMoney(win)), tele.ModeMarkdownV2)
-	case roll == game.roll:
-		a.model.UpdateMoney(user, game.money)
-		return c.Send(diceDraw)
-	default:
-		return c.Send(diceLose)
+		if errors.Is(err, dice.ErrWrongUser) {
+			return nil
+		}
+		return respondInternalError(c, err)
 	}
+	switch result.Outcome {
+	case dice.Win:
+		return respond(c, diceWin.Fill(formatMoney(result.Bet*2)))
+	case dice.Draw:
+		return respond(c, diceDraw)
+	case dice.Lose:
+		return respond(c, diceLose)
+	}
+	return nil
 }
