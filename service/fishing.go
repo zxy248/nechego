@@ -97,7 +97,6 @@ func (s *Service) FreezeFish(u model.User) {
 	s.model.FreezeFish(u)
 }
 
-// TODO: rename to DefrostFish
 func (s *Service) UnfreezeFish(u model.User) {
 	s.model.UnfreezeFish(u)
 }
