@@ -3,6 +3,7 @@ package pets
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -147,7 +148,19 @@ func randomSpecies(l float64) Species {
 	if len(s) == 0 {
 		panic("no species")
 	}
-	return s[rand.Intn(len(s))]
+
+	rand.Shuffle(len(s), func(i, j int) {
+		s[i], s[j] = s[j], s[i]
+	})
+	sort.Slice(s, func(i, j int) bool {
+		return speciesData[s[i]].Rarity < speciesData[s[j]].Rarity
+	})
+
+	few := 5
+	if len(s) < few {
+		few = len(s)
+	}
+	return s[rand.Intn(few)]
 }
 
 func (s Species) Rarity() float64 {
