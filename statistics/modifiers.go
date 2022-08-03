@@ -1,10 +1,12 @@
 package statistics
 
 import (
+	"errors"
 	"fmt"
 	"nechego/model"
 	"nechego/modifiers"
 	"nechego/numbers"
+	"nechego/pets"
 	"strings"
 	"time"
 )
@@ -19,6 +21,7 @@ func (s *Statistics) UserModset(u model.User) (*modifiers.Set, error) {
 		s.setPoorModifier,
 		setFisherModifier,
 		setDebtorModifier,
+		s.setPetModifier,
 	}
 	m := modifiers.NewSet()
 	for _, set := range setters {
@@ -124,4 +127,47 @@ func setDebtorModifier(m *modifiers.Set, u model.User) error {
 		m.Add(modifiers.DebtorModifier)
 	}
 	return nil
+}
+
+func (s *Statistics) setPetModifier(m *modifiers.Set, u model.User) error {
+	p, err := s.model.GetPet(u)
+	if err != nil {
+		if errors.Is(err, model.ErrNoPet) {
+			return nil
+		}
+		return err
+	}
+	quality := petQualityString(p.Species.Quality())
+	var qualitySuffix string
+	if quality != "" {
+		qualitySuffix = " "
+	}
+	m.Add(&modifiers.Modifier{
+		Icon:        p.Species.Icon(),
+		Multiplier:  petQualityMultiplier(p.Species.Quality()),
+		Description: fmt.Sprintf("У вас есть %s%sпитомец: <code>%s</code>.", quality, qualitySuffix, p),
+	})
+	return nil
+}
+
+func petQualityMultiplier(q pets.Quality) float64 {
+	switch q {
+	case pets.Common:
+		return +0.05
+	case pets.Rare:
+		return +0.10
+	case pets.Exotic:
+		return +0.15
+	case pets.Legendary:
+		return +0.20
+	default:
+		panic("unknown quality")
+	}
+}
+
+func petQualityString(q pets.Quality) string {
+	if q != pets.Common {
+		return q.String()
+	}
+	return ""
 }

@@ -77,6 +77,7 @@ func main() {
 		InitialBalance:     1500,
 		MinBet:             50,
 		EnergyRestoreDelta: 1,
+		PetPrice:           5000,
 	})
 
 	a := app.New(b, l, t, s, app.Preferences{

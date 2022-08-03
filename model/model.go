@@ -101,7 +101,17 @@ create table if not exists fishing (
     fish text not null,
     sold integer not null,
     frozen integer not null
-)
+);
+
+create table if not exists pets (
+    id integer primary key autoincrement,
+    user_id integer not null references users (id) on delete cascade,
+    name text not null,
+    species integer not null,
+    gender integer not null,
+    birth datetime not null,
+    unique (user_id)
+);
 `
 
 // CreateTables creates the necessary tables.

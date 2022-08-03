@@ -88,6 +88,12 @@ const (
 	CommandPermit      = 804
 	CommandParliament  = 805
 	CommandImpeachment = 806
+
+	// Pets
+	CommandPet     = 900
+	CommandBuyPet  = 901
+	CommandNamePet = 902
+	CommandDropPet = 903
 )
 
 var commandText = map[Command]string{
@@ -165,9 +171,14 @@ var commandText = map[Command]string{
 	CommandPermit:      "!разрешить",
 	CommandParliament:  "!парламент",
 	CommandImpeachment: "!импичмент",
+
+	CommandPet:     "!питомец",
+	CommandBuyPet:  "!взять",
+	CommandNamePet: "!назвать",
+	CommandDropPet: "!выкинуть",
 }
 
-func CommandText(c Command) string {
+func (c Command) String() string {
 	return commandText[c]
 }
 
@@ -217,6 +228,10 @@ func IsFightCommand(c Command) bool {
 
 func IsAdminCommand(c Command) bool {
 	return c >= 800 && c < 900
+}
+
+func IsPetCommand(c Command) bool {
+	return c >= 900 && c < 1000
 }
 
 func IsImmune(c Command) bool {

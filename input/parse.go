@@ -148,6 +148,14 @@ func ParseCommand(s string) Command {
 		return CommandForbid
 	case startsWith(s, "!разрешить"):
 		return CommandPermit
+	case startsWith(s, "!питомец"):
+		return CommandPet
+	case startsWith(s, "!взять"):
+		return CommandBuyPet
+	case startsWith(s, "!назвать"):
+		return CommandNamePet
+	case startsWith(s, "!выкинуть"):
+		return CommandDropPet
 	}
 	return CommandUnknown
 }

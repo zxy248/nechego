@@ -57,7 +57,7 @@ func (m *Model) SellFish(u User) ([]Catch, error) {
 	for _, c := range catch {
 		tx.MustExec(sellFish, c.ID)
 	}
-	
+
 	return catch, tx.Commit()
 }
 

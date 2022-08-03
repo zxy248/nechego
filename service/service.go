@@ -35,6 +35,9 @@ type Config struct {
 
 	// energy
 	EnergyRestoreDelta int
+
+	// pets
+	PetPrice int
 }
 
 type Service struct {

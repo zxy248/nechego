@@ -8,6 +8,7 @@ import (
 	"nechego/input"
 	"nechego/model"
 	"nechego/numbers"
+	"nechego/pets"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
@@ -73,7 +74,7 @@ func formatStatus(s ...string) HTML {
 }
 
 func formatCommand(c input.Command) HTML {
-	return HTML("<code>" + input.CommandText(c) + "</code>")
+	return HTML("<code>" + c.String() + "</code>")
 }
 
 func formatTitles(s ...string) string {
@@ -138,7 +139,7 @@ func (a *App) enumerateUsers(u ...model.User) HTML {
 func itemizeCommands(c ...input.Command) HTML {
 	s := []string{}
 	for _, cc := range c {
-		s = append(s, input.CommandText(cc))
+		s = append(s, string(formatCommand(cc)))
 	}
 	return itemize(s...)
 }
@@ -183,4 +184,9 @@ var meals = []string{"завтрак", "полдник", "обед", "ужин",
 
 func randomMeal() string {
 	return meals[rand.Intn(len(meals))]
+}
+
+func formatPet(p *pets.Pet) HTML {
+	return HTML(fmt.Sprintf("<code>%s %s %s (%s)</code>",
+		p.Species.Icon(), strings.Title(p.Species.String()), p.Name, p.Gender.Icon()))
 }

@@ -149,6 +149,14 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return requireAdmin(a.handleForbid)
 	case input.CommandPermit:
 		return requireAdmin(a.handlePermit)
+	case input.CommandPet:
+		return a.handlePet
+	case input.CommandBuyPet:
+		return requireNonDebtor(a.handleBuyPet)
+	case input.CommandNamePet:
+		return a.handleNamePet
+	case input.CommandDropPet:
+		return a.handleDropPet
 	}
 	return nil
 }
