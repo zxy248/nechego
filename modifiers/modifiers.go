@@ -19,6 +19,9 @@ var (
 	PoorModifier          = &Modifier{"", -0.05, "Вы бедны.", ""}
 	FisherModifier        = &Modifier{"🎣", +0.05, "Вы можете рыбачить.", ""}
 	DebtorModifier        = &Modifier{"💳", -0.25, "У вас есть кредит.", ""}
+	FirstPlaceModifier    = &Modifier{"🥇", +0.03, "Вы на 1-м месте в рейтинге.", ""}
+	SecondPlaceModifier   = &Modifier{"🥈", +0.02, "Вы на 2-м месте в рейтинге.", ""}
+	ThirdPlaceModifier    = &Modifier{"🥉", +0.01, "Вы на 3-м месте в рейтинге.", ""}
 )
 
 type Modifier struct {

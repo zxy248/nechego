@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"nechego/model"
 	"nechego/service"
+	"nechego/statistics"
 
 	tele "gopkg.in/telebot.v3"
 )
 
 const profile = Response(`📇 <b>%s %s</b>
-<code>%s  %s  %s  %s</code>
+<code>%s  %s  %s  %s  %s</code>
 
 💵 Денег в кошельке: %s
 💳 На счету в банке: %s
@@ -34,6 +35,7 @@ func (a *App) handleProfile(c tele.Context) error {
 		formatTitles(modset.Titles()...),
 		a.mustMentionUser(user),
 		formatEnergy(user.Energy),
+		formatElo(user.Elo),
 		formatStrength(strength),
 		formatMessages(user.Messages),
 		formatFood(user.Fishes),
@@ -45,9 +47,9 @@ func (a *App) handleProfile(c tele.Context) error {
 }
 
 const (
-	versus               = "⚔️ <b>%s</b> <code>[%.2f]</code> <i>против</i> <b>%s</b> <code>[%.2f]</code>"
-	fightCollect         = "🏆 Побеждает %s и забирает %s"
-	fightNoMoney         = "🏆 Побеждает %s. У проигравшего нечего отнять."
+	versus               = "⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs</i></b> <b>%s</b> <code>[%.2f]</code>"
+	fightCollect         = "🏆 %s <code>(%s)</code> выигрывает в поединке и забирает %s"
+	fightNoMoney         = "🏆 %s <code>(%s)</code> выигрывает в поединке."
 	cannotAttackYourself = UserError("Вы не можете напасть на самого себя.")
 )
 
@@ -74,6 +76,7 @@ func (a *App) fightResponse(o *service.FightOutcome) Response {
 		a.mustMentionUser(o.Defender.User),
 		o.Defender.Strength,
 		a.mustMentionUser(o.Winner().User),
+		formatEloDelta(o.Elo),
 	}
 	if o.Reward > 0 {
 		args = append(args, formatMoney(o.Reward))
@@ -139,4 +142,23 @@ func (a *App) handleStrength(c tele.Context) error {
 		return respondInternalError(c, err)
 	}
 	return respond(c, Response("Ваша сила: %s").Fill(formatStrength(str)))
+}
+
+const topRating = Response("🏆 <b>Боевой рейтинг</b>\n%s")
+
+func (a *App) handleTopElo(c tele.Context) error {
+	users, err := a.stat.SortedUsers(getGroup(c), statistics.ByEloDesc)
+	if err != nil {
+		return respondInternalError(c, err)
+	}
+	users = users[:clampTopNumber(len(users))]
+	return respond(c, topRating.Fill(a.topElo(users)))
+}
+
+func (a *App) topElo(u []model.User) HTML {
+	s := []string{}
+	for _, uu := range u {
+		s = append(s, fmt.Sprintf("%s %s", a.mustMentionUser(uu), formatElo(uu.Elo)))
+	}
+	return enumerate(s...)
 }

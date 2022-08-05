@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"math/rand"
 	"nechego/fight"
 	"nechego/model"
 	"nechego/numbers"
@@ -13,6 +14,7 @@ var ErrSameUser = errors.New("same user")
 type FightOutcome struct {
 	*fight.Fight
 	Reward int
+	Elo    float64
 }
 
 func (s *Service) Fight(attacker, defender model.User) (*FightOutcome, error) {
@@ -25,17 +27,48 @@ func (s *Service) Fight(attacker, defender model.User) (*FightOutcome, error) {
 		return nil, ErrNotEnoughEnergy
 	}
 	battle.Attacker.Energy -= s.Config.FightEnergyDrain
-	reward, err := s.model.ForceTransferMoney(
-		battle.Loser().User,
-		battle.Winner().User,
-		numbers.InRange(
-			s.Config.WinReward.Min(),
-			s.Config.WinReward.Max()))
+	winner := battle.Winner().User
+	loser := battle.Loser().User
+	reward, err := s.model.ForceTransferMoney(loser, winner,
+		fightReward(s.Config.MinReward, s.Config.BaseReward, winner.Balance, loser.Balance))
 	if err != nil {
 		return nil, err
 	}
+	elo := numbers.EloDelta(winner.Elo, loser.Elo, numbers.KDefault, numbers.ScoreWin)
+	s.model.UpdateElo(winner, elo)
+	s.model.UpdateElo(loser, -elo)
 	return &FightOutcome{
 		Fight:  battle,
 		Reward: reward,
+		Elo:    elo,
 	}, nil
+}
+
+const (
+	winnerRewardFactor = 1.0
+	loserRewardFactor  = 0.125
+	sigmaRewardFactor  = 0.5
+)
+
+func fightReward(minReward, baseReward, winnerBalance, loserBalance int) int {
+	return int(fightRewardHelper(
+		float64(minReward),
+		float64(baseReward),
+		float64(winnerBalance),
+		float64(loserBalance),
+	))
+}
+
+func fightRewardHelper(minReward, baseReward, winnerBalance, loserBalance float64) float64 {
+	x := numbers.Max(
+		baseReward,
+		numbers.Min(
+			winnerBalance*winnerRewardFactor,
+			loserBalance*loserRewardFactor,
+		),
+	)
+	return numbers.Max(
+		minReward,
+		rand.NormFloat64()*sigmaRewardFactor*x+x,
+	)
 }

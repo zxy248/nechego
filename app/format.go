@@ -53,6 +53,18 @@ func formatStrength(n float64) HTML {
 	return HTML(fmt.Sprintf("<code>%.2f 💪</code>", n))
 }
 
+func formatElo(n float64) HTML {
+	return HTML(fmt.Sprintf("<code>%.1f ⚜️</code>", n))
+}
+
+func formatEloDelta(n float64) HTML {
+	sign := "+"
+	if n < 0 {
+		sign = "-"
+	}
+	return HTML(fmt.Sprintf("<code>%s%.1f</code>", sign, n))
+}
+
 func formatMessages(n int) HTML {
 	return HTML(fmt.Sprintf("<code>%d ✉️</code>", n))
 }

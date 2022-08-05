@@ -61,3 +61,13 @@ func (m *Model) Repay(u User, amount int) error {
 	}
 	return nil
 }
+
+func (m *Model) DepositsToday(u User) (int, error) {
+	var c int
+	err := m.db.Get(&c, countUserEventsToday, depositEvent, u.GID, u.ID)
+	return c, err
+}
+
+func (m *Model) AddDeposit(u User) {
+	m.db.MustExec(insertEvent, u.GID, u.ID, depositEvent)
+}

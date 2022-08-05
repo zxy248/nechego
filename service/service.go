@@ -17,18 +17,21 @@ type Config struct {
 	// fighting
 	FightSettings    fight.Settings
 	FightEnergyDrain int
-	WinReward        numbers.Interval
+	MinReward        int
+	BaseReward       int
 
 	// parliament
 	ParliamentMembers  int
 	ParliamentMajority int
 
 	// economy
+	MaxDeposits    int
 	DepositFee     int
 	WithdrawFee    int
 	MinDebt        int
 	DebtPercentage float64
 	InitialBalance int
+	InitialElo     float64
 
 	// dice
 	MinBet int

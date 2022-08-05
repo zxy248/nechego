@@ -67,6 +67,8 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleStrength
 	case input.CommandEnergy:
 		return handleEnergy
+	case input.CommandRating:
+		return a.handleTopElo
 	case input.CommandFishingRod:
 		return a.handleFishingRod
 	case input.CommandFishing:

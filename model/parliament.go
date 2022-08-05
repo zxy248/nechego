@@ -5,22 +5,11 @@ import (
 	"errors"
 )
 
-const selectParliament = `
-select u.* from real_users as u
-inner join events as e on u.id = e.user_id
-where e.event = ?
-and e.gid = ?
-and e.happen >= date('now', 'localtime')`
-
-const insertEvent = `
-insert into events (gid, user_id, event, happen)
-values (?, ?, ?, datetime('now', 'localtime'))`
-
 func (m *Model) Parliament(g Group, n int) ([]User, error) {
 	tx := m.db.MustBegin()
 	defer tx.Rollback()
 	users := []User{}
-	err := tx.Select(&users, selectParliament, parliamentMemberEvent, g.GID)
+	err := tx.Select(&users, selectEvents, parliamentMemberEvent, g.GID)
 	if err != nil {
 		return nil, err
 	}
@@ -35,19 +24,6 @@ func (m *Model) Parliament(g Group, n int) ([]User, error) {
 	}
 	return users, tx.Commit()
 }
-
-const countEvents = `
-select count(1) from events
-where event = ?
-and gid = ?
-and happen >= date('now', 'localtime')`
-
-const impeachedToday = `
-select 1 from events
-where event = ?
-and gid = ?
-and user_id = ?
-and happen >= date('now', 'localtime')`
 
 const cancelAdmin = `
 delete from daily_admins
@@ -65,7 +41,7 @@ func (m *Model) Impeachment(g Group, u User, threshold int) (votes int, err erro
 	defer tx.Rollback()
 
 	parliament := []User{}
-	if err := tx.Select(&parliament, selectParliament, parliamentMemberEvent, g.GID); err != nil {
+	if err := tx.Select(&parliament, selectEvents, parliamentMemberEvent, g.GID); err != nil {
 		return 0, err
 	}
 	e := false
@@ -80,7 +56,7 @@ func (m *Model) Impeachment(g Group, u User, threshold int) (votes int, err erro
 	}
 
 	var test int
-	err = tx.Get(&test, impeachedToday, impeachmentEvent, g.GID, u.ID)
+	err = tx.Get(&test, existsUserEventToday, impeachmentEvent, g.GID, u.ID)
 	if !errors.Is(err, sql.ErrNoRows) {
 		if err != nil {
 			return 0, err
@@ -91,7 +67,7 @@ func (m *Model) Impeachment(g Group, u User, threshold int) (votes int, err erro
 	tx.MustExec(insertEvent, g.GID, u.ID, impeachmentEvent)
 
 	var c int
-	if err := tx.Get(&c, countEvents, impeachmentEvent, g.GID); err != nil {
+	if err := tx.Get(&c, countEventsToday, impeachmentEvent, g.GID); err != nil {
 		return 0, err
 	}
 	if c == threshold {

@@ -41,9 +41,12 @@ func debtStatus(u model.User) HTML {
 	return HTML(fmt.Sprintf("Вы должны банку %s", formatMoney(u.Debt)))
 }
 
-const deposit = Response(`💳 Вы оплатили комиссию и положили %s в банк.
+const (
+	deposit = Response(`💳 Вы оплатили комиссию и положили %s в банк.
 
 <i>Теперь на счету %s</i>`)
+	bankOperationLimit = UserError("Вы превысили лимит на количество операций за день.")
+)
 
 // !депозит
 func (a *App) handleDeposit(c tele.Context) error {
@@ -56,6 +59,9 @@ func (a *App) handleDeposit(c tele.Context) error {
 	}
 	transfered, err := a.service.Deposit(user, amount)
 	if err != nil {
+		if errors.Is(err, service.ErrBankOperationLimit) {
+			return respondUserError(c, bankOperationLimit)
+		}
 		if errors.Is(err, service.ErrIncorrectAmount) {
 			return respondUserError(c, incorrectAmount)
 		}

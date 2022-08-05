@@ -22,6 +22,7 @@ func (s *Statistics) UserModset(u model.User) (*modifiers.Set, error) {
 		setFisherModifier,
 		setDebtorModifier,
 		s.setPetModifier,
+		s.setPlaceModifier,
 	}
 	m := modifiers.NewSet()
 	for _, set := range setters {
@@ -170,4 +171,23 @@ func petQualityString(q pets.Quality) string {
 		return q.String()
 	}
 	return ""
+}
+
+func (s *Statistics) setPlaceModifier(m *modifiers.Set, u model.User) error {
+	r, err := s.SortedUsers(model.Group{GID: u.GID}, ByEloDesc)
+	if err != nil {
+		return err
+	}
+	if len(r) < 3 {
+		return nil
+	}
+	switch {
+	case r[0].ID == u.ID:
+		m.Add(modifiers.FirstPlaceModifier)
+	case r[1].ID == u.ID:
+		m.Add(modifiers.SecondPlaceModifier)
+	case r[2].ID == u.ID:
+		m.Add(modifiers.ThirdPlaceModifier)
+	}
+	return nil
 }

@@ -23,6 +23,7 @@ func (s *Service) User(u model.User) (model.User, error) {
 		if errors.Is(err, model.ErrUserNotFound) {
 			u.Energy = s.statistics.Settings.EnergyRange.Max()
 			u.Balance = s.Config.InitialBalance
+			u.Elo = s.Config.InitialElo
 			s.model.InsertUser(u)
 			return u, nil
 		}

@@ -40,6 +40,18 @@ func ByWealthAsc(users []model.User) func(int, int) bool {
 	}
 }
 
+func ByEloDesc(users []model.User) func(int, int) bool {
+	return func(i, j int) bool {
+		return users[i].Elo > users[j].Elo
+	}
+}
+
+func ByEloAsc(users []model.User) func(int, int) bool {
+	return func(i, j int) bool {
+		return users[i].Elo < users[j].Elo
+	}
+}
+
 func (s *Statistics) ByStrengthDesc(users []model.User) func(int, int) bool {
 	return func(i, j int) bool {
 		ii, _ := s.Strength(users[i])

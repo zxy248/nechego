@@ -6,11 +6,19 @@ import (
 )
 
 var (
-	ErrMinDebt   = errors.New("debt too low")
-	ErrDebtLimit = errors.New("debt limit too low")
+	ErrMinDebt            = errors.New("debt too low")
+	ErrDebtLimit          = errors.New("debt limit too low")
+	ErrBankOperationLimit = errors.New("bank operation limit")
 )
 
 func (s *Service) Deposit(u model.User, amount int) (transfered int, err error) {
+	c, err := s.model.DepositsToday(u)
+	if err != nil {
+		return 0, err
+	}
+	if c >= s.Config.MaxDeposits {
+		return 0, ErrBankOperationLimit
+	}
 	taxed := amount - s.Config.DepositFee
 	if err := s.model.Deposit(u, taxed, s.Config.DepositFee); err != nil {
 		if errors.Is(err, model.ErrNotEnoughMoney) {
@@ -21,6 +29,7 @@ func (s *Service) Deposit(u model.User, amount int) (transfered int, err error) 
 		}
 		return 0, err
 	}
+	s.model.AddDeposit(u)
 	return taxed, nil
 }
 

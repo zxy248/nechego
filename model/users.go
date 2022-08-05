@@ -19,6 +19,7 @@ type User struct {
 	Messages  int
 	Fisher    bool
 	Fishes    int
+	Elo       float64
 }
 
 func (u User) Summary() int {
@@ -30,12 +31,27 @@ func (u User) Debtor() bool {
 }
 
 const insertUser = `
-insert into users (gid, uid, energy, balance, account, debt, debt_limit, admin, banned, messages, fisher, fishes)
-values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+insert into users (
+    gid,
+    uid,
+    energy,
+    balance,
+    account,
+    debt,
+    debt_limit,
+    admin,
+    banned,
+    messages,
+    fisher,
+    fishes,
+    elo
+)
+values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 func (m *Model) InsertUser(u User) {
 	m.db.MustExec(insertUser,
-		u.GID, u.UID, u.Energy, u.Balance, u.Account, u.Debt, u.DebtLimit, u.Admin, u.Banned, u.Messages, u.Fisher, u.Fishes)
+		u.GID, u.UID, u.Energy, u.Balance, u.Account, u.Debt, u.DebtLimit,
+		u.Admin, u.Banned, u.Messages, u.Fisher, u.Fishes, u.Elo)
 }
 
 const deleteUser = `
@@ -47,7 +63,21 @@ func (m *Model) DeleteUser(u User) {
 }
 
 const selectUser = `
-select id, gid, uid, energy, balance, account, debt, debt_limit, admin, banned, messages, fisher, fishes
+select
+    id,
+    gid,
+    uid,
+    energy,
+    balance,
+    account,
+    debt,
+    debt_limit,
+    admin,
+    banned,
+    messages,
+    fisher,
+    fishes,
+    elo
 from real_users`
 
 const (
@@ -227,4 +257,12 @@ where id = ? and debt_limit < ?`
 
 func (m *Model) RaiseLimit(u User, limit int) {
 	m.db.MustExec(raiseLimit, limit, u.ID, limit)
+}
+
+const updateElo = `
+update users set elo = elo + ?
+where id = ?`
+
+func (m *Model) UpdateElo(u User, delta float64) {
+	m.db.MustExec(updateElo, delta, u.ID)
 }

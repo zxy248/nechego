@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -37,6 +36,7 @@ create table if not exists users (
     messages integer not null default 0,
     fisher integer not null default 0,
     fishes integer not null default 0,
+    elo real not null default 1500,
     active integer not null default 1,
     unique (gid, uid)
 );
@@ -78,12 +78,25 @@ create table if not exists forbidden_commands (
 );
 
 create view if not exists real_users as
-select id, gid, uid, energy, balance, account, debt, debt_limit, admin
-or exists(select 1 from daily_admins
-    where daily_admins.user_id = users.id
-    and added >= date('now', 'localtime'))
-as admin,
-banned, messages, fisher, fishes
+select
+    id,
+    gid,
+    uid,
+    energy,
+    balance,
+    account,
+    debt,
+    debt_limit,
+    admin
+    or exists(select 1 from daily_admins
+	where daily_admins.user_id = users.id
+	and added >= date('now', 'localtime'))
+    as admin,
+    banned,
+    messages,
+    fisher,
+    fishes,
+    elo
 from users
 where active = 1;
 
@@ -134,10 +147,6 @@ drop table fishing;
 // DropTables deletes all tables from the database.
 func (db *DB) DropTables() {
 	db.MustExec(drop)
-}
-
-func concat(elems ...string) string {
-	return strings.Join(elems, " ")
 }
 
 func failOn(err error) {

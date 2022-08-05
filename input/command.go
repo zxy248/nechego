@@ -79,6 +79,7 @@ const (
 	CommandFight     = 703
 	CommandStrength  = 704
 	CommandEnergy    = 705
+	CommandRating    = 706
 
 	// Admin
 	CommandAdmin       = 800
@@ -163,6 +164,7 @@ var commandText = map[Command]string{
 	CommandFight:     "!драка",
 	CommandStrength:  "!сила",
 	CommandEnergy:    "!энергия",
+	CommandRating:    "!рейтинг",
 
 	CommandAdmin:       "!админ дня",
 	CommandBan:         "!бан",
