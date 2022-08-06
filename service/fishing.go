@@ -13,6 +13,7 @@ var (
 	ErrNotEnoughFish = errors.New("not enough fish")
 	ErrNotFisher     = errors.New("not a fisher")
 	ErrAlreadyFisher = errors.New("already a fisher")
+	ErrEatableFish   = errors.New("eatable fish")
 )
 
 func (s *Service) EatFish(u model.User) (energyRestored int, err error) {
@@ -52,17 +53,18 @@ func (s *Service) Fish(u model.User) (fishing.Session, error) {
 	}
 	session := fishing.Cast()
 	if session.Success() {
-		s.collectFish(u, session.Fish)
+		return session, s.collectFish(u, session.Fish)
 	}
 	return session, nil
 }
 
-func (s *Service) collectFish(u model.User, f fishing.Fish) {
-	if f.Light() {
+func (s *Service) collectFish(u model.User, f fishing.Fish) error {
+	if f.Light() && f.Cheap() {
 		s.model.AddFish(u)
-		return
+		return ErrEatableFish
 	}
 	s.model.InsertFish(model.MakeCatch(u, f))
+	return nil
 }
 
 func (s *Service) FreshFish(u model.User) (fishing.Fishes, error) {

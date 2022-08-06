@@ -46,7 +46,7 @@ func (a *App) handleWho(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, who.Fill(a.mustMentionUser(u), message))
+	return respond(c, who.Fill(a.mustMention(u), message))
 }
 
 const (
@@ -61,9 +61,9 @@ const (
 func (a *App) handleTitle(c tele.Context) error {
 	user := getUser(c)
 	name := getMessage(c).Argument()
-	if err := nameOk(name); err != nil {
+	if err := validateName(name); err != nil {
 		if errors.Is(err, errNameEmpty) {
-			return respond(c, yourName.Fill(a.mustMentionUser(user)))
+			return respond(c, yourName.Fill(a.mustMention(user)))
 		}
 		if errors.Is(err, errNameLong) {
 			return respondUserError(c, nameLong)
@@ -81,7 +81,7 @@ var (
 	errNameLong  = errors.New("name is too long")
 )
 
-func nameOk(n string) error {
+func validateName(n string) error {
 	if n == "" {
 		return errNameEmpty
 	}

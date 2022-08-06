@@ -165,11 +165,11 @@ func categoryResponse(category, help string) Response {
 }
 
 func helpResponse() Response {
-	return Response(joinLines(helpHeader("базовые команды"), string(formatHelp())))
+	return Response(joinLines(helpHeader("базовые команды"), formatHelp()))
 }
 
-func formatHelp() HTML {
-	return HTML(fmt.Sprintf(help, availableCategories()))
+func formatHelp() string {
+	return fmt.Sprintf(help, availableCategories())
 }
 
 func availableCategories() string {

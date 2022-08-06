@@ -3,13 +3,13 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"html"
 	"math/rand"
 	"nechego/input"
 	"nechego/model"
 	"nechego/numbers"
 	"nechego/pets"
 	"strings"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -26,7 +26,7 @@ func formatWarning(s string) string {
 	return "⚠️ " + s
 }
 
-func formatMoney(n int) HTML {
+func formatMoney(n int) string {
 	var s string
 	switch p0 := n % 10; {
 	case n >= 10 && n <= 20:
@@ -38,91 +38,112 @@ func formatMoney(n int) HTML {
 	default:
 		s = fmt.Sprintf("%d рублей", n)
 	}
-	return HTML(fmt.Sprintf("<code>%s 🪙</code>", s))
+	return fmt.Sprintf("<code>%s 🪙</code>", s)
 }
 
-func formatWeight(n float64) HTML {
-	return HTML(fmt.Sprintf("<code>%.2f кг ⚖️</code>", n))
+func formatDebtStatus(u model.User) string {
+	if u.Debtor() {
+		return "У вас нет кредитов."
+	}
+	return fmt.Sprintf("Вы должны банку %s", formatMoney(u.Debt))
 }
 
-func formatEnergy(n int) HTML {
-	return HTML(fmt.Sprintf("<code>%d ⚡️</code>", n))
+func formatWeight(n float64) string {
+	return fmt.Sprintf("<code>%.2f кг ⚖️</code>", n)
 }
 
-func formatStrength(n float64) HTML {
-	return HTML(fmt.Sprintf("<code>%.2f 💪</code>", n))
+func formatEnergy(n int) string {
+	return fmt.Sprintf("<code>%d ⚡️</code>", n)
 }
 
-func formatElo(n float64) HTML {
-	return HTML(fmt.Sprintf("<code>%.1f ⚜️</code>", n))
+func formatStrength(n float64) string {
+	return fmt.Sprintf("<code>%.2f 💪</code>", n)
 }
 
-func formatEloDelta(n float64) HTML {
+func formatElo(n float64) string {
+	return fmt.Sprintf("<code>%.1f ⚜️</code>", n)
+}
+
+func formatEloDelta(n float64) string {
 	sign := "+"
 	if n < 0 {
 		sign = "-"
 	}
-	return HTML(fmt.Sprintf("<code>%s%.1f</code>", sign, n))
+	return fmt.Sprintf("<code>%s%.1f</code>", sign, n)
 }
 
-func formatMessages(n int) HTML {
-	return HTML(fmt.Sprintf("<code>%d ✉️</code>", n))
+func formatMessages(n int) string {
+	return fmt.Sprintf("<code>%d ✉️</code>", n)
 }
 
-func formatFood(n int) HTML {
-	return HTML(fmt.Sprintf("<code>%d 🍊</code>", n))
+func formatFood(n int) string {
+	return fmt.Sprintf("<code>%d 🍊</code>", n)
 }
 
-func formatPercentage(v float64) HTML {
-	return HTML(fmt.Sprintf("<code>%d%%</code>", int(v*100)))
+func formatPercentage(v float64) string {
+	return fmt.Sprintf("<code>%d%%</code>", int(v*100))
 }
 
-func formatStatus(s ...string) HTML {
+func formatStatus(s ...string) string {
 	var out string
 	for _, t := range s {
-		out += "<i>" + t + "</i>\n"
+		out += fmt.Sprintf("<i>%s</i>\n", t)
 	}
-	return HTML(strings.TrimSpace(out))
+	return strings.TrimSpace(out)
 }
 
-func formatCommand(c input.Command) HTML {
-	return HTML("<code>" + c.String() + "</code>")
+func formatCommand(c input.Command) string {
+	return fmt.Sprintf("<code>%s</code>", c)
 }
 
 func formatTitles(s ...string) string {
 	if len(s) > 0 {
 		s[0] = strings.Title(s[0])
 	}
-	titles := joinWords(s...)
+	titles := joinSpace(s...)
 	if titles == "" {
 		titles = "Пользователь"
 	}
 	return titles
 }
 
-func formatIcons(icon ...string) HTML {
+func formatIcons(icon ...string) string {
 	icons := strings.Join(icon, "·")
-	return HTML("<code>" + icons + "</code>")
+	return fmt.Sprintf("<code>%s</code>", icons)
 }
 
-func itemize(s ...string) HTML {
+func itemize(s ...string) string {
 	var out string
 	for _, t := range s {
-		out += "<b>•</b> " + t + "\n"
+		out += fmt.Sprintf("<b>•</b> %s\n", t)
 	}
-	return ellipsizeEmpty(strings.TrimSpace(out))
+	return strings.TrimSpace(ellipsizeEmpty(out))
 }
 
-func enumerate(s ...string) HTML {
+func enumerate(s ...string) string {
 	var out string
 	for i, t := range s {
 		out += fmt.Sprintf("<i>%d.</i> %s\n", i+1, t)
 	}
-	return ellipsizeEmpty(strings.TrimSpace(out))
+	return strings.TrimSpace(ellipsizeEmpty(out))
 }
 
-func energyRemaining(n int) HTML {
-	return HTML(fmt.Sprintf("<i>Энергии осталось: %s</i>", formatEnergy(n)))
+func ellipsizeEmpty(s string) string {
+	if s == "" {
+		return "<code>. . .</code>"
+	}
+	return s
+}
+
+func formatEnergyRemaining(n int) string {
+	return fmt.Sprintf("<i>Энергии осталось: %s</i>", formatEnergy(n))
+}
+
+func formatEnergyCooldown(d time.Duration) string {
+	mins := int(d.Minutes())
+	secs := int(d.Seconds()) % 60
+	return fmt.Sprintf("⏰ До восстановления энергии: <code>%d минут %d секунд</code>.",
+		mins, secs)
 }
 
 const maxTopNumber = 5
@@ -132,35 +153,28 @@ func clampTopNumber(x int) int {
 	return numbers.Min(x, maxTopNumber)
 }
 
-func (a *App) itemizeUsers(u ...model.User) HTML {
-	mentions := []string{}
-	for _, uu := range u {
-		mentions = append(mentions, string(a.mustMentionUser(uu)))
-	}
-	return itemize(mentions...)
-}
-
-func (a *App) enumerateUsers(u ...model.User) HTML {
-	mentions := []string{}
-	for _, uu := range u {
-		mentions = append(mentions, string(a.mustMentionUser(uu)))
-	}
-	return enumerate(mentions...)
-}
-
-func itemizeCommands(c ...input.Command) HTML {
+func (a *App) itemizeUsers(u ...model.User) string {
 	s := []string{}
-	for _, cc := range c {
-		s = append(s, string(formatCommand(cc)))
+	for _, uu := range u {
+		s = append(s, a.mustMention(uu))
 	}
 	return itemize(s...)
 }
 
-func ellipsizeEmpty(s string) HTML {
-	if s == "" {
-		return HTML("<code>. . .</code>")
+func (a *App) enumerateUsers(u ...model.User) string {
+	s := []string{}
+	for _, uu := range u {
+		s = append(s, a.mustMention(uu))
 	}
-	return HTML(s)
+	return enumerate(s...)
+}
+
+func itemizeCommands(c ...input.Command) string {
+	s := []string{}
+	for _, cc := range c {
+		s = append(s, formatCommand(cc))
+	}
+	return itemize(s...)
 }
 
 func joinSections(s ...string) string {
@@ -171,12 +185,8 @@ func joinLines(s ...string) string {
 	return strings.Join(s, "\n")
 }
 
-func joinWords(s ...string) string {
+func joinSpace(s ...string) string {
 	return strings.Join(s, " ")
-}
-
-func mention(uid int64, name string) HTML {
-	return HTML(fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, html.EscapeString(name)))
 }
 
 var (
@@ -198,7 +208,11 @@ func randomMeal() string {
 	return meals[rand.Intn(len(meals))]
 }
 
-func formatPet(p *pets.Pet) HTML {
-	return HTML(fmt.Sprintf("<code>%s %s %s (%s)</code>",
-		p.Species.Icon(), strings.Title(p.Species.String()), p.Name, p.Gender.Icon()))
+func formatPet(p *pets.Pet) string {
+	return fmt.Sprintf("<code>%s %s %s (%s)</code>",
+		p.Species.Icon(),
+		strings.Title(p.Species.String()),
+		p.Name,
+		p.Gender.Icon(),
+	)
 }

@@ -7,10 +7,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const (
-	notEnoughEnergy      = UserError("Недостаточно энергии.")
-	energyCooldownFormat = Response("⏰ До восстановления энергии: <code>%d минут %d секунд</code>.")
-)
+const notEnoughEnergy = UserError("Недостаточно энергии.")
 
 // !стамина, !энергия
 func (a *App) energyHandler() tele.HandlerFunc {
@@ -23,11 +20,6 @@ func (a *App) energyHandler() tele.HandlerFunc {
 
 var handleEnergy tele.HandlerFunc
 
-func energyCooldownResponse(t time.Duration, energy int) Response {
-	mins := int(t.Minutes())
-	secs := int(t.Seconds()) % 60
-	return Response(joinSections(
-		string(energyCooldownFormat.Fill(mins, secs)),
-		string(energyRemaining(energy)),
-	))
+func energyCooldownResponse(d time.Duration, energy int) Response {
+	return Response(joinSections(formatEnergyCooldown(d), formatEnergyRemaining(energy)))
 }

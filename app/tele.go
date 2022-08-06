@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"nechego/input"
 	"nechego/model"
 	"strings"
 
@@ -10,15 +11,15 @@ import (
 
 // sendSmallProfilePhoto sends a small profile photo of the sender.
 func sendSmallProfilePhoto(c tele.Context) error {
-	user, err := c.Bot().ChatByID(c.Sender().ID)
+	u, err := c.Bot().ChatByID(c.Sender().ID)
 	if err != nil {
 		return err
 	}
-	file, err := c.Bot().FileByID(user.Photo.SmallFileID)
+	tf, err := c.Bot().FileByID(u.Photo.SmallFileID)
 	if err != nil {
 		return err
 	}
-	f, err := c.Bot().File(&file)
+	f, err := c.Bot().File(&tf)
 	if err != nil {
 		return err
 	}
@@ -28,14 +29,14 @@ func sendSmallProfilePhoto(c tele.Context) error {
 
 // sendLargeProfilePhoto sends a large profile photo of the sender.
 func sendLargeProfilePhoto(c tele.Context) error {
-	ps, err := c.Bot().ProfilePhotosOf(c.Sender())
+	p, err := c.Bot().ProfilePhotosOf(c.Sender())
 	if err != nil {
 		return err
 	}
-	if len(ps) < 1 {
+	if len(p) < 1 {
 		return nil
 	}
-	return c.Send(&ps[0])
+	return c.Send(&p[0])
 }
 
 // chatMemberPresent returns true if the member is not kicked or left.
@@ -46,8 +47,7 @@ func chatMemberPresent(m *tele.ChatMember) bool {
 	return true
 }
 
-// chatMemberName returns the member's displayed name.
-func chatMemberName(m *tele.ChatMember) string {
+func displayedName(m *tele.ChatMember) string {
 	name := m.Title
 	if name == "" {
 		name = m.User.FirstName + " " + m.User.LastName
@@ -55,28 +55,30 @@ func chatMemberName(m *tele.ChatMember) string {
 	return strings.TrimSpace(name)
 }
 
-// chatMember gets a chat member by GID and UID.
 func (a *App) chatMember(u model.User) (*tele.ChatMember, error) {
-	member, err := a.bot.ChatMemberOf(tele.ChatID(u.GID), tele.ChatID(u.UID))
+	m, err := a.bot.ChatMemberOf(tele.ChatID(u.GID), tele.ChatID(u.UID))
 	if err != nil {
 		return nil, err
 	}
-	return member, nil
+	return m, nil
 }
 
-// mentionUser returns the mention of the user by his name.
-func (a *App) mentionUser(u model.User) (HTML, error) {
+func formatMention(uid int64, name string) string {
+	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, input.Sanitize(name))
+}
+
+func (a *App) mention(u model.User) (string, error) {
 	m, err := a.chatMember(u)
 	if err != nil {
 		return "", err
 	}
-	return mention(u.UID, chatMemberName(m)), nil
+	return formatMention(u.UID, displayedName(m)), nil
 }
 
-func (a *App) mustMentionUser(u model.User) HTML {
-	out, err := a.mentionUser(u)
+func (a *App) mustMention(u model.User) string {
+	s, err := a.mention(u)
 	if err != nil {
 		panic(fmt.Errorf("can't mention the user: %v", err))
 	}
-	return out
+	return s
 }

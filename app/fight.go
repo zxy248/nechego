@@ -33,7 +33,7 @@ func (a *App) handleProfile(c tele.Context) error {
 	}
 	return respond(c, profile.Fill(
 		formatTitles(modset.Titles()...),
-		a.mustMentionUser(user),
+		a.mustMention(user),
 		formatEnergy(user.Energy),
 		formatElo(user.Elo),
 		formatStrength(strength),
@@ -71,11 +71,11 @@ func (a *App) handleFight(c tele.Context) error {
 func (a *App) fightResponse(o *service.FightOutcome) Response {
 	sections := []string{versus}
 	args := []any{
-		a.mustMentionUser(o.Attacker.User),
+		a.mustMention(o.Attacker.User),
 		o.Attacker.Strength,
-		a.mustMentionUser(o.Defender.User),
+		a.mustMention(o.Defender.User),
 		o.Defender.Strength,
-		a.mustMentionUser(o.Winner().User),
+		a.mustMention(o.Winner().User),
 		formatEloDelta(o.Elo),
 	}
 	if o.Reward > 0 {
@@ -84,7 +84,7 @@ func (a *App) fightResponse(o *service.FightOutcome) Response {
 	} else {
 		sections = append(sections, fightNoMoney)
 	}
-	sections = append(sections, string(energyRemaining(o.Attacker.Energy)))
+	sections = append(sections, string(formatEnergyRemaining(o.Attacker.Energy)))
 	return Response(joinSections(sections...)).Fill(args...)
 }
 
@@ -123,14 +123,14 @@ func (a *App) handleTopWeak(c tele.Context) error {
 	return respond(c, topWeak.Fill(top))
 }
 
-func (a *App) topStrength(u []model.User) (HTML, error) {
+func (a *App) topStrength(u []model.User) (string, error) {
 	s := []string{}
 	for _, uu := range u {
 		str, err := a.stat.Strength(uu)
 		if err != nil {
 			return "", err
 		}
-		s = append(s, fmt.Sprintf("%s %s", a.mustMentionUser(uu), formatStrength(str)))
+		s = append(s, fmt.Sprintf("%s %s", a.mustMention(uu), formatStrength(str)))
 	}
 	return enumerate(s...), nil
 }
@@ -155,10 +155,10 @@ func (a *App) handleTopElo(c tele.Context) error {
 	return respond(c, topRating.Fill(a.topElo(users)))
 }
 
-func (a *App) topElo(u []model.User) HTML {
+func (a *App) topElo(u []model.User) string {
 	s := []string{}
 	for _, uu := range u {
-		s = append(s, fmt.Sprintf("%s %s", a.mustMentionUser(uu), formatElo(uu.Elo)))
+		s = append(s, fmt.Sprintf("%s %s", a.mustMention(uu), formatElo(uu.Elo)))
 	}
 	return enumerate(s...)
 }

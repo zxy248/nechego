@@ -32,16 +32,16 @@ func balanceResponse(u model.User) Response {
 	return Response(strings.Repeat("%s\n", len(s))).Fill(s...)
 }
 
-func inTheWallet(n int) HTML {
-	return HTML(fmt.Sprintf("💵 В кошельке: %s", formatMoney(n)))
+func inTheWallet(n int) string {
+	return fmt.Sprintf("💵 В кошельке: %s", formatMoney(n))
 }
 
-func onTheAccount(n int) HTML {
-	return HTML(fmt.Sprintf("💳 На банковском счете: %s", formatMoney(n)))
+func onTheAccount(n int) string {
+	return fmt.Sprintf("💳 На банковском счете: %s", formatMoney(n))
 }
 
-func debtValue(n int) HTML {
-	return HTML(fmt.Sprintf("🏦 Кредит: %s", formatMoney(n)))
+func debtValue(n int) string {
+	return fmt.Sprintf("🏦 Кредит: %s", formatMoney(n))
 }
 
 const transfer = Response("Вы перевели %s %s")
@@ -63,7 +63,7 @@ func (a *App) handleTransfer(c tele.Context) error {
 		}
 		return respondInternalError(c, err)
 	}
-	return respond(c, transfer.Fill(a.mustMentionUser(recipient), formatMoney(amount)))
+	return respond(c, transfer.Fill(a.mustMention(recipient), formatMoney(amount)))
 }
 
 const capital = Response(`💸 Капитал беседы <b>%s</b>: %s
@@ -93,7 +93,7 @@ func (a *App) handleCapital(c tele.Context) error {
 	return respond(c, capital.Fill(
 		title,
 		formatMoney(total),
-		a.mustMentionUser(richest),
+		a.mustMention(richest),
 		formatMoney(richest.Summary()),
 		formatPercentage(percentage),
 		formatMoney(int(average))))
@@ -126,10 +126,10 @@ func (a *App) handleTopPoor(c tele.Context) error {
 	return respond(c, topPoor.Fill(a.topRich(users[:n])))
 }
 
-func (a *App) topRich(u []model.User) HTML {
+func (a *App) topRich(u []model.User) string {
 	s := []string{}
 	for _, uu := range u {
-		s = append(s, fmt.Sprintf("%s %s", a.mustMentionUser(uu), formatMoney(uu.Summary())))
+		s = append(s, fmt.Sprintf("%s %s", a.mustMention(uu), formatMoney(uu.Summary())))
 	}
 	return enumerate(s...)
 }

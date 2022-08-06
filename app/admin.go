@@ -9,8 +9,8 @@ import (
 
 const (
 	userBlocked          = Response("Пользователь заблокирован 🚫")
-	userAlreadyBlocked   = UserError("Пользователь уже заблокирован.")
 	userUnblocked        = Response("Пользователь разблокирован ✅")
+	userAlreadyBlocked   = UserError("Пользователь уже заблокирован.")
 	userAlreadyUnblocked = UserError("Пользователь не заблокирован.")
 )
 

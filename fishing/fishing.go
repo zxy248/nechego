@@ -7,6 +7,13 @@ import (
 	"nechego/numbers"
 )
 
+const minFishWeight = 0.05
+
+const (
+	cheapPriceThreshold     = 1_000
+	expensivePriceThreshold = 10_000
+)
+
 type Constitution int
 
 const (
@@ -14,8 +21,6 @@ const (
 	Belly
 	Regular
 )
-
-var MinFishWeight float64 = 0.05
 
 type Species int
 
@@ -49,30 +54,43 @@ const (
 	Bleak
 	Nase
 	Taimen
-	NSpecies
+	numberOfSpecies
 )
 
 func RandomSpecies() Species {
-	return Species(rand.Intn(int(NSpecies)))
-}
-
-func (s Species) randomWeight() float64 {
-	return numbers.UniNormal(
-		MinFishWeight,
-		speciesData[s].normalWeight,
-		speciesData[s].maximumWeight)
+	return Species(rand.Intn(int(numberOfSpecies)))
 }
 
 func (s Species) String() string {
 	return speciesData[s].name
 }
 
+func (s Species) NormalWeight() float64 {
+	return speciesData[s].normalWeight
+}
+
+func (s Species) MaximumWeight() float64 {
+	return speciesData[s].maximumWeight
+}
+
+func (s Species) Constitution() Constitution {
+	return speciesData[s].constitution
+}
+
+func (s Species) PricePerKg() float64 {
+	return speciesData[s].pricePerKg
+}
+
 func (s Species) Predator() bool {
 	return speciesData[s].predator
 }
 
-func (s Species) NormalWeight() float64 {
-	return speciesData[s].normalWeight
+func (s Species) randomWeight() float64 {
+	return numbers.UniNormal(
+		minFishWeight,
+		s.NormalWeight(),
+		s.MaximumWeight(),
+	)
 }
 
 type Fish struct {
@@ -84,12 +102,16 @@ type Fish struct {
 func RandomFish() Fish {
 	s := RandomSpecies()
 	w := s.randomWeight()
-	l := randomLength(w)
-	return Fish{s, w, l}
+	l := randomLength(w, s.Constitution())
+	return Fish{
+		Species: s,
+		Weight:  w,
+		Length:  l,
+	}
 }
 
 func (f Fish) Price() int {
-	return int(f.Weight * speciesData[f.Species].pricePerKg)
+	return int(f.Weight * f.PricePerKg())
 }
 
 func (f Fish) Light() bool {
@@ -97,7 +119,15 @@ func (f Fish) Light() bool {
 }
 
 func (f Fish) Heavy() bool {
-	return f.Weight >= f.NormalWeight()
+	return f.Weight > f.NormalWeight()*2.0
+}
+
+func (f Fish) Cheap() bool {
+	return f.Price() < cheapPriceThreshold
+}
+
+func (f Fish) Expensive() bool {
+	return f.Price() > expensivePriceThreshold
 }
 
 func (f Fish) String() string {
@@ -115,14 +145,24 @@ func (f Fish) String() string {
 	return fmt.Sprintf("%s (%s, %s)", f.Species, weight, length)
 }
 
-func lengthFromWeight(w float64) float64 {
+func normalWeight(w float64, t Constitution) float64 {
 	c, b := 7.089, 3.096
+	switch t {
+	case Long:
+		c *= 1.
+	case Belly:
+		c *= math.Pi
+	case Regular:
+		c *= math.SqrtPi
+	default:
+		panic("unknown constitution")
+	}
 	return math.Pow(w/c, 1.0/b)
 }
 
-func randomLength(w float64) float64 {
-	l := lengthFromWeight(w)
-	l += rand.NormFloat64() * l * (1.0 / 12)
+func randomLength(weight float64, t Constitution) float64 {
+	l := normalWeight(weight, t)
+	l += rand.NormFloat64() * l / 12
 	return l
 }
 
@@ -161,10 +201,8 @@ func (o Outcome) Success() bool {
 }
 
 func (o Outcome) String() string {
-	return OutcomePrefix + outcomeDescriptions[o]
+	return outcomeDescriptions[o]
 }
-
-var OutcomePrefix = "🎣 "
 
 func goodOutcome() Outcome {
 	return Collect
@@ -194,11 +232,13 @@ func Cast() Session {
 	return CastChance(SuccessChance)
 }
 
-func CastChance(win float64) Session {
+func CastChance(success float64) Session {
 	r := rand.Float64()
-	outcome := badOutcome()
-	if r <= win {
+	var outcome Outcome
+	if r <= success {
 		outcome = goodOutcome()
+	} else {
+		outcome = badOutcome()
 	}
 	fish := RandomFish()
 	return Session{outcome, fish}

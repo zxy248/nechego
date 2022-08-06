@@ -2,9 +2,7 @@ package app
 
 import (
 	"errors"
-	"fmt"
 	"nechego/input"
-	"nechego/model"
 	"nechego/service"
 
 	tele "gopkg.in/telebot.v3"
@@ -29,16 +27,9 @@ func (a *App) handleBank(c tele.Context) error {
 	return respond(c, bank.Fill(
 		formatMoney(user.Account),
 		formatMoney(a.service.Config.DepositFee),
-		debtStatus(user),
+		formatDebtStatus(user),
 		formatPercentage(a.service.Config.DebtPercentage),
 		formatMoney(user.DebtLimit)))
-}
-
-func debtStatus(u model.User) HTML {
-	if u.Debtor() {
-		return "У вас нет кредитов."
-	}
-	return HTML(fmt.Sprintf("Вы должны банку %s", formatMoney(u.Debt)))
 }
 
 const (

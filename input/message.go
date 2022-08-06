@@ -2,6 +2,7 @@ package input
 
 import (
 	"errors"
+	"html"
 	"strconv"
 	"strings"
 
@@ -21,20 +22,22 @@ func ParseMessage(s string) *Message {
 
 // Argument returns an argument probably contained in the message.
 func (m *Message) Argument() string {
+	var s string
 	switch m.Command {
 	case CommandWeather:
-		return weatherRe.FindStringSubmatch(m.Raw)[1]
+		s = weatherRe.FindStringSubmatch(m.Raw)[1]
 	case CommandProbability:
-		return probabilityRe.FindStringSubmatch(m.Raw)[1]
+		s = probabilityRe.FindStringSubmatch(m.Raw)[1]
 	case CommandWho:
-		return whoRe.FindStringSubmatch(m.Raw)[1]
+		s = whoRe.FindStringSubmatch(m.Raw)[1]
 	case CommandList:
-		return listRe.FindStringSubmatch(m.Raw)[1]
+		s = listRe.FindStringSubmatch(m.Raw)[1]
 	case CommandTop:
-		return topRe.FindStringSubmatch(m.Raw)[1]
+		s = topRe.FindStringSubmatch(m.Raw)[1]
+	default:
+		_, s, _ = strings.Cut(m.Raw, " ")
 	}
-	_, s, _ := strings.Cut(m.Raw, " ")
-	return s
+	return Sanitize(s)
 }
 
 var (
@@ -48,20 +51,17 @@ type TopArgument struct {
 }
 
 func (m *Message) TopArgument() (TopArgument, error) {
-	a := TopArgument{}
 	if m.Command != CommandTop {
 		panic(noArg)
 	}
 	match := topRe.FindStringSubmatch(m.Raw)
-	number := match[1]
-	a.String = match[2]
-	maybe, err := strconv.ParseInt(number, 10, 32)
+	s := Sanitize(match[2])
+	maybe, err := strconv.ParseInt(match[1], 10, 32)
 	if err != nil {
-		return a, nil
+		return TopArgument{String: s}, nil
 	}
 	n := int(maybe)
-	a.Number = &n
-	return a, nil
+	return TopArgument{Number: &n, String: s}, nil
 }
 
 var commandCommands = []Command{
@@ -128,4 +128,8 @@ func (m *Message) MoneyArgument() (int, error) {
 		return 0, ErrSpecifyAmount
 	}
 	return int(n), nil
+}
+
+func Sanitize(s string) string {
+	return html.EscapeString(s)
 }

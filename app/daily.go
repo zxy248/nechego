@@ -12,7 +12,7 @@ func (a *App) handlePair(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, dailyPair.Fill(a.mustMentionUser(x), a.mustMentionUser(y)))
+	return respond(c, dailyPair.Fill(a.mustMention(x), a.mustMention(y)))
 }
 
 const dailyEblan = Response("<b>Еблан дня</b> — %s 😸")
@@ -23,7 +23,7 @@ func (a *App) handleEblan(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, dailyEblan.Fill(a.mustMentionUser(user)))
+	return respond(c, dailyEblan.Fill(a.mustMention(user)))
 }
 
 const dailyAdmin = Response("<b>Админ дня</b> — %s 👑")
@@ -34,5 +34,5 @@ func (a *App) handleAdmin(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, dailyAdmin.Fill(a.mustMentionUser(user)))
+	return respond(c, dailyAdmin.Fill(a.mustMention(user)))
 }

@@ -68,27 +68,27 @@ func (a *App) handleInfo(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, info.Fill(HTML(joinSections(
-		string(a.adminSection(admins)),
-		string(a.bansSection(bans)),
-		string(a.forbiddenCommandsSection(commands))),
-	)))
+	return respond(c, info.Fill(joinSections(
+		a.formatAdminList(admins),
+		a.formatBlackList(bans),
+		a.formatForbiddenCommandList(commands)),
+	))
 }
 
 const adminListHeader = "👤 <i>Администрация</i>"
 
-func (a *App) adminSection(u []model.User) HTML {
-	return HTML(joinLines(adminListHeader, string(a.itemizeUsers(u...))))
+func (a *App) formatAdminList(u []model.User) string {
+	return joinLines(adminListHeader, a.itemizeUsers(u...))
 }
 
-const bansHeader = "🛑 <i>Черный список</i>"
+const blackListHeader = "🛑 <i>Черный список</i>"
 
-func (a *App) bansSection(u []model.User) HTML {
-	return HTML(joinLines(bansHeader, string(a.itemizeUsers(u...))))
+func (a *App) formatBlackList(u []model.User) string {
+	return joinLines(blackListHeader, a.itemizeUsers(u...))
 }
 
-const forbiddenCommandsHeader = "🔒 <i>Запрещенные команды</i>"
+const forbiddenCommandListHeader = "🔒 <i>Запрещенные команды</i>"
 
-func (a *App) forbiddenCommandsSection(c []input.Command) HTML {
-	return HTML(joinLines(forbiddenCommandsHeader, string(itemizeCommands(c...))))
+func (a *App) formatForbiddenCommandList(c []input.Command) string {
+	return joinLines(forbiddenCommandListHeader, itemizeCommands(c...))
 }

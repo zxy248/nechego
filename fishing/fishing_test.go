@@ -22,7 +22,7 @@ func TestSpeciesData(t *testing.T) {
 			t.Errorf("price must be positive")
 		}
 	}
-	if i != int(NSpecies) {
-		t.Errorf("number of elements in speciesData must be equal to NSpecies")
+	if i != int(numberOfSpecies) {
+		t.Errorf("number of elements in speciesData must be equal to %v", numberOfSpecies)
 	}
 }

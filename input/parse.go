@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// TODO: Parseable is a string, []string, or *regexp.Regexp.
+type Parseable interface{}
+
 var (
 	eblanRe    = regexp.MustCompile("(?i)^![ие][б6п*]?л[ап]н[А-я]* дня")
 	masyunyaRe = regexp.MustCompile("(?i)^(!ма[нс]ю[нс][а-я]*[пая])")

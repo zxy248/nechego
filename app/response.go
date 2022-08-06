@@ -2,12 +2,9 @@ package app
 
 import (
 	"fmt"
-	"html"
 
 	tele "gopkg.in/telebot.v3"
 )
-
-type HTML string
 
 type Response string
 
@@ -16,7 +13,6 @@ func (r Response) Send(b *tele.Bot, to tele.Recipient, opt *tele.SendOptions) (*
 }
 
 func (r Response) Fill(a ...any) Response {
-	sanitizeArguments(a)
 	return Response(fmt.Sprintf(string(r), a...))
 }
 
@@ -30,27 +26,12 @@ func (e UserError) Fill(a ...any) UserError {
 	return UserError(Response(e).Fill(a...))
 }
 
-func sanitizeArguments(a []any) {
-	for i, arg := range a {
-		a[i] = sanitizeArgument(arg)
-	}
-}
-
-func sanitizeArgument(a any) any {
-	switch x := a.(type) {
-	case string:
-		return html.EscapeString(x)
-	default:
-		return x
-	}
-}
-
 func respond(c tele.Context, r Response) error {
 	return c.Send(r, tele.ModeHTML)
 }
 
-func respondUserError(c tele.Context, r UserError) error {
-	return respond(c, Response(formatWarning(string(r))))
+func respondUserError(c tele.Context, err UserError) error {
+	return respond(c, Response(formatWarning(string(err))))
 }
 
 func respondInternalError(c tele.Context, err error) error {
