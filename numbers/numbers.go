@@ -12,9 +12,9 @@ import (
 )
 
 func Normal(min, max float64) float64 {
-	dev := (max - min) / 6
-	mean := (min + max) / 2
-	r := rand.NormFloat64()*dev + mean
+	sigma := (max - min) / 6
+	mu := (min + max) / 2
+	r := rand.NormFloat64()*sigma + mu
 	if r < min || r > max {
 		return Normal(min, max)
 	}

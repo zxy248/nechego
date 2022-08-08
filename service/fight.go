@@ -60,7 +60,7 @@ func fightReward(minReward, baseReward, winnerBalance, loserBalance int) int {
 }
 
 func fightRewardHelper(minReward, baseReward, winnerBalance, loserBalance float64) float64 {
-	x := numbers.Max(
+	mu := numbers.Max(
 		baseReward,
 		numbers.Min(
 			winnerBalance*winnerRewardFactor,
@@ -69,6 +69,6 @@ func fightRewardHelper(minReward, baseReward, winnerBalance, loserBalance float6
 	)
 	return numbers.Max(
 		minReward,
-		rand.NormFloat64()*sigmaRewardFactor*x+x,
+		rand.NormFloat64()*sigmaRewardFactor*mu+mu,
 	)
 }

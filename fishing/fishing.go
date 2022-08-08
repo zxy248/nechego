@@ -162,8 +162,9 @@ func normalWeight(w float64, t Constitution) float64 {
 
 func randomLength(weight float64, t Constitution) float64 {
 	l := normalWeight(weight, t)
-	l += rand.NormFloat64() * l / 12
-	return l
+	sigma := l / 12.0
+	delta := rand.NormFloat64() * sigma
+	return l + delta
 }
 
 type Fishes []Fish
