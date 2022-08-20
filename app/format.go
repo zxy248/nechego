@@ -112,6 +112,16 @@ func formatIcons(icon ...string) string {
 	return fmt.Sprintf("<code>%s</code>", icons)
 }
 
+const longListThreshold = 10
+
+func ellipsizeLong(ss []string) []string {
+	if len(ss) > longListThreshold {
+		ss = ss[:longListThreshold]
+		ss[longListThreshold-1] = ellipsis
+	}
+	return ss
+}
+
 func itemize(s ...string) string {
 	var out string
 	for _, t := range s {
@@ -128,9 +138,11 @@ func enumerate(s ...string) string {
 	return strings.TrimSpace(ellipsizeEmpty(out))
 }
 
+const ellipsis = "<code>. . .</code>"
+
 func ellipsizeEmpty(s string) string {
 	if s == "" {
-		return "<code>. . .</code>"
+		return ellipsis
 	}
 	return s
 }
