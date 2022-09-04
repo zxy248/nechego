@@ -12,6 +12,7 @@ import (
 
 func (a *App) pipeline(next tele.HandlerFunc) tele.HandlerFunc {
 	line := []tele.MiddlewareFunc{
+		ignoreForwarded,
 		ignoreNotGroup,
 		injectMessage,
 		a.logMessage,
@@ -28,6 +29,16 @@ func (a *App) pipeline(next tele.HandlerFunc) tele.HandlerFunc {
 		next = line[i](next)
 	}
 	return next
+}
+
+// BUG: don't work in groups
+func ignoreForwarded(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		if c.Message().IsForwarded() {
+			return nil
+		}
+		return next(c)
+	}
 }
 
 // isGroup returns true if the chat type is a group type, false otherwise.
