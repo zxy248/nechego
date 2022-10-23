@@ -42,6 +42,7 @@ const (
 	CommandMouse    = 303
 	CommandTikTok   = 304
 	CommandGame     = 305
+	CommandSima     = 306
 
 	// Pictures
 	CommandBasili = 400

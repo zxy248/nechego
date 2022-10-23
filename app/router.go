@@ -107,6 +107,8 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleMasyunya
 	case input.CommandPoppy:
 		return a.handlePoppy
+	case input.CommandSima:
+		return a.handleSima
 	case input.CommandHello:
 		return a.handleHello
 	case input.CommandMouse:

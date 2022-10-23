@@ -10,7 +10,7 @@ import (
 )
 
 type Stickers struct {
-	Hello, Masyunya, Poppy StickerPack
+	Hello, Masyunya, Poppy, Sima StickerPack
 }
 
 func (a *App) InitStickers() error {
@@ -25,6 +25,10 @@ func (a *App) InitStickers() error {
 		return err
 	}
 	a.stickers.Poppy, err = a.poppyStickers()
+	if err != nil {
+		return err
+	}
+	a.stickers.Sima, err = a.simaStickers()
 	if err != nil {
 		return err
 	}
@@ -77,6 +81,16 @@ func (a *App) poppyStickers() (StickerPack, error) {
 	return stickers, nil
 }
 
+var simaStickersName = "catsima_vk"
+
+func (a *App) simaStickers() (StickerPack, error) {
+	set, err := a.bot.StickerSet(simaStickersName)
+	if err != nil {
+		return nil, err
+	}
+	return set.Stickers, nil
+}
+
 // !привет
 func (a *App) handleHello(c tele.Context) error {
 	if strings.HasPrefix(getMessage(c).Raw, "!") || rand.Float64() <= a.pref.HelloChance {
@@ -93,4 +107,9 @@ func (a *App) handleMasyunya(c tele.Context) error {
 // !паппи
 func (a *App) handlePoppy(c tele.Context) error {
 	return c.Send(a.stickers.Poppy.Random())
+}
+
+// !сима
+func (a *App) handleSima(c tele.Context) error {
+	return c.Send(a.stickers.Sima.Random())
 }
