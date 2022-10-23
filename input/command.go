@@ -132,6 +132,7 @@ var commandText = map[Command]string{
 	CommandMouse:    "!мыш",
 	CommandTikTok:   "!тикток",
 	CommandGame:     "!игра",
+	CommandSima:     "!сима",
 
 	CommandBasili: "!марсик",
 	CommandCasper: "!каспер",
