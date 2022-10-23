@@ -114,7 +114,7 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandMouse:
 		return a.handleMouse
 	case input.CommandWeather:
-		return technicalMaintenance(a.handleWeather)
+		return a.handleWeather
 	case input.CommandTikTok:
 		return a.handleTikTok
 	case input.CommandList:

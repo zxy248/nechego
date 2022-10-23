@@ -16,7 +16,7 @@ const (
 	placeNotExists      = "Такого места не существует ☔️"
 	weatherBadRequest   = "Неудачный запрос ☔️"
 	weatherURL          = "https://wttr.in/"
-	weatherFormat       = "?format=%l:+%c+%t+\nОщущается+как+%f\n\nВетер+—+%w\nВлажность+—+%h\nДавление+—+%P\nФаза+луны+—+%m\nУФ-индекс+—+%u\n"
+	weatherFormat       = `?format=%l:+%c+%t+\nОщущается+как+%f\n\nВетер+—+%w\nВлажность+—+%h\nДавление+—+%P\nФаза+луны+—+%m\nУФ-индекс+—+%u\n`
 )
 
 // handleWeather sends the current weather for a given city
