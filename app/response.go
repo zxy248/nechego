@@ -26,8 +26,8 @@ func (e UserError) Fill(a ...any) UserError {
 	return UserError(Response(e).Fill(a...))
 }
 
-func respond(c tele.Context, r Response) error {
-	return c.Send(r, tele.ModeHTML)
+func respond(c tele.Context, r Response, opts ...interface{}) error {
+	return c.Send(r, append(opts, tele.ModeHTML)...)
 }
 
 func respondUserError(c tele.Context, err UserError) error {

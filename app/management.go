@@ -45,10 +45,7 @@ func (a *App) handleTurnOff(c tele.Context) error {
 		}
 		return respondInternalError(c, err)
 	}
-	if err := closeKeyboard(c); err != nil {
-		return respondInternalError(c, err)
-	}
-	return respond(c, botTurnedOff.Fill(inactiveEmoji()))
+	return respond(c, botTurnedOff.Fill(inactiveEmoji()), tele.RemoveKeyboard)
 }
 
 const info = Response("ℹ️ <b>Информация</b> 📌\n\n%s")

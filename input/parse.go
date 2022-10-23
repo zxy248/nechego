@@ -107,7 +107,7 @@ func ParseCommand(s string) Command {
 		return CommandMasyunya
 	case startsWith(s, "!паппи", "Паппи 🦊"):
 		return CommandPoppy
-	case startsWith(s, "!сима"):
+	case startsWith(s, "!сима", "Сима 💖"):
 		return CommandSima
 	case helloRe.MatchString(s):
 		return CommandHello
