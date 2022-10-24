@@ -46,6 +46,7 @@ func New(
 
 func (a *App) Start() {
 	a.bot.Handle(tele.OnText, a.route, a.pipeline)
+	a.bot.Handle(tele.OnPhoto, a.route, a.pipeline)
 	a.bot.Handle(tele.OnDice, a.handleRoll, a.pipeline)
 	a.bot.Handle(tele.OnUserJoined, a.handleJoin, a.pipeline)
 	// TODO: refactor dynamic handlers

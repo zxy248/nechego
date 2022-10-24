@@ -31,7 +31,7 @@ func (a *App) handleProfile(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, profile.Fill(
+	response := profile.Fill(
 		formatTitles(modset.Titles()...),
 		a.mustMention(user),
 		formatEnergy(user.Energy),
@@ -43,7 +43,12 @@ func (a *App) handleProfile(c tele.Context) error {
 		formatMoney(user.Account),
 		formatStatus(modset.Descriptions()...),
 		formatIcons(modset.Icons()...),
-	))
+	)
+	if ava, ok := loadAvatar(user.UID); ok {
+		ava.Caption = string(response)
+		return c.Send(ava, tele.ModeHTML)
+	}
+	return respond(c, response)
 }
 
 const (
