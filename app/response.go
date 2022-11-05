@@ -35,7 +35,7 @@ func respondUserError(c tele.Context, err UserError) error {
 }
 
 func respondInternalError(c tele.Context, err error) error {
-	send := respond(c, Response(formatError("Ошибка сервера")))
+	send := respond(c, Response(formatError("Ошибка сервера.")))
 	return serverError{send, err}
 }
 

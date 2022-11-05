@@ -18,6 +18,8 @@ const profile = Response(`📇 <b>%s %s</b>
 
 %s
 
+%s
+
 %s`)
 
 // !профиль
@@ -43,6 +45,7 @@ func (a *App) handleProfile(c tele.Context) error {
 		formatMoney(user.Account),
 		formatStatus(modset.Descriptions()...),
 		formatIcons(modset.Icons()...),
+		formatStatus(getStatus(user.UID)),
 	)
 	if ava, ok := loadAvatar(user.UID); ok {
 		ava.Caption = string(response)

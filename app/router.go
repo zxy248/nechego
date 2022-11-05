@@ -71,6 +71,8 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleTopElo
 	case input.CommandAvatar:
 		return a.handleAvatar
+	case input.CommandStatus:
+		return handleStatus
 	case input.CommandFishingRod:
 		return a.handleFishingRod
 	case input.CommandFishing:

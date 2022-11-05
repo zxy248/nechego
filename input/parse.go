@@ -69,6 +69,8 @@ func ParseCommand(s string) Command {
 		return CommandRating
 	case startsWith(s, "!аватар"):
 		return CommandAvatar
+	case startsWith(s, "!статус"):
+		return CommandStatus
 	case startsWith(s, "!удочка"):
 		return CommandFishingRod
 	case startsWith(s, "!рыбалка", "!ловля рыб", "!закинуть удочку"):
