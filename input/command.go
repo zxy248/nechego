@@ -14,6 +14,7 @@ const (
 	CommandTurnOff       = 4
 	CommandKeyboardOpen  = 5
 	CommandKeyboardClose = 6
+	CommandKick          = 7
 
 	// General
 	CommandProbability = 100
@@ -109,6 +110,7 @@ var commandText = map[Command]string{
 	CommandTurnOff:       "!выключить",
 	CommandKeyboardOpen:  "!открыть",
 	CommandKeyboardClose: "!закрыть",
+	CommandKick:          "!кик",
 
 	CommandProbability: "!инфа",
 	CommandWho:         "!кто",
