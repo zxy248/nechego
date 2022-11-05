@@ -93,6 +93,9 @@ const userNotFound = UserError("Пользователь не найден.")
 
 func (a *App) injectReplyUser(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
+		if !c.Message().IsReply() {
+			return next(c)
+		}
 		u, err := a.service.FindUser(model.User{GID: c.Chat().ID, UID: c.Message().ReplyTo.Sender.ID})
 		if err != nil {
 			if errors.Is(err, service.ErrUserNotFound) {

@@ -56,7 +56,7 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandTransfer:
 		return requireNonDebtor(requireReply(a.injectReplyUser(a.handleTransfer)))
 	case input.CommandProfile:
-		return a.handleProfile
+		return a.injectReplyUser(a.handleProfile)
 	case input.CommandTopRich:
 		return a.handleTopRich
 	case input.CommandTopPoor:

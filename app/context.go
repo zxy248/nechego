@@ -47,5 +47,11 @@ func addReplyUser(c tele.Context, u model.User) tele.Context {
 }
 
 func getReplyUser(c tele.Context) model.User {
-	return c.Get(replyUserKey).(model.User)
+	u, _ := maybeGetReplyUser(c)
+	return u
+}
+
+func maybeGetReplyUser(c tele.Context) (model.User, bool) {
+	u, ok := c.Get(replyUserKey).(model.User)
+	return u, ok
 }

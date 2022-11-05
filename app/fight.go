@@ -24,7 +24,10 @@ const profile = Response(`📇 <b>%s %s</b>
 
 // !профиль
 func (a *App) handleProfile(c tele.Context) error {
-	user := getUser(c)
+	user, ok := maybeGetReplyUser(c)
+	if !ok {
+		user = getUser(c)
+	}
 	strength, err := a.stat.Strength(user)
 	if err != nil {
 		return respondInternalError(c, err)
