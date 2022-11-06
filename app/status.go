@@ -1,12 +1,15 @@
 package app
 
 import (
-	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"unicode/utf8"
 
 	tele "gopkg.in/telebot.v3"
 )
+
+const statusDir = "status"
 
 func getStatus(uid int64) string {
 	f, err := os.ReadFile(statusPath(uid))
@@ -17,11 +20,14 @@ func getStatus(uid int64) string {
 }
 
 func setStatus(uid int64, s string) error {
+	if err := os.MkdirAll(statusDir, 0755); err != nil {
+		return err
+	}
 	return os.WriteFile(statusPath(uid), []byte(s), 0644)
 }
 
 func statusPath(uid int64) string {
-	return fmt.Sprintf("status/%d", uid)
+	return filepath.Join(statusDir, strconv.FormatInt(uid, 10))
 }
 
 const maxStatusLength = 120
