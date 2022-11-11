@@ -67,7 +67,7 @@ func ParseCommand(s string) Command {
 		return CommandEnergy
 	case startsWith(s, "!рейтинг", "!ммр", "!эло"):
 		return CommandRating
-	case startsWith(s, "!аватар"):
+	case startsWith(s, "!ава"):
 		return CommandAvatar
 	case startsWith(s, "!статус"):
 		return CommandStatus

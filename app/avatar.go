@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	avatarMaxHeight = 1000
-	avatarMaxWidth  = 1000
+	avatarMaxHeight = 1500
+	avatarMaxWidth  = 1500
 	avatarMaxSize   = UserError("Максимальный размер аватара - %dx%d пикселей.")
 	avatarSet       = Response("✅ Аватар установлен.")
 	avatarAttach    = UserError("Прикрепите изображение.")

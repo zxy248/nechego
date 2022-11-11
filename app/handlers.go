@@ -9,12 +9,14 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const randomPhotoChance = 0.0125
+const randomPhotoChance = 0.01
 
 func (a *App) handleRandomPhoto(c tele.Context) error {
 	if rand.Float64() < randomPhotoChance {
-		if a, ok := loadAvatar(getUser(c).UID); ok && rand.Float64() < 0.5 {
-			return c.Send(a, tele.ModeHTML)
+		if rand.Float64() < 0.5 {
+			if a, ok := loadAvatar(getUser(c).UID); ok {
+				return c.Send(a)
+			}
 		}
 		return sendLargeProfilePhoto(c)
 	}
