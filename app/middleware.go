@@ -118,6 +118,15 @@ func requireAdmin(next tele.HandlerFunc) tele.HandlerFunc {
 	}
 }
 
+func requireAdminForReply(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		if !c.Message().IsReply() || getUser(c).Admin {
+			return next(c)
+		}
+		return respondUserError(c, accessRestricted)
+	}
+}
+
 const replyRequired = UserError("Перешлите сообщение пользователя.")
 
 func requireReply(next tele.HandlerFunc) tele.HandlerFunc {

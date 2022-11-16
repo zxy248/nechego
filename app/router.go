@@ -28,7 +28,7 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	case input.CommandCat:
 		return a.handleCat
 	case input.CommandTitle:
-		return a.handleTitle
+		return requireAdminForReply(a.injectReplyUser(a.handleTitle))
 	case input.CommandAnime:
 		return a.handleAnime
 	case input.CommandFurry:

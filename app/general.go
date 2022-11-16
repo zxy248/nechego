@@ -53,17 +53,23 @@ const (
 	maxNameLength = 16
 	nameLong      = UserError("Максимальная длина имени 16 символов.")
 	yourName      = Response("Ваше имя: <b>%s</b> 🔖")
-	pleaseReEnter = UserError("Перезайдите в беседу чтобы использовать эту функцию.")
+	theirName     = Response("Этого пользователя зовут <b>%s</b> 🔖")
+	userError     = UserError("Ошибка.")
 	nameSet       = Response("Имя <b>%s</b> установлено ✅")
 )
 
 // !имя
 func (a *App) handleTitle(c tele.Context) error {
-	user := getUser(c)
+	user, ok := maybeGetReplyUser(c)
+	resp := theirName
+	if !ok {
+		user = getUser(c)
+		resp = yourName
+	}
 	name := getMessage(c).Argument()
 	if err := validateName(name); err != nil {
 		if errors.Is(err, errNameEmpty) {
-			return respond(c, yourName.Fill(a.mustMention(user)))
+			return respond(c, resp.Fill(a.mustMention(user)))
 		}
 		if errors.Is(err, errNameLong) {
 			return respondUserError(c, nameLong)
@@ -71,7 +77,7 @@ func (a *App) handleTitle(c tele.Context) error {
 		return respondInternalError(c, err)
 	}
 	if err := setName(c, user, name); err != nil {
-		return respondUserError(c, pleaseReEnter)
+		return respondUserError(c, userError)
 	}
 	return respond(c, nameSet.Fill(name))
 }
@@ -93,8 +99,8 @@ func validateName(n string) error {
 
 func setName(c tele.Context, u model.User, name string) error {
 	group := c.Chat()
-	sender := c.Sender()
-	return c.Bot().SetAdminTitle(group, sender, name)
+	user := &tele.User{ID: u.UID}
+	return c.Bot().SetAdminTitle(group, user, name)
 }
 
 const list = Response("Список %s 📝\n%s")
