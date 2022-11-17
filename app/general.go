@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"nechego/model"
 	"unicode/utf8"
@@ -51,12 +52,13 @@ func (a *App) handleWho(c tele.Context) error {
 
 const (
 	maxNameLength = 16
-	nameLong      = UserError("Максимальная длина имени 16 символов.")
 	yourName      = Response("Ваше имя: <b>%s</b> 🔖")
 	theirName     = Response("Этого пользователя зовут <b>%s</b> 🔖")
 	userError     = UserError("Ошибка.")
 	nameSet       = Response("Имя <b>%s</b> установлено ✅")
 )
+
+var nameLong = UserError(fmt.Sprintf("Максимальная длина имени %d символов.", maxNameLength))
 
 // !имя
 func (a *App) handleTitle(c tele.Context) error {
