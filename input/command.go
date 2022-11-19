@@ -25,6 +25,7 @@ const (
 	CommandList        = 105
 	CommandTop         = 106
 	CommandTitle       = 107
+	CommandCalc        = 108
 
 	// Neural networks
 	CommandCat    = 200
@@ -120,6 +121,7 @@ var commandText = map[Command]string{
 	CommandList:        "!список",
 	CommandTop:         "!топ",
 	CommandTitle:       "!имя",
+	CommandCalc:        "!калькулятор",
 
 	CommandCat:    "!кот",
 	CommandAnime:  "!аниме",

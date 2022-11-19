@@ -20,24 +20,26 @@ func ParseMessage(s string) *Message {
 	return &Message{s, ParseCommand(s)}
 }
 
-// Argument returns an argument probably contained in the message.
-func (m *Message) Argument() string {
-	var s string
+func (m *Message) RawArgument() string {
 	switch m.Command {
 	case CommandWeather:
-		s = weatherRe.FindStringSubmatch(m.Raw)[1]
+		return weatherRe.FindStringSubmatch(m.Raw)[1]
 	case CommandProbability:
-		s = probabilityRe.FindStringSubmatch(m.Raw)[1]
+		return probabilityRe.FindStringSubmatch(m.Raw)[1]
 	case CommandWho:
-		s = whoRe.FindStringSubmatch(m.Raw)[1]
+		return whoRe.FindStringSubmatch(m.Raw)[1]
 	case CommandList:
-		s = listRe.FindStringSubmatch(m.Raw)[1]
+		return listRe.FindStringSubmatch(m.Raw)[1]
 	case CommandTop:
-		s = topRe.FindStringSubmatch(m.Raw)[1]
-	default:
-		_, s, _ = strings.Cut(m.Raw, " ")
+		return topRe.FindStringSubmatch(m.Raw)[1]
 	}
-	return Sanitize(s)
+	_, arg, _ := strings.Cut(m.Raw, " ")
+	return arg
+}
+
+// Argument returns an argument probably contained in the message.
+func (m *Message) Argument() string {
+	return Sanitize(m.RawArgument())
 }
 
 var (

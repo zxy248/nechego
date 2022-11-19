@@ -29,6 +29,8 @@ func ParseCommand(s string) Command {
 		return CommandWho
 	case startsWith(s, "!имя"):
 		return CommandTitle
+	case startsWith(s, "!калькул", "!вычисл"):
+		return CommandCalc
 	case startsWith(s, "!аним", "!мульт"):
 		return CommandAnime
 	case startsWith(s, "!фур"):
