@@ -147,6 +147,8 @@ func ParseCommand(s string) Command {
 		return CommandKeyboardClose
 	case startsWith(s, "!кик"):
 		return CommandKick
+	case startsWith(s, "!очистка"):
+		return CommandClean
 	case startsWith(s, "!вкл", "!подкл", "!подруб"):
 		return CommandTurnOn
 	case startsWith(s, "!выкл", "!откл"):

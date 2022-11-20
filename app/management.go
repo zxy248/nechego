@@ -72,6 +72,33 @@ func (a *App) handleInfo(c tele.Context) error {
 	))
 }
 
+const (
+	usersNotDeleted = Response("♻️ Некого удалить.")
+	usersDeleted    = Response("♻️ Пользователи удалены:\n%s")
+)
+
+// !очистка
+func (a *App) handleClean(c tele.Context) error {
+	absent := []model.User{}
+	if err := a.service.DeleteUsers(getGroup(c), func(u model.User) bool {
+		memb, err := a.chatMember(u)
+		if err != nil {
+			return false
+		}
+		if chatMemberAbsent(memb) {
+			absent = append(absent, u)
+			return true
+		}
+		return false
+	}); err != nil {
+		return respondInternalError(c, err)
+	}
+	if len(absent) == 0 {
+		return respond(c, usersNotDeleted)
+	}
+	return respond(c, usersDeleted.Fill(a.itemizeUsers(absent...)))
+}
+
 const adminListHeader = "👤 <i>Администрация</i>"
 
 func (a *App) formatAdminList(u []model.User) string {

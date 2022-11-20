@@ -145,6 +145,8 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleKeyboardClose
 	case input.CommandKick:
 		return a.injectReplyUser(a.handleKick)
+	case input.CommandClean:
+		return a.handleClean
 	case input.CommandTurnOn:
 		return a.handleTurnOn
 	case input.CommandTurnOff:

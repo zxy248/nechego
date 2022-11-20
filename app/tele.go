@@ -39,12 +39,9 @@ func sendLargeProfilePhoto(c tele.Context) error {
 	return c.Send(&p[0])
 }
 
-// chatMemberPresent returns true if the member is not kicked or left.
-func chatMemberPresent(m *tele.ChatMember) bool {
-	if m.Role == tele.Kicked || m.Role == tele.Left {
-		return false
-	}
-	return true
+// chatMemberAbsent returns true if the member is kicked or left.
+func chatMemberAbsent(m *tele.ChatMember) bool {
+	return m.Role == tele.Kicked || m.Role == tele.Left
 }
 
 func displayedName(m *tele.ChatMember) string {

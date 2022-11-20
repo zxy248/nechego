@@ -41,3 +41,16 @@ func (s *Service) ForbiddenCommands(g model.Group) ([]input.Command, error) {
 func (s *Service) IsCommandForbidden(g model.Group, c input.Command) (bool, error) {
 	return s.model.IsCommandForbidden(g, c)
 }
+
+func (s *Service) DeleteUsers(g model.Group, p func(model.User) bool) error {
+	users, err := s.model.ListUsers(g)
+	if err != nil {
+		return err
+	}
+	for _, u := range users {
+		if p(u) {
+			s.model.DeleteUser(u)
+		}
+	}
+	return nil
+}
