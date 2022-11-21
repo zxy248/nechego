@@ -27,18 +27,7 @@ func formatWarning(s string) string {
 }
 
 func formatMoney(n int) string {
-	var s string
-	switch p0 := n % 10; {
-	case n >= 10 && n <= 20:
-		s = fmt.Sprintf("%d рублей", n)
-	case p0 == 1:
-		s = fmt.Sprintf("%d рубль", n)
-	case p0 >= 2 && p0 <= 4:
-		s = fmt.Sprintf("%d рубля", n)
-	default:
-		s = fmt.Sprintf("%d рублей", n)
-	}
-	return fmt.Sprintf("<code>%s 🪙</code>", s)
+	return fmt.Sprintf("<code>%d ₽</code>", n)
 }
 
 func formatDebtStatus(u model.User) string {
