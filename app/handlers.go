@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"nechego/input"
 	"nechego/service"
+	"regexp"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -48,6 +49,7 @@ func promoteAdmin(c tele.Context, m *tele.ChatMember) error {
 }
 
 const (
+	allCommandsPermitted    = Response("Все команды разрешены ✅")
 	commandForbiddenSuccess = Response("Команда запрещена 🚫")
 	commandPermittedSuccess = Response("Команда разрешена ✅")
 	commandAlreadyForbidden = UserError("Команда уже запрещена.")
@@ -71,8 +73,16 @@ func (a *App) handleForbid(c tele.Context) error {
 	})
 }
 
+var regexpAll = regexp.MustCompile("вс[её]")
+
 // !разрешить
 func (a *App) handlePermit(c tele.Context) error {
+	if regexpAll.MatchString(getMessage(c).Argument()) {
+		if err := a.service.PermitAll(getGroup(c)); err != nil {
+			return respondInternalError(c, err)
+		}
+		return respond(c, allCommandsPermitted)
+	}
 	return actOnCommand(c, func(command input.Command) error {
 		if err := a.service.Permit(getGroup(c), command); err != nil {
 			if errors.Is(err, service.ErrAlreadyPermitted) {

@@ -42,3 +42,16 @@ func (s *Service) Permit(g model.Group, c input.Command) error {
 	}
 	return nil
 }
+
+func (s *Service) PermitAll(g model.Group) error {
+	cmds, err := s.ForbiddenCommands(g)
+	if err != nil {
+		return err
+	}
+	for _, cmd := range cmds {
+		if err := s.Permit(g, cmd); err != nil {
+			return err
+		}
+	}
+	return nil
+}
