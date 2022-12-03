@@ -2,10 +2,11 @@ package app
 
 import (
 	"errors"
+	"log"
 	"nechego/input"
 	"nechego/model"
 	"nechego/service"
-	"time"
+	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -222,15 +223,11 @@ func technicalMaintenance(next tele.HandlerFunc) tele.HandlerFunc {
 
 func (a *App) logMessage(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		t0 := time.Now()
-		msg := getMessage(c)
-		err := next(c)
-		a.log.Sugar().Infow(msg.Raw,
-			"cmd", msg.Command,
-			"uid", c.Sender().ID,
-			"gid", c.Chat().ID,
-			"time", time.Since(t0))
-		return err
+		title := c.Chat().Title
+		name := strings.TrimSpace(c.Sender().FirstName + " " + c.Sender().LastName)
+		msg := c.Text()
+		log.Printf("[%s] %s: %s\n", title, name, msg)
+		return next(c)
 	}
 }
 
