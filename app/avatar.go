@@ -1,14 +1,16 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"strconv"
 
 	tele "gopkg.in/telebot.v3"
 )
 
 const (
+	avatarDir       = "avatar"
 	avatarMaxHeight = 1500
 	avatarMaxWidth  = 1500
 	avatarMaxSize   = UserError("Максимальный размер аватара - %dx%d пикселей.")
@@ -44,11 +46,14 @@ func (a *App) setAvatar(uid int64, f tele.File) error {
 		return err
 	}
 	rc.Close()
-	return os.WriteFile(avatarPath(uid), data, 0o644)
+	if err := os.MkdirAll(avatarDir, 0777); err != nil {
+		return err
+	}
+	return os.WriteFile(avatarPath(uid), data, 0666)
 }
 
 func avatarPath(uid int64) string {
-	return fmt.Sprintf("avatar/%d", uid)
+	return filepath.Join(avatarDir, strconv.FormatInt(uid, 10))
 }
 
 func loadAvatar(uid int64) (avatar *tele.Photo, ok bool) {

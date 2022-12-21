@@ -18,7 +18,6 @@ func (a *App) pipeline(next tele.HandlerFunc) tele.HandlerFunc {
 		injectMessage,
 		a.logMessage,
 		a.injectGroup,
-		requireGroupWhitelisted,
 		requireStatusActive,
 		a.injectUser,
 		a.raiseLimit,
@@ -32,10 +31,9 @@ func (a *App) pipeline(next tele.HandlerFunc) tele.HandlerFunc {
 	return next
 }
 
-// BUG: don't work in groups
 func ignoreForwarded(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		if c.Message().IsForwarded() {
+		if c.Message().OriginalUnixtime != 0 {
 			return nil
 		}
 		return next(c)

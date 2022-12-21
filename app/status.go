@@ -20,10 +20,10 @@ func getStatus(uid int64) string {
 }
 
 func setStatus(uid int64, s string) error {
-	if err := os.MkdirAll(statusDir, 0755); err != nil {
+	if err := os.MkdirAll(statusDir, 0777); err != nil {
 		return err
 	}
-	return os.WriteFile(statusPath(uid), []byte(s), 0644)
+	return os.WriteFile(statusPath(uid), []byte(s), 0666)
 }
 
 func statusPath(uid int64) string {
