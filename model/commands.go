@@ -3,7 +3,7 @@ package model
 import "nechego/input"
 
 const forbidCommand = `
-insert into forbidden_commands (gid, command)
+insert or ignore into forbidden_commands (gid, command)
 values (?, ?)`
 
 func (m *Model) ForbidCommand(g Group, c input.Command) bool {
