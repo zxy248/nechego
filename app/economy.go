@@ -63,7 +63,7 @@ func (a *App) handleTransfer(c tele.Context) error {
 		}
 		return respondInternalError(c, err)
 	}
-	return respond(c, transfer.Fill(a.mustMention(recipient), formatMoney(amount)))
+	return respond(c, transfer.Fill(a.mention(recipient), formatMoney(amount)))
 }
 
 const capital = Response(`💸 Капитал беседы <b>%s</b>: %s
@@ -93,7 +93,7 @@ func (a *App) handleCapital(c tele.Context) error {
 	return respond(c, capital.Fill(
 		title,
 		formatMoney(total),
-		a.mustMention(richest),
+		a.mention(richest),
 		formatMoney(richest.Summary()),
 		formatPercentage(percentage),
 		formatMoney(int(average))))
@@ -129,7 +129,7 @@ func (a *App) handleTopPoor(c tele.Context) error {
 func (a *App) topRich(u []model.User) string {
 	s := []string{}
 	for _, uu := range u {
-		s = append(s, fmt.Sprintf("%s %s", a.mustMention(uu), formatMoney(uu.Summary())))
+		s = append(s, fmt.Sprintf("%s %s", a.mention(uu), formatMoney(uu.Summary())))
 	}
 	return enumerate(s...)
 }

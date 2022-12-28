@@ -64,18 +64,10 @@ func formatMention(uid int64, name string) string {
 	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, input.Sanitize(name))
 }
 
-func (a *App) mention(u model.User) (string, error) {
+func (a *App) mention(u model.User) string {
 	m, err := a.chatMember(u)
 	if err != nil {
-		return "", err
+		return "❔"
 	}
-	return formatMention(u.UID, displayedName(m)), nil
-}
-
-func (a *App) mustMention(u model.User) string {
-	s, err := a.mention(u)
-	if err != nil {
-		panic(fmt.Errorf("can't mention the user: %v", err))
-	}
-	return s
+	return formatMention(u.UID, displayedName(m))
 }

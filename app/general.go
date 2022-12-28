@@ -47,7 +47,7 @@ func (a *App) handleWho(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, who.Fill(a.mustMention(u), message))
+	return respond(c, who.Fill(a.mention(u), message))
 }
 
 const (
@@ -71,7 +71,7 @@ func (a *App) handleTitle(c tele.Context) error {
 	name := getMessage(c).Argument()
 	if err := validateName(name); err != nil {
 		if errors.Is(err, errNameEmpty) {
-			return respond(c, resp.Fill(a.mustMention(user)))
+			return respond(c, resp.Fill(a.mention(user)))
 		}
 		if errors.Is(err, errNameLong) {
 			return respondUserError(c, nameLong)

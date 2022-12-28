@@ -7,6 +7,18 @@ import (
 	"time"
 )
 
+type DailyType int
+
+const (
+	DailyEblan DailyType = iota
+	DailyAdmin
+)
+
+var dailyTableNames = map[DailyType]string{
+	DailyEblan: "daily_eblans",
+	DailyAdmin: "daily_admins",
+}
+
 type Daily struct {
 	ID     int
 	GID    int64
@@ -33,36 +45,43 @@ func insertDailyQuery(tableName string) string {
 	return fmt.Sprintf(insertDaily, tableName)
 }
 
-func (m *Model) dailyUser(g Group, tableName string) (User, error) {
+func (m *Model) dailyUser(g Group, d DailyType, roll bool, u User) (User, error) {
+	tableName := dailyTableNames[d]
 	var daily Daily
-	var user User
 	tx := m.db.MustBegin()
 	defer tx.Rollback()
-
 	if err := tx.Get(&daily, getDailyQuery(tableName), g.GID); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// randomly choosing and inserting a new user if not found
-			if err := tx.Get(&user, randomUser, g.GID); err != nil {
-				return user, err
+		if errors.Is(err, sql.ErrNoRows) && roll {
+			if !u.Exists() {
+				if err := tx.Get(&u, randomUser, g.GID); err != nil {
+					return User{}, err
+				}
 			}
-			tx.MustExec(insertDailyQuery(tableName), user.GID, user.ID)
-			return user, tx.Commit()
+			tx.MustExec(insertDailyQuery(tableName), u.GID, u.ID)
+			return u, tx.Commit()
 		}
-		return user, err
+		return User{}, err
 	}
-	if err := tx.Get(&user, getUserByID, daily.UserID); err != nil {
-		return user, err
+	if err := tx.Get(&u, getUserByID, daily.UserID); err != nil {
+		return User{}, err
 	}
-	return user, tx.Commit()
-
+	return u, tx.Commit()
 }
 
-func (m *Model) DailyEblan(g Group) (User, error) {
-	return m.dailyUser(g, "daily_eblans")
+func (m *Model) DailyUser(g Group, d DailyType) (User, error) {
+	return m.dailyUser(g, d, true, User{})
 }
 
-func (m *Model) DailyAdmin(g Group) (User, error) {
-	return m.dailyUser(g, "daily_admins")
+func (m *Model) DailyUserSet(g Group, d DailyType, u User) (User, error) {
+	return m.dailyUser(g, d, true, u)
+}
+
+func (m *Model) DailyUserIfExists(g Group, d DailyType) (User, error) {
+	u, err := m.dailyUser(g, d, false, User{})
+	if errors.Is(err, sql.ErrNoRows) {
+		return User{}, nil
+	}
+	return u, err
 }
 
 type DailyPair struct {

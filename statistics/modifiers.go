@@ -43,9 +43,12 @@ func setAdminModifier(m *modifiers.Set, u model.User) error {
 }
 
 func (s *Statistics) setEblanModifier(m *modifiers.Set, u model.User) error {
-	eblan, err := s.model.DailyEblan(model.Group{GID: u.GID})
+	eblan, err := s.model.DailyUserIfExists(model.Group{GID: u.GID}, model.DailyEblan)
 	if err != nil {
 		return err
+	}
+	if !eblan.Exists() {
+		return nil
 	}
 	if eblan.ID == u.ID {
 		m.Add(modifiers.EblanModifier)

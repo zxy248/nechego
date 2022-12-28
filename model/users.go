@@ -22,6 +22,10 @@ type User struct {
 	Elo       float64
 }
 
+func (u User) Exists() bool {
+	return u.ID != 0
+}
+
 func (u User) Summary() int {
 	return u.Balance + u.Account - u.Debt
 }

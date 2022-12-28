@@ -81,7 +81,7 @@ func (a *App) handleFishing(c tele.Context) error {
 func (a *App) fishingResponse(u model.User, s fishing.Session) Response {
 	sections := []string{formatOutcome(s.Outcome)}
 	if s.Success() {
-		sections = append(sections, fmt.Sprintf(catchFish, a.mustMention(u), s.Fish))
+		sections = append(sections, fmt.Sprintf(catchFish, a.mention(u), s.Fish))
 	}
 	return Response(joinSections(sections...))
 }
@@ -89,7 +89,7 @@ func (a *App) fishingResponse(u model.User, s fishing.Session) Response {
 func (a *App) fishingFoodResponse(u model.User, s fishing.Session) Response {
 	return Response(joinSections(
 		formatOutcome(s.Outcome),
-		fmt.Sprintf(catchFish, a.mustMention(u), s.Fish),
+		fmt.Sprintf(catchFish, a.mention(u), s.Fish),
 		fmt.Sprintf(foodFish, randomMeal()),
 	))
 }
@@ -101,7 +101,7 @@ func (a *App) handleFish(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, freshFish.Fill(a.mustMention(user), formatFishes(fishes)))
+	return respond(c, freshFish.Fill(a.mention(user), formatFishes(fishes)))
 }
 
 // !продажа
@@ -143,7 +143,7 @@ func (a *App) handleFreezer(c tele.Context) error {
 	if err != nil {
 		return respondInternalError(c, err)
 	}
-	return respond(c, freezerFish.Fill(a.mustMention(user), formatFishes(fishes)))
+	return respond(c, freezerFish.Fill(a.mention(user), formatFishes(fishes)))
 }
 
 func formatFish(f fishing.Fish) string {

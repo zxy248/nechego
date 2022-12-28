@@ -146,7 +146,7 @@ func (a *App) handleKick(c tele.Context) error {
 	var status kickStatus
 	if ok {
 		status = voteKick(sender.GID, sender.UID, reply.UID, func() {
-			respondUserError(c, responseKickCancel.Fill(a.mustMention(reply)))
+			respondUserError(c, responseKickCancel.Fill(a.mention(reply)))
 		})
 	} else {
 		status = voteKick(sender.GID, sender.UID, 0, func() {})
@@ -160,17 +160,17 @@ func (a *App) handleKick(c tele.Context) error {
 	}
 	switch status.event {
 	case kickInit:
-		return respond(c, responseKickInit.Fill(a.mustMention(kicked), formatVote(status.votesRemaining)))
+		return respond(c, responseKickInit.Fill(a.mention(kicked), formatVote(status.votesRemaining)))
 	case kickVote:
-		return respond(c, responseKickVote.Fill(a.mustMention(kicked), formatVote(status.votesRemaining)))
+		return respond(c, responseKickVote.Fill(a.mention(kicked), formatVote(status.votesRemaining)))
 	case kickCancel:
-		return respondUserError(c, responseKickCancel.Fill(a.mustMention(kicked)))
+		return respondUserError(c, responseKickCancel.Fill(a.mention(kicked)))
 	case kickDuplicate:
 		return respondUserError(c, responseKickDuplicate)
 	case kickWrong:
 		return respondUserError(c, responseKickWrong)
 	case kickSuccess:
-		return respond(c, responseKickSuccess.Fill(a.mustMention(kicked)))
+		return respond(c, responseKickSuccess.Fill(a.mention(kicked)))
 	}
 	return nil
 }

@@ -59,7 +59,7 @@ func (a *App) handleDice(c tele.Context) error {
 		return respondInternalError(c, err)
 	}
 	return respond(c, diceStart.Fill(
-		a.mustMention(user),
+		a.mention(user),
 		formatMoney(bet),
 		a.service.Casino.Settings.RollTime/time.Second,
 	))

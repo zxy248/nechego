@@ -157,7 +157,7 @@ func clampTopNumber(x int) int {
 func (a *App) itemizeUsers(u ...model.User) string {
 	s := []string{}
 	for _, uu := range u {
-		s = append(s, a.mustMention(uu))
+		s = append(s, a.mention(uu))
 	}
 	return itemize(s...)
 }
@@ -165,7 +165,7 @@ func (a *App) itemizeUsers(u ...model.User) string {
 func (a *App) enumerateUsers(u ...model.User) string {
 	s := []string{}
 	for _, uu := range u {
-		s = append(s, a.mustMention(uu))
+		s = append(s, a.mention(uu))
 	}
 	return enumerate(s...)
 }

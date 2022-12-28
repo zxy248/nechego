@@ -38,7 +38,7 @@ func (a *App) handleProfile(c tele.Context) error {
 	}
 	response := profile.Fill(
 		formatTitles(modset.Titles()...),
-		a.mustMention(user),
+		a.mention(user),
 		formatEnergy(user.Energy),
 		formatElo(user.Elo),
 		formatStrength(strength),
@@ -82,11 +82,11 @@ func (a *App) handleFight(c tele.Context) error {
 func (a *App) fightResponse(o *service.FightOutcome) Response {
 	sections := []string{versus}
 	args := []any{
-		a.mustMention(o.Attacker.User),
+		a.mention(o.Attacker.User),
 		o.Attacker.Strength,
-		a.mustMention(o.Defender.User),
+		a.mention(o.Defender.User),
 		o.Defender.Strength,
-		a.mustMention(o.Winner().User),
+		a.mention(o.Winner().User),
 		formatEloDelta(o.Elo),
 	}
 	if o.Reward > 0 {
@@ -141,7 +141,7 @@ func (a *App) topStrength(u []model.User) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		s = append(s, fmt.Sprintf("%s %s", a.mustMention(uu), formatStrength(str)))
+		s = append(s, fmt.Sprintf("%s %s", a.mention(uu), formatStrength(str)))
 	}
 	return enumerate(s...), nil
 }
@@ -169,7 +169,7 @@ func (a *App) handleTopElo(c tele.Context) error {
 func (a *App) topElo(u []model.User) string {
 	s := []string{}
 	for _, uu := range u {
-		s = append(s, fmt.Sprintf("%s %s", a.mustMention(uu), formatElo(uu.Elo)))
+		s = append(s, fmt.Sprintf("%s %s", a.mention(uu), formatElo(uu.Elo)))
 	}
 	return enumerate(s...)
 }
