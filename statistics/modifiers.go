@@ -147,7 +147,7 @@ func (s *Statistics) setPetModifier(m *modifiers.Set, u model.User) error {
 		qualitySuffix = " "
 	}
 	m.Add(&modifiers.Modifier{
-		Icon:        p.Species.Icon(),
+		Icon:        p.Species.Emoji(),
 		Multiplier:  petQualityMultiplier(p.Species.Quality()),
 		Description: fmt.Sprintf("У вас есть %s%sпитомец: <code>%s</code>.", quality, qualitySuffix, p),
 	})

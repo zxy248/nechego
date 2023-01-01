@@ -211,9 +211,9 @@ func randomMeal() string {
 
 func formatPet(p *pets.Pet) string {
 	return fmt.Sprintf("<code>%s %s %s (%s)</code>",
-		p.Species.Icon(),
+		p.Species.Emoji(),
 		strings.Title(p.Species.String()),
 		p.Name,
-		p.Gender.Icon(),
+		p.Gender.Emoji(),
 	)
 }

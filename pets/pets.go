@@ -19,12 +19,12 @@ func randomGender() Gender {
 	return Gender(rand.Intn(int(numberOfGenders)))
 }
 
-func (g Gender) Icon() string {
-	return genderData[g].Icon
+func (g Gender) Emoji() string {
+	return genderData[g].Emoji
 }
 
 func (g Gender) String() string {
-	return genderData[g].Name
+	return genderData[g].Description
 }
 
 type Pet struct {
@@ -34,9 +34,9 @@ type Pet struct {
 	Birth   time.Time
 }
 
-func RandomPet(l float64) *Pet {
+func RandomPet(p float64) *Pet {
 	return &Pet{
-		Species: randomSpecies(l),
+		Species: randomSpecies(p),
 		Gender:  randomGender(),
 		Birth:   time.Now(),
 	}
@@ -51,9 +51,9 @@ func (p *Pet) Age() time.Duration {
 }
 
 func (p *Pet) String() string {
-	var nameSuffix string
+	space := ""
 	if p.HasName() {
-		nameSuffix = " "
+		space = " "
 	}
-	return fmt.Sprintf("%s %s%s(%s)", p.Species, p.Name, nameSuffix, p.Gender.Icon())
+	return fmt.Sprintf("%s %s%s(%s)", p.Species, p.Name, space, p.Gender.Emoji())
 }

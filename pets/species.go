@@ -114,26 +114,30 @@ const (
 	Hedgehog
 	Parrot
 	Dragon
+	Caterpillar
 
 	numberOfSpecies
 )
 
-func randomSpecies(l float64) Species {
+func randomSpecies(p float64) Species {
+	if p < 0 || p > 1 {
+		panic("p must be between 0 and 1")
+	}
 	s := []Species{}
 	for k, v := range speciesData {
-		if l < v.Rarity {
+		if p < v.Probability {
 			s = append(s, k)
 		}
 	}
 	if len(s) == 0 {
-		panic("no species")
+		panic("empty list")
 	}
 
 	rand.Shuffle(len(s), func(i, j int) {
 		s[i], s[j] = s[j], s[i]
 	})
 	sort.Slice(s, func(i, j int) bool {
-		return speciesData[s[i]].Rarity < speciesData[s[j]].Rarity
+		return speciesData[s[i]].Probability < speciesData[s[j]].Probability
 	})
 
 	few := 4
@@ -143,29 +147,21 @@ func randomSpecies(l float64) Species {
 	return s[rand.Intn(few)]
 }
 
-func (s Species) Rarity() float64 {
-	return speciesData[s].Rarity
-}
-
-func (s Species) RarityMultiplier() float64 {
-	return 1.0 / speciesData[s].Rarity
-}
-
-func (s Species) Icon() string {
-	return speciesData[s].Icon
+func (s Species) Emoji() string {
+	return speciesData[s].Emoji
 }
 
 func (s Species) String() string {
-	return speciesData[s].Name
+	return speciesData[s].Description
 }
 
 func (s Species) Quality() Quality {
-	switch r := s.Rarity(); {
-	case r < 0.01:
+	switch p := speciesData[s].Probability; {
+	case p <= 0.01:
 		return Legendary
-	case r < 0.05:
+	case p <= 0.05:
 		return Exotic
-	case r < 0.20:
+	case p <= 0.20:
 		return Rare
 	default:
 		return Common

@@ -51,9 +51,9 @@ func (a *App) handleBuyPet(c tele.Context) error {
 	}
 	return respond(c, petBought.Fill(
 		formatMoney(a.service.Config.PetPrice),
-		pet.Species.Icon(),
+		pet.Species.Emoji(),
 		pet.Species.String(),
-		pet.Gender.Icon(),
+		pet.Gender.Emoji(),
 	))
 }
 
