@@ -117,12 +117,8 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleSima
 	case input.CommandHello:
 		return a.handleHello
-	case input.CommandMouse:
-		return a.handleMouse
 	case input.CommandWeather:
 		return a.handleWeather
-	case input.CommandTikTok:
-		return a.handleTikTok
 	case input.CommandList:
 		return a.handleList
 	case input.CommandTop:
@@ -137,8 +133,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handlePic
 	case input.CommandDice:
 		return a.handleDice
-	case input.CommandGame:
-		return a.handleGame
 	case input.CommandKeyboardOpen:
 		return a.handleKeyboardOpen
 	case input.CommandKeyboardClose:
