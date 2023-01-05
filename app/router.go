@@ -21,26 +21,10 @@ func (a *App) route(c tele.Context) error {
 // commandHandler returns a corresponding handler for a command.
 func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	switch c {
-	case input.CommandCat:
-		return a.handleCat
 	case input.CommandTitle:
 		return requireAdminForReply(a.injectReplyUser(a.handleTitle))
 	case input.CommandCalc:
 		return handleCalculator
-	case input.CommandAnime:
-		return a.handleAnime
-	case input.CommandFurry:
-		return a.handleFurry
-	case input.CommandFlag:
-		return a.handleFlag
-	case input.CommandPerson:
-		return a.handlePerson
-	case input.CommandHorse:
-		return a.handleHorse
-	case input.CommandArt:
-		return a.handleArt
-	case input.CommandCar:
-		return a.handleCar
 	case input.CommandPair:
 		return a.handlePair
 	case input.CommandEblan:
