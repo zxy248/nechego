@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"html"
@@ -160,4 +162,164 @@ func (h *Weather) Handle(c tele.Context) error {
 		return err
 	}
 	return c.Send(string(data))
+}
+
+type Cat struct{}
+
+var catRe = regexp.MustCompile("^!ко[тш]")
+
+func (h *Cat) Match(s string) bool {
+	return catRe.MatchString(s)
+}
+
+func (h *Cat) Handle(c tele.Context) error {
+	addr := "https://thiscatdoesnotexist.com/"
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
+type Anime struct{}
+
+var animeRe = regexp.MustCompile("^!(аним|мульт)")
+
+func (h *Anime) Match(s string) bool {
+	return animeRe.MatchString(s)
+}
+
+func (h *Anime) Handle(c tele.Context) error {
+	const format = "https://thisanimedoesnotexist.ai/results/psi-%s/seed%05d.png"
+	psis := [...]string{"0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0",
+		"1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "2.0"}
+	psi := psis[rand.Intn(len(psis))]
+	addr := fmt.Sprintf(format, psi, rand.Intn(100_000))
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
+type Furry struct{}
+
+var furryRe = regexp.MustCompile("^!фур")
+
+func (h *Furry) Match(s string) bool {
+	return furryRe.MatchString(s)
+}
+
+func (h *Furry) Handle(c tele.Context) error {
+	const format = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%05d.jpg"
+	addr := fmt.Sprintf(format, rand.Intn(100_000))
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
+type Flag struct{}
+
+var flagRe = regexp.MustCompile("^!флаг")
+
+func (h *Flag) Match(s string) bool {
+	return flagRe.MatchString(s)
+}
+
+func (h *Flag) Handle(c tele.Context) error {
+	const format = "https://thisflagdoesnotexist.com/images/%d.png"
+	addr := fmt.Sprintf(format, rand.Intn(5000))
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
+type Person struct{}
+
+var personRe = regexp.MustCompile("^!чел")
+
+func (h *Person) Match(s string) bool {
+	return personRe.MatchString(s)
+}
+
+func (h *Person) Handle(c tele.Context) error {
+	const addr = "https://thispersondoesnotexist.com/image"
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
+type Horse struct{}
+
+var horseRe = regexp.MustCompile("^!(лошад|конь)")
+
+func (h *Horse) Match(s string) bool {
+	return horseRe.MatchString(s)
+}
+
+func (h *Horse) Handle(c tele.Context) error {
+	const addr = "https://thishorsedoesnotexist.com/"
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
+type Art struct{}
+
+var artRe = regexp.MustCompile("^!арт")
+
+func (h *Art) Match(s string) bool {
+	return artRe.MatchString(s)
+}
+
+func (h *Art) Handle(c tele.Context) error {
+	const addr = "https://thisartworkdoesnotexist.com/"
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
+type Car struct{}
+
+var (
+	carRe    = regexp.MustCompile("^!(авто|машин|тачка)")
+	carImgRe = regexp.MustCompile(`<img id = "vehicle" src="data:image/png;base64,(.+)" class="center">`)
+)
+
+func (h *Car) Match(s string) bool {
+	return carRe.MatchString(s)
+}
+
+func (h *Car) Handle(c tele.Context) error {
+	const addr = "https://www.thisautomobiledoesnotexist.com/"
+	r, err := http.Get(addr)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	img := carImgRe.FindSubmatch(data)[1]
+	buf := bytes.NewBuffer(img)
+	dec := base64.NewDecoder(base64.StdEncoding, buf)
+	return c.Send(&tele.Photo{File: tele.FromReader(dec)})
 }
