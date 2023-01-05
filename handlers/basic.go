@@ -319,7 +319,6 @@ func (h *Car) Handle(c tele.Context) error {
 		return err
 	}
 	img := carImgRe.FindSubmatch(data)[1]
-	buf := bytes.NewBuffer(img)
-	dec := base64.NewDecoder(base64.StdEncoding, buf)
+	dec := base64.NewDecoder(base64.StdEncoding, bytes.NewReader(img))
 	return c.Send(&tele.Photo{File: tele.FromReader(dec)})
 }
