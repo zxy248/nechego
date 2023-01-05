@@ -17,7 +17,7 @@ type Router struct {
 
 func (r *Router) OnText(c tele.Context) error {
 	for _, h := range r.Handlers {
-		if h.Regexp().MatchString(c.Message().Text) {
+		if h.Match(c.Message().Text) {
 			f := h.Handle
 			for _, w := range r.Middleware {
 				f = w.Wrap(f)
@@ -47,6 +47,7 @@ func main() {
 		&handlers.Infa{},
 		&handlers.Who{Universe: universe},
 		&handlers.Save{Universe: universe},
+		&handlers.Weather{},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},

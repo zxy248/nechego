@@ -2,6 +2,7 @@ package teleutil
 
 import (
 	"nechego/format"
+	"regexp"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
@@ -21,4 +22,8 @@ func Mention(c tele.Context, gid, uid int64) string {
 		return "❔"
 	}
 	return format.Mention(uid, Name(member))
+}
+
+func Args(c tele.Context, re *regexp.Regexp) []string {
+	return re.FindStringSubmatch(c.Message().Text)
 }

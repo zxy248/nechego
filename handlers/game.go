@@ -13,8 +13,8 @@ type Save struct {
 
 var saveRe = regexp.MustCompile("!сохран")
 
-func (h *Save) Regexp() *regexp.Regexp {
-	return saveRe
+func (h *Save) Match(s string) bool {
+	return saveRe.MatchString(s)
 }
 
 func (h *Save) Handle(c tele.Context) error {
