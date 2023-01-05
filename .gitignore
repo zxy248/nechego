@@ -1,4 +1,3 @@
-*.db
-*.sh
-/data
-c.out
+/data/
+/universe/
+/*.sh
