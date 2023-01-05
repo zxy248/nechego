@@ -1,21 +1,20 @@
 package game
 
 import (
-	"path/filepath"
-	"strconv"
 	"time"
 )
 
 type Gender int
 
 const (
-	GenderMale Gender = iota
+	GenderUnknown Gender = iota
+	GenderMale
 	GenderFemale
 	GenderTrans
 )
 
 type User struct {
-	ID        int
+	TUID      int64
 	Energy    int
 	EnergyCap int
 	Rating    float64
@@ -28,6 +27,17 @@ type User struct {
 	Inventory []*Item
 
 	hotkeys map[string]int // map from hotkey to item ID
+}
+
+func NewUser(tuid int64) *User {
+	return &User{
+		TUID:      tuid,
+		EnergyCap: 5,
+		Rating:    1500,
+		Inventory: []*Item{},
+
+		hotkeys: map[string]int{},
+	}
 }
 
 func (u *User) Ban() {
@@ -59,10 +69,6 @@ func (u *User) RestoreEnergy(δ int) {
 	if u.Energy > u.EnergyCap {
 		u.Energy = u.EnergyCap
 	}
-}
-
-func (u *User) AvatarPath() string {
-	return filepath.Join(WorldDir, "avatars", strconv.Itoa(u.ID))
 }
 
 func (u *User) GenerateHotkeys() {

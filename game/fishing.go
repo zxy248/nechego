@@ -23,11 +23,13 @@ func (f FishingRod) String() string {
 	q := int(f.Quality * float64(len(quality)))
 	d := f.Durability * 100
 	var t string
-	switch f.Type {
+	switch x := f.Type; x {
 	case Spinning:
 		t = "спиннинг"
 	case Floating:
 		t = "поплавочная"
+	default:
+		panic(fmt.Errorf("unexpected fishing rod type %v", x))
 	}
 	return fmt.Sprintf("🎣 Удочка (%s) [%s, %.f%%]", t, quality[q], d)
 }
