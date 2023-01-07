@@ -1,11 +1,7 @@
 package app
 
 import (
-	"errors"
-	"fmt"
 	"math/rand"
-	"nechego/model"
-	"unicode/utf8"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -48,61 +44,6 @@ func (a *App) handleWho(c tele.Context) error {
 		return respondInternalError(c, err)
 	}
 	return respond(c, who.Fill(a.mention(u), message))
-}
-
-const (
-	maxNameLength = 16
-	yourName      = Response("Ваше имя: <b>%s</b> 🔖")
-	theirName     = Response("Этого пользователя зовут <b>%s</b> 🔖")
-	userError     = UserError("Ошибка.")
-	nameSet       = Response("Имя <b>%s</b> установлено ✅")
-)
-
-var nameLong = UserError(fmt.Sprintf("Максимальная длина имени %d символов.", maxNameLength))
-
-// !имя
-func (a *App) handleTitle(c tele.Context) error {
-	user, ok := maybeGetReplyUser(c)
-	resp := theirName
-	if !ok {
-		user = getUser(c)
-		resp = yourName
-	}
-	name := getMessage(c).Argument()
-	if err := validateName(name); err != nil {
-		if errors.Is(err, errNameEmpty) {
-			return respond(c, resp.Fill(a.mention(user)))
-		}
-		if errors.Is(err, errNameLong) {
-			return respondUserError(c, nameLong)
-		}
-		return respondInternalError(c, err)
-	}
-	if err := setName(c, user, name); err != nil {
-		return respondUserError(c, userError)
-	}
-	return respond(c, nameSet.Fill(name))
-}
-
-var (
-	errNameEmpty = errors.New("empty name")
-	errNameLong  = errors.New("name is too long")
-)
-
-func validateName(n string) error {
-	if n == "" {
-		return errNameEmpty
-	}
-	if utf8.RuneCountInString(n) > maxNameLength {
-		return errNameLong
-	}
-	return nil
-}
-
-func setName(c tele.Context, u model.User, name string) error {
-	group := c.Chat()
-	user := &tele.User{ID: u.UID}
-	return c.Bot().SetAdminTitle(group, user, name)
 }
 
 const list = Response("Список %s 📝\n%s")

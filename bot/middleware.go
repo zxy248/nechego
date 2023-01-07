@@ -47,3 +47,14 @@ func (m *MessageIncrementer) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 		return next(c)
 	}
 }
+
+type RequireSupergroup struct{}
+
+func (m *RequireSupergroup) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		if c.Chat().Type != tele.ChatSuperGroup {
+			return nil
+		}
+		return next(c)
+	}
+}

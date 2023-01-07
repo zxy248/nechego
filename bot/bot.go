@@ -56,10 +56,12 @@ func main() {
 		&handlers.Horse{},
 		&handlers.Art{},
 		&handlers.Car{},
+		&handlers.Name{},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},
 		&UserAdder{Universe: universe},
+		&RequireSupergroup{},
 	}
 
 	bot.Handle(tele.OnText, router.OnText)

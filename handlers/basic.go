@@ -64,10 +64,11 @@ func (h *Who) Handle(c tele.Context) error {
 	w.Lock()
 	defer w.Unlock()
 
-	u := w.RandomUser()
+	user := w.RandomUser()
+	member := teleutil.Member(c, tele.ChatID(user.TUID))
 	arg := whoRe.FindStringSubmatch(c.Message().Text)[1]
-	msg := fmt.Sprintf("%s %s", teleutil.Mention(c, w.TGID, u.TUID), html.EscapeString(arg))
-	return c.Send(msg, tele.ModeHTML)
+	out := teleutil.Mention(c, member) + " " + html.EscapeString(arg)
+	return c.Send(out, tele.ModeHTML)
 }
 
 type Mouse struct {

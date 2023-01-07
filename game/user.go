@@ -20,7 +20,6 @@ type User struct {
 	Rating    float64
 	Messages  int
 	Banned    bool
-	Name      string
 	Birthday  time.Time
 	Gender    Gender
 	Status    string
