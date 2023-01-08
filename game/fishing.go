@@ -47,12 +47,11 @@ func NewFishingRod(t FishingRodType) *FishingRod {
 }
 
 func (u *User) FishingRod() (f *FishingRod, ok bool) {
-	u.TraverseInventory(func(i *Item) {
-		switch v := i.Value.(type) {
+	for _, v := range u.Items() {
+		switch f := v.Value.(type) {
 		case *FishingRod:
-			f, ok = v, true
-			return
+			return f, true
 		}
-	})
-	return
+	}
+	return nil, false
 }

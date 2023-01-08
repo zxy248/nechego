@@ -111,71 +111,57 @@ func (u *User) ItemByHotkey(k int) (i *Item, ok bool) {
 	return i, true
 }
 
-func (u *User) TraverseInventory(f func(*Item)) {
-	for _, v := range u.Inventory {
-		f(v)
-	}
-}
-
 func (u *User) Total() int {
 	t := 0
-	u.TraverseInventory(func(i *Item) {
-		switch o := i.Value.(type) {
+	for _, v := range u.Items() {
+		switch x := v.Value.(type) {
 		case *Wallet:
-			t += o.Money
+			t += x.Money
 		case *CreditCard:
-			t += o.Money
+			t += x.Money
 		case *Debt:
-			t -= o.Money
+			t -= x.Money
 		}
-	})
+	}
 	return t
 }
 
 func (u *User) InDebt() bool {
-	f := false
-	u.TraverseInventory(func(i *Item) {
-		switch i.Value.(type) {
+	for _, v := range u.Items() {
+		switch v.Value.(type) {
 		case *Debt:
-			f = true
-			return
+			return true
 		}
-	})
-	return f
+	}
+	return false
 }
 
 func (u *User) IsEblan() bool {
-	f := false
-	u.TraverseInventory(func(i *Item) {
-		switch i.Value.(type) {
+	for _, v := range u.Items() {
+		switch v.Value.(type) {
 		case *EblanToken:
-			f = true
-			return
+			return true
 		}
-	})
-	return f
+	}
+	return false
 }
 
 func (u *User) IsAdmin() bool {
-	f := false
-	u.TraverseInventory(func(i *Item) {
-		switch i.Value.(type) {
+	for _, v := range u.Items() {
+		switch v.Value.(type) {
 		case *AdminToken:
-			f = true
-			return
+			return true
 		}
-	})
-	return f
+	}
+	return false
 }
 
 func (u *User) IsPair() bool {
-	f := false
-	u.TraverseInventory(func(i *Item) {
-		switch i.Value.(type) {
+	for _, v := range u.Items() {
+		switch v.Value.(type) {
 		case *PairToken:
-			f = true
-			return
+			return true
 		}
-	})
-	return f
+	}
+	return false
 }
