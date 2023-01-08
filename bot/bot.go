@@ -57,6 +57,10 @@ func main() {
 		&handlers.Art{},
 		&handlers.Car{},
 		&handlers.Name{},
+		&handlers.DailyEblan{Universe: universe},
+		&handlers.DailyAdmin{Universe: universe},
+		&handlers.DailyPair{Universe: universe},
+		&handlers.Inventory{Universe: universe},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},

@@ -3,19 +3,17 @@ package game
 type EblanToken struct{}
 
 func (e EblanToken) String() string {
-	return "😸 Жетон еблана дня"
+	return "😸 Токен еблана дня"
 }
 
 type AdminToken struct{}
 
 func (a AdminToken) String() string {
-	return "👑 Жетон админа дня"
+	return "👑 Токен админа дня"
 }
 
-type PairToken struct {
-	MateID int
-}
+type PairToken struct{}
 
 func (p PairToken) String() string {
-	return "💘 Жетон пары дня"
+	return "💘 Токен пары дня"
 }

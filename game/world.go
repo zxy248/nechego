@@ -8,7 +8,12 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 type Universe struct {
 	worlds map[int64]*World
@@ -70,9 +75,10 @@ func (u *Universe) SaveAll() error {
 }
 
 type World struct {
-	TGID  int64
-	Users []*User
-	Floor []*Item
+	TGID       int64
+	Users      []*User
+	Floor      []*Item
+	NextItemID int
 
 	mu sync.Mutex
 }
@@ -120,6 +126,15 @@ func (w *World) Save(path string) error {
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "\t")
 	return enc.Encode(w)
+}
+
+func (w *World) Itemize(i *Item) *Item {
+	if i.Type == ItemTypeUnknown {
+		panic("cannot itemize: item type unknown")
+	}
+	i.ID = w.NextItemID
+	w.NextItemID++
+	return i
 }
 
 func (w *World) AddUser(u *User) {
@@ -171,7 +186,18 @@ func (w *World) DailyEblan() (u *User, ok bool) {
 			return
 		}
 	})
+	if !ok {
+		u, ok = w.rollDailyEblan()
+	}
 	return
+}
+
+func (w *World) rollDailyEblan() (u *User, ok bool) {
+	u = w.RandomUser()
+	tomorrow := time.Now().Add(time.Hour * 24)
+	token := w.Itemize(&Item{Type: ItemTypeEblanToken, Value: &EblanToken{}, Expire: tomorrow})
+	u.Inventory = append(u.Inventory, token)
+	return u, true
 }
 
 func (w *World) DailyAdmin() (u *User, ok bool) {
@@ -181,20 +207,47 @@ func (w *World) DailyAdmin() (u *User, ok bool) {
 			return
 		}
 	})
+	if !ok {
+		u, ok = w.rollDailyAdmin()
+	}
 	return
 }
 
-func (w *World) DailyPair() (u [2]*User, ok bool) {
-	n := 0
+func (w *World) rollDailyAdmin() (u *User, ok bool) {
+	u = w.RandomUser()
+	tomorrow := time.Now().Add(time.Hour * 24)
+	token := w.Itemize(&Item{Type: ItemTypeAdminToken, Value: &AdminToken{}, Expire: tomorrow})
+	u.Inventory = append(u.Inventory, token)
+	return u, true
+}
+
+func (w *World) DailyPair() (pair []*User, ok bool) {
+	if len(w.Users) < 2 {
+		return nil, false
+	}
 	w.TraverseUsers(func(v *User) {
-		if n == 2 {
-			ok = true
+		if v.IsPair() {
+			pair = append(pair, v)
+		}
+		if len(pair) == 2 {
 			return
 		}
-		if v.IsPair() {
-			u[n] = v
-			n++
-		}
 	})
-	return
+	if len(pair) != 2 {
+		return w.rollDailyPair()
+	}
+	return pair, true
+}
+
+func (w *World) rollDailyPair() (pair []*User, ok bool) {
+	pair = w.RandomUsers(2)
+	if len(pair) != 2 {
+		return nil, false
+	}
+	tomorrow := time.Now().Add(time.Hour * 24)
+	t0 := w.Itemize(&Item{Type: ItemTypePairToken, Value: &PairToken{}, Expire: tomorrow})
+	t1 := w.Itemize(&Item{Type: ItemTypePairToken, Value: &PairToken{}, Expire: tomorrow})
+	pair[0].Inventory = append(pair[0].Inventory, t0)
+	pair[1].Inventory = append(pair[1].Inventory, t1)
+	return pair, true
 }

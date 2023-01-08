@@ -77,6 +77,19 @@ func (u *User) GenerateHotkeys() {
 	}
 }
 
+type HotkeyItem struct {
+	Hotkey string
+	ItemID int
+}
+
+func (u *User) ItemList() []HotkeyItem {
+	r := []HotkeyItem{}
+	for k, v := range u.hotkeys {
+		r = append(r, HotkeyItem{k, v})
+	}
+	return r
+}
+
 func (u *User) ItemByID(id int) (i *Item, ok bool) {
 	for _, v := range u.Inventory {
 		if v.ID == id {
@@ -99,7 +112,7 @@ func (u *User) TraverseInventory(f func(*Item)) {
 func (u *User) Total() int {
 	t := 0
 	u.TraverseInventory(func(i *Item) {
-		switch o := i.Object.(type) {
+		switch o := i.Value.(type) {
 		case *Wallet:
 			t += o.Money
 		case *CreditCard:
@@ -114,8 +127,8 @@ func (u *User) Total() int {
 func (u *User) InDebt() bool {
 	f := false
 	u.TraverseInventory(func(i *Item) {
-		switch i.Object.(type) {
-		case Debt:
+		switch i.Value.(type) {
+		case *Debt:
 			f = true
 			return
 		}
@@ -126,8 +139,8 @@ func (u *User) InDebt() bool {
 func (u *User) IsEblan() bool {
 	f := false
 	u.TraverseInventory(func(i *Item) {
-		switch i.Object.(type) {
-		case EblanToken:
+		switch i.Value.(type) {
+		case *EblanToken:
 			f = true
 			return
 		}
@@ -138,8 +151,8 @@ func (u *User) IsEblan() bool {
 func (u *User) IsAdmin() bool {
 	f := false
 	u.TraverseInventory(func(i *Item) {
-		switch i.Object.(type) {
-		case AdminToken:
+		switch i.Value.(type) {
+		case *AdminToken:
 			f = true
 			return
 		}
@@ -150,8 +163,8 @@ func (u *User) IsAdmin() bool {
 func (u *User) IsPair() bool {
 	f := false
 	u.TraverseInventory(func(i *Item) {
-		switch i.Object.(type) {
-		case PairToken:
+		switch i.Value.(type) {
+		case *PairToken:
 			f = true
 			return
 		}
