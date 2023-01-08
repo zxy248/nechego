@@ -4,10 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"nechego/format"
 	"nechego/game"
 	"nechego/teleutil"
 	"regexp"
-	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -18,14 +19,17 @@ type Save struct {
 	Universe *game.Universe
 }
 
-var saveRe = regexp.MustCompile("!сохран")
+var saveRe = regexp.MustCompile("^!сохран")
 
 func (h *Save) Match(s string) bool {
 	return saveRe.MatchString(s)
 }
 
 func (h *Save) Handle(c tele.Context) error {
-	return h.Universe.SaveAll()
+	if err := h.Universe.SaveAll(); err != nil {
+		return err
+	}
+	return c.Send("💾 Игра сохранена.")
 }
 
 type Name struct{}
@@ -72,20 +76,64 @@ func (h *Inventory) Handle(c tele.Context) error {
 	if !ok {
 		return errors.New("user not found")
 	}
-	u.GenerateHotkeys()
-	items := u.ItemList()
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].Hotkey < items[j].Hotkey
-	})
+	items := u.ListInventory()
 	mention := teleutil.Mention(c, teleutil.Member(c, c.Sender()))
 	head := fmt.Sprintf("<b>🗄 Инвентарь пользователя %s</b>", mention)
-	lines := []string{head}
-	for _, v := range items {
-		i, ok := u.ItemByID(v.ItemID)
-		if !ok {
-			return errors.New("can't get item")
-		}
-		lines = append(lines, fmt.Sprintf("<code>%s:</code> %s", v.Hotkey, i.Value))
+	lines := append([]string{head}, format.Items(items)...)
+	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
+}
+
+type Drop struct {
+	Universe *game.Universe
+}
+
+var dropRe = regexp.MustCompile("^!выкинуть (.*)")
+
+func (h *Drop) Match(s string) bool {
+	return dropRe.MatchString(s)
+}
+
+func (h *Drop) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
 	}
+	k, err := strconv.Atoi(teleutil.Args(c, dropRe)[1])
+	if err != nil {
+		return c.Send("#⃣ Укажите номер предмета.")
+	}
+	item, ok := user.ItemByHotkey(k)
+	if !ok {
+		return c.Send("🗄 Такого предмета нет в инвентаре.")
+	}
+	if ok := world.Drop(user, item); !ok {
+		return c.Send("♻ Вы не можете выбросить этот предмет.")
+	}
+	out := fmt.Sprintf("🚮 Вы выбросили %s.", format.Item(item))
+	return c.Send(out, tele.ModeHTML)
+}
+
+type Floor struct {
+	Universe *game.Universe
+}
+
+var floorRe = regexp.MustCompile("^!пол")
+
+func (h *Floor) Match(s string) bool {
+	return floorRe.MatchString(s)
+}
+
+func (h *Floor) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	items := world.ListFloor()
+	head := fmt.Sprintf("<b>🗑 Пол</b>")
+	lines := append([]string{head}, format.Items(items)...)
 	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
 }

@@ -75,10 +75,11 @@ func (u *Universe) SaveAll() error {
 }
 
 type World struct {
-	TGID       int64
-	Users      []*User
-	Floor      []*Item
-	NextItemID int
+	TGID         int64
+	Users        []*User
+	Floor        []*Item
+	floorHotkeys map[int]*Item
+	NextItemID   int
 
 	mu sync.Mutex
 }
@@ -128,13 +129,15 @@ func (w *World) Save(path string) error {
 	return enc.Encode(w)
 }
 
-func (w *World) Itemize(i *Item) *Item {
+func (w *World) Identify(i *Item) {
 	if i.Type == ItemTypeUnknown {
 		panic("cannot itemize: item type unknown")
 	}
+	if i.ID != 0 {
+		return
+	}
 	i.ID = w.NextItemID
 	w.NextItemID++
-	return i
 }
 
 func (w *World) AddUser(u *User) {
@@ -179,75 +182,28 @@ func (w *World) RestoreEnergy() {
 	})
 }
 
-func (w *World) DailyEblan() (u *User, ok bool) {
-	w.TraverseUsers(func(v *User) {
-		if v.IsEblan() {
-			u, ok = v, true
-			return
+func (w *World) AddItem(u *User, i *Item) {
+	w.Identify(i)
+	u.Inventory = append(u.Inventory, i)
+}
+
+func (w *World) Drop(u *User, i *Item) (ok bool) {
+	if !i.Transferable {
+		return false
+	}
+	for n, j := range u.Inventory {
+		if i == j {
+			u.Inventory[n] = u.Inventory[len(u.Inventory)-1]
+			u.Inventory = u.Inventory[:len(u.Inventory)-1]
+			w.Floor = append(w.Floor, j)
+			return true
 		}
-	})
-	if !ok {
-		u, ok = w.rollDailyEblan()
 	}
-	return
+	return false
 }
 
-func (w *World) rollDailyEblan() (u *User, ok bool) {
-	u = w.RandomUser()
-	tomorrow := time.Now().Add(time.Hour * 24)
-	token := w.Itemize(&Item{Type: ItemTypeEblanToken, Value: &EblanToken{}, Expire: tomorrow})
-	u.Inventory = append(u.Inventory, token)
-	return u, true
-}
-
-func (w *World) DailyAdmin() (u *User, ok bool) {
-	w.TraverseUsers(func(v *User) {
-		if v.IsAdmin() {
-			u, ok = v, true
-			return
-		}
-	})
-	if !ok {
-		u, ok = w.rollDailyAdmin()
-	}
-	return
-}
-
-func (w *World) rollDailyAdmin() (u *User, ok bool) {
-	u = w.RandomUser()
-	tomorrow := time.Now().Add(time.Hour * 24)
-	token := w.Itemize(&Item{Type: ItemTypeAdminToken, Value: &AdminToken{}, Expire: tomorrow})
-	u.Inventory = append(u.Inventory, token)
-	return u, true
-}
-
-func (w *World) DailyPair() (pair []*User, ok bool) {
-	if len(w.Users) < 2 {
-		return nil, false
-	}
-	w.TraverseUsers(func(v *User) {
-		if v.IsPair() {
-			pair = append(pair, v)
-		}
-		if len(pair) == 2 {
-			return
-		}
-	})
-	if len(pair) != 2 {
-		return w.rollDailyPair()
-	}
-	return pair, true
-}
-
-func (w *World) rollDailyPair() (pair []*User, ok bool) {
-	pair = w.RandomUsers(2)
-	if len(pair) != 2 {
-		return nil, false
-	}
-	tomorrow := time.Now().Add(time.Hour * 24)
-	t0 := w.Itemize(&Item{Type: ItemTypePairToken, Value: &PairToken{}, Expire: tomorrow})
-	t1 := w.Itemize(&Item{Type: ItemTypePairToken, Value: &PairToken{}, Expire: tomorrow})
-	pair[0].Inventory = append(pair[0].Inventory, t0)
-	pair[1].Inventory = append(pair[1].Inventory, t1)
-	return pair, true
+func (w *World) ListFloor() []*Item {
+	var r []*Item
+	w.floorHotkeys, r = hotkeys(w.Floor)
+	return r
 }

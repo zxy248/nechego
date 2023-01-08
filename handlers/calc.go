@@ -12,7 +12,7 @@ import (
 
 type Calculator struct{}
 
-var calculatorRe = regexp.MustCompile("!калькулятор (.*)")
+var calculatorRe = regexp.MustCompile("^!калькулятор (.*)")
 
 func (h *Calculator) Match(s string) bool {
 	return calculatorRe.MatchString(s)

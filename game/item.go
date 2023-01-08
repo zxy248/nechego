@@ -6,11 +6,6 @@ import (
 	"time"
 )
 
-const (
-	Hotkeys       = "123456789йцукенгшщзхфывапролджэячсмитьбю"
-	InventorySize = len(Hotkeys)
-)
-
 type ItemType int
 
 const (
@@ -61,4 +56,14 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		panic(fmt.Errorf("unexpected item type %v", i.Type))
 	}
 	return json.Unmarshal(raw, i.Value)
+}
+
+func hotkeys(items []*Item) (map[int]*Item, []*Item) {
+	m := map[int]*Item{}
+	r := []*Item{}
+	for i, v := range items {
+		m[i] = v
+		r = append(r, v)
+	}
+	return m, r
 }

@@ -14,18 +14,17 @@ const (
 )
 
 type User struct {
-	TUID      int64
-	Energy    int
-	EnergyCap int
-	Rating    float64
-	Messages  int
-	Banned    bool
-	Birthday  time.Time
-	Gender    Gender
-	Status    string
-	Inventory []*Item
-
-	hotkeys map[string]int // map from hotkey to item ID
+	TUID             int64
+	Energy           int
+	EnergyCap        int
+	Rating           float64
+	Messages         int
+	Banned           bool
+	Birthday         time.Time
+	Gender           Gender
+	Status           string
+	Inventory        []*Item
+	inventoryHotkeys map[int]*Item
 }
 
 func NewUser(tuid int64) *User {
@@ -34,8 +33,6 @@ func NewUser(tuid int64) *User {
 		EnergyCap: 5,
 		Rating:    1500,
 		Inventory: []*Item{},
-
-		hotkeys: map[string]int{},
 	}
 }
 
@@ -70,23 +67,21 @@ func (u *User) RestoreEnergy(δ int) {
 	}
 }
 
-func (u *User) GenerateHotkeys() {
-	u.hotkeys = map[string]int{}
-	for i, v := range u.Inventory {
-		u.hotkeys[string(Hotkeys[i])] = v.ID
+func (u *User) Items() []*Item {
+	n := 0
+	for _, v := range u.Inventory {
+		if v.Expire.IsZero() || time.Now().Before(v.Expire) {
+			u.Inventory[n] = v
+			n++
+		}
 	}
+	u.Inventory = u.Inventory[:n]
+	return u.Inventory
 }
 
-type HotkeyItem struct {
-	Hotkey string
-	ItemID int
-}
-
-func (u *User) ItemList() []HotkeyItem {
-	r := []HotkeyItem{}
-	for k, v := range u.hotkeys {
-		r = append(r, HotkeyItem{k, v})
-	}
+func (u *User) ListInventory() []*Item {
+	var r []*Item
+	u.inventoryHotkeys, r = hotkeys(u.Inventory)
 	return r
 }
 
@@ -99,8 +94,21 @@ func (u *User) ItemByID(id int) (i *Item, ok bool) {
 	return nil, false
 }
 
-func (u *User) ItemByHotkey(h string) (i *Item, ok bool) {
-	return u.ItemByID(u.hotkeys[h])
+func (u *User) HasItem(i *Item) bool {
+	for _, j := range u.Items() {
+		if i == j {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *User) ItemByHotkey(k int) (i *Item, ok bool) {
+	i, ok = u.inventoryHotkeys[k]
+	if !ok || !u.HasItem(i) {
+		return nil, false
+	}
+	return i, true
 }
 
 func (u *User) TraverseInventory(f func(*Item)) {
