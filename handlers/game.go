@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html"
+	"math/rand"
 	"nechego/format"
 	"nechego/game"
 	"nechego/teleutil"
@@ -242,6 +243,9 @@ func (h *Eat) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("user not found")
 	}
+	if user.Energy == user.EnergyCap {
+		return c.Send("🍊 Вы не хотите есть.")
+	}
 	key, err := strconv.Atoi(teleutil.Args(c, eatRe)[1])
 	if err != nil {
 		return c.Send("#⃣ Укажите номер предмета.")
@@ -257,5 +261,57 @@ func (h *Eat) Handle(c tele.Context) error {
 		format.Item(item),
 		format.Energy(user.Energy),
 	)
+	return c.Send(out, tele.ModeHTML)
+}
+
+type Fish struct {
+	Universe *game.Universe
+}
+
+var fishRe = regexp.MustCompile("^!рыбалка")
+
+func (h *Fish) Match(s string) bool {
+	return fishRe.MatchString(s)
+}
+
+func (h *Fish) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	rod, ok := user.FishingRod()
+	if !ok {
+		return c.Send("🎣 Приобретите удочку, прежде чем рыбачить.")
+	}
+	if ok := user.SpendEnergy(1); !ok {
+		return c.Send("⚡ Недостаточно энергии.")
+	}
+	fish := user.Fish(rod)
+	if rod.Durability < 0 {
+		c.Send("🎣 Ваша удочка сломалась.")
+	}
+	if rand.Float64() < 0.5 {
+		outcomes := [...]string{
+			"Вы не смогли выудить рыбу.",
+			"Рыба сорвалась с крючка.",
+			"Рыба сорвала леску.",
+			"Рыба скрылась в водорослях.",
+			"Рыба выскользнула из рук.",
+			"Вы отпустили рыбу обратно в воду.",
+			"Вы оставили рыбу себе.",
+		}
+		return c.Send("🎣 " + outcomes[rand.Intn(len(outcomes))])
+	}
+	user.Inventory.Add(&game.Item{
+		Type:         game.ItemTypeFish,
+		Transferable: true,
+		Value:        fish,
+	})
+	mention := teleutil.Mention(c, teleutil.Member(c, c.Sender()))
+	out := fmt.Sprintf("🎣 %s получает рыбу: %s", mention, format.Fish(fish))
 	return c.Send(out, tele.ModeHTML)
 }

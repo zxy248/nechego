@@ -45,14 +45,8 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleAvatar
 	case input.CommandStatus:
 		return handleStatus
-	case input.CommandFishingRod:
-		return a.handleFishingRod
-	case input.CommandFishing:
-		return a.handleFishing
 	case input.CommandTopStrong:
 		return a.handleTopStrong
-	case input.CommandEatFish:
-		return a.handleEatFood
 	case input.CommandDeposit:
 		return a.handleDeposit
 	case input.CommandWithdraw:
@@ -69,24 +63,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleParliament
 	case input.CommandImpeachment:
 		return a.handleImpeachment
-	case input.CommandFishList:
-		return a.handleFish
-	case input.CommandFreezeFish:
-		return a.handleFreeze
-	case input.CommandFreezer:
-		return a.handleFreezer
-	case input.CommandUnfreezeFish:
-		return a.handleUnfreeze
-	case input.CommandSellFish:
-		return a.handleSellFish
-	case input.CommandMasyunya:
-		return a.handleMasyunya
-	case input.CommandPoppy:
-		return a.handlePoppy
-	case input.CommandSima:
-		return a.handleSima
-	case input.CommandHello:
-		return a.handleHello
 	case input.CommandList:
 		return a.handleList
 	case input.CommandTop:
@@ -101,30 +77,12 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handlePic
 	case input.CommandDice:
 		return a.handleDice
-	case input.CommandKeyboardOpen:
-		return a.handleKeyboardOpen
-	case input.CommandKeyboardClose:
-		return a.handleKeyboardClose
 	case input.CommandKick:
 		return a.injectReplyUser(a.handleKick)
-	case input.CommandClean:
-		return a.handleClean
-	case input.CommandTurnOn:
-		return a.handleTurnOn
-	case input.CommandTurnOff:
-		return a.handleTurnOff
 	case input.CommandBan:
 		return requireAdmin(requireReply(a.injectReplyUser(a.handleBan)))
 	case input.CommandUnban:
 		return requireAdmin(requireReply(a.injectReplyUser(a.handleUnban)))
-	case input.CommandInfo:
-		return a.handleInfo
-	case input.CommandHelp:
-		return a.handleHelp
-	case input.CommandForbid:
-		return requireAdmin(a.handleForbid)
-	case input.CommandPermit:
-		return requireAdmin(a.handlePermit)
 	case input.CommandPet:
 		return a.handlePet
 	case input.CommandBuyPet:

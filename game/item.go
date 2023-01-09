@@ -112,6 +112,9 @@ func (it *Items) updateHotkeys() {
 func (it *Items) list() []*Item {
 	n := 0
 	for _, v := range it.I {
+		if rod, ok := v.Value.(*FishingRod); ok && rod.Durability < 0 {
+			continue
+		}
 		if v.Expire.IsZero() || time.Now().Before(v.Expire) {
 			it.I[n] = v
 			n++

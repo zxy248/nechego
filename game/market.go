@@ -1,5 +1,10 @@
 package game
 
+import (
+	"math/rand"
+	"nechego/fishing"
+)
+
 type Product struct {
 	Price int
 	Item  *Item
@@ -12,6 +17,22 @@ type Market struct {
 
 func NewMarket() *Market {
 	return &Market{P: []*Product{}}
+}
+
+func (m *Market) Refill() {
+	fish := fishing.RandomFish()
+	fishPrice := int(float64(fish.Price()) * (0.5 + rand.Float64()))
+	products := []*Product{
+		{2000 + rand.Intn(2000), &Item{
+			Type:         ItemTypeFishingRod,
+			Transferable: true,
+			Value:        NewFishingRod()}},
+		{fishPrice, &Item{
+			Type:         ItemTypeFish,
+			Transferable: true,
+			Value:        &fish}},
+	}
+	m.Add(products[rand.Intn(len(products))])
 }
 
 func (m *Market) Add(p *Product) {

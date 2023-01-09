@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
@@ -322,4 +323,79 @@ func (h *Car) Handle(c tele.Context) error {
 	img := carImgRe.FindSubmatch(data)[1]
 	dec := base64.NewDecoder(base64.StdEncoding, bytes.NewReader(img))
 	return c.Send(&tele.Photo{File: tele.FromReader(dec)})
+}
+
+type Masyunya struct{}
+
+var masyunyaRe = regexp.MustCompile("^!масюня")
+
+func (h *Masyunya) Match(s string) bool {
+	return masyunyaRe.MatchString(s)
+}
+
+func (h *Masyunya) Handle(c tele.Context) error {
+	set, err := c.Bot().StickerSet("masyunya_vk")
+	if err != nil {
+		return err
+	}
+	return c.Send(&set.Stickers[rand.Intn(len(set.Stickers))])
+}
+
+type Poppy struct{}
+
+var poppyRe = regexp.MustCompile("^!паппи")
+
+func (h *Poppy) Match(s string) bool {
+	return poppyRe.MatchString(s)
+}
+
+func (h *Poppy) Handle(c tele.Context) error {
+	names := []string{"pappy2_vk", "poppy_vk"}
+	set, err := c.Bot().StickerSet(names[rand.Intn(len(names))])
+	if err != nil {
+		return err
+	}
+	return c.Send(&set.Stickers[rand.Intn(len(set.Stickers))])
+}
+
+type Sima struct{}
+
+var simaRe = regexp.MustCompile("^!сима")
+
+func (h *Sima) Match(s string) bool {
+	return simaRe.MatchString(s)
+}
+
+func (h *Sima) Handle(c tele.Context) error {
+	set, err := c.Bot().StickerSet("catsima_vk")
+	if err != nil {
+		return err
+	}
+	return c.Send(&set.Stickers[rand.Intn(len(set.Stickers))])
+}
+
+type Hello struct {
+	Path  string
+	cache []tele.Sticker
+}
+
+var helloRe = regexp.MustCompile("^!привет")
+
+func (h *Hello) Match(s string) bool {
+	return helloRe.MatchString(s)
+}
+
+func (h *Hello) Handle(c tele.Context) error {
+	if h.cache == nil {
+		f, err := os.Open(h.Path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		if err := json.NewDecoder(f).Decode(&h.cache); err != nil {
+			return err
+		}
+	}
+	return c.Send(&h.cache[rand.Intn(len(h.cache))])
 }

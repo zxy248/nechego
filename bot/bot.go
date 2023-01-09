@@ -68,6 +68,11 @@ func main() {
 		&handlers.Market{Universe: universe},
 		&handlers.Buy{Universe: universe},
 		&handlers.Eat{Universe: universe},
+		&handlers.Fish{Universe: universe},
+		&handlers.Masyunya{},
+		&handlers.Poppy{},
+		&handlers.Sima{},
+		&handlers.Hello{Path: "data/hello.json"},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},

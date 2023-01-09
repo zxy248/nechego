@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand"
+	"nechego/fishing"
 )
 
 type FishingRod struct {
@@ -11,7 +12,7 @@ type FishingRod struct {
 }
 
 func (f FishingRod) String() string {
-	lvls := [...]string{"i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x"}
+	lvls := [...]string{"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"}
 	lvl := lvls[int(f.Quality*float64(len(lvls)))]
 	dur := f.Durability * 100
 	return fmt.Sprintf("🎣 Удочка [%s, %.f%%]", lvl, dur)
@@ -36,4 +37,13 @@ func (u *User) FishingRod() (f *FishingRod, ok bool) {
 		}
 	}
 	return nil, false
+}
+
+func (u *User) Fish(rod *FishingRod) *fishing.Fish {
+	f := fishing.RandomFish()
+	q := rod.Quality*0.5 + 1.0
+	f.Length *= q
+	f.Weight *= q
+	rod.Durability -= 0.01
+	return &f
 }

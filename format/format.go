@@ -3,6 +3,7 @@ package format
 import (
 	"fmt"
 	"html"
+	"nechego/fishing"
 	"nechego/game"
 )
 
@@ -45,4 +46,8 @@ func Money(q int) string {
 
 func Energy(e int) string {
 	return fmt.Sprintf("<code>%d ⚡</code>", e)
+}
+
+func Fish(f *fishing.Fish) string {
+	return fmt.Sprintf("<code>%s</code>", f)
 }
