@@ -78,7 +78,7 @@ func (h *Inventory) Handle(c tele.Context) error {
 	}
 	items := u.ListInventory()
 	mention := teleutil.Mention(c, teleutil.Member(c, c.Sender()))
-	head := fmt.Sprintf("<b>🗄 Инвентарь пользователя %s</b>", mention)
+	head := fmt.Sprintf("<b>🗄 Инвентарь: %s</b>", mention)
 	lines := append([]string{head}, format.Items(items)...)
 	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
 }
@@ -117,6 +117,40 @@ func (h *Drop) Handle(c tele.Context) error {
 	return c.Send(out, tele.ModeHTML)
 }
 
+type Pick struct {
+	Universe *game.Universe
+}
+
+var pickRe = regexp.MustCompile("^!взять (.*)")
+
+func (h *Pick) Match(s string) bool {
+	return pickRe.MatchString(s)
+}
+
+func (h *Pick) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	k, err := strconv.Atoi(teleutil.Args(c, pickRe)[1])
+	if err != nil {
+		return c.Send("#⃣ Укажите номер предмета.")
+	}
+	i, ok := world.ItemByKey(k)
+	if !ok {
+		return c.Send("🗄 Такого предмета нет на полу.")
+	}
+	if ok := world.Pick(user, i); !ok {
+		return c.Send("♻ Вы не можете взять этот предмет.")
+	}
+	out := fmt.Sprintf("🫳 Вы взяли %s.", format.Item(i))
+	return c.Send(out, tele.ModeHTML)
+}
+
 type Floor struct {
 	Universe *game.Universe
 }
@@ -133,7 +167,95 @@ func (h *Floor) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	items := world.ListFloor()
-	head := fmt.Sprintf("<b>🗑 Пол</b>")
+	head := "<b>🗑 Пол</b>"
 	lines := append([]string{head}, format.Items(items)...)
 	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
+}
+
+type Market struct {
+	Universe *game.Universe
+}
+
+var marketRe = regexp.MustCompile("^!магазин")
+
+func (h *Market) Match(s string) bool {
+	return marketRe.MatchString(s)
+}
+
+func (h *Market) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	products := world.Market.Products()
+	head := "<b>🏪 Магазин</b>"
+	lines := append([]string{head}, format.Products(products)...)
+	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
+}
+
+type Buy struct {
+	Universe *game.Universe
+}
+
+var buyRe = regexp.MustCompile("^!купить (.*)")
+
+func (h *Buy) Match(s string) bool {
+	return buyRe.MatchString(s)
+}
+
+func (h *Buy) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	key, err := strconv.Atoi(teleutil.Args(c, buyRe)[1])
+	if err != nil {
+		return c.Send("#⃣ Укажите номер предмета.")
+	}
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	p, ok := user.Buy(world.Market, key)
+	if !ok {
+		return c.Send("💵 Недостаточно средств.")
+	}
+	out := fmt.Sprintf("🛒 Вы приобрели %s за %s.", format.Item(p.Item), format.Money(p.Price))
+	return c.Send(out, tele.ModeHTML)
+}
+
+type Eat struct {
+	Universe *game.Universe
+}
+
+var eatRe = regexp.MustCompile("^!с[ъь]есть (.*)")
+
+func (h *Eat) Match(s string) bool {
+	return eatRe.MatchString(s)
+}
+
+func (h *Eat) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return c.Send("user not found")
+	}
+	key, err := strconv.Atoi(teleutil.Args(c, eatRe)[1])
+	if err != nil {
+		return c.Send("#⃣ Укажите номер предмета.")
+	}
+	item, ok := user.ItemByHotkey(key)
+	if !ok {
+		return c.Send("🗄 Такого предмета нет в инвентаре.")
+	}
+	e := user.Energy
+	if ok := user.Eat(item); !ok {
+		return c.Send("🤮")
+	}
+	out := fmt.Sprintf("🍊 Вы съели %s <code>[+%d ⚡]</code>", format.Item(item), user.Energy-e)
+	return c.Send(out, tele.ModeHTML)
 }

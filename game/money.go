@@ -13,6 +13,16 @@ func (w Wallet) String() string {
 	return fmt.Sprintf("💰 Кошелек (%d ₽)", w.Money)
 }
 
+func (u *User) Wallet() (w *Wallet, ok bool) {
+	for _, v := range u.Items() {
+		switch x := v.Value.(type) {
+		case *Wallet:
+			return x, true
+		}
+	}
+	return nil, false
+}
+
 type CreditCard struct {
 	Bank    int
 	Number  int

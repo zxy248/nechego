@@ -62,8 +62,12 @@ func main() {
 		&handlers.DailyPair{Universe: universe},
 		&handlers.Inventory{Universe: universe},
 		&handlers.Drop{Universe: universe},
+		&handlers.Pick{Universe: universe},
 		&handlers.Floor{Universe: universe},
 		&handlers.Calculator{},
+		&handlers.Market{Universe: universe},
+		&handlers.Buy{Universe: universe},
+		&handlers.Eat{Universe: universe},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},

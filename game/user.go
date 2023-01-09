@@ -1,6 +1,7 @@
 package game
 
 import (
+	"nechego/fishing"
 	"time"
 )
 
@@ -65,6 +66,26 @@ func (u *User) RestoreEnergy(δ int) {
 	if u.Energy > u.EnergyCap {
 		u.Energy = u.EnergyCap
 	}
+}
+
+func (u *User) SpendMoney(δ int) bool {
+	w, ok := u.Wallet()
+	if !ok {
+		return false
+	}
+	if w.Money < δ {
+		return false
+	}
+	w.Money -= δ
+	return true
+}
+
+func (u *User) AddMoney(δ int) {
+	w, ok := u.Wallet()
+	if !ok {
+		return
+	}
+	w.Money += δ
 }
 
 func (u *User) Items() []*Item {
@@ -162,6 +183,19 @@ func (u *User) IsPair() bool {
 		case *PairToken:
 			return true
 		}
+	}
+	return false
+}
+
+func (u *User) Eat(i *Item) bool {
+	switch x := i.Value.(type) {
+	case *fishing.Fish:
+		e := 1
+		if x.Heavy() {
+			e = 2
+		}
+		u.RestoreEnergy(e)
+		return true
 	}
 	return false
 }

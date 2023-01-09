@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"nechego/fishing"
 	"time"
 )
 
@@ -17,6 +18,7 @@ const (
 	ItemTypeCreditCard
 	ItemTypeDebt
 	ItemTypeFishingRod
+	ItemTypeFish
 )
 
 type Item struct {
@@ -52,6 +54,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &Debt{}
 	case ItemTypeFishingRod:
 		i.Value = &FishingRod{}
+	case ItemTypeFish:
+		i.Value = &fishing.Fish{}
 	default:
 		panic(fmt.Errorf("unexpected item type %v", i.Type))
 	}

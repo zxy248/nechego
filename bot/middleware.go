@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"nechego/fishing"
 	"nechego/game"
 
 	tele "gopkg.in/telebot.v3"
@@ -22,7 +23,20 @@ func (m *UserAdder) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 		w.Lock()
 		_, ok := w.UserByID(user.ID)
 		if !ok {
-			w.AddUser(game.NewUser(user.ID))
+			user := game.NewUser(user.ID)
+			wallet := &game.Item{
+				Type:         game.ItemTypeWallet,
+				Transferable: true,
+				Value:        &game.Wallet{Money: 5000},
+			}
+			fish := &game.Item{
+				Type:         game.ItemTypeFish,
+				Transferable: true,
+				Value:        fishing.RandomFish(),
+			}
+			w.AddUser(user)
+			w.AddItem(user, wallet)
+			w.AddItem(user, fish)
 		}
 		w.Unlock()
 		return next(c)

@@ -79,6 +79,7 @@ type World struct {
 	Users        []*User
 	Floor        []*Item
 	floorHotkeys map[int]*Item
+	Market       *Market
 	NextItemID   int
 
 	mu sync.Mutex
@@ -187,7 +188,7 @@ func (w *World) AddItem(u *User, i *Item) {
 	u.Inventory = append(u.Inventory, i)
 }
 
-func (w *World) Drop(u *User, i *Item) (ok bool) {
+func (w *World) Drop(u *User, i *Item) bool {
 	if !i.Transferable {
 		return false
 	}
@@ -202,8 +203,37 @@ func (w *World) Drop(u *User, i *Item) (ok bool) {
 	return false
 }
 
+func (w *World) Pick(u *User, i *Item) bool {
+	for n, j := range w.Floor {
+		if i == j {
+			w.Floor[n] = w.Floor[len(w.Floor)-1]
+			w.Floor = w.Floor[:len(w.Floor)-1]
+			u.Inventory = append(w.Floor, j)
+			return true
+		}
+	}
+	return false
+}
+
 func (w *World) ListFloor() []*Item {
 	var r []*Item
 	w.floorHotkeys, r = hotkeys(w.Floor)
 	return r
+}
+
+func (w *World) OnFloor(i *Item) bool {
+	for _, j := range w.Floor {
+		if i == j {
+			return true
+		}
+	}
+	return false
+}
+
+func (w *World) ItemByKey(k int) (i *Item, ok bool) {
+	i, ok = w.floorHotkeys[k]
+	if !ok || !w.OnFloor(i) {
+		return nil, false
+	}
+	return i, true
 }

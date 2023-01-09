@@ -26,3 +26,19 @@ func Items(items []*game.Item) []string {
 func Item(i *game.Item) string {
 	return fmt.Sprintf("<code>%s</code>", i.Value)
 }
+
+func Products(products []*game.Product) []string {
+	lines := []string{}
+	for i, p := range products {
+		line := fmt.Sprintf("<code>%v ≡ </code> %s, %s", i, Item(p.Item), Money(p.Price))
+		lines = append(lines, line)
+	}
+	if len(lines) == 0 {
+		return []string{empty}
+	}
+	return lines
+}
+
+func Money(q int) string {
+	return fmt.Sprintf("<code>%d ₽</code>", q)
+}
