@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"nechego/fishing"
+	"nechego/pets"
 	"time"
 )
 
@@ -19,6 +20,7 @@ const (
 	ItemTypeDebt
 	ItemTypeFishingRod
 	ItemTypeFish
+	ItemTypePet
 )
 
 type Item struct {
@@ -55,6 +57,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &FishingRod{}
 	case ItemTypeFish:
 		i.Value = &fishing.Fish{}
+	case ItemTypePet:
+		i.Value = &pets.Pet{}
 	default:
 		panic(fmt.Errorf("unexpected item type %v", i.Type))
 	}

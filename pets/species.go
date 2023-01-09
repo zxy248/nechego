@@ -1,8 +1,10 @@
 package pets
 
 import (
+	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 )
 
 type Quality int
@@ -119,13 +121,10 @@ const (
 	numberOfSpecies
 )
 
-func randomSpecies(p float64) Species {
-	if p < 0 || p > 1 {
-		panic("p must be between 0 and 1")
-	}
+func randomSpecies() Species {
 	s := []Species{}
-	for k, v := range speciesData {
-		if p < v.Probability {
+	for k, v := range species {
+		if rand.Float64() < v.Probability {
 			s = append(s, k)
 		}
 	}
@@ -137,7 +136,7 @@ func randomSpecies(p float64) Species {
 		s[i], s[j] = s[j], s[i]
 	})
 	sort.Slice(s, func(i, j int) bool {
-		return speciesData[s[i]].Probability < speciesData[s[j]].Probability
+		return species[s[i]].Probability < species[s[j]].Probability
 	})
 
 	few := 4
@@ -148,15 +147,19 @@ func randomSpecies(p float64) Species {
 }
 
 func (s Species) Emoji() string {
-	return speciesData[s].Emoji
+	return species[s].Emoji
+}
+
+func (s Species) Description() string {
+	return species[s].Description
 }
 
 func (s Species) String() string {
-	return speciesData[s].Description
+	return fmt.Sprintf("%s %s", s.Emoji(), strings.Title(s.Description()))
 }
 
 func (s Species) Quality() Quality {
-	switch p := speciesData[s].Probability; {
+	switch p := species[s].Probability; {
 	case p <= 0.01:
 		return Legendary
 	case p <= 0.05:

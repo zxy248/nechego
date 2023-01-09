@@ -15,7 +15,7 @@ func (f FishingRod) String() string {
 	lvls := [...]string{"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"}
 	lvl := lvls[int(f.Quality*float64(len(lvls)))]
 	dur := f.Durability * 100
-	return fmt.Sprintf("🎣 Удочка [%s, %.f%%]", lvl, dur)
+	return fmt.Sprintf("🎣 Удочка (%s, %.f%%)", lvl, dur)
 }
 
 func NewFishingRod() *FishingRod {

@@ -8,7 +8,7 @@ var genderData = map[Gender]struct {
 	Female: {"♀", "самка"},
 }
 
-var speciesData = map[Species]struct {
+var species = map[Species]struct {
 	Emoji       string
 	Description string
 	Probability float64

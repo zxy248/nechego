@@ -59,10 +59,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return requireDebtor(a.handleRepay)
 	case input.CommandTopWeak:
 		return a.handleTopWeak
-	case input.CommandParliament:
-		return a.handleParliament
-	case input.CommandImpeachment:
-		return a.handleImpeachment
 	case input.CommandList:
 		return a.handleList
 	case input.CommandTop:
@@ -83,14 +79,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return requireAdmin(requireReply(a.injectReplyUser(a.handleBan)))
 	case input.CommandUnban:
 		return requireAdmin(requireReply(a.injectReplyUser(a.handleUnban)))
-	case input.CommandPet:
-		return a.handlePet
-	case input.CommandBuyPet:
-		return requireNonDebtor(a.handleBuyPet)
-	case input.CommandNamePet:
-		return a.handleNamePet
-	case input.CommandDropPet:
-		return a.handleDropPet
 	}
 	return nil
 }

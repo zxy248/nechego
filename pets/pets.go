@@ -3,7 +3,10 @@ package pets
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 type Gender int
@@ -11,13 +14,7 @@ type Gender int
 const (
 	Male Gender = iota
 	Female
-
-	numberOfGenders
 )
-
-func randomGender() Gender {
-	return Gender(rand.Intn(int(numberOfGenders)))
-}
 
 func (g Gender) Emoji() string {
 	return genderData[g].Emoji
@@ -34,16 +31,12 @@ type Pet struct {
 	Birth   time.Time
 }
 
-func RandomPet(p float64) *Pet {
+func RandomPet() *Pet {
 	return &Pet{
-		Species: randomSpecies(p),
-		Gender:  randomGender(),
+		Species: randomSpecies(),
+		Gender:  Gender(rand.Intn(2)),
 		Birth:   time.Now(),
 	}
-}
-
-func (p *Pet) HasName() bool {
-	return p.Name != ""
 }
 
 func (p *Pet) Age() time.Duration {
@@ -51,9 +44,32 @@ func (p *Pet) Age() time.Duration {
 }
 
 func (p *Pet) String() string {
-	space := ""
-	if p.HasName() {
-		space = " "
+	name := p.Name
+	if name != "" {
+		name = name + " "
 	}
-	return fmt.Sprintf("%s %s%s(%s)", p.Species, p.Name, space, p.Gender.Emoji())
+	return fmt.Sprintf("%s %s(%s)", p.Species, name, p.Gender.Emoji())
+}
+
+func (p *Pet) SetName(s string) bool {
+	if !validName(s) {
+		return false
+	}
+	p.Name = strings.Title(s)
+	return true
+}
+
+func validName(s string) bool {
+	if !utf8.ValidString(s) {
+		return false
+	}
+	if utf8.RuneCountInString(s) > 40 {
+		return false
+	}
+	for _, r := range s {
+		if !unicode.Is(unicode.Cyrillic, r) && r != ' ' {
+			return false
+		}
+	}
+	return true
 }

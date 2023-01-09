@@ -3,6 +3,7 @@ package game
 import (
 	"math/rand"
 	"nechego/fishing"
+	"nechego/pets"
 )
 
 type Product struct {
@@ -31,8 +32,23 @@ func (m *Market) Refill() {
 			Type:         ItemTypeFish,
 			Transferable: true,
 			Value:        fish}},
+		{100 + rand.Intn(50000), &Item{
+			Type:         ItemTypePet,
+			Transferable: true,
+			Value:        pets.RandomPet()}},
+	}
+	if rand.Float64() < 0.25 {
+		products = append(products, &Product{
+			500000 + rand.Intn(1000000), &Item{
+				Type:         ItemTypeAdminToken,
+				Transferable: true,
+				Value:        &AdminToken{}}})
 	}
 	m.Add(products[rand.Intn(len(products))])
+	const maxitems = 10
+	if len(m.P) > maxitems {
+		m.P = m.P[len(m.P)-maxitems:]
+	}
 }
 
 func (m *Market) Add(p *Product) {
