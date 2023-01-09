@@ -29,7 +29,7 @@ func NewFishingRod() *FishingRod {
 }
 
 func (u *User) FishingRod() (f *FishingRod, ok bool) {
-	for _, v := range u.Items() {
+	for _, v := range u.Inventory.list() {
 		switch f := v.Value.(type) {
 		case *FishingRod:
 			return f, true

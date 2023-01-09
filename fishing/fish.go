@@ -51,7 +51,7 @@ func (f Fish) String() string {
 	} else {
 		weight = fmt.Sprintf("%.2f кг", f.Weight)
 	}
-	return fmt.Sprintf("%s (%s, %s)", f.Species, weight, length)
+	return fmt.Sprintf("🐟 %s (%s, %s)", f.Species, weight, length)
 }
 
 type Fishes []Fish

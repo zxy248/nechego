@@ -14,7 +14,7 @@ func (w Wallet) String() string {
 }
 
 func (u *User) Wallet() (w *Wallet, ok bool) {
-	for _, v := range u.Items() {
+	for _, v := range u.Inventory.list() {
 		switch x := v.Value.(type) {
 		case *Wallet:
 			return x, true

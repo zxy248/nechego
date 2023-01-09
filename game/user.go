@@ -15,17 +15,16 @@ const (
 )
 
 type User struct {
-	TUID             int64
-	Energy           int
-	EnergyCap        int
-	Rating           float64
-	Messages         int
-	Banned           bool
-	Birthday         time.Time
-	Gender           Gender
-	Status           string
-	Inventory        []*Item
-	inventoryHotkeys map[int]*Item
+	TUID      int64
+	Energy    int
+	EnergyCap int
+	Rating    float64
+	Messages  int
+	Banned    bool
+	Birthday  time.Time
+	Gender    Gender
+	Status    string
+	Inventory *Items
 }
 
 func NewUser(tuid int64) *User {
@@ -33,7 +32,7 @@ func NewUser(tuid int64) *User {
 		TUID:      tuid,
 		EnergyCap: 5,
 		Rating:    1500,
-		Inventory: []*Item{},
+		Inventory: NewItems(),
 	}
 }
 
@@ -49,92 +48,48 @@ func (u *User) IncrementMessages() {
 	u.Messages++
 }
 
-func (u *User) AddRating(δ float64) {
-	u.Rating += δ
+func (u *User) AddRating(r float64) {
+	u.Rating += r
 }
 
-func (u *User) SpendEnergy(δ int) bool {
-	if u.Energy < δ {
+func (u *User) SpendEnergy(e int) bool {
+	if u.Energy < e {
 		return false
 	}
-	u.Energy -= δ
+	u.Energy -= e
 	return true
 }
 
-func (u *User) RestoreEnergy(δ int) {
-	u.Energy += δ
+func (u *User) RestoreEnergy(e int) {
+	u.Energy += e
 	if u.Energy > u.EnergyCap {
 		u.Energy = u.EnergyCap
 	}
 }
 
-func (u *User) SpendMoney(δ int) bool {
+func (u *User) SpendMoney(n int) bool {
 	w, ok := u.Wallet()
 	if !ok {
 		return false
 	}
-	if w.Money < δ {
+	if w.Money < n {
 		return false
 	}
-	w.Money -= δ
+	w.Money -= n
 	return true
 }
 
-func (u *User) AddMoney(δ int) {
+func (u *User) AddMoney(n int) {
 	w, ok := u.Wallet()
 	if !ok {
 		return
 	}
-	w.Money += δ
-}
-
-func (u *User) Items() []*Item {
-	n := 0
-	for _, v := range u.Inventory {
-		if v.Expire.IsZero() || time.Now().Before(v.Expire) {
-			u.Inventory[n] = v
-			n++
-		}
-	}
-	u.Inventory = u.Inventory[:n]
-	return u.Inventory
-}
-
-func (u *User) ListInventory() []*Item {
-	var r []*Item
-	u.inventoryHotkeys, r = hotkeys(u.Inventory)
-	return r
-}
-
-func (u *User) ItemByID(id int) (i *Item, ok bool) {
-	for _, v := range u.Inventory {
-		if v.ID == id {
-			return v, true
-		}
-	}
-	return nil, false
-}
-
-func (u *User) HasItem(i *Item) bool {
-	for _, j := range u.Items() {
-		if i == j {
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) ItemByHotkey(k int) (i *Item, ok bool) {
-	i, ok = u.inventoryHotkeys[k]
-	if !ok || !u.HasItem(i) {
-		return nil, false
-	}
-	return i, true
+	w.Money += n
 }
 
 func (u *User) Total() int {
 	t := 0
-	for _, v := range u.Items() {
+	for _, v := range u.Inventory.list() {
 		switch x := v.Value.(type) {
 		case *Wallet:
 			t += x.Money
@@ -148,7 +103,7 @@ func (u *User) Total() int {
 }
 
 func (u *User) InDebt() bool {
-	for _, v := range u.Items() {
+	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
 		case *Debt:
 			return true
@@ -158,7 +113,7 @@ func (u *User) InDebt() bool {
 }
 
 func (u *User) IsEblan() bool {
-	for _, v := range u.Items() {
+	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
 		case *EblanToken:
 			return true
@@ -168,7 +123,7 @@ func (u *User) IsEblan() bool {
 }
 
 func (u *User) IsAdmin() bool {
-	for _, v := range u.Items() {
+	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
 		case *AdminToken:
 			return true
@@ -178,7 +133,7 @@ func (u *User) IsAdmin() bool {
 }
 
 func (u *User) IsPair() bool {
-	for _, v := range u.Items() {
+	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
 		case *PairToken:
 			return true
@@ -190,6 +145,7 @@ func (u *User) IsPair() bool {
 func (u *User) Eat(i *Item) bool {
 	switch x := i.Value.(type) {
 	case *fishing.Fish:
+		u.Inventory.Remove(i)
 		e := 1
 		if x.Heavy() {
 			e = 2

@@ -22,7 +22,6 @@ const (
 )
 
 type Item struct {
-	ID           int
 	Type         ItemType
 	Transferable bool
 	Expire       time.Time
@@ -62,12 +61,80 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(raw, i.Value)
 }
 
-func hotkeys(items []*Item) (map[int]*Item, []*Item) {
-	m := map[int]*Item{}
-	r := []*Item{}
-	for i, v := range items {
-		m[i] = v
-		r = append(r, v)
+type Items struct {
+	I    []*Item
+	keys map[int]*Item
+}
+
+func NewItems() *Items {
+	return &Items{I: []*Item{}}
+}
+
+func (it *Items) Add(x *Item) {
+	it.I = append(it.I, x)
+}
+
+func (it *Items) Remove(x *Item) bool {
+	for i, v := range it.I {
+		if v == x {
+			it.I[i] = it.I[len(it.I)-1]
+			it.I = it.I[:len(it.I)-1]
+			return true
+		}
 	}
-	return m, r
+	return false
+}
+
+func (it *Items) Exist(x *Item) bool {
+	for _, v := range it.I {
+		if v == x {
+			return true
+		}
+	}
+	return false
+}
+
+func (it *Items) ByKey(k int) (x *Item, ok bool) {
+	x, ok = it.keys[k]
+	if !ok || !it.Exist(x) {
+		return nil, false
+	}
+	return x, true
+}
+
+func (it *Items) updateHotkeys() {
+	it.keys = map[int]*Item{}
+	for i, v := range it.I {
+		it.keys[i] = v
+	}
+}
+
+func (it *Items) list() []*Item {
+	n := 0
+	for _, v := range it.I {
+		if v.Expire.IsZero() || time.Now().Before(v.Expire) {
+			it.I[n] = v
+			n++
+		}
+	}
+	it.I = it.I[:n]
+	return it.I
+}
+
+func (it *Items) List() []*Item {
+	// updates hotkeys; only for public use
+	it.list()
+	it.updateHotkeys()
+	return it.I
+}
+
+func (it *Items) Move(dst *Items, x *Item) bool {
+	if !x.Transferable {
+		return false
+	}
+	if ok := it.Remove(x); !ok {
+		return false
+	}
+	dst.Add(x)
+	return true
 }

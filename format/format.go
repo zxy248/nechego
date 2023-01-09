@@ -42,3 +42,7 @@ func Products(products []*game.Product) []string {
 func Money(q int) string {
 	return fmt.Sprintf("<code>%d ₽</code>", q)
 }
+
+func Energy(e int) string {
+	return fmt.Sprintf("<code>%d ⚡</code>", e)
+}

@@ -3,21 +3,17 @@ package game
 import "time"
 
 func (w *World) DailyEblan() (u *User, ok bool) {
-	w.TraverseUsers(func(v *User) {
-		if v.IsEblan() {
-			u, ok = v, true
-			return
+	for _, u = range w.Users {
+		if u.IsEblan() {
+			return u, true
 		}
-	})
-	if !ok {
-		return w.rollDailyEblan(), true
 	}
-	return
+	return w.rollDailyEblan(), true
 }
 
 func (w *World) rollDailyEblan() *User {
 	u := w.RandomUser()
-	w.AddItem(u, &Item{
+	u.Inventory.Add(&Item{
 		Type:   ItemTypeEblanToken,
 		Value:  &EblanToken{},
 		Expire: tomorrow(),
@@ -26,21 +22,17 @@ func (w *World) rollDailyEblan() *User {
 }
 
 func (w *World) DailyAdmin() (u *User, ok bool) {
-	w.TraverseUsers(func(v *User) {
-		if v.IsAdmin() {
-			u, ok = v, true
-			return
+	for _, u = range w.Users {
+		if u.IsAdmin() {
+			return u, true
 		}
-	})
-	if !ok {
-		return w.rollDailyAdmin(), true
 	}
-	return
+	return w.rollDailyAdmin(), true
 }
 
 func (w *World) rollDailyAdmin() *User {
 	u := w.RandomUser()
-	w.AddItem(u, &Item{
+	u.Inventory.Add(&Item{
 		Type:         ItemTypeAdminToken,
 		Value:        &AdminToken{},
 		Expire:       tomorrow(),
@@ -53,14 +45,14 @@ func (w *World) DailyPair() (pair []*User, ok bool) {
 	if len(w.Users) < 2 {
 		return nil, false
 	}
-	w.TraverseUsers(func(v *User) {
-		if v.IsPair() {
-			pair = append(pair, v)
+	for _, u := range w.Users {
+		if u.IsPair() {
+			pair = append(pair, u)
 		}
 		if len(pair) == 2 {
-			return
+			break
 		}
-	})
+	}
 	if len(pair) != 2 {
 		return w.rollDailyPair()
 	}
@@ -72,8 +64,8 @@ func (w *World) rollDailyPair() (pair []*User, ok bool) {
 	if len(pair) != 2 {
 		return nil, false
 	}
-	w.AddItem(pair[0], pairToken())
-	w.AddItem(pair[1], pairToken())
+	pair[0].Inventory.Add(pairToken())
+	pair[1].Inventory.Add(pairToken())
 	return pair, true
 }
 

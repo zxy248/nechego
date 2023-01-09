@@ -75,34 +75,25 @@ func (u *Universe) SaveAll() error {
 }
 
 type World struct {
-	TGID         int64
-	Users        []*User
-	Floor        []*Item
-	floorHotkeys map[int]*Item
-	Market       *Market
-	NextItemID   int
+	TGID   int64
+	Users  []*User
+	Floor  *Items
+	Market *Market
 
-	mu sync.Mutex
-}
-
-func (w *World) Lock() {
-	w.mu.Lock()
-}
-
-func (w *World) Unlock() {
-	w.mu.Unlock()
+	sync.Mutex `json:"-"`
 }
 
 func NewWorld(id int64) *World {
 	return &World{
-		TGID:  id,
-		Users: []*User{},
-		Floor: []*Item{},
+		TGID:   id,
+		Users:  []*User{},
+		Floor:  NewItems(),
+		Market: NewMarket(),
 	}
 }
 
-func LoadWorld(path string) (*World, error) {
-	f, err := os.Open(path)
+func LoadWorld(name string) (*World, error) {
+	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
 	}
@@ -115,30 +106,20 @@ func LoadWorld(path string) (*World, error) {
 	return w, nil
 }
 
-func (w *World) Save(path string) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0666)
+func (w *World) Save(name string) error {
+	os.Rename(name, fmt.Sprintf("%s-%d", name, time.Now().Unix()))
+	f, err := os.Create(name)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	w.mu.Lock()
-	defer w.mu.Unlock()
+	w.Lock()
+	defer w.Unlock()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "\t")
 	return enc.Encode(w)
-}
-
-func (w *World) Identify(i *Item) {
-	if i.Type == ItemTypeUnknown {
-		panic("cannot itemize: item type unknown")
-	}
-	if i.ID != 0 {
-		return
-	}
-	i.ID = w.NextItemID
-	w.NextItemID++
 }
 
 func (w *World) AddUser(u *User) {
@@ -162,78 +143,16 @@ func (w *World) RandomUsers(n int) []*User {
 }
 
 func (w *World) UserByID(tuid int64) (u *User, ok bool) {
-	w.TraverseUsers(func(v *User) {
-		if v.TUID == tuid {
-			u, ok = v, true
-			return
+	for _, u = range w.Users {
+		if u.TUID == tuid {
+			return u, true
 		}
-	})
-	return
-}
-
-func (w *World) TraverseUsers(f func(*User)) {
-	for _, v := range w.Users {
-		f(v)
 	}
+	return nil, false
 }
 
 func (w *World) RestoreEnergy() {
-	w.TraverseUsers(func(u *User) {
+	for _, u := range w.Users {
 		u.RestoreEnergy(1)
-	})
-}
-
-func (w *World) AddItem(u *User, i *Item) {
-	w.Identify(i)
-	u.Inventory = append(u.Inventory, i)
-}
-
-func (w *World) Drop(u *User, i *Item) bool {
-	if !i.Transferable {
-		return false
 	}
-	for n, j := range u.Inventory {
-		if i == j {
-			u.Inventory[n] = u.Inventory[len(u.Inventory)-1]
-			u.Inventory = u.Inventory[:len(u.Inventory)-1]
-			w.Floor = append(w.Floor, j)
-			return true
-		}
-	}
-	return false
-}
-
-func (w *World) Pick(u *User, i *Item) bool {
-	for n, j := range w.Floor {
-		if i == j {
-			w.Floor[n] = w.Floor[len(w.Floor)-1]
-			w.Floor = w.Floor[:len(w.Floor)-1]
-			u.Inventory = append(w.Floor, j)
-			return true
-		}
-	}
-	return false
-}
-
-func (w *World) ListFloor() []*Item {
-	var r []*Item
-	w.floorHotkeys, r = hotkeys(w.Floor)
-	return r
-}
-
-func (w *World) OnFloor(i *Item) bool {
-	for _, j := range w.Floor {
-		if i == j {
-			return true
-		}
-	}
-	return false
-}
-
-func (w *World) ItemByKey(k int) (i *Item, ok bool) {
-	i, ok = w.floorHotkeys[k]
-	if !ok || !w.OnFloor(i) {
-		return nil, false
-	}
-	return i, true
 }

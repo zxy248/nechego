@@ -47,11 +47,10 @@ func (h *Name) Handle(c tele.Context) error {
 		return c.Send(fmt.Sprintf("⚠️ Максимальная длина имени %d символов.", max))
 	}
 
-	user := c.Sender()
-	if err := teleutil.Promote(c, teleutil.Member(c, user)); err != nil {
+	if err := teleutil.Promote(c, teleutil.Member(c, c.Sender())); err != nil {
 		return err
 	}
-	if err := c.Bot().SetAdminTitle(c.Chat(), user, name); err != nil {
+	if err := c.Bot().SetAdminTitle(c.Chat(), c.Sender(), name); err != nil {
 		return err
 	}
 	return c.Send(fmt.Sprintf("Имя <b>%s</b> установлено ✅", name), tele.ModeHTML)
@@ -76,7 +75,7 @@ func (h *Inventory) Handle(c tele.Context) error {
 	if !ok {
 		return errors.New("user not found")
 	}
-	items := u.ListInventory()
+	items := u.Inventory.List()
 	mention := teleutil.Mention(c, teleutil.Member(c, c.Sender()))
 	head := fmt.Sprintf("<b>🗄 Инвентарь: %s</b>", mention)
 	lines := append([]string{head}, format.Items(items)...)
@@ -87,7 +86,7 @@ type Drop struct {
 	Universe *game.Universe
 }
 
-var dropRe = regexp.MustCompile("^!выкинуть (.*)")
+var dropRe = regexp.MustCompile("^!(выкинуть|выбросить) (.*)")
 
 func (h *Drop) Match(s string) bool {
 	return dropRe.MatchString(s)
@@ -102,15 +101,15 @@ func (h *Drop) Handle(c tele.Context) error {
 	if !ok {
 		return errors.New("user not found")
 	}
-	k, err := strconv.Atoi(teleutil.Args(c, dropRe)[1])
+	key, err := strconv.Atoi(teleutil.Args(c, dropRe)[2])
 	if err != nil {
 		return c.Send("#⃣ Укажите номер предмета.")
 	}
-	item, ok := user.ItemByHotkey(k)
+	item, ok := user.Inventory.ByKey(key)
 	if !ok {
 		return c.Send("🗄 Такого предмета нет в инвентаре.")
 	}
-	if ok := world.Drop(user, item); !ok {
+	if ok := user.Inventory.Move(world.Floor, item); !ok {
 		return c.Send("♻ Вы не можете выбросить этот предмет.")
 	}
 	out := fmt.Sprintf("🚮 Вы выбросили %s.", format.Item(item))
@@ -136,18 +135,18 @@ func (h *Pick) Handle(c tele.Context) error {
 	if !ok {
 		return errors.New("user not found")
 	}
-	k, err := strconv.Atoi(teleutil.Args(c, pickRe)[1])
+	key, err := strconv.Atoi(teleutil.Args(c, pickRe)[1])
 	if err != nil {
 		return c.Send("#⃣ Укажите номер предмета.")
 	}
-	i, ok := world.ItemByKey(k)
+	item, ok := world.Floor.ByKey(key)
 	if !ok {
 		return c.Send("🗄 Такого предмета нет на полу.")
 	}
-	if ok := world.Pick(user, i); !ok {
+	if ok := world.Floor.Move(user.Inventory, item); !ok {
 		return c.Send("♻ Вы не можете взять этот предмет.")
 	}
-	out := fmt.Sprintf("🫳 Вы взяли %s.", format.Item(i))
+	out := fmt.Sprintf("🫳 Вы взяли %s.", format.Item(item))
 	return c.Send(out, tele.ModeHTML)
 }
 
@@ -166,7 +165,7 @@ func (h *Floor) Handle(c tele.Context) error {
 	world.Lock()
 	defer world.Unlock()
 
-	items := world.ListFloor()
+	items := world.Floor.List()
 	head := "<b>🗑 Пол</b>"
 	lines := append([]string{head}, format.Items(items)...)
 	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
@@ -212,16 +211,15 @@ func (h *Buy) Handle(c tele.Context) error {
 	if err != nil {
 		return c.Send("#⃣ Укажите номер предмета.")
 	}
-
 	user, ok := world.UserByID(c.Sender().ID)
 	if !ok {
 		return errors.New("user not found")
 	}
-	p, ok := user.Buy(world.Market, key)
+	product, ok := user.Buy(world.Market, key)
 	if !ok {
 		return c.Send("💵 Недостаточно средств.")
 	}
-	out := fmt.Sprintf("🛒 Вы приобрели %s за %s.", format.Item(p.Item), format.Money(p.Price))
+	out := fmt.Sprintf("🛒 Вы приобрели %s за %s.", format.Item(product.Item), format.Money(product.Price))
 	return c.Send(out, tele.ModeHTML)
 }
 
@@ -248,14 +246,16 @@ func (h *Eat) Handle(c tele.Context) error {
 	if err != nil {
 		return c.Send("#⃣ Укажите номер предмета.")
 	}
-	item, ok := user.ItemByHotkey(key)
+	item, ok := user.Inventory.ByKey(key)
 	if !ok {
 		return c.Send("🗄 Такого предмета нет в инвентаре.")
 	}
-	e := user.Energy
 	if ok := user.Eat(item); !ok {
 		return c.Send("🤮")
 	}
-	out := fmt.Sprintf("🍊 Вы съели %s <code>[+%d ⚡]</code>", format.Item(item), user.Energy-e)
+	out := fmt.Sprintf("🍊 Вы съели %s.\n\n<i>Энергии осталось: %s</i>",
+		format.Item(item),
+		format.Energy(user.Energy),
+	)
 	return c.Send(out, tele.ModeHTML)
 }

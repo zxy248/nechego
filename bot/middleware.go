@@ -24,19 +24,18 @@ func (m *UserAdder) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 		_, ok := w.UserByID(user.ID)
 		if !ok {
 			user := game.NewUser(user.ID)
-			wallet := &game.Item{
+			fish := fishing.RandomFish()
+			w.AddUser(user)
+			user.Inventory.Add(&game.Item{
 				Type:         game.ItemTypeWallet,
 				Transferable: true,
 				Value:        &game.Wallet{Money: 5000},
-			}
-			fish := &game.Item{
+			})
+			user.Inventory.Add(&game.Item{
 				Type:         game.ItemTypeFish,
 				Transferable: true,
-				Value:        fishing.RandomFish(),
-			}
-			w.AddUser(user)
-			w.AddItem(user, wallet)
-			w.AddItem(user, fish)
+				Value:        &fish,
+			})
 		}
 		w.Unlock()
 		return next(c)

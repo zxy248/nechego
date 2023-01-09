@@ -10,6 +10,10 @@ type Market struct {
 	keys map[int]*Product
 }
 
+func NewMarket() *Market {
+	return &Market{P: []*Product{}}
+}
+
 func (m *Market) Add(p *Product) {
 	m.P = append(m.P, p)
 }
@@ -37,6 +41,6 @@ func (u *User) Buy(m *Market, key int) (p *Product, ok bool) {
 			m.P = m.P[:len(m.P)-1]
 		}
 	}
-	u.Inventory = append(u.Inventory, p.Item)
+	u.Inventory.Add(p.Item)
 	return p, true
 }
