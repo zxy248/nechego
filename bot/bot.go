@@ -79,7 +79,14 @@ func main() {
 		&UserAdder{Universe: universe},
 		&RequireSupergroup{},
 	}
-
+	go func() {
+		for range time.NewTicker(time.Second * 30).C {
+			universe.ForEachWorld(func(w *game.World) {
+				w.RestoreEnergy()
+				w.Market.Refill()
+			})
+		}
+	}()
 	bot.Handle(tele.OnText, router.OnText)
 	bot.Start()
 }

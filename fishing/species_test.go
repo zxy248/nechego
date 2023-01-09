@@ -4,7 +4,7 @@ import "testing"
 
 func TestSpeciesData(t *testing.T) {
 	i := 0
-	for _, s := range speciesData {
+	for _, s := range species {
 		i++
 		if s.name == "" {
 			t.Errorf("empty string")

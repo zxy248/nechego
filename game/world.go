@@ -40,6 +40,14 @@ func (u *Universe) MustWorld(id int64) *World {
 	return w
 }
 
+func (u *Universe) ForEachWorld(action func(*World)) {
+	for _, w := range u.worlds {
+		w.Lock()
+		action(w)
+		w.Unlock()
+	}
+}
+
 func (u *Universe) World(id int64) (*World, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()

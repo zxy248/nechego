@@ -45,5 +45,5 @@ func (u *User) Fish(rod *FishingRod) *fishing.Fish {
 	f.Length *= q
 	f.Weight *= q
 	rod.Durability -= 0.01
-	return &f
+	return f
 }

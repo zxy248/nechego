@@ -5,7 +5,13 @@ import (
 	"math/rand"
 )
 
-var speciesData = map[Species]struct {
+const (
+	minimumWeight      = 0.05
+	cheapThreshold     = 1000
+	expensiveThreshold = 10000
+)
+
+var species = map[Species]struct {
 	name          string
 	normalWeight  float64
 	maximumWeight float64
@@ -37,18 +43,12 @@ var speciesData = map[Species]struct {
 	Ide:         {"Язь", 1.0, 7.5, Regular, 300, false},
 	Roach:       {"Плотва", 0.2, 2.0, Regular, 280, false},
 	BigheadCarp: {"Толстолобик", 1.2, 16.0, Regular, 200, false},
-	WhiteBream:  {"Белоглазка", 0.1, 0.80, Belly, 50, false},
+	WhiteBream:  {"Белоглазка", 0.1, 0.8, Belly, 50, false},
 	Rudd:        {"Красноперка", 0.3, 2.0, Belly, 100, false},
 	Bleak:       {"Уклейка", 0.02, 0.06, Regular, 400, false},
 	Nase:        {"Подуст", 0.4, 1.6, Regular, 180, false},
 	Taimen:      {"Таймень", 4.0, 70.0, Long, 900, true},
 }
-
-const (
-	MinWeight          = 50e-3
-	CheapThreshold     = 1e3
-	ExpensiveThreshold = 1e4
-)
 
 type Constitution int
 
@@ -75,7 +75,7 @@ func (t Constitution) NormalLength(weight float64) float64 {
 
 func (t Constitution) randomLength(weight float64) float64 {
 	mu := t.NormalLength(weight)
-	sigma := mu / math.Pow(math.Pi, 2)
+	sigma := mu / 10.0
 	return rand.NormFloat64()*sigma + mu
 }
 
@@ -120,37 +120,37 @@ func RandomSpecies() Species {
 }
 
 func (s Species) String() string {
-	return speciesData[s].name
+	return species[s].name
 }
 
 func (s Species) NormalWeight() float64 {
-	return speciesData[s].normalWeight
+	return species[s].normalWeight
 }
 
 func (s Species) MaximumWeight() float64 {
-	return speciesData[s].maximumWeight
+	return species[s].maximumWeight
 }
 
 func (s Species) Constitution() Constitution {
-	return speciesData[s].constitution
+	return species[s].constitution
 }
 
 func (s Species) PricePerKg() float64 {
-	return speciesData[s].pricePerKg
+	return species[s].pricePerKg
 }
 
 func (s Species) Predator() bool {
-	return speciesData[s].predator
+	return species[s].predator
 }
 
 func (s Species) randomWeight() float64 {
-	weight := rand.NormFloat64()*s.weightSigma() + s.NormalWeight()
-	if weight < MinWeight {
-		weight = rand.Float64()*(s.NormalWeight()-MinWeight) + MinWeight
+	w := rand.NormFloat64()*s.weightStdDev() + s.NormalWeight()
+	if w < minimumWeight {
+		w = rand.Float64()*(s.NormalWeight()-minimumWeight) + minimumWeight
 	}
-	return weight
+	return w
 }
 
-func (s Species) weightSigma() float64 {
+func (s Species) weightStdDev() float64 {
 	return (s.MaximumWeight() - s.NormalWeight()) / 3.0
 }
