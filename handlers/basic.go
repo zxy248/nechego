@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -70,6 +71,56 @@ func (h *Who) Handle(c tele.Context) error {
 	arg := whoRe.FindStringSubmatch(c.Message().Text)[1]
 	out := teleutil.Mention(c, member) + " " + html.EscapeString(arg)
 	return c.Send(out, tele.ModeHTML)
+}
+
+type List struct {
+	Universe *game.Universe
+}
+
+var listRe = regexp.MustCompile("^!список ?(.*)")
+
+func (h *List) Match(s string) bool {
+	return listRe.MatchString(s)
+}
+
+func (h *List) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	users := world.RandomUsers(3 + rand.Intn(3))
+	arg := teleutil.Args(c, listRe)[1]
+	s := []string{fmt.Sprintf("<b>📝 Список %s</b>", arg)}
+	for _, u := range users {
+		mention := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(u.TUID)))
+		s = append(s, fmt.Sprintf("<b>•</b> %s", mention))
+	}
+	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
+}
+
+type Top struct {
+	Universe *game.Universe
+}
+
+var topRe = regexp.MustCompile("^!топ ?(.*)")
+
+func (h *Top) Match(s string) bool {
+	return topRe.MatchString(s)
+}
+
+func (h *Top) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	users := world.RandomUsers(3 + rand.Intn(3))
+	arg := teleutil.Args(c, topRe)[1]
+	s := []string{fmt.Sprintf("<b>🏆 Топ %s</b>", arg)}
+	for i, u := range users {
+		mention := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(u.TUID)))
+		s = append(s, fmt.Sprintf("<i>%d.</i> %s", i+1, mention))
+	}
+	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
 }
 
 type Mouse struct {

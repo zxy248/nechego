@@ -46,6 +46,8 @@ func main() {
 		&handlers.Game{},
 		&handlers.Infa{},
 		&handlers.Who{Universe: universe},
+		&handlers.Top{Universe: universe},
+		&handlers.List{Universe: universe},
 		&handlers.Save{Universe: universe},
 		&handlers.Weather{},
 		&handlers.Cat{},
@@ -73,6 +75,7 @@ func main() {
 		&handlers.Poppy{},
 		&handlers.Sima{},
 		&handlers.Hello{Path: "data/hello.json"},
+		&handlers.Status{Universe: universe},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},

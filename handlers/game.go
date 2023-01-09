@@ -314,3 +314,31 @@ func (h *Fish) Handle(c tele.Context) error {
 	out := fmt.Sprintf("🎣 %s получает рыбу: %s", mention, format.Fish(fish))
 	return c.Send(out, tele.ModeHTML)
 }
+
+type Status struct {
+	Universe *game.Universe
+}
+
+var statusRe = regexp.MustCompile("^!статус (.*)")
+
+func (h *Status) Match(s string) bool {
+	return statusRe.MatchString(s)
+}
+
+func (h *Status) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	status := teleutil.Args(c, statusRe)[1]
+	const maxlen = 120
+	if utf8.RuneCountInString(status) > maxlen {
+		return c.Send("💬 Максимальная длина статуса %d символов.", maxlen)
+	}
+	user.Status = status
+	return c.Send("✅ Статус установлен.")
+}

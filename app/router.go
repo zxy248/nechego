@@ -37,14 +37,10 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleCapital
 	case input.CommandStrength:
 		return a.handleStrength
-	case input.CommandEnergy:
-		return handleEnergy
 	case input.CommandRating:
 		return a.handleTopElo
 	case input.CommandAvatar:
 		return a.handleAvatar
-	case input.CommandStatus:
-		return handleStatus
 	case input.CommandTopStrong:
 		return a.handleTopStrong
 	case input.CommandDeposit:
@@ -59,10 +55,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return requireDebtor(a.handleRepay)
 	case input.CommandTopWeak:
 		return a.handleTopWeak
-	case input.CommandList:
-		return a.handleList
-	case input.CommandTop:
-		return a.handleTop
 	case input.CommandBasili:
 		return a.handleBasili
 	case input.CommandCasper:

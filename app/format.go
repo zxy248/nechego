@@ -101,41 +101,6 @@ func formatIcons(icon ...string) string {
 	return fmt.Sprintf("<code>%s</code>", icons)
 }
 
-const longListThreshold = 10
-
-func ellipsizeLong(ss []string) []string {
-	if len(ss) > longListThreshold {
-		ss = ss[:longListThreshold]
-		ss[longListThreshold-1] = ellipsis
-	}
-	return ss
-}
-
-func itemize(s ...string) string {
-	var out string
-	for _, t := range s {
-		out += fmt.Sprintf("<b>•</b> %s\n", t)
-	}
-	return strings.TrimSpace(ellipsizeEmpty(out))
-}
-
-func enumerate(s ...string) string {
-	var out string
-	for i, t := range s {
-		out += fmt.Sprintf("<i>%d.</i> %s\n", i+1, t)
-	}
-	return strings.TrimSpace(ellipsizeEmpty(out))
-}
-
-const ellipsis = "<code>. . .</code>"
-
-func ellipsizeEmpty(s string) string {
-	if s == "" {
-		return ellipsis
-	}
-	return s
-}
-
 func formatEnergyRemaining(n int) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", formatEnergy(n))
 }
@@ -152,42 +117,6 @@ const maxTopNumber = 5
 // clampTopNumber returns x if x < maxTopNumber; otherwise returns maxTopNumber.
 func clampTopNumber(x int) int {
 	return numbers.Min(x, maxTopNumber)
-}
-
-func (a *App) itemizeUsers(u ...model.User) string {
-	s := []string{}
-	for _, uu := range u {
-		s = append(s, a.mention(uu))
-	}
-	return itemize(s...)
-}
-
-func (a *App) enumerateUsers(u ...model.User) string {
-	s := []string{}
-	for _, uu := range u {
-		s = append(s, a.mention(uu))
-	}
-	return enumerate(s...)
-}
-
-func itemizeCommands(c ...input.Command) string {
-	s := []string{}
-	for _, cc := range c {
-		s = append(s, formatCommand(cc))
-	}
-	return itemize(s...)
-}
-
-func joinSections(s ...string) string {
-	return strings.Join(s, "\n\n")
-}
-
-func joinLines(s ...string) string {
-	return strings.Join(s, "\n")
-}
-
-func joinSpace(s ...string) string {
-	return strings.Join(s, " ")
 }
 
 var (
