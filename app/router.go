@@ -55,14 +55,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return requireDebtor(a.handleRepay)
 	case input.CommandTopWeak:
 		return a.handleTopWeak
-	case input.CommandBasili:
-		return a.handleBasili
-	case input.CommandCasper:
-		return a.handleCasper
-	case input.CommandZeus:
-		return a.handleZeus
-	case input.CommandPic:
-		return a.handlePic
 	case input.CommandDice:
 		return a.handleDice
 	case input.CommandKick:

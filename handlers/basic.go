@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -153,7 +152,7 @@ func (h *Tiktok) Handle(c tele.Context) error {
 		return err
 	}
 	if len(files) == 0 {
-		return errors.New("empty directory")
+		return fmt.Errorf("empty directory %s", h.Path)
 	}
 	f := files[rand.Intn(len(files))]
 	return c.Send(&tele.Video{File: tele.FromDisk(filepath.Join(h.Path, f.Name()))})
@@ -449,4 +448,100 @@ func (h *Hello) Handle(c tele.Context) error {
 		}
 	}
 	return c.Send(&h.cache[rand.Intn(len(h.cache))])
+}
+
+type Basili struct {
+	Path string
+}
+
+var basiliRe = regexp.MustCompile("^!(муся|марсик|кот василия|кошка василия)")
+
+func (h *Basili) Match(s string) bool {
+	return basiliRe.MatchString(s)
+}
+
+func (h *Basili) Handle(c tele.Context) error {
+	files, err := os.ReadDir(h.Path)
+	if err != nil {
+		return err
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("empty directory %s", h.Path)
+	}
+	f := files[rand.Intn(len(files))]
+	return c.Send(&tele.Photo{File: tele.FromDisk(filepath.Join(h.Path, f.Name()))})
+}
+
+type Casper struct {
+	Path string
+}
+
+var casperRe = regexp.MustCompile("^!касп[ие]р")
+
+func (h *Casper) Match(s string) bool {
+	return casperRe.MatchString(s)
+}
+
+func (h *Casper) Handle(c tele.Context) error {
+	files, err := os.ReadDir(h.Path)
+	if err != nil {
+		return err
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("empty directory %s", h.Path)
+	}
+	f := files[rand.Intn(len(files))]
+	return c.Send(&tele.Photo{File: tele.FromDisk(filepath.Join(h.Path, f.Name()))})
+}
+
+type Zeus struct {
+	Path string
+}
+
+var zeusRe = regexp.MustCompile("^!зевс")
+
+func (h *Zeus) Match(s string) bool {
+	return zeusRe.MatchString(s)
+}
+
+func (h *Zeus) Handle(c tele.Context) error {
+	files, err := os.ReadDir(h.Path)
+	if err != nil {
+		return err
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("empty directory %s", h.Path)
+	}
+	f := files[rand.Intn(len(files))]
+	return c.Send(&tele.Photo{File: tele.FromDisk(filepath.Join(h.Path, f.Name()))})
+}
+
+type Pic struct {
+	Path string
+}
+
+var picRe = regexp.MustCompile("^!пик")
+
+func (h *Pic) Match(s string) bool {
+	return picRe.MatchString(s)
+}
+
+func (h *Pic) Handle(c tele.Context) error {
+	dirs, err := os.ReadDir(h.Path)
+	if err != nil {
+		return err
+	}
+	if len(dirs) == 0 {
+		return fmt.Errorf("empty directory %s", h.Path)
+	}
+	d := dirs[rand.Intn(len(dirs))]
+	files, err := os.ReadDir(filepath.Join(h.Path, d.Name()))
+	if err != nil {
+		return err
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("empty directory %s", h.Path)
+	}
+	f := files[rand.Intn(len(files))]
+	return c.Send(&tele.Photo{File: tele.FromDisk(filepath.Join(h.Path, d.Name(), f.Name()))})
 }
