@@ -51,3 +51,7 @@ func Energy(e int) string {
 func Fish(f *fishing.Fish) string {
 	return fmt.Sprintf("<code>%s</code>", f)
 }
+
+func Key(k int) string {
+	return fmt.Sprintf("<code>#%d</code>", k)
+}

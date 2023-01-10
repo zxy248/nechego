@@ -15,6 +15,7 @@ const (
 	ItemTypeEblanToken
 	ItemTypeAdminToken
 	ItemTypePairToken
+	ItemTypeCash
 	ItemTypeWallet
 	ItemTypeCreditCard
 	ItemTypeDebt
@@ -47,6 +48,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &AdminToken{}
 	case ItemTypePairToken:
 		i.Value = &PairToken{}
+	case ItemTypeCash:
+		i.Value = &Cash{}
 	case ItemTypeWallet:
 		i.Value = &Wallet{}
 	case ItemTypeCreditCard:

@@ -3,6 +3,7 @@ package teleutil
 import (
 	"nechego/format"
 	"regexp"
+	"strconv"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
@@ -43,4 +44,17 @@ func Promote(c tele.Context, m *tele.ChatMember) error {
 
 func Admin(m *tele.ChatMember) bool {
 	return m.Role == tele.Administrator || m.Role == tele.Creator
+}
+
+func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
+	s := Args(c, re)[n]
+	nums := []int{}
+	for _, x := range strings.Fields(s) {
+		n, err := strconv.Atoi(x)
+		if err != nil {
+			continue
+		}
+		nums = append(nums, n)
+	}
+	return nums
 }

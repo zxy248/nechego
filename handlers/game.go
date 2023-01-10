@@ -87,7 +87,7 @@ type Drop struct {
 	Universe *game.Universe
 }
 
-var dropRe = regexp.MustCompile("^!(выкинуть|выбросить) (.*)")
+var dropRe = regexp.MustCompile("^!(выкинуть|выбросить|выложить) (.*)")
 
 func (h *Drop) Match(s string) bool {
 	return dropRe.MatchString(s)
@@ -102,26 +102,27 @@ func (h *Drop) Handle(c tele.Context) error {
 	if !ok {
 		return errors.New("user not found")
 	}
-	key, err := strconv.Atoi(teleutil.Args(c, dropRe)[2])
-	if err != nil {
-		return c.Send("#⃣ Укажите номер предмета.")
+	for _, key := range teleutil.NumArg(c, dropRe, 2) {
+		item, ok := user.Inventory.ByKey(key)
+		if !ok {
+			return c.Send(fmt.Sprintf("🗄 Предмета %s нет в инвентаре.",
+				format.Key(key)), tele.ModeHTML)
+		}
+		if ok := user.Inventory.Move(world.Floor, item); !ok {
+			return c.Send(fmt.Sprintf("♻ Вы не можете выбросить %s.",
+				format.Item(item)), tele.ModeHTML)
+		}
+		c.Send(fmt.Sprintf("🚮 Вы выбросили %s.",
+			format.Item(item)), tele.ModeHTML)
 	}
-	item, ok := user.Inventory.ByKey(key)
-	if !ok {
-		return c.Send("🗄 Такого предмета нет в инвентаре.")
-	}
-	if ok := user.Inventory.Move(world.Floor, item); !ok {
-		return c.Send("♻ Вы не можете выбросить этот предмет.")
-	}
-	out := fmt.Sprintf("🚮 Вы выбросили %s.", format.Item(item))
-	return c.Send(out, tele.ModeHTML)
+	return nil
 }
 
 type Pick struct {
 	Universe *game.Universe
 }
 
-var pickRe = regexp.MustCompile("^!взять (.*)")
+var pickRe = regexp.MustCompile("^!(взять|подобрать) (.*)")
 
 func (h *Pick) Match(s string) bool {
 	return pickRe.MatchString(s)
@@ -136,19 +137,20 @@ func (h *Pick) Handle(c tele.Context) error {
 	if !ok {
 		return errors.New("user not found")
 	}
-	key, err := strconv.Atoi(teleutil.Args(c, pickRe)[1])
-	if err != nil {
-		return c.Send("#⃣ Укажите номер предмета.")
+	for _, key := range teleutil.NumArg(c, pickRe, 2) {
+		item, ok := world.Floor.ByKey(key)
+		if !ok {
+			return c.Send(fmt.Sprintf("🗄 Предмета %s нет на полу.",
+				format.Key(key)), tele.ModeHTML)
+		}
+		if ok := world.Floor.Move(user.Inventory, item); !ok {
+			return c.Send(fmt.Sprintf("♻ Вы не можете взять %s.",
+				format.Item(item)), tele.ModeHTML)
+		}
+		c.Send(fmt.Sprintf("🫳 Вы взяли %s.",
+			format.Item(item)), tele.ModeHTML)
 	}
-	item, ok := world.Floor.ByKey(key)
-	if !ok {
-		return c.Send("🗄 Такого предмета нет на полу.")
-	}
-	if ok := world.Floor.Move(user.Inventory, item); !ok {
-		return c.Send("♻ Вы не можете взять этот предмет.")
-	}
-	out := fmt.Sprintf("🫳 Вы взяли %s.", format.Item(item))
-	return c.Send(out, tele.ModeHTML)
+	return nil
 }
 
 type Floor struct {
@@ -220,8 +222,8 @@ func (h *Buy) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("💵 Недостаточно средств.")
 	}
-	out := fmt.Sprintf("🛒 Вы приобрели %s за %s.", format.Item(product.Item), format.Money(product.Price))
-	return c.Send(out, tele.ModeHTML)
+	return c.Send(fmt.Sprintf("🛒 Вы приобрели %s за %s.",
+		format.Item(product.Item), format.Money(product.Price)), tele.ModeHTML)
 }
 
 type Eat struct {
@@ -257,11 +259,8 @@ func (h *Eat) Handle(c tele.Context) error {
 	if ok := user.Eat(item); !ok {
 		return c.Send("🤮")
 	}
-	out := fmt.Sprintf("🍊 Вы съели %s.\n\n<i>Энергии осталось: %s</i>",
-		format.Item(item),
-		format.Energy(user.Energy),
-	)
-	return c.Send(out, tele.ModeHTML)
+	return c.Send(fmt.Sprintf("🍊 Вы съели %s.\n\n<i>Энергии осталось: %s</i>",
+		format.Item(item), format.Energy(user.Energy)), tele.ModeHTML)
 }
 
 type Fish struct {
@@ -311,8 +310,8 @@ func (h *Fish) Handle(c tele.Context) error {
 		Value:        fish,
 	})
 	mention := teleutil.Mention(c, teleutil.Member(c, c.Sender()))
-	out := fmt.Sprintf("🎣 %s получает рыбу: %s", mention, format.Fish(fish))
-	return c.Send(out, tele.ModeHTML)
+	return c.Send(fmt.Sprintf("🎣 %s получает рыбу: %s",
+		mention, format.Fish(fish)), tele.ModeHTML)
 }
 
 type Status struct {
@@ -337,8 +336,70 @@ func (h *Status) Handle(c tele.Context) error {
 	status := teleutil.Args(c, statusRe)[1]
 	const maxlen = 120
 	if utf8.RuneCountInString(status) > maxlen {
-		return c.Send("💬 Максимальная длина статуса %d символов.", maxlen)
+		return c.Send(fmt.Sprintf("💬 Максимальная длина статуса %d символов.", maxlen))
 	}
 	user.Status = status
 	return c.Send("✅ Статус установлен.")
+}
+
+type Sell struct {
+	Universe *game.Universe
+}
+
+var sellRe = regexp.MustCompile("^!продать (.*)")
+
+func (h *Sell) Match(s string) bool {
+	return sellRe.MatchString(s)
+}
+
+func (h *Sell) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	items := teleutil.NumArg(c, sellRe, 1)
+	for _, key := range items {
+		item, ok := user.Inventory.ByKey(key)
+		if !ok {
+			return c.Send(fmt.Sprintf("🗄 Предмета %s нет в инвентаре.",
+				format.Key(key)), tele.ModeHTML)
+		}
+		profit, ok := user.Sell(item)
+		if !ok {
+			return c.Send(fmt.Sprintf("ℹ️ Вы не можете продать %s.",
+				format.Item(item)), tele.ModeHTML)
+		}
+		c.Send(fmt.Sprintf("💵 Вы продали %s, заработав %s.",
+			format.Item(item), format.Money(profit)), tele.ModeHTML)
+	}
+	return nil
+}
+
+type Stack struct {
+	Universe *game.Universe
+}
+
+var stackRe = regexp.MustCompile("^!сложить")
+
+func (h *Stack) Match(s string) bool {
+	return stackRe.MatchString(s)
+}
+
+func (h *Stack) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	if ok := user.Stack(); ok {
+		return c.Send("💵 Вы сложили деньги.")
+	}
+	return c.Send("✅")
 }

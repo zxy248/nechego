@@ -5,6 +5,24 @@ import (
 	"time"
 )
 
+type Cash struct {
+	Money int
+}
+
+func (c Cash) String() string {
+	return fmt.Sprintf("💵 Наличные (%d ₽)", c.Money)
+}
+
+func (u *User) Cash() (c *Cash, ok bool) {
+	for _, v := range u.Inventory.list() {
+		switch x := v.Value.(type) {
+		case *Cash:
+			return x, true
+		}
+	}
+	return nil, false
+}
+
 type Wallet struct {
 	Money int
 }

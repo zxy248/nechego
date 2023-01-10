@@ -68,6 +68,11 @@ func (u *User) RestoreEnergy(e int) {
 }
 
 func (u *User) SpendMoney(n int) bool {
+	u.Stack()
+	return u.spendWallet(n) || u.spendCash(n)
+}
+
+func (u *User) spendWallet(n int) bool {
 	w, ok := u.Wallet()
 	if !ok {
 		return false
@@ -79,18 +84,58 @@ func (u *User) SpendMoney(n int) bool {
 	return true
 }
 
-func (u *User) AddMoney(n int) {
-	w, ok := u.Wallet()
+func (u *User) spendCash(n int) bool {
+	c, ok := u.Cash()
 	if !ok {
-		return
+		return false
 	}
-	w.Money += n
+	if c.Money < n {
+		return false
+	}
+	c.Money -= n
+	return true
+}
+
+func (u *User) AddMoney(n int) {
+	u.Inventory.Add(&Item{
+		Type:         ItemTypeCash,
+		Transferable: true,
+		Value:        &Cash{Money: n},
+	})
+}
+
+func (u *User) Stack() bool {
+	t := 0
+	for _, x := range u.Inventory.list() {
+		if cash, ok := x.Value.(*Cash); ok {
+			// TODO: possible optimization (from n^2 to n)
+			// Filter(func (i *Item) (keep bool))
+			u.Inventory.Remove(x)
+			t += cash.Money
+		}
+	}
+	if t == 0 {
+		return false
+	}
+	wallet, ok := u.Wallet()
+	if !ok {
+		u.Inventory.Add(&Item{
+			Type:         ItemTypeCash,
+			Transferable: true,
+			Value:        &Cash{Money: t},
+		})
+		return true
+	}
+	wallet.Money += t
+	return true
 }
 
 func (u *User) Total() int {
 	t := 0
 	for _, v := range u.Inventory.list() {
 		switch x := v.Value.(type) {
+		case *Cash:
+			t += x.Money
 		case *Wallet:
 			t += x.Money
 		case *CreditCard:
@@ -154,4 +199,20 @@ func (u *User) Eat(i *Item) bool {
 		return true
 	}
 	return false
+}
+
+func (u *User) Sell(i *Item) (profit int, ok bool) {
+	if ok = u.Inventory.Remove(i); !ok {
+		return 0, false
+	}
+	switch x := i.Value.(type) {
+	case *fishing.Fish:
+		n := int(x.Price())
+		u.AddMoney(n)
+		return n, true
+	default:
+		// can't sell; return item back
+		u.Inventory.Add(i)
+	}
+	return 0, false
 }
