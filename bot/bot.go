@@ -5,6 +5,7 @@ import (
 	"nechego/game"
 	"nechego/handlers"
 	"os"
+	"os/signal"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -90,6 +91,22 @@ func main() {
 			})
 		}
 	}()
+
+	interrupt := make(chan os.Signal, 1)
+	stop := make(chan struct{}, 1)
+	signal.Notify(interrupt, os.Interrupt)
+	go func() {
+		<-interrupt
+		log.Println("Stopping the bot...")
+		bot.Stop()
+		log.Println("Saving the universe...")
+		if err := universe.SaveAll(); err != nil {
+			log.Fatal(err)
+		}
+		stop <- struct{}{}
+	}()
 	bot.Handle(tele.OnText, router.OnText)
 	bot.Start()
+	<-stop
+	log.Println("Successful shutdown.")
 }
