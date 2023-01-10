@@ -205,6 +205,8 @@ func (u *User) Sell(i *Item) (profit int, ok bool) {
 	if ok = u.Inventory.Remove(i); !ok {
 		return 0, false
 	}
+	// TODO: another approach: implement interface{Cost() int} on items
+	// which can be sold, then cast it here
 	switch x := i.Value.(type) {
 	case *fishing.Fish:
 		n := int(x.Price())
