@@ -36,6 +36,10 @@ func (m *Market) Refill() {
 			Type:         ItemTypePet,
 			Transferable: true,
 			Value:        pets.RandomPet()}},
+		{500 + rand.Intn(4500), &Item{
+			Type:         ItemTypeDice,
+			Transferable: true,
+			Value:        &Dice{}}},
 	}
 	if rand.Float64() < 0.25 {
 		products = append(products, &Product{

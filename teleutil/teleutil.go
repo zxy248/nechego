@@ -58,6 +58,10 @@ func Admin(m *tele.ChatMember) bool {
 	return m.Role == tele.Administrator || m.Role == tele.Creator
 }
 
+func Left(m *tele.ChatMember) bool {
+	return m.Role == tele.Kicked || m.Role == tele.Left
+}
+
 func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
 	s := Args(c, re)[n]
 	nums := []int{}

@@ -19,14 +19,17 @@ type Router struct {
 	Middleware []Wrapper
 }
 
+func (r *Router) wrap(f tele.HandlerFunc) tele.HandlerFunc {
+	for _, w := range r.Middleware {
+		f = w.Wrap(f)
+	}
+	return f
+}
+
 func (r *Router) OnText(c tele.Context) error {
 	for _, h := range r.Handlers {
 		if h.Match(c.Text()) {
-			f := h.Handle
-			for _, w := range r.Middleware {
-				f = w.Wrap(f)
-			}
-			return f(c)
+			return r.wrap(h.Handle)(c)
 		}
 	}
 	return nil
@@ -89,8 +92,10 @@ func main() {
 		&handlers.Fight{Universe: universe},
 		&handlers.Profile{Universe: universe, AvatarPath: "data/avatar"},
 		&handlers.Avatar{Path: "data/avatar"},
+		&handlers.Dice{Universe: universe},
 	}
 	router.Middleware = []Wrapper{
+		&RandomPhoto{},
 		&MessageIncrementer{Universe: universe},
 		&UserAdder{Universe: universe},
 		&RequireSupergroup{},
@@ -121,6 +126,8 @@ func main() {
 		}
 		done <- struct{}{}
 	}()
+	rollHandler := &handlers.Roll{Universe: universe}
+	bot.Handle(tele.OnDice, router.wrap(rollHandler.Handle))
 	bot.Handle(tele.OnText, router.OnText)
 	bot.Handle(tele.OnPhoto, router.OnText)
 	bot.Start()

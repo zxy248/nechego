@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	tele "gopkg.in/telebot.v3"
@@ -509,4 +510,94 @@ func avatar(dir string, id int64) (a *tele.Photo, ok bool) {
 		return &tele.Photo{File: f}, true
 	}
 	return nil, false
+}
+
+type Dice struct {
+	Universe *game.Universe
+}
+
+var diceRe = regexp.MustCompile("!кости (.*)")
+
+func (h *Dice) Match(s string) bool {
+	return diceRe.MatchString(s)
+}
+
+func (h *Dice) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	if _, ok := user.Dice(); !ok {
+		return c.Send("🎲 У вас нет костей.")
+	}
+	args := teleutil.NumArg(c, diceRe, 1)
+	if len(args) != 1 {
+		return c.Send("💵 Сделайте ставку.")
+	}
+	bet := args[0]
+	const minbet = 100
+	if bet < minbet {
+		return c.Send(fmt.Sprintf("💵 Минимальная ставка %s.",
+			format.Money(minbet)), tele.ModeHTML)
+	}
+	if world.Casino.GameGoing() {
+		return c.Send("🎲 Игра уже идет.")
+	}
+	if ok := user.SpendMoney(bet); !ok {
+		return c.Send("💵 Недостаточно средств.")
+	}
+	if err := world.Casino.PlayDice(
+		user, bet,
+		func() (int, error) {
+			msg, err := tele.Cube.Send(c.Bot(), c.Chat(), nil)
+			if err != nil {
+				return 0, err
+			}
+			return msg.Dice.Value, nil
+		},
+		func() {
+			c.Send(fmt.Sprintf("<i>Время вышло: вы потеряли %s</i>",
+				format.Money(bet)), tele.ModeHTML)
+		},
+	); err != nil {
+		return err
+	}
+	return c.Send(fmt.Sprintf("🎲 %s играет на %s\nУ вас <code>%d секунд</code> на то, чтобы кинуть кости!",
+		teleutil.Mention(c, c.Sender()), format.Money(bet), world.Casino.Timeout/time.Second), tele.ModeHTML)
+}
+
+type Roll struct {
+	Universe *game.Universe
+}
+
+func (h *Roll) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	game, ok := world.Casino.DiceGame()
+	if !ok || game.Player != user {
+		return nil
+	}
+	game.Finish()
+	switch score := c.Message().Dice.Value; {
+	case score > game.CasinoScore:
+		win := game.Bet * 2
+		game.Player.AddMoney(win)
+		return c.Send(fmt.Sprintf("💥 Вы выиграли %s",
+			format.Money(win)), tele.ModeHTML)
+	case score == game.CasinoScore:
+		draw := game.Bet
+		game.Player.AddMoney(draw)
+		return c.Send("🎲 Ничья.")
+	}
+	return c.Send("😵 Вы проиграли.")
 }

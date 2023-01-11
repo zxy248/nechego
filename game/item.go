@@ -23,6 +23,7 @@ const (
 	ItemTypeFishingRod
 	ItemTypeFish
 	ItemTypePet
+	ItemTypeDice
 )
 
 type Item struct {
@@ -63,6 +64,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &fishing.Fish{}
 	case ItemTypePet:
 		i.Value = &pets.Pet{}
+	case ItemTypeDice:
+		i.Value = &Dice{}
 	default:
 		panic(fmt.Errorf("unexpected item type %v", i.Type))
 	}

@@ -6,29 +6,13 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-// route routes an input message to a corresponding handler.
-func (a *App) route(c tele.Context) error {
-	if err := a.handleRandomPhoto(c); err != nil {
-		return err
-	}
-	f := a.commandHandler(getMessage(c).Command)
-	if f == nil {
-		return nil
-	}
-	return f(c)
-}
-
 // commandHandler returns a corresponding handler for a command.
 func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	switch c {
-	case input.CommandBalance:
-		return a.handleBalance
 	case input.CommandTransfer:
 		return requireNonDebtor(requireReply(a.injectReplyUser(a.handleTransfer)))
 	case input.CommandTopRich:
 		return a.handleTopRich
-	case input.CommandTopPoor:
-		return a.handleTopPoor
 	case input.CommandCapital:
 		return a.handleCapital
 	case input.CommandStrength:
@@ -47,10 +31,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return requireNonDebtor(a.handleDebt)
 	case input.CommandRepay:
 		return requireDebtor(a.handleRepay)
-	case input.CommandTopWeak:
-		return a.handleTopWeak
-	case input.CommandDice:
-		return a.handleDice
 	case input.CommandKick:
 		return a.injectReplyUser(a.handleKick)
 	case input.CommandBan:

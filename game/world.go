@@ -87,6 +87,7 @@ type World struct {
 	Users    []*User
 	Floor    *Items
 	Market   *Market
+	Casino   *Casino
 	Messages int
 
 	sync.Mutex `json:"-"`
@@ -98,6 +99,7 @@ func NewWorld(id int64) *World {
 		Users:  []*User{},
 		Floor:  NewItems(),
 		Market: NewMarket(),
+		Casino: &Casino{Timeout: time.Second * 25},
 	}
 }
 

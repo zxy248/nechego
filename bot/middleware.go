@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"math/rand"
 	"nechego/game"
 
 	tele "gopkg.in/telebot.v3"
@@ -70,4 +71,19 @@ type WrapperFunc tele.MiddlewareFunc
 
 func (f WrapperFunc) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return f(next)
+}
+
+type RandomPhoto struct{}
+
+func (m *RandomPhoto) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		p, err := c.Bot().ProfilePhotosOf(c.Sender())
+		if err != nil {
+			return err
+		}
+		if len(p) > 0 && rand.Float64() < 0.02 {
+			c.Send(&p[0])
+		}
+		return next(c)
+	}
 }
