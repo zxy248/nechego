@@ -58,48 +58,6 @@ func (a *App) handleProfile(c tele.Context) error {
 }
 
 const (
-	versus               = "⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs</i></b> <b>%s</b> <code>[%.2f]</code>"
-	fightCollect         = "🏆 %s <code>(%s)</code> выигрывает в поединке и забирает %s"
-	fightNoMoney         = "🏆 %s <code>(%s)</code> выигрывает в поединке."
-	cannotAttackYourself = UserError("Вы не можете напасть на самого себя.")
-)
-
-// !драка
-func (a *App) handleFight(c tele.Context) error {
-	outcome, err := a.service.Fight(getUser(c), getReplyUser(c))
-	if err != nil {
-		if errors.Is(err, service.ErrSameUser) {
-			return respondUserError(c, cannotAttackYourself)
-		}
-		if errors.Is(err, service.ErrNotEnoughEnergy) {
-			return respondUserError(c, notEnoughEnergy)
-		}
-		return respondInternalError(c, err)
-	}
-	return respond(c, a.fightResponse(outcome))
-}
-
-func (a *App) fightResponse(o *service.FightOutcome) Response {
-	sections := []string{versus}
-	args := []any{
-		a.mention(o.Attacker.User),
-		o.Attacker.Strength,
-		a.mention(o.Defender.User),
-		o.Defender.Strength,
-		a.mention(o.Winner().User),
-		formatEloDelta(o.Elo),
-	}
-	if o.Reward > 0 {
-		args = append(args, formatMoney(o.Reward))
-		sections = append(sections, fightCollect)
-	} else {
-		sections = append(sections, fightNoMoney)
-	}
-	sections = append(sections, string(formatEnergyRemaining(o.Attacker.Energy)))
-	return Response(joinSections(sections...)).Fill(args...)
-}
-
-const (
 	topStrong = Response(`🏋️‍♀️ <b>Самые сильные пользователи</b>
 %s`)
 	topWeak = Response(`🤕 <b>Самые слабые пользователи</b>

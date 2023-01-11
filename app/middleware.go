@@ -126,17 +126,6 @@ func requireAdminForReply(next tele.HandlerFunc) tele.HandlerFunc {
 	}
 }
 
-const replyRequired = UserError("Перешлите сообщение пользователя.")
-
-func requireReply(next tele.HandlerFunc) tele.HandlerFunc {
-	return func(c tele.Context) error {
-		if !c.Message().IsReply() || c.Message().ReplyTo.Sender.IsBot {
-			return respondUserError(c, replyRequired)
-		}
-		return next(c)
-	}
-}
-
 func requireGroupWhitelisted(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		if getGroup(c).Whitelisted {

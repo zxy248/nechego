@@ -1,6 +1,7 @@
 package teleutil
 
 import (
+	"fmt"
 	"nechego/format"
 	"regexp"
 	"strconv"
@@ -17,8 +18,19 @@ func Name(m *tele.ChatMember) string {
 	return name
 }
 
-func Mention(c tele.Context, m *tele.ChatMember) string {
-	return format.Mention(c.Chat().ID, Name(m))
+func Mention(c tele.Context, user any) string {
+	var member *tele.ChatMember
+	switch x := user.(type) {
+	case *tele.ChatMember:
+		member = x
+	case tele.Recipient:
+		member = Member(c, x)
+	case int64:
+		member = Member(c, tele.ChatID(x))
+	default:
+		panic(fmt.Errorf("unexpected type %T", x))
+	}
+	return format.Mention(c.Chat().ID, Name(member))
 }
 
 func Args(c tele.Context, re *regexp.Regexp) []string {
@@ -57,4 +69,11 @@ func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
 		nums = append(nums, n)
 	}
 	return nums
+}
+
+func Reply(c tele.Context) (u *tele.User, ok bool) {
+	if !c.Message().IsReply() || c.Message().ReplyTo.Sender.IsBot {
+		return nil, false
+	}
+	return c.Message().ReplyTo.Sender, true
 }

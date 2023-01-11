@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"errors"
-	"math"
 	"math/rand"
 
 	"golang.org/x/exp/constraints"
@@ -93,19 +92,3 @@ func (c cryptSource) Uint64() uint64 {
 func (c cryptSource) Seed(_ int64) {}
 
 var CryptSource rand.Source64 = cryptSource{}
-
-const (
-	ScoreWin  float64 = 1.0
-	ScoreDraw         = 0.5
-	ScoreLose         = 0.0
-)
-
-const KDefault = 20
-
-func eloExpectedScore(ratA, ratB float64) float64 {
-	return 1. / (1. + math.Pow(10., (ratB-ratA)/400.))
-}
-
-func EloDelta(ratA, ratB, K, score float64) float64 {
-	return K * (score - eloExpectedScore(ratA, ratB))
-}

@@ -1,6 +1,8 @@
 package game
 
 import (
+	"math/rand"
+	"nechego/elo"
 	"nechego/fishing"
 	"time"
 )
@@ -34,22 +36,6 @@ func NewUser(tuid int64) *User {
 		Rating:    1500,
 		Inventory: NewItems(),
 	}
-}
-
-func (u *User) Ban() {
-	u.Banned = true
-}
-
-func (u *User) Unban() {
-	u.Banned = false
-}
-
-func (u *User) IncrementMessages() {
-	u.Messages++
-}
-
-func (u *User) AddRating(r float64) {
-	u.Rating += r
 }
 
 func (u *User) SpendEnergy(e int) bool {
@@ -217,4 +203,27 @@ func (u *User) Sell(i *Item) (profit int, ok bool) {
 		u.Inventory.Add(i)
 	}
 	return 0, false
+}
+
+func (u *User) Strength() float64 {
+	return rand.Float64()
+}
+
+func (u *User) Fight(opponent *User) (winner, loser *User, r float64) {
+	if u == opponent {
+		panic("user cannot be an opponent to themself")
+	}
+	if u.power() > opponent.power() {
+		winner, loser = u, opponent
+	} else {
+		winner, loser = opponent, u
+	}
+	r = elo.EloDelta(winner.Rating, loser.Rating, elo.KDefault, elo.ScoreWin)
+	winner.Rating += r
+	loser.Rating -= r
+	return
+}
+
+func (u *User) power() float64 {
+	return u.Strength() * rand.Float64()
 }

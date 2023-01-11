@@ -403,3 +403,55 @@ func (h *Stack) Handle(c tele.Context) error {
 	}
 	return c.Send("✅")
 }
+
+type Fight struct {
+	Universe *game.Universe
+}
+
+var fightRe = regexp.MustCompile("^!(драка|дуэль|поединок|атака|битва|схватка|сражение|бой|борьба)")
+
+func (h *Fight) Match(s string) bool {
+	return fightRe.MatchString(s)
+}
+
+func (h *Fight) Handle(c tele.Context) error {
+	reply, ok := teleutil.Reply(c)
+	if !ok {
+		return c.Send("✉️ Перешлите сообщение пользователя.")
+	}
+	if c.Sender().ID == reply.ID {
+		return c.Send("🛡️ Вы не можете напасть на самого себя.")
+	}
+
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	opnt, ok := world.UserByID(reply.ID)
+	if !ok {
+		return errors.New("opponent not found")
+	}
+	if ok := user.SpendEnergy(1); !ok {
+		return c.Send("⚡ Недостаточно энергии.")
+	}
+	c.Send(fmt.Sprintf("⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs</i></b> <b>%s</b> <code>[%.2f]</code>",
+		teleutil.Mention(c, user.TUID), user.Strength(),
+		teleutil.Mention(c, opnt.TUID), opnt.Strength()),
+		tele.ModeHTML)
+	winner, loser, rating := user.Fight(opnt)
+	winnerMent := teleutil.Mention(c, winner.TUID)
+	if rand.Float64() < 0.25 {
+		if item, ok := loser.Inventory.Random(); ok {
+			if ok := loser.Inventory.Move(winner.Inventory, item); ok {
+				c.Send(fmt.Sprintf("🥊 %s забирает %s у проигравшего.",
+					winnerMent, format.Item(item)), tele.ModeHTML)
+			}
+		}
+	}
+	return c.Send(fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.",
+		winnerMent, rating), tele.ModeHTML)
+}

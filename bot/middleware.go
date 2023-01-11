@@ -48,7 +48,7 @@ func (m *MessageIncrementer) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 			w.Unlock()
 			return errors.New("user not found")
 		}
-		u.IncrementMessages()
+		u.Messages++
 		w.Unlock()
 		return next(c)
 	}

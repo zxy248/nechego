@@ -83,6 +83,7 @@ func main() {
 		&handlers.Status{Universe: universe},
 		&handlers.Sell{Universe: universe},
 		&handlers.Stack{Universe: universe},
+		&handlers.Fight{Universe: universe},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},

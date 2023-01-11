@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"nechego/fishing"
 	"nechego/pets"
 	"time"
@@ -28,7 +29,7 @@ type Item struct {
 	Type         ItemType
 	Transferable bool
 	Expire       time.Time
-	Value        interface{}
+	Value        any
 }
 
 func (i *Item) UnmarshalJSON(data []byte) error {
@@ -147,4 +148,12 @@ func (it *Items) Move(dst *Items, x *Item) bool {
 	}
 	dst.Add(x)
 	return true
+}
+
+func (it *Items) Random() (x *Item, ok bool) {
+	items := it.list()
+	if len(items) == 0 {
+		return nil, false
+	}
+	return items[rand.Intn(len(items))], true
 }
