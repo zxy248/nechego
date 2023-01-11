@@ -21,14 +21,10 @@ func (a *App) route(c tele.Context) error {
 // commandHandler returns a corresponding handler for a command.
 func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 	switch c {
-	case input.CommandFight:
-		return requireReply(a.injectReplyUser(a.handleFight))
 	case input.CommandBalance:
 		return a.handleBalance
 	case input.CommandTransfer:
 		return requireNonDebtor(requireReply(a.injectReplyUser(a.handleTransfer)))
-	case input.CommandProfile:
-		return a.injectReplyUser(a.handleProfile)
 	case input.CommandTopRich:
 		return a.handleTopRich
 	case input.CommandTopPoor:
@@ -39,8 +35,6 @@ func (a *App) commandHandler(c input.Command) tele.HandlerFunc {
 		return a.handleStrength
 	case input.CommandRating:
 		return a.handleTopElo
-	case input.CommandAvatar:
-		return a.handleAvatar
 	case input.CommandTopStrong:
 		return a.handleTopStrong
 	case input.CommandDeposit:

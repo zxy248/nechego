@@ -5,6 +5,8 @@ import (
 	"html"
 	"nechego/fishing"
 	"nechego/game"
+	"nechego/modifier"
+	"strings"
 )
 
 const empty = "<code>. . .</code>"
@@ -52,6 +54,54 @@ func Fish(f *fishing.Fish) string {
 	return fmt.Sprintf("<code>%s</code>", f)
 }
 
+func Rating(r float64) string {
+	return fmt.Sprintf("<code>%.1f ⚜️</code>", r)
+}
+
+func Strength(s float64) string {
+	return fmt.Sprintf("<code>%.2f 💪</code>", s)
+}
+
+func Messages(n int) string {
+	return fmt.Sprintf("<code>%d ✉️</code>", n)
+}
+
+func Status(s string) string {
+	return fmt.Sprintf("<i>%s</i>", s)
+}
+
 func Key(k int) string {
 	return fmt.Sprintf("<code>#%d</code>", k)
+}
+
+func ModifierEmojis(m []*modifier.Mod) string {
+	emojis := []string{}
+	for _, x := range m {
+		if x.Emoji != "" {
+			emojis = append(emojis, x.Emoji)
+		}
+	}
+	return fmt.Sprintf("<code>%s</code>", strings.Join(emojis, "·"))
+}
+
+func ModifierDescriptions(m []*modifier.Mod) string {
+	descs := []string{}
+	for _, x := range m {
+		descs = append(descs, x.Description)
+	}
+	return fmt.Sprintf("<i>%s</i>", strings.Join(descs, "\n"))
+}
+
+func ModifierTitles(m []*modifier.Mod) string {
+	titles := []string{}
+	for _, x := range m {
+		if x.Title != "" {
+			titles = append(titles, x.Title)
+		}
+	}
+	if len(titles) == 0 {
+		titles = append(titles, "пользователь")
+	}
+	titles[0] = strings.Title(titles[0])
+	return strings.Join(titles, " ")
 }

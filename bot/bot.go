@@ -6,10 +6,12 @@ import (
 	"nechego/handlers"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
+	"gopkg.in/telebot.v3/middleware"
 )
 
 type Router struct {
@@ -19,7 +21,7 @@ type Router struct {
 
 func (r *Router) OnText(c tele.Context) error {
 	for _, h := range r.Handlers {
-		if h.Match(c.Message().Text) {
+		if h.Match(c.Text()) {
 			f := h.Handle
 			for _, w := range r.Middleware {
 				f = w.Wrap(f)
@@ -85,11 +87,17 @@ func main() {
 		&handlers.Sell{Universe: universe},
 		&handlers.Stack{Universe: universe},
 		&handlers.Fight{Universe: universe},
+		&handlers.Profile{Universe: universe, AvatarPath: "data/avatar"},
+		&handlers.Avatar{Path: "data/avatar"},
 	}
 	router.Middleware = []Wrapper{
 		&MessageIncrementer{Universe: universe},
 		&UserAdder{Universe: universe},
 		&RequireSupergroup{},
+		WrapperFunc(middleware.Recover(func(err error) {
+			log.Print(err)
+			debug.PrintStack()
+		})),
 	}
 	go func() {
 		for range time.NewTicker(time.Second * 30).C {
@@ -114,6 +122,7 @@ func main() {
 		done <- struct{}{}
 	}()
 	bot.Handle(tele.OnText, router.OnText)
+	bot.Handle(tele.OnPhoto, router.OnText)
 	bot.Start()
 	<-done
 	log.Println("Successful shutdown.")

@@ -14,71 +14,8 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func photoFromBytes(data []byte) *tele.Photo {
-	return &tele.Photo{File: tele.FromReader(bytes.NewReader(data))}
-}
-
-func formatError(s string) string {
-	return "⭕️ " + s
-}
-
-func formatWarning(s string) string {
-	return "⚠️ " + s
-}
-
-func formatMoney(n int) string {
-	return fmt.Sprintf("<code>%d ₽</code>", n)
-}
-
-func formatDebtStatus(u model.User) string {
-	if u.Debtor() {
-		return "У вас нет кредитов."
-	}
-	return fmt.Sprintf("Вы должны банку %s", formatMoney(u.Debt))
-}
-
 func formatWeight(n float64) string {
 	return fmt.Sprintf("<code>%.2f кг ⚖️</code>", n)
-}
-
-func formatEnergy(n int) string {
-	return fmt.Sprintf("<code>%d ⚡️</code>", n)
-}
-
-func formatStrength(n float64) string {
-	return fmt.Sprintf("<code>%.2f 💪</code>", n)
-}
-
-func formatElo(n float64) string {
-	return fmt.Sprintf("<code>%.1f ⚜️</code>", n)
-}
-
-func formatEloDelta(n float64) string {
-	sign := "+"
-	if n < 0 {
-		sign = "-"
-	}
-	return fmt.Sprintf("<code>%s%.1f</code>", sign, n)
-}
-
-func formatMessages(n int) string {
-	return fmt.Sprintf("<code>%d ✉️</code>", n)
-}
-
-func formatFood(n int) string {
-	return fmt.Sprintf("<code>%d 🍊</code>", n)
-}
-
-func formatPercentage(v float64) string {
-	return fmt.Sprintf("<code>%d%%</code>", int(v*100))
-}
-
-func formatStatus(s ...string) string {
-	var out string
-	for _, t := range s {
-		out += fmt.Sprintf("<i>%s</i>\n", t)
-	}
-	return strings.TrimSpace(out)
 }
 
 func formatCommand(c input.Command) string {
@@ -130,19 +67,4 @@ func activeEmoji() string {
 
 func inactiveEmoji() string {
 	return emojisInactive[rand.Intn(len(emojisInactive))]
-}
-
-var meals = []string{"завтрак", "полдник", "обед", "ужин", "перекус"}
-
-func randomMeal() string {
-	return meals[rand.Intn(len(meals))]
-}
-
-func formatPet(p *pets.Pet) string {
-	return fmt.Sprintf("<code>%s %s %s (%s)</code>",
-		p.Species.Emoji(),
-		strings.Title(p.Species.String()),
-		p.Name,
-		p.Gender.Emoji(),
-	)
 }

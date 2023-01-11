@@ -1,61 +1,12 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"nechego/model"
-	"nechego/service"
 	"nechego/statistics"
 
 	tele "gopkg.in/telebot.v3"
 )
-
-const profile = Response(`📇 <b>%s %s</b>
-<code>%s  %s  %s  %s  %s</code>
-
-💵 Денег в кошельке: %s
-💳 На счету в банке: %s
-
-%s
-
-%s
-
-%s`)
-
-// !профиль
-func (a *App) handleProfile(c tele.Context) error {
-	user, ok := maybeGetReplyUser(c)
-	if !ok {
-		user = getUser(c)
-	}
-	strength, err := a.stat.Strength(user)
-	if err != nil {
-		return respondInternalError(c, err)
-	}
-	modset, err := a.stat.UserModset(user)
-	if err != nil {
-		return respondInternalError(c, err)
-	}
-	response := profile.Fill(
-		formatTitles(modset.Titles()...),
-		a.mention(user),
-		formatEnergy(user.Energy),
-		formatElo(user.Elo),
-		formatStrength(strength),
-		formatMessages(user.Messages),
-		formatFood(user.Fishes),
-		formatMoney(user.Balance),
-		formatMoney(user.Account),
-		formatStatus(modset.Descriptions()...),
-		formatIcons(modset.Icons()...),
-		formatStatus(getStatus(user.UID)),
-	)
-	if ava, ok := loadAvatar(user.UID); ok {
-		ava.Caption = string(response)
-		return c.Send(ava, tele.ModeHTML)
-	}
-	return respond(c, response)
-}
 
 const (
 	topStrong = Response(`🏋️‍♀️ <b>Самые сильные пользователи</b>

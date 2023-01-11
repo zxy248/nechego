@@ -8,6 +8,8 @@ import (
 	"nechego/format"
 	"nechego/game"
 	"nechego/teleutil"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -454,4 +456,57 @@ func (h *Fight) Handle(c tele.Context) error {
 	}
 	return c.Send(fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.",
 		winnerMent, rating), tele.ModeHTML)
+}
+
+type Profile struct {
+	Universe   *game.Universe
+	AvatarPath string
+}
+
+var profileRe = regexp.MustCompile("^!профиль")
+
+func (h *Profile) Match(s string) bool {
+	return profileRe.MatchString(s)
+}
+
+func (h *Profile) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+
+	const profile = "📇 <b>%s %s</b>\n<code>%s  %s  %s  %s</code>\n\n%s\n\n%s\n\n%s"
+	mods := user.Modset().List()
+	out := fmt.Sprintf(profile,
+		format.ModifierTitles(mods),
+		teleutil.Mention(c, c.Sender()),
+		format.Energy(user.Energy),
+		format.Rating(user.Rating),
+		format.Strength(user.Strength()),
+		format.Messages(user.Messages),
+		format.ModifierDescriptions(mods),
+		format.ModifierEmojis(mods),
+		format.Status(user.Status),
+	)
+	if a, ok := avatar(h.AvatarPath, c.Sender().ID); ok {
+		a.Caption = out
+		return c.Send(a, tele.ModeHTML)
+	}
+	return c.Send(out, tele.ModeHTML)
+}
+
+func avatar(dir string, id int64) (a *tele.Photo, ok bool) {
+	_, err := os.Stat(dir)
+	if err != nil {
+		return nil, false
+	}
+	f := tele.FromDisk(filepath.Join(dir, strconv.FormatInt(id, 10)))
+	if f.OnDisk() {
+		return &tele.Photo{File: f}, true
+	}
+	return nil, false
 }

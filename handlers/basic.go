@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,9 +43,9 @@ func (h *Infa) Handle(c tele.Context) error {
 		"Прикинув раз на раз, я определился с тем, что %s с вероятностью %d%%",
 		"Уверяю вас в том, что %s с вероятностью %d%%",
 	}
-	tmpl := templates[rand.Intn(len(templates))]
-	arg := infaRe.FindStringSubmatch(c.Message().Text)[1]
-	return c.Send(fmt.Sprintf(tmpl, arg, rand.Intn(101)))
+	return c.Send(fmt.Sprintf(templates[rand.Intn(len(templates))],
+		teleutil.Args(c, infaRe)[1],
+		rand.Intn(101)))
 }
 
 type Who struct {
@@ -66,10 +67,8 @@ func (h *Who) Handle(c tele.Context) error {
 	defer w.Unlock()
 
 	user := w.RandomUser()
-	member := teleutil.Member(c, tele.ChatID(user.TUID))
-	arg := whoRe.FindStringSubmatch(c.Message().Text)[1]
-	out := teleutil.Mention(c, member) + " " + html.EscapeString(arg)
-	return c.Send(out, tele.ModeHTML)
+	return c.Send(teleutil.Mention(c, user.TUID)+" "+
+		html.EscapeString(teleutil.Args(c, whoRe)[1]), tele.ModeHTML)
 }
 
 type List struct {
@@ -544,4 +543,43 @@ func (h *Pic) Handle(c tele.Context) error {
 	}
 	f := files[rand.Intn(len(files))]
 	return c.Send(&tele.Photo{File: tele.FromDisk(filepath.Join(h.Path, d.Name(), f.Name()))})
+}
+
+type Avatar struct {
+	Path string
+}
+
+var avatarRe = regexp.MustCompile("^!аватар")
+
+func (h *Avatar) Match(s string) bool {
+	return avatarRe.MatchString(s)
+}
+
+func (h *Avatar) Handle(c tele.Context) error {
+	if a := c.Message().Photo; a != nil {
+		const max = 1500
+		if a.Width > max || a.Height > max {
+			return c.Send("📷 Максимальный размер аватара %dx%d пикселей.", max, max)
+		}
+		src, err := c.Bot().File(&a.File)
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+		if err := os.MkdirAll(h.Path, 0777); err != nil {
+			return err
+		}
+		dst, err := os.Create(filepath.Join(h.Path, strconv.FormatInt(c.Sender().ID, 10)))
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(dst, src); err != nil {
+			return err
+		}
+		return c.Send(c, "📸 Аватар установлен.")
+	}
+	if a, ok := avatar(h.Path, c.Sender().ID); ok {
+		return c.Send(a)
+	}
+	return c.Send("📷 Прикрепите изображение.")
 }

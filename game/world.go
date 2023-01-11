@@ -83,10 +83,11 @@ func (u *Universe) SaveAll() error {
 }
 
 type World struct {
-	TGID   int64
-	Users  []*User
-	Floor  *Items
-	Market *Market
+	TGID     int64
+	Users    []*User
+	Floor    *Items
+	Market   *Market
+	Messages int
 
 	sync.Mutex `json:"-"`
 }
@@ -163,4 +164,11 @@ func (w *World) RestoreEnergy() {
 	for _, u := range w.Users {
 		u.RestoreEnergy(1)
 	}
+}
+
+func (w *World) Capital() (total, avg int) {
+	for _, w := range w.Users {
+		total += w.Total()
+	}
+	return total, total / len(w.Users)
 }

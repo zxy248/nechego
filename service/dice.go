@@ -38,22 +38,3 @@ func (s *Service) Roll(g model.Group, u model.User, roll int) (dice.Result, erro
 	}
 	return result, nil
 }
-
-// defer func() {
-// 	if rand.Float64() < tiredChance {
-// 		a.model.UpdateEnergy(user, -energyDelta, energyLimit)
-// 		err := c.Send(fmt.Sprintf(tired, formatEnergy(user.Energy-energyDelta)),
-// 			tele.ModeMarkdownV2)
-// 		if err != nil {
-// 			a.SugarLog().Error(err)
-// 		}
-// 	}
-// }()
-
-// func (s *Service Bonus(g model.Group, u model.User) {
-// }		if rand.Float64() <= diceBonusChance && game.bet >= diceBetForBonus {
-// 			bonus := numbers.InRange(diceMinBonus, diceMaxBonus)
-// 			a.model.UpdateMoney(user, bonus)
-// 			c.Send(fmt.Sprintf(diceBonus, a.mustMentionUser(user), formatMoney(bonus)),
-// 				tele.ModeMarkdownV2)
-// }

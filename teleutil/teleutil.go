@@ -34,7 +34,7 @@ func Mention(c tele.Context, user any) string {
 }
 
 func Args(c tele.Context, re *regexp.Regexp) []string {
-	return re.FindStringSubmatch(c.Message().Text)
+	return re.FindStringSubmatch(c.Text())
 }
 
 func Member(c tele.Context, user tele.Recipient) *tele.ChatMember {

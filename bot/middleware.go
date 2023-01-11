@@ -48,6 +48,7 @@ func (m *MessageIncrementer) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 			w.Unlock()
 			return errors.New("user not found")
 		}
+		w.Messages++
 		u.Messages++
 		w.Unlock()
 		return next(c)
@@ -63,4 +64,10 @@ func (m *RequireSupergroup) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 		}
 		return next(c)
 	}
+}
+
+type WrapperFunc tele.MiddlewareFunc
+
+func (f WrapperFunc) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
+	return f(next)
 }
