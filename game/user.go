@@ -199,7 +199,7 @@ func (u *User) Sell(i *Item) (profit int, ok bool) {
 		u.AddMoney(n)
 		return n, true
 	default:
-		// can't sell; return item back
+		// cannot sell; return item back
 		u.Inventory.Add(i)
 	}
 	return 0, false

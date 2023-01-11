@@ -40,7 +40,7 @@ func Args(c tele.Context, re *regexp.Regexp) []string {
 func Member(c tele.Context, user tele.Recipient) *tele.ChatMember {
 	m, err := c.Bot().ChatMemberOf(c.Chat(), user)
 	if err != nil {
-		panic("can't get chat member")
+		panic("cannot get chat member")
 	}
 	return m
 }
