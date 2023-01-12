@@ -24,7 +24,7 @@ import (
 
 type Infa struct{}
 
-var infaRe = regexp.MustCompile("!инфа (.*)")
+var infaRe = regexp.MustCompile("!инфа ?(.*)")
 
 func (h *Infa) Match(s string) bool {
 	return infaRe.MatchString(s)
@@ -53,7 +53,7 @@ type Who struct {
 	Universe *game.Universe
 }
 
-var whoRe = regexp.MustCompile("!кто (.*)")
+var whoRe = regexp.MustCompile("!кто ?(.*)")
 
 func (h *Who) Match(s string) bool {
 	return whoRe.MatchString(s)
@@ -173,6 +173,7 @@ func (h *Game) Handle(c tele.Context) error {
 
 type Weather struct{}
 
+// TODO: assess "(?i)^!погода ([-А-я]+)"
 var weatherRe = regexp.MustCompile("^!погода (.*)")
 
 func (h *Weather) Match(s string) bool {
@@ -377,7 +378,7 @@ func (h *Car) Handle(c tele.Context) error {
 
 type Masyunya struct{}
 
-var masyunyaRe = regexp.MustCompile("^!масюня")
+var masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")
 
 func (h *Masyunya) Match(s string) bool {
 	return masyunyaRe.MatchString(s)
@@ -429,7 +430,7 @@ type Hello struct {
 	cache []tele.Sticker
 }
 
-var helloRe = regexp.MustCompile("^!привет")
+var helloRe = regexp.MustCompile("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
 
 func (h *Hello) Match(s string) bool {
 	return helloRe.MatchString(s)
@@ -454,7 +455,7 @@ type Basili struct {
 	Path string
 }
 
-var basiliRe = regexp.MustCompile("^!(муся|марсик|кот василия|кошка василия)")
+var basiliRe = regexp.MustCompile("^!(муся|марс|кот василия|кошка василия)")
 
 func (h *Basili) Match(s string) bool {
 	return basiliRe.MatchString(s)
@@ -550,7 +551,7 @@ type Avatar struct {
 	Path string
 }
 
-var avatarRe = regexp.MustCompile("^!аватар")
+var avatarRe = regexp.MustCompile("^!ава")
 
 func (h *Avatar) Match(s string) bool {
 	return avatarRe.MatchString(s)
@@ -577,7 +578,7 @@ func (h *Avatar) Handle(c tele.Context) error {
 		if _, err := io.Copy(dst, src); err != nil {
 			return err
 		}
-		return c.Send(c, "📸 Аватар установлен.")
+		return c.Send("📸 Аватар установлен.")
 	}
 	if a, ok := avatar(h.Path, c.Sender().ID); ok {
 		return c.Send(a)
@@ -589,7 +590,7 @@ type TurnOn struct {
 	Universe *game.Universe
 }
 
-var turnOnRe = regexp.MustCompile("^!включить")
+var turnOnRe = regexp.MustCompile("^!(вкл|подкл|подруб)")
 
 func (h *TurnOn) Match(s string) bool {
 	return turnOnRe.MatchString(s)
@@ -604,7 +605,7 @@ type TurnOff struct {
 	Universe *game.Universe
 }
 
-var turnOffRe = regexp.MustCompile("^!выключить")
+var turnOffRe = regexp.MustCompile("^!(выкл|откл)")
 
 func (h *TurnOff) Match(s string) bool {
 	return turnOffRe.MatchString(s)

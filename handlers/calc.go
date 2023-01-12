@@ -12,14 +12,14 @@ import (
 
 type Calculator struct{}
 
-var calculatorRe = regexp.MustCompile("^!калькулятор (.*)")
+var calculatorRe = regexp.MustCompile("^!(калькул|вычисл)[а-я]* (.*)")
 
 func (h *Calculator) Match(s string) bool {
 	return calculatorRe.MatchString(s)
 }
 
 func (h *Calculator) Handle(c tele.Context) error {
-	arg := teleutil.Args(c, calculatorRe)[1]
+	arg := teleutil.Args(c, calculatorRe)[2]
 	result, err := expr.Eval(arg, nil)
 	if err != nil {
 		return c.Send("😵‍💫")

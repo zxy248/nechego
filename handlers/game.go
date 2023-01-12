@@ -160,7 +160,7 @@ type Floor struct {
 	Universe *game.Universe
 }
 
-var floorRe = regexp.MustCompile("^!пол")
+var floorRe = regexp.MustCompile("^!(пол|мусор|вещи|предметы)")
 
 func (h *Floor) Match(s string) bool {
 	return floorRe.MatchString(s)
@@ -172,7 +172,7 @@ func (h *Floor) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	items := world.Floor.List()
-	head := "<b>🗑 Пол</b>"
+	head := "<b>🗃️ Предметы</b>"
 	lines := append([]string{head}, format.Items(items)...)
 	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
 }
@@ -233,7 +233,7 @@ type Eat struct {
 	Universe *game.Universe
 }
 
-var eatRe = regexp.MustCompile("^!с[ъь]есть (.*)")
+var eatRe = regexp.MustCompile("^!(с[ъь]есть|еда) (.*)")
 
 func (h *Eat) Match(s string) bool {
 	return eatRe.MatchString(s)
@@ -251,7 +251,7 @@ func (h *Eat) Handle(c tele.Context) error {
 	if user.Energy == user.EnergyCap {
 		return c.Send("🍊 Вы не хотите есть.")
 	}
-	key, err := strconv.Atoi(teleutil.Args(c, eatRe)[1])
+	key, err := strconv.Atoi(teleutil.Args(c, eatRe)[2])
 	if err != nil {
 		return c.Send("#⃣ Укажите номер предмета.")
 	}
@@ -270,7 +270,7 @@ type Fish struct {
 	Universe *game.Universe
 }
 
-var fishRe = regexp.MustCompile("^!рыбалка")
+var fishRe = regexp.MustCompile("^!(рыбалка|ловля рыб)")
 
 func (h *Fish) Match(s string) bool {
 	return fishRe.MatchString(s)
@@ -349,7 +349,7 @@ type Sell struct {
 	Universe *game.Universe
 }
 
-var sellRe = regexp.MustCompile("^!продать (.*)")
+var sellRe = regexp.MustCompile("^!прода(ть|жа) (.*)")
 
 func (h *Sell) Match(s string) bool {
 	return sellRe.MatchString(s)
@@ -364,7 +364,7 @@ func (h *Sell) Handle(c tele.Context) error {
 	if !ok {
 		return errors.New("user not found")
 	}
-	items := teleutil.NumArg(c, sellRe, 1)
+	items := teleutil.NumArg(c, sellRe, 2)
 	for _, key := range items {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
@@ -447,7 +447,7 @@ func (h *Fight) Handle(c tele.Context) error {
 		tele.ModeHTML)
 	winner, loser, rating := user.Fight(opnt)
 	winnerMent := teleutil.Mention(c, winner.TUID)
-	if rand.Float64() < 0.25 {
+	if rand.Float64() < 0.1 {
 		if item, ok := loser.Inventory.Random(); ok {
 			if ok := loser.Inventory.Move(winner.Inventory, item); ok {
 				c.Send(fmt.Sprintf("🥊 %s забирает %s у проигравшего.",
@@ -464,7 +464,7 @@ type Profile struct {
 	AvatarPath string
 }
 
-var profileRe = regexp.MustCompile("^!профиль")
+var profileRe = regexp.MustCompile("^!(профиль|стат)")
 
 func (h *Profile) Match(s string) bool {
 	return profileRe.MatchString(s)
@@ -606,7 +606,7 @@ type TopStrong struct {
 	Universe *game.Universe
 }
 
-var topStrongRe = regexp.MustCompile("^!(топ сильных|силачи)")
+var topStrongRe = regexp.MustCompile("^!топ сил")
 
 func (h *TopStrong) Match(s string) bool {
 	return topStrongRe.MatchString(s)
@@ -656,7 +656,7 @@ type TopRich struct {
 	Universe *game.Universe
 }
 
-var topRich = regexp.MustCompile("^!топ богатых")
+var topRich = regexp.MustCompile("^!топ бога[тч]")
 
 func (h *TopRich) Match(s string) bool {
 	return topRich.MatchString(s)
@@ -681,7 +681,7 @@ type Capital struct {
 	Universe *game.Universe
 }
 
-var capitalRe = regexp.MustCompile("^!(капитал|топ богатых)")
+var capitalRe = regexp.MustCompile("^!капитал")
 
 func (h *Capital) Match(s string) bool {
 	return capitalRe.MatchString(s)

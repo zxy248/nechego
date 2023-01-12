@@ -13,7 +13,7 @@ type DailyEblan struct {
 	Universe *game.Universe
 }
 
-var dailyEblanRe = regexp.MustCompile("^!еблан дня")
+var dailyEblanRe = regexp.MustCompile("^![ие][б6п]?л[ап]н[а-я]* дня")
 
 func (h *DailyEblan) Match(s string) bool {
 	return dailyEblanRe.MatchString(s)

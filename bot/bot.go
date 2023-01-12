@@ -55,7 +55,6 @@ func main() {
 		&handlers.Zeus{Path: "data/zeus"},
 		&handlers.Mouse{Path: "data/mouse.mp4"},
 		&handlers.Tiktok{Path: "data/tiktok/"},
-		helloHandler,
 		&handlers.Game{},
 		&handlers.Infa{},
 		&handlers.Weather{},
@@ -90,8 +89,8 @@ func main() {
 		&handlers.Sell{Universe: universe},
 		&handlers.Stack{Universe: universe},
 		&handlers.Fight{Universe: universe},
-		&handlers.Profile{Universe: universe, AvatarPath: "data/avatar"},
-		&handlers.Avatar{Path: "data/avatar"},
+		&handlers.Profile{Universe: universe, AvatarPath: "avatar"},
+		&handlers.Avatar{Path: "avatar"},
 		&handlers.Dice{Universe: universe},
 		&handlers.TurnOn{Universe: universe},
 		&handlers.TurnOff{Universe: universe},
@@ -102,6 +101,7 @@ func main() {
 		&handlers.TopRich{Universe: universe},
 		&handlers.Top{Universe: universe},
 		&handlers.Capital{Universe: universe},
+		helloHandler,
 	}
 	router.Middleware = []Wrapper{
 		&RandomPhoto{},
@@ -117,10 +117,16 @@ func main() {
 		})),
 	}
 	go func() {
-		for range time.NewTicker(time.Second * 30).C {
+		for range time.NewTicker(time.Minute * 1).C {
+			universe.ForEachWorld(func(w *game.World) {
+				w.Market.Refill()
+			})
+		}
+	}()
+	go func() {
+		for range time.NewTicker(time.Minute * 20).C {
 			universe.ForEachWorld(func(w *game.World) {
 				w.RestoreEnergy()
-				w.Market.Refill()
 			})
 		}
 	}()
