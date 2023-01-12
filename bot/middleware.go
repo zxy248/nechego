@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"nechego/game"
+	"nechego/teleutil"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
@@ -14,46 +15,16 @@ type Wrapper interface {
 	Wrap(tele.HandlerFunc) tele.HandlerFunc
 }
 
-type UserAdder struct {
-	Universe *game.Universe
-}
-
-func (m *UserAdder) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
-	return func(c tele.Context) error {
-		user := c.Sender()
-		w := m.Universe.MustWorld(c.Chat().ID)
-		w.Lock()
-		_, ok := w.UserByID(user.ID)
-		if !ok {
-			user := game.NewUser(user.ID)
-			w.AddUser(user)
-			user.Inventory.Add(&game.Item{
-				Type:         game.ItemTypeWallet,
-				Transferable: true,
-				Value:        &game.Wallet{Money: 5000},
-			})
-		}
-		w.Unlock()
-		return next(c)
-	}
-}
-
 type MessageIncrementer struct {
 	Universe *game.Universe
 }
 
 func (m *MessageIncrementer) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		w := m.Universe.MustWorld(c.Chat().ID)
-		w.Lock()
-		u, ok := w.UserByID(c.Sender().ID)
-		if !ok {
-			w.Unlock()
-			return errors.New("user not found")
-		}
-		w.Messages++
-		u.Messages++
-		w.Unlock()
+		world, user := teleutil.Lock(c, m.Universe)
+		world.Messages++
+		user.Messages++
+		world.Unlock()
 		return next(c)
 	}
 }
@@ -96,13 +67,7 @@ type IgnoreBanned struct {
 
 func (m *IgnoreBanned) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		world := m.Universe.MustWorld(c.Chat().ID)
-		world.Lock()
-		user, ok := world.UserByID(c.Sender().ID)
-		if !ok {
-			world.Unlock()
-			return errors.New("user not found")
-		}
+		world, user := teleutil.Lock(c, m.Universe)
 		if user.Banned {
 			world.Unlock()
 			return nil

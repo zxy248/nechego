@@ -20,8 +20,7 @@ func (h *DailyEblan) Match(s string) bool {
 }
 
 func (h *DailyEblan) Handle(c tele.Context) error {
-	world := h.Universe.MustWorld(c.Chat().ID)
-	world.Lock()
+	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	eblan, ok := world.DailyEblan()
@@ -44,8 +43,7 @@ func (h *DailyAdmin) Match(s string) bool {
 }
 
 func (h *DailyAdmin) Handle(c tele.Context) error {
-	world := h.Universe.MustWorld(c.Chat().ID)
-	world.Lock()
+	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	admin, ok := world.DailyAdmin()
@@ -68,8 +66,7 @@ func (h *DailyPair) Match(s string) bool {
 }
 
 func (h *DailyPair) Handle(c tele.Context) error {
-	world := h.Universe.MustWorld(c.Chat().ID)
-	world.Lock()
+	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	pair, ok := world.DailyPair()

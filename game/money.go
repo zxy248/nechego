@@ -10,7 +10,7 @@ type Cash struct {
 }
 
 func (c Cash) String() string {
-	return fmt.Sprintf("💵 Наличные (%d ₽)", c.Money)
+	return fmt.Sprintf("💵 Наличные (%d ₴)", c.Money)
 }
 
 func (u *User) Cash() (c *Cash, ok bool) {
@@ -28,7 +28,7 @@ type Wallet struct {
 }
 
 func (w Wallet) String() string {
-	return fmt.Sprintf("💰 Кошелек (%d ₽)", w.Money)
+	return fmt.Sprintf("💰 Кошелек (%d ₴)", w.Money)
 }
 
 func (u *User) Wallet() (w *Wallet, ok bool) {
@@ -49,7 +49,7 @@ type CreditCard struct {
 }
 
 func (c CreditCard) String() string {
-	return fmt.Sprintf("💳 Кредитная карта (%d ₽)", c.Money)
+	return fmt.Sprintf("💳 Кредитная карта (%d ₴)", c.Money)
 }
 
 type Debt struct {
@@ -59,5 +59,5 @@ type Debt struct {
 }
 
 func (d Debt) String() string {
-	return fmt.Sprintf("💵 Долг (%d ₽, %d%%)", d.Money, d.Percent)
+	return fmt.Sprintf("💵 Долг (%d ₴, %d%%)", d.Money, d.Percent)
 }

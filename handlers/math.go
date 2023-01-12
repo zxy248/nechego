@@ -17,3 +17,10 @@ func max[T number](a, b T) T {
 	}
 	return b
 }
+
+func tern[T any](cond bool, a, b T) T {
+	if cond {
+		return a
+	}
+	return b
+}

@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html"
 	"io"
 	"math/rand"
+	"nechego/format"
 	"nechego/game"
 	"nechego/teleutil"
 	"net/http"
@@ -83,8 +83,7 @@ func (h *List) Match(s string) bool {
 }
 
 func (h *List) Handle(c tele.Context) error {
-	world := h.Universe.MustWorld(c.Chat().ID)
-	world.Lock()
+	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.RandomUsers(3 + rand.Intn(3))
@@ -108,8 +107,7 @@ func (h *Top) Match(s string) bool {
 }
 
 func (h *Top) Handle(c tele.Context) error {
-	world := h.Universe.MustWorld(c.Chat().ID)
-	world.Lock()
+	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.RandomUsers(3 + rand.Intn(3))
@@ -627,27 +625,18 @@ func (h *Ban) Match(s string) bool {
 }
 
 func (h *Ban) Handle(c tele.Context) error {
-	world := h.Universe.MustWorld(c.Chat().ID)
-	world.Lock()
+	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	user, ok := world.UserByID(c.Sender().ID)
-	if !ok {
-		return errors.New("user not found")
-	}
 	if !user.IsAdmin() {
-		return c.Send("⚠️ Эта команда доступна только администрации.")
+		return c.Send(format.AdminsOnly)
 	}
 	reply, ok := teleutil.Reply(c)
 	if !ok {
-		return c.Send("✉️ Перешлите сообщение пользователя.")
+		return c.Send(format.RepostMessage)
 	}
-	banned, ok := world.UserByID(reply.ID)
-	if !ok {
-		return errors.New("user not found")
-	}
-	banned.Banned = true
-	return c.Send("🚫 Пользователь заблокирован.")
+	world.UserByID(reply.ID).Banned = true
+	return c.Send(format.UserBanned)
 }
 
 type Unban struct {
@@ -661,25 +650,16 @@ func (h *Unban) Match(s string) bool {
 }
 
 func (h *Unban) Handle(c tele.Context) error {
-	world := h.Universe.MustWorld(c.Chat().ID)
-	world.Lock()
+	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	user, ok := world.UserByID(c.Sender().ID)
-	if !ok {
-		return errors.New("user not found")
-	}
 	if !user.IsAdmin() {
-		return c.Send("⚠️ Эта команда доступна только администрации.")
+		return c.Send(format.AdminsOnly)
 	}
 	reply, ok := teleutil.Reply(c)
 	if !ok {
-		return c.Send("✉️ Перешлите сообщение пользователя.")
+		return c.Send(format.RepostMessage)
 	}
-	unbanned, ok := world.UserByID(reply.ID)
-	if !ok {
-		return errors.New("user not found")
-	}
-	unbanned.Banned = false
-	return c.Send("✅ Пользователь разблокирован.")
+	world.UserByID(reply.ID).Banned = false
+	return c.Send(format.UserUnbanned)
 }

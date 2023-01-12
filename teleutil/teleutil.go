@@ -3,6 +3,7 @@ package teleutil
 import (
 	"fmt"
 	"nechego/format"
+	"nechego/game"
 	"regexp"
 	"strconv"
 	"strings"
@@ -80,4 +81,14 @@ func Reply(c tele.Context) (u *tele.User, ok bool) {
 		return nil, false
 	}
 	return c.Message().ReplyTo.Sender, true
+}
+
+func Lock(c tele.Context, u *game.Universe) (*game.World, *game.User) {
+	world, err := u.World(c.Chat().ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get world: %w", err))
+	}
+	world.Lock()
+	user := world.UserByID(c.Sender().ID)
+	return world, user
 }

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime/debug"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,7 +29,7 @@ func (r *Router) wrap(f tele.HandlerFunc) tele.HandlerFunc {
 
 func (r *Router) OnText(c tele.Context) error {
 	for _, h := range r.Handlers {
-		if h.Match(c.Text()) {
+		if h.Match(strings.ToLower(c.Text())) {
 			return r.wrap(h.Handle)(c)
 		}
 	}
@@ -101,13 +102,14 @@ func main() {
 		&handlers.TopRich{Universe: universe},
 		&handlers.Top{Universe: universe},
 		&handlers.Capital{Universe: universe},
+		&handlers.Balance{Universe: universe},
+		&handlers.Energy{Universe: universe},
 		helloHandler,
 	}
 	router.Middleware = []Wrapper{
 		&RandomPhoto{},
 		&MessageIncrementer{Universe: universe},
 		&IgnoreBanned{Universe: universe},
-		&UserAdder{Universe: universe},
 		&LogMessage{},
 		&IgnoreForwarded{},
 		&RequireSupergroup{},

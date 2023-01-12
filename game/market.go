@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"math/rand"
 	"nechego/fishing"
 	"nechego/pets"
@@ -67,13 +68,18 @@ func (m *Market) Products() []*Product {
 	return m.P
 }
 
-func (u *User) Buy(m *Market, key int) (p *Product, ok bool) {
-	p, ok = m.keys[key]
+var (
+	ErrNoMoney = errors.New("insufficient money")
+	ErrNoKey   = errors.New("key not found")
+)
+
+func (u *User) Buy(m *Market, key int) (*Product, error) {
+	p, ok := m.keys[key]
 	if !ok {
-		return nil, false
+		return nil, ErrNoKey
 	}
 	if ok := u.SpendMoney(p.Price); !ok {
-		return nil, false
+		return nil, ErrNoMoney
 	}
 	delete(m.keys, key)
 	for i, v := range m.P {
@@ -83,5 +89,5 @@ func (u *User) Buy(m *Market, key int) (p *Product, ok bool) {
 		}
 	}
 	u.Inventory.Add(p.Item)
-	return p, true
+	return p, nil
 }

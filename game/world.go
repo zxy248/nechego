@@ -32,14 +32,6 @@ func (u *Universe) worldPath(id int64) string {
 	return filepath.Join(u.dir, fmt.Sprintf("world%d.json", id))
 }
 
-func (u *Universe) MustWorld(id int64) *World {
-	w, err := u.World(id)
-	if err != nil {
-		panic(err)
-	}
-	return w
-}
-
 func (u *Universe) ForEachWorld(action func(*World)) {
 	for _, w := range u.worlds {
 		w.Lock()
@@ -134,6 +126,11 @@ func (w *World) Save(name string) error {
 }
 
 func (w *World) AddUser(u *User) {
+	u.Inventory.Add(&Item{
+		Type:         ItemTypeCash,
+		Transferable: true,
+		Value:        &Cash{Money: 3000},
+	})
 	w.Users = append(w.Users, u)
 }
 
@@ -153,13 +150,15 @@ func (w *World) RandomUsers(n int) []*User {
 	return users[:n]
 }
 
-func (w *World) UserByID(tuid int64) (u *User, ok bool) {
-	for _, u = range w.Users {
+func (w *World) UserByID(tuid int64) *User {
+	for _, u := range w.Users {
 		if u.TUID == tuid {
-			return u, true
+			return u
 		}
 	}
-	return nil, false
+	u := NewUser(tuid)
+	w.AddUser(u)
+	return u
 }
 
 func (w *World) RestoreEnergy() {

@@ -9,7 +9,14 @@ import (
 	"strings"
 )
 
-const empty = "<code>. . .</code>"
+const (
+	Empty         = "<code>. . .</code>"
+	NoMoney       = "💵 Недостаточно средств."
+	AdminsOnly    = "⚠️ Эта команда доступна только администрации."
+	RepostMessage = "✉️ Перешлите сообщение пользователя."
+	UserBanned    = "🚫 Пользователь заблокирован."
+	UserUnbanned  = "✅ Пользователь разблокирован."
+)
 
 func Mention(uid int64, name string) string {
 	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, html.EscapeString(name))
@@ -21,7 +28,7 @@ func Items(items []*game.Item) []string {
 		lines = append(lines, fmt.Sprintf("<code>%v ≡ </code> %s", i, Item(v)))
 	}
 	if len(lines) == 0 {
-		return []string{empty}
+		return []string{Empty}
 	}
 	return lines
 }
@@ -37,13 +44,13 @@ func Products(products []*game.Product) []string {
 		lines = append(lines, line)
 	}
 	if len(lines) == 0 {
-		return []string{empty}
+		return []string{Empty}
 	}
 	return lines
 }
 
 func Money(q int) string {
-	return fmt.Sprintf("<code>%d ₽</code>", q)
+	return fmt.Sprintf("<code>%d ₴</code>", q)
 }
 
 func Energy(e int) string {
@@ -72,6 +79,10 @@ func Status(s string) string {
 
 func Key(k int) string {
 	return fmt.Sprintf("<code>#%d</code>", k)
+}
+
+func BadKey(k int) string {
+	return fmt.Sprintf("🔖 Предмет %s не найден.", Key(k))
 }
 
 func ModifierEmojis(m []*modifier.Mod) string {
