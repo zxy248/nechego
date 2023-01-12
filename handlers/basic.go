@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -582,4 +583,102 @@ func (h *Avatar) Handle(c tele.Context) error {
 		return c.Send(a)
 	}
 	return c.Send("📷 Прикрепите изображение.")
+}
+
+type TurnOn struct {
+	Universe *game.Universe
+}
+
+var turnOnRe = regexp.MustCompile("^!включить")
+
+func (h *TurnOn) Match(s string) bool {
+	return turnOnRe.MatchString(s)
+}
+
+func (h *TurnOn) Handle(c tele.Context) error {
+	emoji := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
+	return c.Send(emoji[rand.Intn(len(emoji))])
+}
+
+type TurnOff struct {
+	Universe *game.Universe
+}
+
+var turnOffRe = regexp.MustCompile("^!выключить")
+
+func (h *TurnOff) Match(s string) bool {
+	return turnOffRe.MatchString(s)
+}
+
+func (h *TurnOff) Handle(c tele.Context) error {
+	emoji := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
+	return c.Send(emoji[rand.Intn(len(emoji))])
+}
+
+type Ban struct {
+	Universe *game.Universe
+}
+
+var banRe = regexp.MustCompile("^!бан")
+
+func (h *Ban) Match(s string) bool {
+	return banRe.MatchString(s)
+}
+
+func (h *Ban) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	if !user.IsAdmin() {
+		return c.Send("⚠️ Эта команда доступна только администрации.")
+	}
+	reply, ok := teleutil.Reply(c)
+	if !ok {
+		return c.Send("✉️ Перешлите сообщение пользователя.")
+	}
+	banned, ok := world.UserByID(reply.ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	banned.Banned = true
+	return c.Send("🚫 Пользователь заблокирован.")
+}
+
+type Unban struct {
+	Universe *game.Universe
+}
+
+var unbanRe = regexp.MustCompile("^!разбан")
+
+func (h *Unban) Match(s string) bool {
+	return unbanRe.MatchString(s)
+}
+
+func (h *Unban) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	user, ok := world.UserByID(c.Sender().ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	if !user.IsAdmin() {
+		return c.Send("⚠️ Эта команда доступна только администрации.")
+	}
+	reply, ok := teleutil.Reply(c)
+	if !ok {
+		return c.Send("✉️ Перешлите сообщение пользователя.")
+	}
+	unbanned, ok := world.UserByID(reply.ID)
+	if !ok {
+		return errors.New("user not found")
+	}
+	unbanned.Banned = false
+	return c.Send("✅ Пользователь разблокирован.")
 }

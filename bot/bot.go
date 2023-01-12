@@ -46,6 +46,7 @@ func main() {
 	}
 
 	universe := game.NewUniverse("universe")
+	helloHandler := &handlers.Hello{Path: "data/hello.json"}
 	router := &Router{}
 	router.Handlers = []handlers.Handler{
 		&handlers.Pic{Path: "data/pic"},
@@ -54,7 +55,7 @@ func main() {
 		&handlers.Zeus{Path: "data/zeus"},
 		&handlers.Mouse{Path: "data/mouse.mp4"},
 		&handlers.Tiktok{Path: "data/tiktok/"},
-		&handlers.Hello{Path: "data/hello.json"},
+		helloHandler,
 		&handlers.Game{},
 		&handlers.Infa{},
 		&handlers.Weather{},
@@ -72,7 +73,6 @@ func main() {
 		&handlers.Calculator{},
 		&handlers.Name{},
 		&handlers.Who{Universe: universe},
-		&handlers.Top{Universe: universe},
 		&handlers.List{Universe: universe},
 		&handlers.Save{Universe: universe},
 		&handlers.DailyEblan{Universe: universe},
@@ -93,11 +93,23 @@ func main() {
 		&handlers.Profile{Universe: universe, AvatarPath: "data/avatar"},
 		&handlers.Avatar{Path: "data/avatar"},
 		&handlers.Dice{Universe: universe},
+		&handlers.TurnOn{Universe: universe},
+		&handlers.TurnOff{Universe: universe},
+		&handlers.Ban{Universe: universe},
+		&handlers.Unban{Universe: universe},
+		&handlers.TopStrong{Universe: universe},
+		&handlers.TopRating{Universe: universe},
+		&handlers.TopRich{Universe: universe},
+		&handlers.Top{Universe: universe},
+		&handlers.Capital{Universe: universe},
 	}
 	router.Middleware = []Wrapper{
 		&RandomPhoto{},
 		&MessageIncrementer{Universe: universe},
+		&IgnoreBanned{Universe: universe},
 		&UserAdder{Universe: universe},
+		&LogMessage{},
+		&IgnoreForwarded{},
 		&RequireSupergroup{},
 		WrapperFunc(middleware.Recover(func(err error) {
 			log.Print(err)
@@ -128,6 +140,7 @@ func main() {
 	}()
 	rollHandler := &handlers.Roll{Universe: universe}
 	bot.Handle(tele.OnDice, router.wrap(rollHandler.Handle))
+	bot.Handle(tele.OnUserJoined, router.wrap(helloHandler.Handle))
 	bot.Handle(tele.OnText, router.OnText)
 	bot.Handle(tele.OnPhoto, router.OnText)
 	bot.Start()

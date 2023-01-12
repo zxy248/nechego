@@ -105,3 +105,7 @@ func ModifierTitles(m []*modifier.Mod) string {
 	titles[0] = strings.Title(titles[0])
 	return strings.Join(titles, " ")
 }
+
+func Percentage(p float64) string {
+	return fmt.Sprintf("%.1f%%", p*100)
+}

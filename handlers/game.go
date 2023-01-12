@@ -601,3 +601,111 @@ func (h *Roll) Handle(c tele.Context) error {
 	}
 	return c.Send("😵 Вы проиграли.")
 }
+
+type TopStrong struct {
+	Universe *game.Universe
+}
+
+var topStrongRe = regexp.MustCompile("^!(топ сильных|силачи)")
+
+func (h *TopStrong) Match(s string) bool {
+	return topStrongRe.MatchString(s)
+}
+
+func (h *TopStrong) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	users := world.SortedUsers(game.ByStrength)
+	users = users[:min(len(users), 5)]
+	list := []string{"🏋️‍♀️ <b>Самые сильные пользователи</b>"}
+	for i, u := range users {
+		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
+			i+1, teleutil.Mention(c, u.TUID), format.Strength(u.Strength())))
+	}
+	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
+}
+
+type TopRating struct {
+	Universe *game.Universe
+}
+
+var topRating = regexp.MustCompile("^!(рейтинг|ммр|эло)")
+
+func (h *TopRating) Match(s string) bool {
+	return topRating.MatchString(s)
+}
+
+func (h *TopRating) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	users := world.SortedUsers(game.ByElo)
+	users = users[:min(len(users), 5)]
+	list := []string{"🏆 <b>Боевой рейтинг</b>"}
+	for i, u := range users {
+		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
+			i+1, teleutil.Mention(c, u.TUID), format.Rating(u.Rating)))
+	}
+	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
+}
+
+type TopRich struct {
+	Universe *game.Universe
+}
+
+var topRich = regexp.MustCompile("^!топ богатых")
+
+func (h *TopRich) Match(s string) bool {
+	return topRich.MatchString(s)
+}
+
+func (h *TopRich) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	users := world.SortedUsers(game.ByWealth)
+	users = users[:min(len(users), 5)]
+	list := []string{"💵 <b>Самые богатые пользователи</b>"}
+	for i, u := range users {
+		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
+			i+1, teleutil.Mention(c, u.TUID), format.Money(u.Total())))
+	}
+	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
+}
+
+type Capital struct {
+	Universe *game.Universe
+}
+
+var capitalRe = regexp.MustCompile("^!(капитал|топ богатых)")
+
+func (h *Capital) Match(s string) bool {
+	return capitalRe.MatchString(s)
+}
+
+func (h *Capital) Handle(c tele.Context) error {
+	world := h.Universe.MustWorld(c.Chat().ID)
+	world.Lock()
+	defer world.Unlock()
+
+	total, avg := world.Capital()
+	users := world.SortedUsers(game.ByWealth)
+	users = users[:min(len(users), 5)]
+	rich := users[0]
+	balance := rich.Total()
+	list := []string{
+		fmt.Sprintf("💸 Капитал беседы <b>%s</b>: %s\n",
+			c.Chat().Title, format.Money(total)),
+		fmt.Sprintf("<i>В среднем на счету: %s</i>\n",
+			format.Money(avg)),
+		fmt.Sprintf("<i>В руках магната %s %s,</i>",
+			teleutil.Mention(c, users[0].TUID), format.Money(balance)),
+		fmt.Sprintf("<i>или %s от общего количества средств.</i>\n",
+			format.Percentage(float64(balance)/float64(total))),
+	}
+	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
+}

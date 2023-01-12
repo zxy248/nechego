@@ -146,6 +146,7 @@ func (u *User) InDebt() bool {
 	return false
 }
 
+// TODO: remove is prefixes
 func (u *User) IsEblan() bool {
 	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
