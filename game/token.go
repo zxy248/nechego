@@ -21,7 +21,7 @@ func (p PairToken) String() string {
 type Dice struct{}
 
 func (d Dice) String() string {
-	return "🎲 Кости"
+	return "🎲 Игральные кости"
 }
 
 func (u *User) Dice() (d *Dice, ok bool) {

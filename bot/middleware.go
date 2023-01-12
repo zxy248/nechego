@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"log"
 	"math/rand"
 	"nechego/game"

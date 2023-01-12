@@ -210,16 +210,21 @@ func (u *User) Eat(i *Item) bool {
 		}
 		u.RestoreEnergy(e)
 		return true
+	case *pets.Pet:
+		u.Inventory.Remove(i)
+		u.RestoreEnergy(1 + rand.Intn(2))
+		return true
 	}
 	return false
 }
 
 func (u *User) Sell(i *Item) (profit int, ok bool) {
+	if !i.Transferable {
+		return 0, false
+	}
 	if ok = u.Inventory.Remove(i); !ok {
 		return 0, false
 	}
-	// TODO: another approach: implement interface{Cost() int} on items
-	// which can be sold, then cast it here
 	switch x := i.Value.(type) {
 	case *fishing.Fish:
 		n := int(x.Price())
