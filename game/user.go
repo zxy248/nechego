@@ -312,7 +312,7 @@ func (u *User) Modset() modifier.Set {
 	if u.InDebt() {
 		set.Add(modifier.Debtor)
 	}
-	if u.Inventory.Overflow() {
+	if u.Inventory.Count() > InventorySize {
 		set.Add(modifier.Heavy)
 	}
 

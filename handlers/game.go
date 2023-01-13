@@ -75,7 +75,7 @@ func (h *Inventory) Handle(c tele.Context) error {
 
 	items := user.Inventory.List()
 	warn := ""
-	if user.Inventory.Overflow() {
+	if user.Inventory.Count() > game.InventorySize {
 		warn = " (!)"
 	}
 	lines := append([]string{fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>",
@@ -127,6 +127,9 @@ func (h *Pick) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	if user.Inventory.Count() > game.InventoryCap {
+		return c.Send(format.InventoryFull)
+	}
 	for _, key := range teleutil.NumArg(c, pickRe, 2) {
 		item, ok := world.Floor.ByKey(key)
 		if !ok {
@@ -195,6 +198,9 @@ func (h *Buy) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	if user.Inventory.Count() > game.InventoryCap {
+		return c.Send(format.InventoryFull)
+	}
 	for _, key := range teleutil.NumArg(c, buyRe, 1) {
 		p, err := user.Buy(world.Market, key)
 		if errors.Is(err, game.ErrNoKey) {
@@ -284,6 +290,9 @@ func (h *Fish) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	if user.Inventory.Count() > game.InventoryCap {
+		return c.Send(format.InventoryFull)
+	}
 	rod, ok := user.FishingRod()
 	if !ok {
 		return c.Send("🎣 Приобретите удочку в магазине, прежде чем рыбачить.")

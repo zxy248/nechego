@@ -127,7 +127,7 @@ func main() {
 			universe.ForEachWorld(func(w *game.World) {
 				w.Market.Refill()
 				for _, u := range w.Users {
-					if u.Inventory.Overflow() && counter%2 == 0 {
+					if u.Inventory.Count() > game.InventorySize && counter%2 == 0 {
 						continue
 					}
 					u.RestoreEnergy(1)
