@@ -85,6 +85,7 @@ func main() {
 		&handlers.Market{Universe: universe},
 		&handlers.Buy{Universe: universe},
 		&handlers.Eat{Universe: universe},
+		&handlers.EatQuick{Universe: universe},
 		&handlers.Fish{Universe: universe},
 		&handlers.Status{Universe: universe},
 		&handlers.Sell{Universe: universe},

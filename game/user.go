@@ -230,6 +230,20 @@ func (u *User) Eat(i *Item) bool {
 	return false
 }
 
+func (u *User) EatQuick() (i *Item, ok bool) {
+	for _, i = range u.Inventory.list() {
+		switch x := i.Value.(type) {
+		case *fishing.Fish:
+			if x.Price() < 2000 {
+				return i, u.Eat(i)
+			}
+		case *food.Food:
+			return i, u.Eat(i)
+		}
+	}
+	return nil, false
+}
+
 func (u *User) Sell(i *Item) (profit int, ok bool) {
 	if !i.Transferable {
 		return 0, false

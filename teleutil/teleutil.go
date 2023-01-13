@@ -73,6 +73,10 @@ func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
 		}
 		nums = append(nums, n)
 	}
+	const lim = 4
+	if len(nums) > lim {
+		nums = nums[:lim]
+	}
 	return nums
 }
 

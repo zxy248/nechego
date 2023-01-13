@@ -18,6 +18,8 @@ const (
 	UserBanned           = "🚫 Пользователь заблокирован."
 	UserUnbanned         = "✅ Пользователь разблокирован."
 	CannotAttackYourself = "🛡️ Вы не можете напасть на самого себя."
+	NoFood               = "🍊 У вас закончилась подходящая еда."
+	NotHungry            = "🍊 Вы не хотите есть."
 )
 
 func Mention(uid int64, name string) string {
@@ -61,6 +63,14 @@ func Energy(e int) string {
 
 func EnergyOutOf(e, max int) string {
 	return fmt.Sprintf("<code>%d из %d ⚡</code>", e, max)
+}
+
+func EnergyRemaining(e int) string {
+	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
+}
+
+func Eat(s string) string {
+	return fmt.Sprintf("🍊 Вы съели %s.", s)
 }
 
 func Fish(f *fishing.Fish) string {

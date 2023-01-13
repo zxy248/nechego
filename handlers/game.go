@@ -225,13 +225,12 @@ func (h *Eat) Handle(c tele.Context) error {
 	ate := false
 	defer func() {
 		if ate {
-			c.Send(fmt.Sprintf("<i>Энергии осталось: %s</i>",
-				format.Energy(user.Energy)), tele.ModeHTML)
+			c.Send(format.EnergyRemaining(user.Energy), tele.ModeHTML)
 		}
 	}()
 	for _, key := range teleutil.NumArg(c, eatRe, 2) {
 		if user.Energy == game.EnergyCap {
-			return c.Send("🍊 Вы не хотите есть.")
+			return c.Send(format.NotHungry)
 		}
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
@@ -241,9 +240,34 @@ func (h *Eat) Handle(c tele.Context) error {
 			return c.Send("🤮")
 		}
 		ate = true
-		c.Send(fmt.Sprintf("🍊 Вы съели %s.", format.Item(item)), tele.ModeHTML)
+		c.Send(format.Eat(format.Item(item)), tele.ModeHTML)
 	}
 	return nil
+}
+
+type EatQuick struct {
+	Universe *game.Universe
+}
+
+var eatQuickRe = regexp.MustCompile("^!еда")
+
+func (h *EatQuick) Match(s string) bool {
+	return eatQuickRe.MatchString(s)
+}
+
+func (h *EatQuick) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	if user.Energy == game.EnergyCap {
+		return c.Send(format.NotHungry)
+	}
+	i, ok := user.EatQuick()
+	if !ok {
+		return c.Send(format.NoFood)
+	}
+	return c.Send(format.Eat(format.Item(i))+"\n\n"+
+		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
 type Fish struct {
