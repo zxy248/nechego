@@ -6,6 +6,7 @@ import (
 	"nechego/game"
 	"nechego/teleutil"
 	"strings"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -96,5 +97,26 @@ func (m *LogMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 			strings.TrimSpace(c.Sender().FirstName+" "+c.Sender().LastName),
 			c.Text())
 		return next(c)
+	}
+}
+
+type DeleterContext struct {
+	tele.Context
+}
+
+func (c DeleterContext) Send(what interface{}, opts ...interface{}) error {
+	msg, err := c.Bot().Send(c.Recipient(), what, opts...)
+	if err != nil {
+		return err
+	}
+	time.AfterFunc(5*time.Minute, func() { c.Bot().Delete(msg) })
+	return nil
+}
+
+type DeleteMessage struct{}
+
+func (m *DeleteMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
+	return func(c tele.Context) error {
+		return next(DeleterContext{c})
 	}
 }

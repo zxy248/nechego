@@ -111,6 +111,7 @@ func main() {
 		&RandomPhoto{},
 		&MessageIncrementer{Universe: universe},
 		&IgnoreBanned{Universe: universe},
+		&DeleteMessage{},
 		&LogMessage{},
 		&IgnoreForwarded{},
 		&RequireSupergroup{},
