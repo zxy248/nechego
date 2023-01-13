@@ -166,7 +166,7 @@ type Market struct {
 	Universe *game.Universe
 }
 
-var marketRe = regexp.MustCompile("^!магаз")
+var marketRe = regexp.MustCompile("^!(магаз|шоп)")
 
 func (h *Market) Match(s string) bool {
 	return marketRe.MatchString(s)
@@ -387,7 +387,6 @@ func (h *Fight) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	opnt := world.UserByID(reply.ID)
-
 	if ok := user.SpendEnergy(25); !ok {
 		return c.Send(format.NoEnergy)
 	}
@@ -397,11 +396,19 @@ func (h *Fight) Handle(c tele.Context) error {
 		tele.ModeHTML)
 	winner, loser, rating := user.Fight(opnt)
 	winnerMent := teleutil.Mention(c, winner.TUID)
-	if rand.Float64() < 0.16 {
-		if item, ok := loser.Inventory.Random(); ok {
-			if ok := loser.Inventory.Move(winner.Inventory, item); ok {
-				c.Send(fmt.Sprintf("🥊 %s забирает %s у проигравшего.",
-					winnerMent, format.Item(item)), tele.ModeHTML)
+	if rand.Float64() < 1.0/6 {
+		if i, ok := loser.Inventory.Random(); ok {
+			if ok := loser.Inventory.Move(world.Floor, i); ok {
+				c.Send(fmt.Sprintf("🥊 %s выбивает %s из проигравшего.",
+					winnerMent, format.Item(i)), tele.ModeHTML)
+			}
+		}
+	}
+	if rand.Float64() < 1.0/12 {
+		if i, ok := user.Inventory.Random(); ok {
+			if ok := user.Inventory.Move(world.Floor, i); ok {
+				c.Send(fmt.Sprintf("🌀 %s уронил %s во время драки.",
+					teleutil.Mention(c, user.TUID), format.Item(i)), tele.ModeHTML)
 			}
 		}
 	}
