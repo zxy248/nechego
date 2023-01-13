@@ -131,8 +131,9 @@ const (
 
 func randomSpecies() Species {
 	s := []Species{}
+	r := rand.Float64()
 	for k, v := range species {
-		if rand.Float64() < v.Probability {
+		if r < v.Probability {
 			s = append(s, k)
 		}
 	}
