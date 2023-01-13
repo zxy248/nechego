@@ -31,7 +31,7 @@ type Pet struct {
 	Birth   time.Time
 }
 
-func RandomPet() *Pet {
+func Random() *Pet {
 	return &Pet{
 		Species: randomSpecies(),
 		Gender:  Gender(rand.Intn(2)),

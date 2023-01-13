@@ -57,6 +57,10 @@ func Energy(e int) string {
 	return fmt.Sprintf("<code>%d ⚡</code>", e)
 }
 
+func EnergyOutOf(e, max int) string {
+	return fmt.Sprintf("<code>%d из %d ⚡</code>", e, max)
+}
+
 func Fish(f *fishing.Fish) string {
 	return fmt.Sprintf("<code>%s</code>", f)
 }

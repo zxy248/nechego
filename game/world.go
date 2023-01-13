@@ -161,9 +161,9 @@ func (w *World) UserByID(tuid int64) *User {
 	return u
 }
 
-func (w *World) RestoreEnergy() {
+func (w *World) RestoreEnergy(e int) {
 	for _, u := range w.Users {
-		u.RestoreEnergy(1)
+		u.RestoreEnergy(e)
 	}
 }
 

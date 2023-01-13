@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/rand"
 	"nechego/fishing"
+	"nechego/food"
 	"nechego/pets"
 )
 
@@ -36,11 +37,15 @@ func (m *Market) Refill() {
 		{100 + rand.Intn(50000), &Item{
 			Type:         ItemTypePet,
 			Transferable: true,
-			Value:        pets.RandomPet()}},
+			Value:        pets.Random()}},
 		{500 + rand.Intn(4500), &Item{
 			Type:         ItemTypeDice,
 			Transferable: true,
 			Value:        &Dice{}}},
+		{500 + rand.Intn(1500), &Item{
+			Type:         ItemTypeFood,
+			Transferable: true,
+			Value:        food.Random()}},
 	}
 	if rand.Float64() < 0.25 {
 		products = append(products, &Product{

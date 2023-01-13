@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"nechego/elo"
 	"nechego/fishing"
+	"nechego/food"
 	"nechego/modifier"
 	"nechego/pets"
 	"time"
@@ -19,10 +20,11 @@ const (
 	GenderTrans
 )
 
+const EnergyCap = 100
+
 type User struct {
 	TUID      int64
 	Energy    int
-	EnergyCap int
 	Rating    float64
 	Messages  int
 	Banned    bool
@@ -35,7 +37,6 @@ type User struct {
 func NewUser(tuid int64) *User {
 	return &User{
 		TUID:      tuid,
-		EnergyCap: 5,
 		Rating:    1500,
 		Inventory: NewItems(),
 	}
@@ -51,8 +52,8 @@ func (u *User) SpendEnergy(e int) bool {
 
 func (u *User) RestoreEnergy(e int) {
 	u.Energy += e
-	if u.Energy > u.EnergyCap {
-		u.Energy = u.EnergyCap
+	if u.Energy > EnergyCap {
+		u.Energy = EnergyCap
 	}
 }
 
@@ -204,15 +205,26 @@ func (u *User) Eat(i *Item) bool {
 	switch x := i.Value.(type) {
 	case *fishing.Fish:
 		u.Inventory.Remove(i)
-		e := 1
 		if x.Heavy() {
-			e = 2
+			u.RestoreEnergy(25 + rand.Intn(10))
+		} else {
+			u.RestoreEnergy(15 + rand.Intn(10))
 		}
-		u.RestoreEnergy(e)
 		return true
 	case *pets.Pet:
 		u.Inventory.Remove(i)
-		u.RestoreEnergy(1 + rand.Intn(2))
+		switch x.Species.Size() {
+		case pets.Small:
+			u.RestoreEnergy(5 + rand.Intn(10))
+		case pets.Medium:
+			u.RestoreEnergy(15 + rand.Intn(10))
+		case pets.Big:
+			u.RestoreEnergy(25 + rand.Intn(10))
+		}
+		return true
+	case *food.Food:
+		u.Inventory.Remove(i)
+		u.RestoreEnergy(int(x.Nutrition() * 100))
 		return true
 	}
 	return false
@@ -271,10 +283,10 @@ func (u *User) Modset() modifier.Set {
 	if u.Energy == 0 {
 		set.Add(modifier.NoEnergy)
 	}
-	if u.Energy == u.EnergyCap {
+	if u.Energy == EnergyCap {
 		set.Add(modifier.FullEnergy)
 	}
-	if u.Energy > u.EnergyCap {
+	if u.Energy > EnergyCap {
 		set.Add(modifier.MuchEnergy)
 	}
 	if u.Rich() {

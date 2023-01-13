@@ -7,6 +7,14 @@ import (
 	"strings"
 )
 
+type Size int
+
+const (
+	Small Size = iota
+	Medium
+	Big
+)
+
 type Quality int
 
 const (
@@ -152,6 +160,10 @@ func (s Species) Emoji() string {
 
 func (s Species) Description() string {
 	return species[s].Description
+}
+
+func (s Species) Size() Size {
+	return species[s].Size
 }
 
 func (s Species) String() string {

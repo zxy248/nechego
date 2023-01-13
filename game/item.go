@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/fishing"
+	"nechego/food"
 	"nechego/pets"
 	"time"
 )
@@ -24,6 +25,7 @@ const (
 	ItemTypeFish
 	ItemTypePet
 	ItemTypeDice
+	ItemTypeFood
 )
 
 type Item struct {
@@ -66,6 +68,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &pets.Pet{}
 	case ItemTypeDice:
 		i.Value = &Dice{}
+	case ItemTypeFood:
+		i.Value = &food.Food{}
 	default:
 		panic(fmt.Errorf("unexpected item type %v", i.Type))
 	}
@@ -159,4 +163,15 @@ func (it *Items) Random() (x *Item, ok bool) {
 		return nil, false
 	}
 	return items[rand.Intn(len(items))], true
+}
+
+type SetNamer interface {
+	SetName(s string) bool
+}
+
+func (i *Item) SetName(s string) bool {
+	if x, ok := i.Value.(SetNamer); ok {
+		return x.SetName(s)
+	}
+	return false
 }

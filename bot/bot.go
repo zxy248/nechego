@@ -104,6 +104,7 @@ func main() {
 		&handlers.Capital{Universe: universe},
 		&handlers.Balance{Universe: universe},
 		&handlers.Energy{Universe: universe},
+		&handlers.NamePet{Universe: universe},
 		helloHandler,
 	}
 	router.Middleware = []Wrapper{
@@ -122,13 +123,7 @@ func main() {
 		for range time.NewTicker(time.Minute * 1).C {
 			universe.ForEachWorld(func(w *game.World) {
 				w.Market.Refill()
-			})
-		}
-	}()
-	go func() {
-		for range time.NewTicker(time.Minute * 20).C {
-			universe.ForEachWorld(func(w *game.World) {
-				w.RestoreEnergy()
+				w.RestoreEnergy(1)
 			})
 		}
 	}()

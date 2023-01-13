@@ -63,7 +63,7 @@ type Inventory struct {
 	Universe *game.Universe
 }
 
-var inventoryRe = regexp.MustCompile("^!(инвентарь|улов)")
+var inventoryRe = regexp.MustCompile("^!(инвентарь|лут|улов)")
 
 func (h *Inventory) Match(s string) bool {
 	return inventoryRe.MatchString(s)
@@ -161,7 +161,7 @@ type Market struct {
 	Universe *game.Universe
 }
 
-var marketRe = regexp.MustCompile("^!магазин")
+var marketRe = regexp.MustCompile("^!магаз")
 
 func (h *Market) Match(s string) bool {
 	return marketRe.MatchString(s)
@@ -218,7 +218,7 @@ func (h *Eat) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	for _, key := range teleutil.NumArg(c, eatRe, 2) {
-		if user.Energy == user.EnergyCap {
+		if user.Energy == game.EnergyCap {
 			return c.Send("🍊 Вы не хотите есть.")
 		}
 		item, ok := user.Inventory.ByKey(key)
@@ -252,7 +252,7 @@ func (h *Fish) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("🎣 Приобретите удочку, прежде чем рыбачить.")
 	}
-	if ok := user.SpendEnergy(1); !ok {
+	if ok := user.SpendEnergy(20); !ok {
 		return c.Send("⚡ Недостаточно энергии.")
 	}
 	fish := user.Fish(rod)
@@ -376,7 +376,7 @@ func (h *Fight) Handle(c tele.Context) error {
 	defer world.Unlock()
 	opnt := world.UserByID(reply.ID)
 
-	if ok := user.SpendEnergy(1); !ok {
+	if ok := user.SpendEnergy(25); !ok {
 		return c.Send("⚡ Недостаточно энергии.")
 	}
 	c.Send(fmt.Sprintf("⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs.</i></b> <b>%s</b> <code>[%.2f]</code>",
@@ -385,7 +385,7 @@ func (h *Fight) Handle(c tele.Context) error {
 		tele.ModeHTML)
 	winner, loser, rating := user.Fight(opnt)
 	winnerMent := teleutil.Mention(c, winner.TUID)
-	if rand.Float64() < 0.1 {
+	if rand.Float64() < 0.16 {
 		if item, ok := loser.Inventory.Random(); ok {
 			if ok := loser.Inventory.Move(winner.Inventory, item); ok {
 				c.Send(fmt.Sprintf("🥊 %s забирает %s у проигравшего.",
@@ -658,6 +658,32 @@ func (h *Energy) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 	return c.Send(fmt.Sprintf("%s Запас энергии: %s",
-		tern(user.Energy < user.EnergyCap/2, "🪫", "🔋"),
-		format.Energy(user.Energy)), tele.ModeHTML)
+		tern(user.Energy < game.EnergyCap/2, "🪫", "🔋"),
+		format.EnergyOutOf(user.Energy, game.EnergyCap)), tele.ModeHTML)
+}
+
+type NamePet struct {
+	Universe *game.Universe
+}
+
+var namePetRe = regexp.MustCompile("^!назвать (.*)")
+
+func (h *NamePet) Match(s string) bool {
+	return namePetRe.MatchString(s)
+}
+
+func (h *NamePet) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	name := teleutil.Args(c, namePetRe)[1]
+	pet, ok := user.Pet()
+	if !ok {
+		return c.Send("🐈 У вас нет питомца.")
+	}
+	if ok := pet.SetName(name); !ok {
+		return c.Send("🐈 Такое имя не подходит для питомца.")
+	}
+	return c.Send(fmt.Sprintf("🐈 Вы назвали питомца <code>%s</code>.",
+		name), tele.ModeHTML)
 }
