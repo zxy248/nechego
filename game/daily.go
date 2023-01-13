@@ -4,7 +4,7 @@ import "time"
 
 func (w *World) DailyEblan() (u *User, ok bool) {
 	for _, u = range w.Users {
-		if u.IsEblan() {
+		if u.Eblan() {
 			return u, true
 		}
 	}
@@ -23,7 +23,7 @@ func (w *World) rollDailyEblan() *User {
 
 func (w *World) DailyAdmin() (u *User, ok bool) {
 	for _, u = range w.Users {
-		if u.IsAdmin() {
+		if u.Admin() {
 			return u, true
 		}
 	}
@@ -46,7 +46,7 @@ func (w *World) DailyPair() (pair []*User, ok bool) {
 		return nil, false
 	}
 	for _, u := range w.Users {
-		if u.IsPair() {
+		if u.Pair() {
 			pair = append(pair, u)
 		}
 		if len(pair) == 2 {

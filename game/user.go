@@ -147,8 +147,7 @@ func (u *User) InDebt() bool {
 	return false
 }
 
-// TODO: remove is prefixes
-func (u *User) IsEblan() bool {
+func (u *User) Eblan() bool {
 	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
 		case *EblanToken:
@@ -158,7 +157,7 @@ func (u *User) IsEblan() bool {
 	return false
 }
 
-func (u *User) IsAdmin() bool {
+func (u *User) Admin() bool {
 	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
 		case *AdminToken:
@@ -168,7 +167,7 @@ func (u *User) IsAdmin() bool {
 	return false
 }
 
-func (u *User) IsPair() bool {
+func (u *User) Pair() bool {
 	for _, v := range u.Inventory.list() {
 		switch v.Value.(type) {
 		case *PairToken:
@@ -288,10 +287,10 @@ func (u *User) power() float64 {
 
 func (u *User) Modset() modifier.Set {
 	set := modifier.Set{}
-	if u.IsAdmin() {
+	if u.Admin() {
 		set.Add(modifier.Admin)
 	}
-	if u.IsEblan() {
+	if u.Eblan() {
 		set.Add(modifier.Eblan)
 	}
 	if u.Energy == 0 {

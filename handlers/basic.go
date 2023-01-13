@@ -628,7 +628,7 @@ func (h *Ban) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if !user.IsAdmin() {
+	if !user.Admin() {
 		return c.Send(format.AdminsOnly)
 	}
 	reply, ok := teleutil.Reply(c)
@@ -653,7 +653,7 @@ func (h *Unban) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if !user.IsAdmin() {
+	if !user.Admin() {
 		return c.Send(format.AdminsOnly)
 	}
 	reply, ok := teleutil.Reply(c)
