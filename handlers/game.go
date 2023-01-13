@@ -88,7 +88,7 @@ type Drop struct {
 	Universe *game.Universe
 }
 
-var dropRe = regexp.MustCompile("^!(выкинуть|выбросить|выложить) (.*)")
+var dropRe = regexp.MustCompile("^!(выкинуть|выбросить|выложить|дроп|положить) (.*)")
 
 func (h *Drop) Match(s string) bool {
 	return dropRe.MatchString(s)
