@@ -298,6 +298,9 @@ func (u *User) Modset() modifier.Set {
 	if u.InDebt() {
 		set.Add(modifier.Debtor)
 	}
+	if u.Inventory.Overflow() {
+		set.Add(modifier.Heavy)
+	}
 
 	switch l := u.Luck(); {
 	case l < 0.01:

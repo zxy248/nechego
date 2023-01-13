@@ -119,12 +119,19 @@ func main() {
 			debug.PrintStack()
 		})),
 	}
+	counter := 0
 	go func() {
 		for range time.NewTicker(time.Minute * 1).C {
 			universe.ForEachWorld(func(w *game.World) {
 				w.Market.Refill()
-				w.RestoreEnergy(1)
+				for _, u := range w.Users {
+					if u.Inventory.Overflow() && counter%2 == 0 {
+						continue
+					}
+					u.RestoreEnergy(1)
+				}
 			})
+			counter++
 		}
 	}()
 

@@ -73,9 +73,14 @@ func (h *Inventory) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	lines := append([]string{fmt.Sprintf("<b>🗄 Инвентарь: %s</b>",
-		teleutil.Mention(c, user.TUID))},
-		format.Items(user.Inventory.List())...)
+	items := user.Inventory.List()
+	warn := ""
+	if user.Inventory.Overflow() {
+		warn = " (!)"
+	}
+	lines := append([]string{fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>",
+		teleutil.Mention(c, user.TUID), len(items), game.InventorySize, warn)},
+		format.Items(items)...)
 	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
 }
 
@@ -92,6 +97,7 @@ func (h *Drop) Match(s string) bool {
 func (h *Drop) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
+
 	for _, key := range teleutil.NumArg(c, dropRe, 2) {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
@@ -102,8 +108,7 @@ func (h *Drop) Handle(c tele.Context) error {
 			return c.Send(fmt.Sprintf("♻ Вы не можете выбросить %s.",
 				format.Item(item)), tele.ModeHTML)
 		}
-		c.Send(fmt.Sprintf("🚮 Вы выбросили %s.",
-			format.Item(item)), tele.ModeHTML)
+		c.Send(fmt.Sprintf("🚮 Вы выбросили %s.", format.Item(item)), tele.ModeHTML)
 	}
 	return nil
 }
@@ -217,6 +222,13 @@ func (h *Eat) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	ate := false
+	defer func() {
+		if ate {
+			c.Send(fmt.Sprintf("<i>Энергии осталось: %s</i>",
+				format.Energy(user.Energy)), tele.ModeHTML)
+		}
+	}()
 	for _, key := range teleutil.NumArg(c, eatRe, 2) {
 		if user.Energy == game.EnergyCap {
 			return c.Send("🍊 Вы не хотите есть.")
@@ -228,8 +240,8 @@ func (h *Eat) Handle(c tele.Context) error {
 		if ok := user.Eat(item); !ok {
 			return c.Send("🤮")
 		}
-		c.Send(fmt.Sprintf("🍊 Вы съели %s.\n\n<i>Энергии осталось: %s</i>",
-			format.Item(item), format.Energy(user.Energy)), tele.ModeHTML)
+		ate = true
+		c.Send(fmt.Sprintf("🍊 Вы съели %s.", format.Item(item)), tele.ModeHTML)
 	}
 	return nil
 }
@@ -250,10 +262,10 @@ func (h *Fish) Handle(c tele.Context) error {
 
 	rod, ok := user.FishingRod()
 	if !ok {
-		return c.Send("🎣 Приобретите удочку, прежде чем рыбачить.")
+		return c.Send("🎣 Приобретите удочку в магазине, прежде чем рыбачить.")
 	}
 	if ok := user.SpendEnergy(20); !ok {
-		return c.Send("⚡ Недостаточно энергии.")
+		return c.Send(format.NoEnergy)
 	}
 	fish := user.Fish(rod)
 	if rod.Durability < 0 {
@@ -366,18 +378,18 @@ func (h *Fight) Match(s string) bool {
 func (h *Fight) Handle(c tele.Context) error {
 	reply, ok := teleutil.Reply(c)
 	if !ok {
-		return c.Send("✉️ Перешлите сообщение пользователя.")
+		return c.Send(format.RepostMessage)
 	}
 	if c.Sender().ID == reply.ID {
-		return c.Send("🛡️ Вы не можете напасть на самого себя.")
+		return c.Send(format.CannotAttackYourself)
 	}
-
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
+
 	opnt := world.UserByID(reply.ID)
 
 	if ok := user.SpendEnergy(25); !ok {
-		return c.Send("⚡ Недостаточно энергии.")
+		return c.Send(format.NoEnergy)
 	}
 	c.Send(fmt.Sprintf("⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs.</i></b> <b>%s</b> <code>[%.2f]</code>",
 		teleutil.Mention(c, user.TUID), user.Strength(),

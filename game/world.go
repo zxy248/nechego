@@ -161,12 +161,6 @@ func (w *World) UserByID(tuid int64) *User {
 	return u
 }
 
-func (w *World) RestoreEnergy(e int) {
-	for _, u := range w.Users {
-		u.RestoreEnergy(e)
-	}
-}
-
 func (w *World) Capital() (total, avg int) {
 	for _, w := range w.Users {
 		total += w.Total()

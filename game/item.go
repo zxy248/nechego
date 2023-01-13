@@ -165,6 +165,12 @@ func (it *Items) Random() (x *Item, ok bool) {
 	return items[rand.Intn(len(items))], true
 }
 
+const InventorySize = 10
+
+func (it *Items) Overflow() bool {
+	return len(it.I) > InventorySize
+}
+
 type SetNamer interface {
 	SetName(s string) bool
 }
