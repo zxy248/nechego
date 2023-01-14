@@ -211,6 +211,9 @@ func (u *User) Eat(i *Item) bool {
 		}
 		return true
 	case *pets.Pet:
+		if x.Name != "" {
+			return false
+		}
 		u.Inventory.Remove(i)
 		switch x.Species.Size() {
 		case pets.Small:
