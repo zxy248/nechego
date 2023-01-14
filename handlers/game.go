@@ -280,7 +280,7 @@ type Fish struct {
 	Universe *game.Universe
 }
 
-var fishRe = regexp.MustCompile("^!(рыбалка|ловля рыб)")
+var fishRe = regexp.MustCompile("^!(р[ыі]балка|ловля рыб)")
 
 func (h *Fish) Match(s string) bool {
 	return fishRe.MatchString(s)
