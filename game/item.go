@@ -157,6 +157,12 @@ func (it *Items) Move(dst *Items, x *Item) bool {
 	return true
 }
 
+func (it *Items) Retain(n int) {
+	if len(it.I) > n {
+		it.I = it.I[len(it.I)-n:]
+	}
+}
+
 func (it *Items) Random() (x *Item, ok bool) {
 	items := it.list()
 	if len(items) == 0 {

@@ -110,6 +110,7 @@ func (h *Drop) Handle(c tele.Context) error {
 		}
 		c.Send(fmt.Sprintf("🚮 Вы выбросили %s.", format.Item(item)), tele.ModeHTML)
 	}
+	world.Floor.Retain(10)
 	return nil
 }
 

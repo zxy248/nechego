@@ -63,7 +63,7 @@ func Left(m *tele.ChatMember) bool {
 	return m.Role == tele.Kicked || m.Role == tele.Left
 }
 
-func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
+func NumArgAll(c tele.Context, re *regexp.Regexp, n int) []int {
 	s := Args(c, re)[n]
 	nums := []int{}
 	for _, x := range strings.Fields(s) {
@@ -73,7 +73,12 @@ func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
 		}
 		nums = append(nums, n)
 	}
-	const lim = 4
+	return nums
+}
+
+func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
+	nums := NumArgAll(c, re, n)
+	const lim = 5
 	if len(nums) > lim {
 		nums = nums[:lim]
 	}
