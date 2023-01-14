@@ -733,6 +733,9 @@ func (h *NamePet) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("🐈 У вас нет питомца.")
 	}
+	if pet.Name != "" {
+		return c.Send("🐈 У вашего питомца уже есть имя.")
+	}
 	if ok := pet.SetName(name); !ok {
 		return c.Send("🐈 Такое имя не подходит для питомца.")
 	}
