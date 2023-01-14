@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
-	"strings"
 )
 
 type Size int
@@ -22,8 +21,6 @@ const (
 	Rare
 	Exotic
 	Legendary
-
-	numberOfQualities
 )
 
 func (q Quality) String() string {
@@ -37,7 +34,7 @@ func (q Quality) String() string {
 	case Legendary:
 		return "легендарный"
 	default:
-		panic("unknown quality")
+		panic(fmt.Errorf("unexpected quality %d", q))
 	}
 }
 
@@ -125,8 +122,6 @@ const (
 	Parrot
 	Dragon
 	Caterpillar
-
-	numberOfSpecies
 )
 
 func randomSpecies() Species {
@@ -145,7 +140,7 @@ func randomSpecies() Species {
 		s[i], s[j] = s[j], s[i]
 	})
 	sort.Slice(s, func(i, j int) bool {
-		return species[s[i]].Probability < species[s[j]].Probability
+		return species[s[i]].Probability > species[s[j]].Probability
 	})
 
 	few := 4
@@ -155,29 +150,17 @@ func randomSpecies() Species {
 	return s[rand.Intn(few)]
 }
 
-func (s Species) Emoji() string {
-	return species[s].Emoji
-}
-
-func (s Species) Description() string {
-	return species[s].Description
-}
-
-func (s Species) Size() Size {
-	return species[s].Size
-}
-
-func (s Species) String() string {
-	return fmt.Sprintf("%s %s", s.Emoji(), strings.Title(s.Description()))
-}
-
+func (s Species) Emoji() string        { return species[s].Emoji }
+func (s Species) String() string       { return species[s].Description }
+func (s Species) Probability() float64 { return species[s].Probability }
+func (s Species) Size() Size           { return species[s].Size }
 func (s Species) Quality() Quality {
-	switch p := species[s].Probability; {
-	case p <= 0.01:
+	switch p := s.Probability(); {
+	case p < 0.01:
 		return Legendary
-	case p <= 0.05:
+	case p < 0.05:
 		return Exotic
-	case p <= 0.20:
+	case p < 0.20:
 		return Rare
 	default:
 		return Common

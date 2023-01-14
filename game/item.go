@@ -76,6 +76,16 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(raw, i.Value)
 }
 
+func (i *Item) bad() bool {
+	if rod, ok := i.Value.(*FishingRod); ok && rod.Durability < 0 {
+		return true
+	}
+	if !i.Expire.IsZero() && time.Now().After(i.Expire) {
+		return true
+	}
+	return false
+}
+
 type Items struct {
 	I    []*Item
 	keys map[int]*Item
@@ -124,24 +134,14 @@ func (it *Items) updateHotkeys() {
 	}
 }
 
-func (it *Items) list() []*Item {
-	n := 0
-	for _, v := range it.I {
-		if rod, ok := v.Value.(*FishingRod); ok && rod.Durability < 0 {
-			continue
-		}
-		if v.Expire.IsZero() || time.Now().Before(v.Expire) {
-			it.I[n] = v
-			n++
-		}
-	}
-	it.I = it.I[:n]
+func (it *Items) normalize() []*Item {
+	it.Filter(func(i *Item) bool { return !i.bad() })
 	return it.I
 }
 
 func (it *Items) List() []*Item {
 	// updates hotkeys; only for public use
-	it.list()
+	it.normalize()
 	it.updateHotkeys()
 	return it.I
 }
@@ -164,11 +164,22 @@ func (it *Items) Retain(n int) {
 }
 
 func (it *Items) Random() (x *Item, ok bool) {
-	items := it.list()
+	items := it.normalize()
 	if len(items) == 0 {
 		return nil, false
 	}
 	return items[rand.Intn(len(items))], true
+}
+
+func (it *Items) Filter(keep func(i *Item) bool) {
+	n := 0
+	for _, x := range it.I {
+		if keep(x) {
+			it.I[n] = x
+			n++
+		}
+	}
+	it.I = it.I[:n]
 }
 
 const (

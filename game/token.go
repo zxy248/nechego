@@ -25,7 +25,7 @@ func (d Dice) String() string {
 }
 
 func (u *User) Dice() (d *Dice, ok bool) {
-	for _, x := range u.Inventory.list() {
+	for _, x := range u.Inventory.normalize() {
 		if d, ok = x.Value.(*Dice); ok {
 			return
 		}

@@ -430,7 +430,7 @@ func (h *Fight) Handle(c tele.Context) error {
 		tele.ModeHTML)
 	winner, loser, rating := user.Fight(opnt)
 	winnerMent := teleutil.Mention(c, winner.TUID)
-	if rand.Float64() < 1.0/6 {
+	if rand.Float64() < 1.0/8 {
 		if i, ok := loser.Inventory.Random(); ok {
 			if ok := loser.Inventory.Move(world.Floor, i); ok {
 				c.Send(fmt.Sprintf("🥊 %s выбивает %s из проигравшего.",

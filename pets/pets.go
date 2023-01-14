@@ -16,13 +16,8 @@ const (
 	Female
 )
 
-func (g Gender) Emoji() string {
-	return genderData[g].Emoji
-}
-
-func (g Gender) String() string {
-	return genderData[g].Description
-}
+func (g Gender) Emoji() string  { return genders[g].Emoji }
+func (g Gender) String() string { return genders[g].Description }
 
 type Pet struct {
 	Name    string
@@ -48,7 +43,8 @@ func (p *Pet) String() string {
 	if name != "" {
 		name = name + " "
 	}
-	return fmt.Sprintf("%s %s(%s)", p.Species, name, p.Gender.Emoji())
+	return fmt.Sprintf("%s %s %s(%s)", p.Species.Emoji(),
+		strings.Title(p.Species.String()), name, p.Gender.Emoji())
 }
 
 func (p *Pet) SetName(s string) bool {

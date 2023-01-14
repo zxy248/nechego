@@ -78,5 +78,6 @@ func pairToken() *Item {
 }
 
 func tomorrow() time.Time {
-	return time.Now().Add(time.Hour * 24)
+	y, m, d := time.Now().Date()
+	return time.Date(y, m, d+1, 0, 0, 0, 0, time.Local)
 }

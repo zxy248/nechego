@@ -1,6 +1,9 @@
 package food
 
-import "math/rand"
+import (
+	"fmt"
+	"math/rand"
+)
 
 type Type int
 
@@ -15,25 +18,11 @@ const (
 	PizzaCheeseChicken
 	Toast
 	Shawarma
-
-	typeN
 )
 
-func (t Type) String() string {
-	return data[t].Description
-}
-
-func (t Type) Emoji() string {
-	return data[t].Emoji
-}
-
-func (t Type) Nutrition() float64 {
-	return data[t].Nutrition
-}
-
-func (t Type) Description() string {
-	return data[t].Description
-}
+func (t Type) Emoji() string      { return data[t].Emoji }
+func (t Type) Nutrition() float64 { return data[t].Nutrition }
+func (t Type) String() string     { return data[t].Description }
 
 var data = map[Type]struct {
 	Emoji       string
@@ -57,9 +46,9 @@ type Food struct {
 }
 
 func (f Food) String() string {
-	return f.Type.Emoji() + " " + f.Type.Description()
+	return fmt.Sprintf("%s %s", f.Type.Emoji(), f.Type)
 }
 
 func Random() *Food {
-	return &Food{Type: Type(rand.Intn(int(typeN)))}
+	return &Food{Type: Type(rand.Intn(len(data)))}
 }

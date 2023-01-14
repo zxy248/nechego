@@ -1,6 +1,6 @@
 package pets
 
-var genderData = map[Gender]struct {
+var genders = map[Gender]struct {
 	Emoji       string
 	Description string
 }{

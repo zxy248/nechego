@@ -96,14 +96,13 @@ func (u *User) AddMoney(n int) {
 
 func (u *User) Stack() bool {
 	t := 0
-	for _, x := range u.Inventory.list() {
-		if cash, ok := x.Value.(*Cash); ok {
-			// TODO: possible optimization (from n^2 to n)
-			// Filter(func (i *Item) (keep bool))
-			u.Inventory.Remove(x)
-			t += cash.Money
+	u.Inventory.Filter(func(i *Item) bool {
+		if c, ok := i.Value.(*Cash); ok {
+			t += c.Money
+			return false
 		}
-	}
+		return true
+	})
 	if t == 0 {
 		return false
 	}
@@ -122,7 +121,7 @@ func (u *User) Stack() bool {
 
 func (u *User) Total() int {
 	t := 0
-	for _, v := range u.Inventory.list() {
+	for _, v := range u.Inventory.normalize() {
 		switch x := v.Value.(type) {
 		case *Cash:
 			t += x.Money
@@ -138,7 +137,7 @@ func (u *User) Total() int {
 }
 
 func (u *User) InDebt() bool {
-	for _, v := range u.Inventory.list() {
+	for _, v := range u.Inventory.normalize() {
 		switch v.Value.(type) {
 		case *Debt:
 			return true
@@ -148,7 +147,7 @@ func (u *User) InDebt() bool {
 }
 
 func (u *User) Eblan() bool {
-	for _, v := range u.Inventory.list() {
+	for _, v := range u.Inventory.normalize() {
 		switch v.Value.(type) {
 		case *EblanToken:
 			return true
@@ -158,7 +157,7 @@ func (u *User) Eblan() bool {
 }
 
 func (u *User) Admin() bool {
-	for _, v := range u.Inventory.list() {
+	for _, v := range u.Inventory.normalize() {
 		switch v.Value.(type) {
 		case *AdminToken:
 			return true
@@ -168,7 +167,7 @@ func (u *User) Admin() bool {
 }
 
 func (u *User) Pair() bool {
-	for _, v := range u.Inventory.list() {
+	for _, v := range u.Inventory.normalize() {
 		switch v.Value.(type) {
 		case *PairToken:
 			return true
@@ -178,7 +177,7 @@ func (u *User) Pair() bool {
 }
 
 func (u *User) Pet() (p *pets.Pet, ok bool) {
-	for _, x := range u.Inventory.list() {
+	for _, x := range u.Inventory.normalize() {
 		if p, ok = x.Value.(*pets.Pet); ok {
 			return
 		}
@@ -233,7 +232,7 @@ func (u *User) Eat(i *Item) bool {
 }
 
 func (u *User) EatQuick() (i *Item, ok bool) {
-	for _, i = range u.Inventory.list() {
+	for _, i = range u.Inventory.normalize() {
 		switch x := i.Value.(type) {
 		case *fishing.Fish:
 			if x.Price() < 2000 {

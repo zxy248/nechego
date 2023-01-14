@@ -3,9 +3,7 @@ package fishing
 import "testing"
 
 func TestSpeciesData(t *testing.T) {
-	i := 0
 	for _, s := range species {
-		i++
 		if s.name == "" {
 			t.Errorf("empty string")
 		}
@@ -21,8 +19,5 @@ func TestSpeciesData(t *testing.T) {
 		if s.pricePerKg <= 0 {
 			t.Errorf("price must be positive")
 		}
-	}
-	if i != int(numberOfSpecies) {
-		t.Errorf("number of elements in speciesData must be equal to %v", numberOfSpecies)
 	}
 }

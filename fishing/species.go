@@ -1,6 +1,7 @@
 package fishing
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
 )
@@ -62,13 +63,13 @@ func (t Constitution) NormalLength(weight float64) float64 {
 	c, b := 7.089, 3.096
 	switch t {
 	case Long:
-		c *= 1.
+		c *= 1.0
 	case Belly:
 		c *= math.Pi
 	case Regular:
 		c *= math.SqrtPi
 	default:
-		panic("unknown constitution")
+		panic(fmt.Errorf("unexpected constitution %d", t))
 	}
 	return math.Pow(weight/c, 1.0/b)
 }
@@ -111,37 +112,18 @@ const (
 	Bleak
 	Nase
 	Taimen
-
-	numberOfSpecies
 )
 
 func RandomSpecies() Species {
-	return Species(rand.Intn(int(numberOfSpecies)))
+	return Species(rand.Intn(len(species)))
 }
 
-func (s Species) String() string {
-	return species[s].name
-}
-
-func (s Species) NormalWeight() float64 {
-	return species[s].normalWeight
-}
-
-func (s Species) MaximumWeight() float64 {
-	return species[s].maximumWeight
-}
-
-func (s Species) Constitution() Constitution {
-	return species[s].constitution
-}
-
-func (s Species) PricePerKg() float64 {
-	return species[s].pricePerKg
-}
-
-func (s Species) Predator() bool {
-	return species[s].predator
-}
+func (s Species) String() string             { return species[s].name }
+func (s Species) NormalWeight() float64      { return species[s].normalWeight }
+func (s Species) MaximumWeight() float64     { return species[s].maximumWeight }
+func (s Species) Constitution() Constitution { return species[s].constitution }
+func (s Species) PricePerKg() float64        { return species[s].pricePerKg }
+func (s Species) Predator() bool             { return species[s].predator }
 
 func (s Species) randomWeight() float64 {
 	w := rand.NormFloat64()*s.weightStdDev() + s.NormalWeight()

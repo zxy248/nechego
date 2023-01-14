@@ -15,26 +15,11 @@ func RandomFish() *Fish {
 	return &Fish{s, w, l}
 }
 
-func (f *Fish) Price() float64 {
-	return f.Weight * f.PricePerKg()
-}
-
-func (f *Fish) Light() bool {
-	return f.Weight < f.NormalWeight()
-}
-
-func (f *Fish) Heavy() bool {
-	return f.Weight > f.NormalWeight()+f.weightStdDev()
-}
-
-func (f *Fish) Cheap() bool {
-	return f.Price() < cheapThreshold
-}
-
-func (f *Fish) Expensive() bool {
-	return f.Price() > expensiveThreshold
-}
-
+func (f *Fish) Price() float64  { return f.Weight * f.PricePerKg() }
+func (f *Fish) Light() bool     { return f.Weight < f.NormalWeight() }
+func (f *Fish) Heavy() bool     { return f.Weight > f.NormalWeight()+f.weightStdDev() }
+func (f *Fish) Cheap() bool     { return f.Price() < cheapThreshold }
+func (f *Fish) Expensive() bool { return f.Price() > expensiveThreshold }
 func (f *Fish) String() string {
 	var length, weight string
 	if f.Length < 1.0 {
