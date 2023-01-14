@@ -12,6 +12,7 @@ import (
 	"nechego/game"
 	"nechego/teleutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -171,7 +172,6 @@ func (h *Game) Handle(c tele.Context) error {
 
 type Weather struct{}
 
-// TODO: assess "(?i)^!погода ([-А-я]+)"
 var weatherRe = regexp.MustCompile("^!погода (.*)")
 
 func (h *Weather) Match(s string) bool {
@@ -187,7 +187,7 @@ func (h *Weather) Handle(c tele.Context) error {
 		`Давление+—+%P\n` +
 		`Фаза+луны+—+%m\n` +
 		`УФ-индекс+—+%u\n`
-	city := teleutil.Args(c, weatherRe)[1]
+	city := url.PathEscape(teleutil.Args(c, weatherRe)[1])
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, addr+city+format, nil)
