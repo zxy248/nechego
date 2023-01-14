@@ -374,6 +374,23 @@ func (h *Car) Handle(c tele.Context) error {
 	return c.Send(&tele.Photo{File: tele.FromReader(dec)})
 }
 
+type Soy struct{}
+
+var soyRe = regexp.MustCompile("^!сой")
+
+func (h *Soy) Match(s string) bool {
+	return soyRe.MatchString(s)
+}
+
+func (h *Soy) Handle(c tele.Context) error {
+	r, err := http.Get("https://booru.soy/random_image/download")
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
+}
+
 type Masyunya struct{}
 
 var masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")

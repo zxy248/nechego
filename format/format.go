@@ -27,35 +27,61 @@ func Mention(uid int64, name string) string {
 	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, html.EscapeString(name))
 }
 
-func Items(items []*game.Item) []string {
-	lines := []string{}
-	for i, v := range items {
-		lines = append(lines, fmt.Sprintf("<code>%v ≡ </code> %s", i, Item(v)))
-	}
-	if len(lines) == 0 {
-		return []string{Empty}
-	}
-	return lines
-}
-
 func Item(i *game.Item) string {
 	return fmt.Sprintf("<code>%s</code>", i.Value)
 }
 
-func Products(products []*game.Product) []string {
+func NumItem(n int, i *game.Item) string {
+	return fmt.Sprintf("<code>%d ≡ </code> %s", n, Item(i))
+}
+
+func Items(items []*game.Item) string {
+	if len(items) == 0 {
+		return Empty
+	}
+	lines := make([]string, 0, len(items))
+	for i, v := range items {
+		lines = append(lines, NumItem(i, v))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func Catch(items []*game.Item) string {
 	lines := []string{}
-	for i, p := range products {
-		line := fmt.Sprintf("<code>%v ≡ </code> %s, %s", i, Item(p.Item), Money(p.Price))
-		lines = append(lines, line)
+	price, weight := 0.0, 0.0
+	for i, v := range items {
+		if f, ok := v.Value.(*fishing.Fish); ok {
+			price += f.Price()
+			weight += f.Weight
+			lines = append(lines, NumItem(i, v))
+		}
 	}
 	if len(lines) == 0 {
-		return []string{Empty}
+		return Empty
 	}
-	return lines
+	tail := fmt.Sprintf("Стоимость: %s\nВес: %s",
+		Money(int(price)), Weight(weight))
+	lines = append(lines, tail)
+	return strings.Join(lines, "\n")
+}
+
+func Products(products []*game.Product) string {
+	if len(products) == 0 {
+		return Empty
+	}
+	lines := make([]string, 0, len(products))
+	for i, p := range products {
+		lines = append(lines, NumItem(i, p.Item)+", "+Money(p.Price))
+	}
+	return strings.Join(lines, "\n")
 }
 
 func Money(q int) string {
 	return fmt.Sprintf("<code>%d ₴</code>", q)
+}
+
+func Weight(w float64) string {
+	return fmt.Sprintf("<code>%.2f кг ⚖️</code>", w)
 }
 
 func Energy(e int) string {

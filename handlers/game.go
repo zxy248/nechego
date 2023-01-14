@@ -63,7 +63,7 @@ type Inventory struct {
 	Universe *game.Universe
 }
 
-var inventoryRe = regexp.MustCompile("^!(инвентарь|лут|улов)")
+var inventoryRe = regexp.MustCompile("^!(инвентарь|лут)")
 
 func (h *Inventory) Match(s string) bool {
 	return inventoryRe.MatchString(s)
@@ -78,10 +78,29 @@ func (h *Inventory) Handle(c tele.Context) error {
 	if user.Inventory.Count() > game.InventorySize {
 		warn = " (!)"
 	}
-	lines := append([]string{fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>",
-		teleutil.Mention(c, user.TUID), len(items), game.InventorySize, warn)},
-		format.Items(items)...)
-	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
+	head := fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>\n",
+		teleutil.Mention(c, user), len(items), game.InventorySize, warn)
+	list := format.Items(items)
+	return c.Send(head+list, tele.ModeHTML)
+}
+
+type Catch struct {
+	Universe *game.Universe
+}
+
+var catchRe = regexp.MustCompile("^!улов")
+
+func (h *Catch) Match(s string) bool {
+	return catchRe.MatchString(s)
+}
+
+func (h *Catch) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", teleutil.Mention(c, user))
+	list := format.Catch(user.Inventory.List())
+	return c.Send(head+list, tele.ModeHTML)
 }
 
 type Drop struct {
@@ -160,10 +179,9 @@ func (h *Floor) Handle(c tele.Context) error {
 	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	items := world.Floor.List()
-	head := "<b>🗃️ Предметы</b>"
-	lines := append([]string{head}, format.Items(items)...)
-	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
+	head := "<b>🗃️ Предметы</b>\n"
+	list := format.Items(world.Floor.List())
+	return c.Send(head+list, tele.ModeHTML)
 }
 
 type Market struct {
@@ -180,9 +198,9 @@ func (h *Market) Handle(c tele.Context) error {
 	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	lines := append([]string{"<b>🏪 Магазин</b>"},
-		format.Products(world.Market.Products())...)
-	return c.Send(strings.Join(lines, "\n"), tele.ModeHTML)
+	head := "<b>🏪 Магазин</b>\n"
+	list := format.Products(world.Market.Products())
+	return c.Send(head+list, tele.ModeHTML)
 }
 
 type Buy struct {

@@ -28,6 +28,8 @@ func Mention(c tele.Context, user any) string {
 		member = Member(c, x)
 	case int64:
 		member = Member(c, tele.ChatID(x))
+	case *game.User:
+		member = Member(c, tele.ChatID(x.TUID))
 	default:
 		panic(fmt.Errorf("unexpected type %T", x))
 	}
