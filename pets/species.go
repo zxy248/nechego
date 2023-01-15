@@ -155,12 +155,16 @@ func (s Species) String() string       { return species[s].Description }
 func (s Species) Probability() float64 { return species[s].Probability }
 func (s Species) Size() Size           { return species[s].Size }
 func (s Species) Quality() Quality {
-	switch p := s.Probability(); {
+	p := s.Probability()
+	if p <= 0 || p > 1 {
+		panic(fmt.Errorf("p = %f, must be in (0, 1]", p))
+	}
+	switch {
 	case p < 0.01:
 		return Legendary
-	case p < 0.05:
+	case p <= 0.05:
 		return Exotic
-	case p < 0.20:
+	case p <= 0.20:
 		return Rare
 	default:
 		return Common

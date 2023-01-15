@@ -19,6 +19,8 @@ const (
 	Toast
 	Shawarma
 	SuperKontik
+	AdrenalineRush
+	Burn
 )
 
 func (t Type) Emoji() string      { return data[t].Emoji }
@@ -41,6 +43,8 @@ var data = map[Type]struct {
 	Toast:              {"🥪", 0.10, "Бутерброд"},
 	Shawarma:           {"🌯", 0.16, "Шаурма"},
 	SuperKontik:        {"🍩", 0.10, "Супер-Контик"},
+	AdrenalineRush:     {"🦎", 0.20, "Напиток (Adrenaline Rush)"},
+	Burn:               {"🔥", 0.20, "Напиток (Burn)"},
 }
 
 type Food struct {
