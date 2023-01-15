@@ -33,7 +33,7 @@ func Mention(c tele.Context, user any) string {
 	default:
 		panic(fmt.Errorf("unexpected type %T", x))
 	}
-	return format.Mention(c.Chat().ID, Name(member))
+	return format.Mention(member.User.ID, Name(member))
 }
 
 func Args(c tele.Context, re *regexp.Regexp) []string {
