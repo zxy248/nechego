@@ -433,10 +433,14 @@ func (h *Danbooru) Handle(c tele.Context) error {
 
 	photo := &tele.Photo{File: tele.FromReader(b)}
 	if rating == "e" {
-		photo.Caption = "🔞 Осторожно! Только для взрослых."
+		caps := [...]string{
+			"🔞 Осторожно! Только для взрослых.",
+			"<b>ВНИМАНИЕ!</b> Вы увидите фотографии взрослых голых женщин. Будьте сдержанны.",
+		}
+		photo.Caption = caps[rand.Intn(len(caps))]
 		photo.HasSpoiler = true
 	}
-	return c.Send(photo)
+	return c.Send(photo, tele.ModeHTML)
 }
 
 func danbooruRandom(retries int) (url, rating string, err error) {
