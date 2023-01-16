@@ -137,7 +137,7 @@ type Pick struct {
 	Universe *game.Universe
 }
 
-var pickRe = regexp.MustCompile("^!(взять|подобрать) (.*)")
+var pickRe = regexp.MustCompile("^!(взять|подобрать|поднять) (.*)")
 
 func (h *Pick) Match(s string) bool {
 	return pickRe.MatchString(s)
@@ -198,9 +198,32 @@ func (h *Market) Handle(c tele.Context) error {
 	world, _ := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	head := "<b>🏪 Магазин</b>\n"
+	head := fmt.Sprintf("<b>%s</b>\n", world.Market)
 	list := format.Products(world.Market.Products())
 	return c.Send(head+list, tele.ModeHTML)
+}
+
+type NameMarket struct {
+	Universe *game.Universe
+}
+
+var nameMarketRe = regexp.MustCompile("^!назвать магазин (.*)")
+
+func (h *NameMarket) Match(s string) bool {
+	return nameMarketRe.MatchString(s)
+}
+
+func (h *NameMarket) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+	if !user.Admin() {
+		return c.Send(format.AdminsOnly)
+	}
+	name := teleutil.Args(c, nameMarketRe)[1]
+	if ok := world.Market.SetName(name); !ok {
+		return c.Send(format.BadMarketName)
+	}
+	return c.Send(format.MarketRenamed)
 }
 
 type Buy struct {

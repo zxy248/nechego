@@ -2,8 +2,11 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"nechego/fishing"
+	"nechego/valid"
+	"strings"
 )
 
 type Product struct {
@@ -13,6 +16,7 @@ type Product struct {
 
 type Market struct {
 	P    []*Product
+	Name string
 	keys map[int]*Product
 }
 
@@ -61,6 +65,22 @@ func (m *Market) Products() []*Product {
 		m.keys[i] = p
 	}
 	return m.P
+}
+
+func (m *Market) SetName(s string) bool {
+	if !valid.Name(s) {
+		return false
+	}
+	m.Name = strings.Title(s)
+	return true
+}
+
+func (m *Market) String() string {
+	s := "🏪 Магазин"
+	if m.Name != "" {
+		s += fmt.Sprintf(` «%s»`, m.Name)
+	}
+	return s
 }
 
 var (

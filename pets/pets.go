@@ -3,10 +3,9 @@ package pets
 import (
 	"fmt"
 	"math/rand"
+	"nechego/valid"
 	"strings"
 	"time"
-	"unicode"
-	"unicode/utf8"
 )
 
 type Gender int
@@ -48,24 +47,9 @@ func (p *Pet) String() string {
 }
 
 func (p *Pet) SetName(s string) bool {
-	if !validName(s) {
+	if !valid.Name(s) {
 		return false
 	}
 	p.Name = strings.Title(s)
-	return true
-}
-
-func validName(s string) bool {
-	if !utf8.ValidString(s) {
-		return false
-	}
-	if utf8.RuneCountInString(s) > 40 {
-		return false
-	}
-	for _, r := range s {
-		if !unicode.Is(unicode.Cyrillic, r) && r != ' ' {
-			return false
-		}
-	}
 	return true
 }

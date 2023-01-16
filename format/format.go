@@ -22,6 +22,8 @@ const (
 	NoFood               = "🍊 У вас закончилась подходящая еда."
 	NotHungry            = "🍊 Вы не хотите есть."
 	InventoryFull        = "🗄 Ваш инвентарь заполнен."
+	BadMarketName        = "🏪 Такое название не подходит для магазина."
+	MarketRenamed        = "🏪 Вы назвали магазин."
 )
 
 func Mention(uid int64, name string) string {

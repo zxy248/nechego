@@ -108,6 +108,7 @@ func main() {
 		&handlers.Capital{Universe: universe},
 		&handlers.Balance{Universe: universe},
 		&handlers.Energy{Universe: universe},
+		&handlers.NameMarket{Universe: universe},
 		&handlers.NamePet{Universe: universe},
 		helloHandler,
 	}
