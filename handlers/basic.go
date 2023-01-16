@@ -400,9 +400,37 @@ func (h *Danbooru) Match(s string) bool {
 }
 
 func (h *Danbooru) Handle(c tele.Context) error {
-	r, err := http.Get("https://danbooru.donmai.us/posts/random.json")
+	const try = 3
+	var url, rating string
+	for i := 0; i < try && url == ""; i++ {
+		var err error
+		url, rating, err = danbooruRandom()
+		if err != nil {
+			return err
+		}
+	}
+	if url == "" {
+		return fmt.Errorf("empty url after %d retries", try)
+	}
+
+	r, err := http.Get(url)
 	if err != nil {
 		return err
+	}
+	defer r.Body.Close()
+
+	photo := &tele.Photo{File: tele.FromReader(r.Body)}
+	if rating == "e" {
+		photo.Caption = "🔞 Осторожно! Только для взрослых."
+		photo.HasSpoiler = true
+	}
+	return c.Send(photo)
+}
+
+func danbooruRandom() (url, rating string, err error) {
+	r, err := http.Get("https://danbooru.donmai.us/posts/random.json")
+	if err != nil {
+		return "", "", err
 	}
 	defer r.Body.Close()
 
@@ -411,21 +439,9 @@ func (h *Danbooru) Handle(c tele.Context) error {
 		Rating string `json:"rating"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
-		return err
+		return "", "", err
 	}
-
-	f, err := http.Get(result.URL)
-	if err != nil {
-		return err
-	}
-	defer f.Body.Close()
-
-	photo := &tele.Photo{File: tele.FromReader(f.Body)}
-	if result.Rating == "e" {
-		photo.Caption = "🔞 Осторожно! Только для взрослых."
-		photo.HasSpoiler = true
-	}
-	return c.Send(photo)
+	return result.URL, result.Rating, nil
 }
 
 type Masyunya struct{}
