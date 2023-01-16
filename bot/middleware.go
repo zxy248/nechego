@@ -92,11 +92,14 @@ type LogMessage struct{}
 
 func (m *LogMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		log.Printf("[%s] %s: %s\n",
+		start := time.Now()
+		err := next(c)
+		log.Printf("%s [%s] %s: %s\n",
+			time.Now().Sub(start),
 			c.Chat().Title,
 			strings.TrimSpace(c.Sender().FirstName+" "+c.Sender().LastName),
 			c.Text())
-		return next(c)
+		return err
 	}
 }
 
