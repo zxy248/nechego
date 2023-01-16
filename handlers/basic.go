@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -400,26 +401,37 @@ func (h *Danbooru) Match(s string) bool {
 }
 
 func (h *Danbooru) Handle(c tele.Context) error {
-	const try = 3
+	const maxsize = 5 << 20
+	const retries = 3
+	var b *bytes.Reader
 	var url, rating string
-	for i := 0; i < try && url == ""; i++ {
-		var err error
-		url, rating, err = danbooruRandom()
+	var err error
+	for i := 0; i < retries; i++ {
+		url, rating, err = danbooruRandom(retries)
 		if err != nil {
 			return err
 		}
+
+		r, err := http.Get(url)
+		if err != nil {
+			return err
+		}
+		defer r.Body.Close()
+
+		data, err := io.ReadAll(io.LimitReader(r.Body, maxsize))
+		if err != nil {
+			return err
+		}
+		if len(data) < maxsize {
+			b = bytes.NewReader(data)
+			break
+		}
 	}
-	if url == "" {
-		return fmt.Errorf("empty url after %d retries", try)
+	if b == nil {
+		return errors.New("danbooru: too many big files")
 	}
 
-	r, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer r.Body.Close()
-
-	photo := &tele.Photo{File: tele.FromReader(r.Body)}
+	photo := &tele.Photo{File: tele.FromReader(b)}
 	if rating == "e" {
 		photo.Caption = "🔞 Осторожно! Только для взрослых."
 		photo.HasSpoiler = true
@@ -427,21 +439,27 @@ func (h *Danbooru) Handle(c tele.Context) error {
 	return c.Send(photo)
 }
 
-func danbooruRandom() (url, rating string, err error) {
+func danbooruRandom(retries int) (url, rating string, err error) {
+	if retries <= 0 {
+		return "", "", errors.New("danbooru: zero retries left")
+	}
 	r, err := http.Get("https://danbooru.donmai.us/posts/random.json")
 	if err != nil {
 		return "", "", err
 	}
 	defer r.Body.Close()
 
-	var result struct {
+	var x struct {
 		URL    string `json:"file_url"`
 		Rating string `json:"rating"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&x); err != nil {
 		return "", "", err
 	}
-	return result.URL, result.Rating, nil
+	if x.URL == "" {
+		return danbooruRandom(retries - 1)
+	}
+	return x.URL, x.Rating, nil
 }
 
 type Masyunya struct{}
