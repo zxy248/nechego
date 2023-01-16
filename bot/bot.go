@@ -68,6 +68,7 @@ func main() {
 		&handlers.Art{},
 		&handlers.Car{},
 		&handlers.Soy{},
+		&handlers.Danbooru{},
 		&handlers.Masyunya{},
 		&handlers.Poppy{},
 		&handlers.Sima{},

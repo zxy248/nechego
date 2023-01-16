@@ -265,7 +265,7 @@ func (h *Eat) Handle(c tele.Context) error {
 			return c.Send("🤮")
 		}
 		ate = true
-		c.Send(format.Eat(format.Item(item)), tele.ModeHTML)
+		c.Send(format.Eat(item), tele.ModeHTML)
 	}
 	return nil
 }
@@ -291,7 +291,7 @@ func (h *EatQuick) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.NoFood)
 	}
-	return c.Send(format.Eat(format.Item(i))+"\n\n"+
+	return c.Send(format.Eat(i)+"\n\n"+
 		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
@@ -319,7 +319,7 @@ func (h *Fish) Handle(c tele.Context) error {
 	if ok := user.SpendEnergy(20); !ok {
 		return c.Send(format.NoEnergy)
 	}
-	fish := user.Fish(rod)
+	item := user.Fish(rod)
 	if rod.Durability < 0 {
 		c.Send("🎣 Ваша удочка сломалась.")
 	}
@@ -334,13 +334,9 @@ func (h *Fish) Handle(c tele.Context) error {
 		}
 		return c.Send("🎣 " + outcomes[rand.Intn(len(outcomes))])
 	}
-	user.Inventory.Add(&game.Item{
-		Type:         game.ItemTypeFish,
-		Transferable: true,
-		Value:        fish,
-	})
-	return c.Send(fmt.Sprintf("🎣 %s получает рыбу: %s",
-		teleutil.Mention(c, c.Sender()), format.Fish(fish)), tele.ModeHTML)
+	user.Inventory.Add(item)
+	return c.Send(fmt.Sprintf("🎣 %s получает %s",
+		teleutil.Mention(c, user), format.Item(item)), tele.ModeHTML)
 }
 
 type Status struct {

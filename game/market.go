@@ -4,8 +4,6 @@ import (
 	"errors"
 	"math/rand"
 	"nechego/fishing"
-	"nechego/food"
-	"nechego/pets"
 )
 
 type Product struct {
@@ -23,42 +21,34 @@ func NewMarket() *Market {
 }
 
 func (m *Market) Refill() {
-	fish := fishing.RandomFish()
-	fishPrice := int(fish.Price() * (0.5 + rand.Float64()))
-	products := []*Product{
-		{2500 + rand.Intn(5000), &Item{
-			Type:         ItemTypeFishingRod,
-			Transferable: true,
-			Value:        NewFishingRod()}},
-		{fishPrice, &Item{
-			Type:         ItemTypeFish,
-			Transferable: true,
-			Value:        fish}},
-		{100 + rand.Intn(50000), &Item{
-			Type:         ItemTypePet,
-			Transferable: true,
-			Value:        pets.Random()}},
-		{500 + rand.Intn(4500), &Item{
-			Type:         ItemTypeDice,
-			Transferable: true,
-			Value:        &Dice{}}},
-		{500 + rand.Intn(1500), &Item{
-			Type:         ItemTypeFood,
-			Transferable: true,
-			Value:        food.Random()}},
-	}
-	if rand.Float64() < 0.25 {
-		products = append(products, &Product{
-			500000 + rand.Intn(1000000), &Item{
-				Type:         ItemTypeAdminToken,
-				Transferable: true,
-				Value:        &AdminToken{}}})
-	}
-	m.Add(products[rand.Intn(len(products))])
+	product := randomProduct()
+	m.Add(product)
 	const maxitems = 10
 	if len(m.P) > maxitems {
 		m.P = m.P[len(m.P)-maxitems:]
 	}
+}
+
+func randomProduct() *Product {
+	p, i := 0, randomItem()
+	switch i.Type {
+	case ItemTypeFishingRod:
+		p = 2500 + rand.Intn(7500)
+	case ItemTypeFish:
+		f := i.Value.(*fishing.Fish)
+		p = int(f.Price() * (0.5 + 1.5*rand.Float64()))
+	case ItemTypePet:
+		p = 500 + rand.Intn(99500)
+	case ItemTypeDice:
+		p = 5000 + rand.Intn(25000)
+	case ItemTypeFood:
+		p = 250 + rand.Intn(1750)
+	case ItemTypeAdminToken:
+		p = 500_000 + rand.Intn(4_500_000)
+	default:
+		return randomProduct()
+	}
+	return &Product{p, i}
 }
 
 func (m *Market) Add(p *Product) {

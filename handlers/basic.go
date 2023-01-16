@@ -391,6 +391,43 @@ func (h *Soy) Handle(c tele.Context) error {
 	return c.Send(&tele.Photo{File: tele.FromReader(r.Body)})
 }
 
+type Danbooru struct{}
+
+var danbooruRe = regexp.MustCompile("^!данб.?ру")
+
+func (h *Danbooru) Match(s string) bool {
+	return danbooruRe.MatchString(s)
+}
+
+func (h *Danbooru) Handle(c tele.Context) error {
+	r, err := http.Get("https://danbooru.donmai.us/posts/random.json")
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+
+	var result struct {
+		URL    string `json:"file_url"`
+		Rating string `json:"rating"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&result); err != nil {
+		return err
+	}
+
+	f, err := http.Get(result.URL)
+	if err != nil {
+		return err
+	}
+	defer f.Body.Close()
+
+	photo := &tele.Photo{File: tele.FromReader(f.Body)}
+	if result.Rating == "e" {
+		photo.Caption = "🔞 Осторожно! Только для взрослых."
+		photo.HasSpoiler = true
+	}
+	return c.Send(photo)
+}
+
 type Masyunya struct{}
 
 var masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")

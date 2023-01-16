@@ -39,11 +39,15 @@ func (u *User) FishingRod() (f *FishingRod, ok bool) {
 	return nil, false
 }
 
-func (u *User) Fish(rod *FishingRod) *fishing.Fish {
+func (u *User) Fish(rod *FishingRod) *Item {
+	rod.Durability -= 0.01
+
+	if rand.Float64() < 0.08 {
+		return randomItem()
+	}
 	f := fishing.RandomFish()
 	q := rod.Quality*0.5 + 1.0
 	f.Length *= q
 	f.Weight *= q
-	rod.Durability -= 0.01
-	return f
+	return &Item{Type: ItemTypeFish, Transferable: true, Value: f}
 }

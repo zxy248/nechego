@@ -23,9 +23,15 @@ const (
 	Burn
 )
 
+var beverages = map[Type]bool{
+	AdrenalineRush: true,
+	Burn:           true,
+}
+
 func (t Type) Emoji() string      { return data[t].Emoji }
 func (t Type) Nutrition() float64 { return data[t].Nutrition }
 func (t Type) String() string     { return data[t].Description }
+func (t Type) Beverage() bool     { return beverages[t] }
 
 var data = map[Type]struct {
 	Emoji       string

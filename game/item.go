@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"nechego/fishing"
 	"nechego/food"
@@ -200,4 +201,24 @@ func (i *Item) SetName(s string) bool {
 		return x.SetName(s)
 	}
 	return false
+}
+
+func randomItem() *Item {
+	items := []*Item{
+		{Type: ItemTypeFishingRod, Value: NewFishingRod()},
+		{Type: ItemTypeFish, Value: fishing.RandomFish()},
+		{Type: ItemTypePet, Value: pets.Random()},
+		{Type: ItemTypeFood, Value: food.Random()},
+		{Type: ItemTypeWallet, Value: &Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
+		{Type: ItemTypeCash, Value: &Cash{Money: int(math.Abs(rand.NormFloat64() * 2000))}},
+	}
+	if rand.Float64() < 0.50 {
+		items = append(items, &Item{Type: ItemTypeDice, Value: &Dice{}})
+	}
+	if rand.Float64() < 0.02 {
+		items = append(items, &Item{Type: ItemTypeAdminToken, Expire: tomorrow(), Value: &AdminToken{}})
+	}
+	i := items[rand.Intn(len(items))]
+	i.Transferable = true
+	return i
 }

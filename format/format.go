@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"nechego/fishing"
+	"nechego/food"
 	"nechego/game"
 	"nechego/modifier"
 	"strings"
@@ -96,8 +97,12 @@ func EnergyRemaining(e int) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
-func Eat(s string) string {
-	return fmt.Sprintf("🍊 Вы съели %s.", s)
+func Eat(i *game.Item) string {
+	emoji, verb := "🍊", "съели"
+	if x, ok := i.Value.(*food.Food); ok && x.Beverage() {
+		emoji, verb = "🥤", "выпили"
+	}
+	return fmt.Sprintf("%s Вы %s %s.", emoji, verb, Item(i))
 }
 
 func Fish(f *fishing.Fish) string {
