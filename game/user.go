@@ -200,10 +200,13 @@ func (u *User) Luck() float64 {
 	return luck(today(), u.TUID)
 }
 
-func luck(t time.Time, k int64) float64 {
+func luck(t time.Time, id int64) float64 {
+	return checksum(t.UnixNano(), id, 497611803913981554)
+}
+
+func checksum(x ...any) float64 {
 	h := fnv.New32()
-	data := []any{t.UnixNano(), k, 497611803913981554}
-	for _, v := range data {
+	for _, v := range x {
 		binary.Write(h, binary.LittleEndian, v)
 	}
 	return float64(h.Sum32()) / math.MaxUint32

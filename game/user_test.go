@@ -58,7 +58,7 @@ func TestLuck(t *testing.T) {
 		const want = 0.98
 		diff := max - min
 		if diff < want {
-			t.Errorf("diff == %v, want %v", diff, want)
+			t.Errorf("diff == %v, want >= %v", diff, want)
 		}
 	})
 	t.Run("delta", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestLuck(t *testing.T) {
 			epsilon = 1e-4
 		)
 		lucks := make([]float64, n)
-		for i := 0; i < n; i++ {
+		for i := range lucks {
 			date := today().AddDate(0, 0, i)
 			lucks[i] = luck(date, id)
 		}
