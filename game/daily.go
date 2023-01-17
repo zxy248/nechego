@@ -1,7 +1,5 @@
 package game
 
-import "time"
-
 func (w *World) DailyEblan() (u *User, ok bool) {
 	for _, u = range w.Users {
 		if u.Eblan() {
@@ -75,9 +73,4 @@ func pairToken() *Item {
 		Value:  &PairToken{},
 		Expire: tomorrow(),
 	}
-}
-
-func tomorrow() time.Time {
-	y, m, d := time.Now().Date()
-	return time.Date(y, m, d+1, 0, 0, 0, 0, time.Local)
 }

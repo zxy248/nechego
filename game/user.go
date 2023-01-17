@@ -195,9 +195,7 @@ func (u *User) Poor() bool {
 
 func (u *User) Luck() float64 {
 	const prime = 2053
-	now := time.Now()
-	day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
-	return float64((day.UnixNano()+u.TUID)%prime) / prime
+	return float64((today().UnixNano()+u.TUID)%prime) / prime
 }
 
 func (u *User) Eat(i *Item) bool {
