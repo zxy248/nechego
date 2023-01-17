@@ -94,8 +94,8 @@ func (m *LogMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		start := time.Now()
 		err := next(c)
-		log.Printf("%s [%s] %s: %s\n",
-			time.Now().Sub(start),
+		log.Printf("(%s) [%s] %s: %s\n",
+			time.Since(start),
 			c.Chat().Title,
 			strings.TrimSpace(c.Sender().FirstName+" "+c.Sender().LastName),
 			c.Text())
