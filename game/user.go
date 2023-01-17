@@ -1,7 +1,10 @@
 package game
 
 import (
+	"encoding/binary"
 	"fmt"
+	"hash/fnv"
+	"math"
 	"math/rand"
 	"nechego/elo"
 	"nechego/fishing"
@@ -194,8 +197,16 @@ func (u *User) Poor() bool {
 }
 
 func (u *User) Luck() float64 {
-	const prime = 2053
-	return float64((today().UnixNano()+u.TUID)%prime) / prime
+	return luck(today(), u.TUID)
+}
+
+func luck(t time.Time, k int64) float64 {
+	h := fnv.New32()
+	data := []any{t.UnixNano(), k, 497611803913981554}
+	for _, v := range data {
+		binary.Write(h, binary.LittleEndian, v)
+	}
+	return float64(h.Sum32()) / math.MaxUint32
 }
 
 func (u *User) Eat(i *Item) bool {

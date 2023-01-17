@@ -151,7 +151,7 @@ func (it *Items) Move(dst *Items, x *Item) bool {
 	if !x.Transferable {
 		return false
 	}
-	if ok := it.Remove(x); !ok {
+	if !it.Remove(x) {
 		return false
 	}
 	dst.Add(x)

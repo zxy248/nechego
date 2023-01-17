@@ -123,7 +123,7 @@ func (h *Drop) Handle(c tele.Context) error {
 			return c.Send(fmt.Sprintf("🗄 Предмета %s нет в инвентаре.",
 				format.Key(key)), tele.ModeHTML)
 		}
-		if ok := user.Inventory.Move(world.Floor, item); !ok {
+		if !user.Inventory.Move(world.Floor, item) {
 			return c.Send(fmt.Sprintf("♻ Вы не можете выбросить %s.",
 				format.Item(item)), tele.ModeHTML)
 		}
@@ -156,7 +156,7 @@ func (h *Pick) Handle(c tele.Context) error {
 			return c.Send(fmt.Sprintf("🗄 Предмета %s нет на полу.",
 				format.Key(key)), tele.ModeHTML)
 		}
-		if ok := world.Floor.Move(user.Inventory, item); !ok {
+		if !world.Floor.Move(user.Inventory, item) {
 			return c.Send(fmt.Sprintf("♻ Вы не можете взять %s.",
 				format.Item(item)), tele.ModeHTML)
 		}
@@ -220,7 +220,7 @@ func (h *NameMarket) Handle(c tele.Context) error {
 		return c.Send(format.AdminsOnly)
 	}
 	name := teleutil.Args(c, nameMarketRe)[1]
-	if ok := world.Market.SetName(name); !ok {
+	if !world.Market.SetName(name) {
 		return c.Send(format.BadMarketName)
 	}
 	return c.Send(format.MarketRenamed)
@@ -284,7 +284,7 @@ func (h *Eat) Handle(c tele.Context) error {
 		if !ok {
 			return c.Send(format.BadKey(key), tele.ModeHTML)
 		}
-		if ok := user.Eat(item); !ok {
+		if !user.Eat(item) {
 			return c.Send("🤮")
 		}
 		ate = true
@@ -339,7 +339,7 @@ func (h *Fish) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("🎣 Приобретите удочку в магазине, прежде чем рыбачить.")
 	}
-	if ok := user.SpendEnergy(20); !ok {
+	if !user.SpendEnergy(20) {
 		return c.Send(format.NoEnergy)
 	}
 	item := user.Fish(rod)
@@ -431,7 +431,7 @@ func (h *Stack) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if ok := user.Stack(); ok {
+	if user.Stack() {
 		return c.Send("💵 Вы сложили деньги.")
 	}
 	return c.Send("✅")
@@ -459,7 +459,7 @@ func (h *Fight) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	opnt := world.UserByID(reply.ID)
-	if ok := user.SpendEnergy(25); !ok {
+	if !user.SpendEnergy(25) {
 		return c.Send(format.NoEnergy)
 	}
 	c.Send(fmt.Sprintf("⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs.</i></b> <b>%s</b> <code>[%.2f]</code>",
@@ -562,7 +562,7 @@ func (h *Dice) Handle(c tele.Context) error {
 	if world.Casino.GameGoing() {
 		return c.Send("🎲 Игра уже идет.")
 	}
-	if ok := user.SpendMoney(bet); !ok {
+	if !user.SpendMoney(bet) {
 		return c.Send("💵 Недостаточно средств.")
 	}
 	if err := world.Casino.PlayDice(
@@ -772,7 +772,7 @@ func (h *NamePet) Handle(c tele.Context) error {
 	if pet.Name != "" {
 		return c.Send("🐈 У вашего питомца уже есть имя.")
 	}
-	if ok := pet.SetName(name); !ok {
+	if !pet.SetName(name) {
 		return c.Send("🐈 Такое имя не подходит для питомца.")
 	}
 	return c.Send(fmt.Sprintf("🐈 Вы назвали питомца <code>%s</code>.",

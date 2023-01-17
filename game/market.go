@@ -93,7 +93,7 @@ func (u *User) Buy(m *Market, key int) (*Product, error) {
 	if !ok {
 		return nil, ErrNoKey
 	}
-	if ok := u.SpendMoney(p.Price); !ok {
+	if !u.SpendMoney(p.Price) {
 		return nil, ErrNoMoney
 	}
 	delete(m.keys, key)
