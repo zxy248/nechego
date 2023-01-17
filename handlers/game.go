@@ -468,20 +468,16 @@ func (h *Fight) Handle(c tele.Context) error {
 		tele.ModeHTML)
 	winner, loser, rating := user.Fight(opnt)
 	winnerMent := teleutil.Mention(c, winner.TUID)
-	if rand.Float64() < 1.0/8 {
-		if i, ok := loser.Inventory.Random(); ok {
-			if ok := loser.Inventory.Move(world.Floor, i); ok {
-				c.Send(fmt.Sprintf("🥊 %s выбивает %s из проигравшего.",
-					winnerMent, format.Item(i)), tele.ModeHTML)
-			}
+	if i, ok := loser.Inventory.Random(); ok && rand.Float64() < 1.0/8 {
+		if i.Type != game.ItemTypeWallet && loser.Inventory.Move(world.Floor, i) {
+			c.Send(fmt.Sprintf("🥊 %s выбивает %s из проигравшего.",
+				winnerMent, format.Item(i)), tele.ModeHTML)
 		}
 	}
-	if rand.Float64() < 1.0/12 {
-		if i, ok := user.Inventory.Random(); ok {
-			if ok := user.Inventory.Move(world.Floor, i); ok {
-				c.Send(fmt.Sprintf("🌀 %s уронил %s во время драки.",
-					teleutil.Mention(c, user.TUID), format.Item(i)), tele.ModeHTML)
-			}
+	if i, ok := user.Inventory.Random(); ok && rand.Float64() < 1.0/12 {
+		if user.Inventory.Move(world.Floor, i) {
+			c.Send(fmt.Sprintf("🌀 %s уронил %s во время драки.",
+				teleutil.Mention(c, user.TUID), format.Item(i)), tele.ModeHTML)
 		}
 	}
 	return c.Send(fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.",
