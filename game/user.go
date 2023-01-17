@@ -264,7 +264,7 @@ func (u *User) Sell(i *Item) (profit int, ok bool) {
 }
 
 func (u *User) Strength() float64 {
-	return 1.0 + u.Modset().Sum()
+	return 10 * (1.0 + u.Modset().Sum())
 }
 
 func (u *User) Fight(opponent *User) (winner, loser *User, r float64) {
@@ -283,7 +283,7 @@ func (u *User) Fight(opponent *User) (winner, loser *User, r float64) {
 }
 
 func (u *User) power() float64 {
-	return u.Strength() * rand.Float64()
+	return (5*u.Luck() + u.Strength()) * rand.Float64()
 }
 
 func (u *User) Modset() modifier.Set {
@@ -315,18 +315,9 @@ func (u *User) Modset() modifier.Set {
 	if u.Inventory.Count() > InventorySize {
 		set.Add(modifier.Heavy)
 	}
-
-	switch l := u.Luck(); {
-	case l < 0.01:
-		set.Add(modifier.TerribleLuck)
-	case l < 0.02:
-		set.Add(modifier.ExcellentLuck)
-	case l < 0.10:
-		set.Add(modifier.BadLuck)
-	case l < 0.18:
-		set.Add(modifier.GoodLuck)
+	if l, ok := luckModifier(u.Luck()); ok {
+		set.Add(l)
 	}
-
 	if _, ok := u.FishingRod(); ok {
 		set.Add(modifier.Fisher)
 	}
@@ -351,4 +342,25 @@ func (u *User) Modset() modifier.Set {
 		})
 	}
 	return set
+}
+
+func luckModifier(l float64) (m *modifier.Mod, ok bool) {
+	var x *modifier.Mod
+	switch {
+	case l < 0.05:
+		x = modifier.TerribleLuck
+	case l < 0.20:
+		x = modifier.BadLuck
+	case l > 0.95:
+		x = modifier.ExcellentLuck
+	case l > 0.80:
+		x = modifier.GoodLuck
+	default:
+		return nil, false
+	}
+	return &modifier.Mod{
+		Emoji:       x.Emoji,
+		Multiplier:  0,
+		Description: x.Description,
+	}, true
 }

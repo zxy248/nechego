@@ -346,7 +346,8 @@ func (h *Fish) Handle(c tele.Context) error {
 	if rod.Durability < 0 {
 		c.Send("🎣 Ваша удочка сломалась.")
 	}
-	if rand.Float64() < 0.5 {
+	chance := rand.Float64() + (-0.02 + 0.04*user.Luck())
+	if chance < 0.5 {
 		outcomes := [...]string{
 			"Вы не смогли выудить рыбу.",
 			"Рыба сорвалась с крючка.",
@@ -502,7 +503,7 @@ func (h *Profile) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	const profile = "📇 <b>%s %s</b>\n<code>%s  %s  %s  %s</code>\n\n%s\n\n%s\n\n%s"
+	const profile = "📇 <b>%s %s</b>\n<code>%s  %s  %s  %s  %s</code>\n\n%s\n\n%s\n\n%s"
 	mods := user.Modset().List()
 	out := fmt.Sprintf(profile,
 		format.ModifierTitles(mods),
@@ -510,6 +511,7 @@ func (h *Profile) Handle(c tele.Context) error {
 		format.Energy(user.Energy),
 		format.Rating(user.Rating),
 		format.Strength(user.Strength()),
+		format.Luck(user.Luck()),
 		format.Messages(user.Messages),
 		format.ModifierDescriptions(mods),
 		format.ModifierEmojis(mods),

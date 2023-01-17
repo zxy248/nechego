@@ -116,7 +116,11 @@ func Rating(r float64) string {
 }
 
 func Strength(s float64) string {
-	return fmt.Sprintf("<code>%.2f 💪</code>", s)
+	return fmt.Sprintf("<code>%.1f 💪</code>", s)
+}
+
+func Luck(l float64) string {
+	return fmt.Sprintf("<code>%.1f 🍀</code>", 10*l)
 }
 
 func Messages(n int) string {

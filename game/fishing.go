@@ -46,8 +46,10 @@ func (u *User) Fish(rod *FishingRod) *Item {
 		return randomItem()
 	}
 	f := fishing.RandomFish()
-	q := rod.Quality*0.5 + 1.0
-	f.Length *= q
-	f.Weight *= q
+	q := 1.0 + 0.5*rod.Quality
+	l := 0.9 + 0.2*u.Luck()
+	m := q * l
+	f.Length *= m
+	f.Weight *= m
 	return &Item{Type: ItemTypeFish, Transferable: true, Value: f}
 }
