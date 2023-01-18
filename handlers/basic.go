@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html"
 	"io"
 	"math/rand"
+	"nechego/danbooru"
 	"nechego/format"
 	"nechego/game"
 	"nechego/teleutil"
@@ -401,40 +401,15 @@ func (h *Danbooru) Match(s string) bool {
 }
 
 func (h *Danbooru) Handle(c tele.Context) error {
-	const maxsize = 5 << 20
-	const retries = 3
-	var b *bytes.Reader
-	var url, rating string
-	var err error
-	for i := 0; i < retries; i++ {
-		url, rating, err = danbooruRandom(retries)
-		if err != nil {
-			return err
-		}
-
-		r, err := http.Get(url)
-		if err != nil {
-			return err
-		}
-		defer r.Body.Close()
-
-		data, err := io.ReadAll(io.LimitReader(r.Body, maxsize))
-		if err != nil {
-			return err
-		}
-		if len(data) < maxsize {
-			b = bytes.NewReader(data)
-			break
-		}
+	pic, err := danbooru.Get()
+	if err != nil {
+		return err
 	}
-	if b == nil {
-		return errors.New("danbooru: too many big files")
-	}
-
-	photo := &tele.Photo{File: tele.FromReader(b)}
-	if rating == "e" {
+	photo := &tele.Photo{File: tele.FromReader(bytes.NewReader(pic.Data))}
+	if pic.Rating == danbooru.Explicit {
 		caps := [...]string{
 			"🔞 Осторожно! Только для взрослых.",
+			"<i>Содержимое предназначено для просмотра лицами старше 18 лет.</i>",
 			"<b>ВНИМАНИЕ!</b> Вы увидите фотографии взрослых голых женщин. Будьте сдержанны.",
 		}
 		photo.Caption = caps[rand.Intn(len(caps))]
@@ -443,27 +418,28 @@ func (h *Danbooru) Handle(c tele.Context) error {
 	return c.Send(photo, tele.ModeHTML)
 }
 
-func danbooruRandom(retries int) (url, rating string, err error) {
-	if retries <= 0 {
-		return "", "", errors.New("danbooru: zero retries left")
-	}
-	r, err := http.Get("https://danbooru.donmai.us/posts/random.json")
-	if err != nil {
-		return "", "", err
-	}
-	defer r.Body.Close()
+type Fap struct{}
 
-	var x struct {
-		URL    string `json:"file_url"`
-		Rating string `json:"rating"`
+var fapRe = regexp.MustCompile("^!(др.?ч|фап)")
+
+func (h *Fap) Match(s string) bool {
+	return fapRe.MatchString(s)
+}
+
+func (h *Fap) Handle(c tele.Context) error {
+	pic, err := danbooru.GetNSFW()
+	if err != nil {
+		return err
 	}
-	if err := json.NewDecoder(r.Body).Decode(&x); err != nil {
-		return "", "", err
+	photo := &tele.Photo{File: tele.FromReader(bytes.NewReader(pic.Data))}
+	switch pic.Rating {
+	case danbooru.Explicit:
+		photo.Caption = "🔞"
+	case danbooru.Questionable:
+		photo.Caption = "❓"
 	}
-	if x.URL == "" {
-		return danbooruRandom(retries - 1)
-	}
-	return x.URL, x.Rating, nil
+	photo.HasSpoiler = true
+	return c.Send(photo, tele.ModeHTML)
 }
 
 type Masyunya struct{}
