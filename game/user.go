@@ -100,9 +100,13 @@ func (u *User) AddMoney(n int) {
 func (u *User) Stack() bool {
 	t := 0
 	u.Inventory.Filter(func(i *Item) bool {
-		if c, ok := i.Value.(*Cash); ok {
-			t += c.Money
+		switch x := i.Value.(type) {
+		case *Cash:
+			t += x.Money
 			return false
+		case *Wallet:
+			t += x.Money
+			x.Money = 0
 		}
 		return true
 	})
