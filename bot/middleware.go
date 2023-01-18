@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"math/rand"
+	"nechego/avatar"
 	"nechego/game"
 	"nechego/teleutil"
 	"strings"
@@ -46,16 +47,27 @@ func (f WrapperFunc) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return f(next)
 }
 
-type RandomPhoto struct{}
+type RandomPhoto struct {
+	Avatars *avatar.Storage
+}
 
 func (m *RandomPhoto) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		p, err := c.Bot().ProfilePhotosOf(c.Sender())
-		if err != nil {
-			return err
-		}
-		if len(p) > 0 && rand.Float64() < 0.02 {
-			c.Send(&p[0])
+		if rand.Float64() < 0.02 {
+			r := make([]*tele.Photo, 0, 2)
+			p, err := c.Bot().ProfilePhotosOf(c.Sender())
+			if err != nil {
+				return err
+			}
+			if len(p) > 0 {
+				r = append(r, &p[0])
+			}
+			if a, ok := m.Avatars.Get(c.Sender().ID); ok {
+				r = append(r, a)
+			}
+			if len(r) > 0 {
+				c.Send(r[rand.Intn(len(r))])
+			}
 		}
 		return next(c)
 	}

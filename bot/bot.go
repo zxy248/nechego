@@ -115,7 +115,7 @@ func main() {
 		hello,
 	}
 	router.Middleware = []Wrapper{
-		&RandomPhoto{},
+		&RandomPhoto{Avatars: avatars},
 		&MessageIncrementer{Universe: universe},
 		&IgnoreBanned{Universe: universe},
 		&DeleteMessage{},
