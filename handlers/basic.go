@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"io"
 	"math/rand"
+	"nechego/avatar"
 	"nechego/danbooru"
 	"nechego/format"
 	"nechego/game"
@@ -17,7 +19,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -614,7 +615,7 @@ func (h *Pic) Handle(c tele.Context) error {
 }
 
 type Avatar struct {
-	Path string
+	Avatars *avatar.Storage
 }
 
 var avatarRe = re("^!ава")
@@ -624,32 +625,19 @@ func (h *Avatar) Match(s string) bool {
 }
 
 func (h *Avatar) Handle(c tele.Context) error {
-	if a := c.Message().Photo; a != nil {
-		const max = 1500
-		if a.Width > max || a.Height > max {
-			return c.Send("📷 Максимальный размер аватара %dx%d пикселей.", max, max)
+	if c.Message().Photo == nil {
+		if avatar, ok := h.Avatars.Get(c.Sender().ID); ok {
+			return c.Send(avatar)
 		}
-		src, err := c.Bot().File(&a.File)
-		if err != nil {
-			return err
-		}
-		defer src.Close()
-		if err := os.MkdirAll(h.Path, 0777); err != nil {
-			return err
-		}
-		dst, err := os.Create(filepath.Join(h.Path, strconv.FormatInt(c.Sender().ID, 10)))
-		if err != nil {
-			return err
-		}
-		if _, err := io.Copy(dst, src); err != nil {
-			return err
-		}
-		return c.Send("📸 Аватар установлен.")
+		return c.Send("📷 Прикрепите изображение.")
 	}
-	if a, ok := avatar(h.Path, c.Sender().ID); ok {
-		return c.Send(a)
+	if err := h.Avatars.Set(c.Sender().ID, c.Message().Photo); errors.Is(err, avatar.ErrSize) {
+		return c.Send("📷 Максимальный размер аватара %dx%d пикселей.",
+			h.Avatars.MaxWidth, h.Avatars.MaxHeight)
+	} else if err != nil {
+		return err
 	}
-	return c.Send("📷 Прикрепите изображение.")
+	return c.Send("📸 Аватар установлен.")
 }
 
 type TurnOn struct {

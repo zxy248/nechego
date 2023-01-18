@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"html"
 	"math/rand"
+	"nechego/avatar"
 	"nechego/format"
 	"nechego/game"
 	"nechego/teleutil"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -484,8 +482,8 @@ func (h *Fight) Handle(c tele.Context) error {
 }
 
 type Profile struct {
-	Universe   *game.Universe
-	AvatarPath string
+	Universe *game.Universe
+	Avatars  *avatar.Storage
 }
 
 var profileRe = re("^!(профиль|стат)")
@@ -512,23 +510,11 @@ func (h *Profile) Handle(c tele.Context) error {
 		format.ModifierEmojis(mods),
 		format.Status(user.Status),
 	)
-	if a, ok := avatar(h.AvatarPath, c.Sender().ID); ok {
+	if a, ok := h.Avatars.Get(c.Sender().ID); ok {
 		a.Caption = out
 		return c.Send(a, tele.ModeHTML)
 	}
 	return c.Send(out, tele.ModeHTML)
-}
-
-func avatar(dir string, id int64) (a *tele.Photo, ok bool) {
-	_, err := os.Stat(dir)
-	if err != nil {
-		return nil, false
-	}
-	f := tele.FromDisk(filepath.Join(dir, strconv.FormatInt(id, 10)))
-	if f.OnDisk() {
-		return &tele.Photo{File: f}, true
-	}
-	return nil, false
 }
 
 type Dice struct {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"nechego/avatar"
 	"nechego/game"
 	"nechego/handlers"
 	"os"
@@ -46,7 +47,8 @@ func main() {
 	}
 
 	universe := game.NewUniverse("universe")
-	helloHandler := &handlers.Hello{Path: "data/hello.json"}
+	avatars := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
+	hello := &handlers.Hello{Path: "data/hello.json"}
 	router := &Router{}
 	router.Handlers = []handlers.Handler{
 		&handlers.Pic{Path: "data/pic"},
@@ -94,8 +96,8 @@ func main() {
 		&handlers.Sell{Universe: universe},
 		&handlers.Stack{Universe: universe},
 		&handlers.Fight{Universe: universe},
-		&handlers.Profile{Universe: universe, AvatarPath: "avatar"},
-		&handlers.Avatar{Path: "avatar"},
+		&handlers.Profile{Universe: universe, Avatars: avatars},
+		&handlers.Avatar{Avatars: avatars},
 		&handlers.Dice{Universe: universe},
 		&handlers.TurnOn{Universe: universe},
 		&handlers.TurnOff{Universe: universe},
@@ -110,7 +112,7 @@ func main() {
 		&handlers.Energy{Universe: universe},
 		&handlers.NameMarket{Universe: universe},
 		&handlers.NamePet{Universe: universe},
-		helloHandler,
+		hello,
 	}
 	router.Middleware = []Wrapper{
 		&RandomPhoto{},
@@ -156,7 +158,7 @@ func main() {
 	}()
 	rollHandler := &handlers.Roll{Universe: universe}
 	bot.Handle(tele.OnDice, router.wrap(rollHandler.Handle))
-	bot.Handle(tele.OnUserJoined, router.wrap(helloHandler.Handle))
+	bot.Handle(tele.OnUserJoined, router.wrap(hello.Handle))
 	bot.Handle(tele.OnText, router.OnText)
 	bot.Handle(tele.OnPhoto, router.OnText)
 	bot.Start()
