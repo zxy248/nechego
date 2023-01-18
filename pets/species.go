@@ -140,10 +140,9 @@ func randomSpecies() Species {
 		s[i], s[j] = s[j], s[i]
 	})
 	sort.Slice(s, func(i, j int) bool {
-		return species[s[i]].Probability > species[s[j]].Probability
+		return species[s[i]].Probability < species[s[j]].Probability
 	})
-
-	few := 4
+	few := 3
 	if len(s) < few {
 		few = len(s)
 	}
@@ -156,11 +155,8 @@ func (s Species) Probability() float64 { return species[s].Probability }
 func (s Species) Size() Size           { return species[s].Size }
 func (s Species) Quality() Quality {
 	p := s.Probability()
-	if p <= 0 || p > 1 {
-		panic(fmt.Errorf("p = %f, must be in (0, 1]", p))
-	}
 	switch {
-	case p < 0.01:
+	case p <= 0.01:
 		return Legendary
 	case p <= 0.05:
 		return Exotic
