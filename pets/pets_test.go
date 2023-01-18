@@ -5,8 +5,9 @@ import (
 )
 
 func TestRandom(t *testing.T) {
-	const sample = 5000
+	const sample = 10000
 	males, females := 0, 0
+	rare := 0
 	animals := map[Species]bool{}
 	for i := 0; i < sample; i++ {
 		pet := Random()
@@ -15,6 +16,9 @@ func TestRandom(t *testing.T) {
 		}
 		if pet.Gender == Female {
 			females++
+		}
+		if pet.Species.Probability() <= 0.1 {
+			rare++
 		}
 		animals[pet.Species] = true
 	}
@@ -25,19 +29,26 @@ func TestRandom(t *testing.T) {
 		}
 	})
 	t.Run("genders", func(t *testing.T) {
-		const want = 100
+		const want = sample * 0.02
 		delta := males - females
 		if delta < 0 {
 			delta = -delta
 		}
 		if delta > want {
-			t.Errorf("delta == %d, want <= %d", delta, want)
+			t.Errorf("delta == %v, want <= %v", delta, want)
 		}
 	})
 	t.Run("binary", func(t *testing.T) {
 		sum := males + females
 		if sum != sample {
 			t.Errorf("sum == %d, want %d", sum, sample)
+		}
+	})
+	t.Run("few rare", func(t *testing.T) {
+		const want = 0.1
+		q := float64(rare) / sample
+		if q > want {
+			t.Errorf("q == %v, want <= %v", q, want)
 		}
 	})
 }
