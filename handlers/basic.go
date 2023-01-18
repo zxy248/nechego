@@ -26,7 +26,7 @@ import (
 
 type Infa struct{}
 
-var infaRe = regexp.MustCompile("!инфа ?(.*)")
+var infaRe = re("!инфа ?(.*)")
 
 func (h *Infa) Match(s string) bool {
 	return infaRe.MatchString(s)
@@ -55,7 +55,7 @@ type Who struct {
 	Universe *game.Universe
 }
 
-var whoRe = regexp.MustCompile("!кто ?(.*)")
+var whoRe = re("!кто ?(.*)")
 
 func (h *Who) Match(s string) bool {
 	return whoRe.MatchString(s)
@@ -78,7 +78,7 @@ type List struct {
 	Universe *game.Universe
 }
 
-var listRe = regexp.MustCompile("^!список ?(.*)")
+var listRe = re("^!список ?(.*)")
 
 func (h *List) Match(s string) bool {
 	return listRe.MatchString(s)
@@ -102,7 +102,7 @@ type Top struct {
 	Universe *game.Universe
 }
 
-var topRe = regexp.MustCompile("^!топ ?(.*)")
+var topRe = re("^!топ ?(.*)")
 
 func (h *Top) Match(s string) bool {
 	return topRe.MatchString(s)
@@ -126,7 +126,7 @@ type Mouse struct {
 	Path string // path to video file
 }
 
-var mouseRe = regexp.MustCompile("^!мыш")
+var mouseRe = re("^!мыш")
 
 func (h *Mouse) Match(s string) bool {
 	return mouseRe.MatchString(s)
@@ -140,7 +140,7 @@ type Tiktok struct {
 	Path string // path to directory with webms
 }
 
-var tiktokRe = regexp.MustCompile("^!тикток")
+var tiktokRe = re("^!тикток")
 
 func (h *Tiktok) Match(s string) bool {
 	return tiktokRe.MatchString(s)
@@ -160,7 +160,7 @@ func (h *Tiktok) Handle(c tele.Context) error {
 
 type Game struct{}
 
-var gameRe = regexp.MustCompile("^!игр")
+var gameRe = re("^!игр")
 
 func (h *Game) Match(s string) bool {
 	return gameRe.MatchString(s)
@@ -173,7 +173,7 @@ func (h *Game) Handle(c tele.Context) error {
 
 type Weather struct{}
 
-var weatherRe = regexp.MustCompile("^!погода (.*)")
+var weatherRe = re("^!погода (.*)")
 
 func (h *Weather) Match(s string) bool {
 	return weatherRe.MatchString(s)
@@ -218,7 +218,7 @@ func (h *Weather) Handle(c tele.Context) error {
 
 type Cat struct{}
 
-var catRe = regexp.MustCompile("^!ко[тш]")
+var catRe = re("^!ко[тш]")
 
 func (h *Cat) Match(s string) bool {
 	return catRe.MatchString(s)
@@ -236,7 +236,7 @@ func (h *Cat) Handle(c tele.Context) error {
 
 type Anime struct{}
 
-var animeRe = regexp.MustCompile("^!(аним|мульт)")
+var animeRe = re("^!(аним|мульт)")
 
 func (h *Anime) Match(s string) bool {
 	return animeRe.MatchString(s)
@@ -258,7 +258,7 @@ func (h *Anime) Handle(c tele.Context) error {
 
 type Furry struct{}
 
-var furryRe = regexp.MustCompile("^!фур")
+var furryRe = re("^!фур")
 
 func (h *Furry) Match(s string) bool {
 	return furryRe.MatchString(s)
@@ -277,7 +277,7 @@ func (h *Furry) Handle(c tele.Context) error {
 
 type Flag struct{}
 
-var flagRe = regexp.MustCompile("^!флаг")
+var flagRe = re("^!флаг")
 
 func (h *Flag) Match(s string) bool {
 	return flagRe.MatchString(s)
@@ -296,7 +296,7 @@ func (h *Flag) Handle(c tele.Context) error {
 
 type Person struct{}
 
-var personRe = regexp.MustCompile("^!чел")
+var personRe = re("^!чел")
 
 func (h *Person) Match(s string) bool {
 	return personRe.MatchString(s)
@@ -314,7 +314,7 @@ func (h *Person) Handle(c tele.Context) error {
 
 type Horse struct{}
 
-var horseRe = regexp.MustCompile("^!(лошад|конь)")
+var horseRe = re("^!(лошад|конь)")
 
 func (h *Horse) Match(s string) bool {
 	return horseRe.MatchString(s)
@@ -332,7 +332,7 @@ func (h *Horse) Handle(c tele.Context) error {
 
 type Art struct{}
 
-var artRe = regexp.MustCompile("^!арт")
+var artRe = re("^!арт")
 
 func (h *Art) Match(s string) bool {
 	return artRe.MatchString(s)
@@ -351,7 +351,7 @@ func (h *Art) Handle(c tele.Context) error {
 type Car struct{}
 
 var (
-	carRe    = regexp.MustCompile("^!(авто|машин|тачка)")
+	carRe    = re("^!(авто|машин|тачка)")
 	carImgRe = regexp.MustCompile(`<img id = "vehicle" src="data:image/png;base64,(.+)" class="center">`)
 )
 
@@ -377,7 +377,7 @@ func (h *Car) Handle(c tele.Context) error {
 
 type Soy struct{}
 
-var soyRe = regexp.MustCompile("^!сой")
+var soyRe = re("^!сой")
 
 func (h *Soy) Match(s string) bool {
 	return soyRe.MatchString(s)
@@ -394,7 +394,7 @@ func (h *Soy) Handle(c tele.Context) error {
 
 type Danbooru struct{}
 
-var danbooruRe = regexp.MustCompile("^!данб.?ру")
+var danbooruRe = re("^!данб.?ру")
 
 func (h *Danbooru) Match(s string) bool {
 	return danbooruRe.MatchString(s)
@@ -420,7 +420,7 @@ func (h *Danbooru) Handle(c tele.Context) error {
 
 type Fap struct{}
 
-var fapRe = regexp.MustCompile("^!(др.?ч|фап)")
+var fapRe = re("^!(др.?ч|фап)")
 
 func (h *Fap) Match(s string) bool {
 	return fapRe.MatchString(s)
@@ -444,7 +444,7 @@ func (h *Fap) Handle(c tele.Context) error {
 
 type Masyunya struct{}
 
-var masyunyaRe = regexp.MustCompile("^!ма[нс]ю[нс][а-я]*[пая]")
+var masyunyaRe = re("^!ма[нс]ю[нс][а-я]*[пая]")
 
 func (h *Masyunya) Match(s string) bool {
 	return masyunyaRe.MatchString(s)
@@ -460,7 +460,7 @@ func (h *Masyunya) Handle(c tele.Context) error {
 
 type Poppy struct{}
 
-var poppyRe = regexp.MustCompile("^!паппи")
+var poppyRe = re("^!паппи")
 
 func (h *Poppy) Match(s string) bool {
 	return poppyRe.MatchString(s)
@@ -477,7 +477,7 @@ func (h *Poppy) Handle(c tele.Context) error {
 
 type Sima struct{}
 
-var simaRe = regexp.MustCompile("^!сима")
+var simaRe = re("^!сима")
 
 func (h *Sima) Match(s string) bool {
 	return simaRe.MatchString(s)
@@ -496,7 +496,7 @@ type Hello struct {
 	cache []tele.Sticker
 }
 
-var helloRe = regexp.MustCompile("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
+var helloRe = re("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
 
 func (h *Hello) Match(s string) bool {
 	return helloRe.MatchString(s)
@@ -521,7 +521,7 @@ type Basili struct {
 	Path string
 }
 
-var basiliRe = regexp.MustCompile("^!(муся|марс|кот василия|кошка василия)")
+var basiliRe = re("^!(муся|марс|кот василия|кошка василия)")
 
 func (h *Basili) Match(s string) bool {
 	return basiliRe.MatchString(s)
@@ -543,7 +543,7 @@ type Casper struct {
 	Path string
 }
 
-var casperRe = regexp.MustCompile("^!касп[ие]р")
+var casperRe = re("^!касп[ие]р")
 
 func (h *Casper) Match(s string) bool {
 	return casperRe.MatchString(s)
@@ -565,7 +565,7 @@ type Zeus struct {
 	Path string
 }
 
-var zeusRe = regexp.MustCompile("^!зевс")
+var zeusRe = re("^!зевс")
 
 func (h *Zeus) Match(s string) bool {
 	return zeusRe.MatchString(s)
@@ -587,7 +587,7 @@ type Pic struct {
 	Path string
 }
 
-var picRe = regexp.MustCompile("^!пик")
+var picRe = re("^!пик")
 
 func (h *Pic) Match(s string) bool {
 	return picRe.MatchString(s)
@@ -617,7 +617,7 @@ type Avatar struct {
 	Path string
 }
 
-var avatarRe = regexp.MustCompile("^!ава")
+var avatarRe = re("^!ава")
 
 func (h *Avatar) Match(s string) bool {
 	return avatarRe.MatchString(s)
@@ -656,7 +656,7 @@ type TurnOn struct {
 	Universe *game.Universe
 }
 
-var turnOnRe = regexp.MustCompile("^!(вкл|подкл|подруб)")
+var turnOnRe = re("^!(вкл|подкл|подруб)")
 
 func (h *TurnOn) Match(s string) bool {
 	return turnOnRe.MatchString(s)
@@ -671,7 +671,7 @@ type TurnOff struct {
 	Universe *game.Universe
 }
 
-var turnOffRe = regexp.MustCompile("^!(выкл|откл)")
+var turnOffRe = re("^!(выкл|откл)")
 
 func (h *TurnOff) Match(s string) bool {
 	return turnOffRe.MatchString(s)
@@ -686,7 +686,7 @@ type Ban struct {
 	Universe *game.Universe
 }
 
-var banRe = regexp.MustCompile("^!бан")
+var banRe = re("^!бан")
 
 func (h *Ban) Match(s string) bool {
 	return banRe.MatchString(s)
@@ -711,7 +711,7 @@ type Unban struct {
 	Universe *game.Universe
 }
 
-var unbanRe = regexp.MustCompile("^!разбан")
+var unbanRe = re("^!разбан")
 
 func (h *Unban) Match(s string) bool {
 	return unbanRe.MatchString(s)

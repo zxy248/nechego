@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"nechego/game"
 	"nechego/teleutil"
-	"regexp"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -13,7 +12,7 @@ type DailyEblan struct {
 	Universe *game.Universe
 }
 
-var dailyEblanRe = regexp.MustCompile("^![ие][б6п]?л[ап]н[а-я]* дня")
+var dailyEblanRe = re("^![ие][б6п]?л[ап]н[а-я]* дня")
 
 func (h *DailyEblan) Match(s string) bool {
 	return dailyEblanRe.MatchString(s)
@@ -36,7 +35,7 @@ type DailyAdmin struct {
 	Universe *game.Universe
 }
 
-var dailyAdminRe = regexp.MustCompile("^!админ дня")
+var dailyAdminRe = re("^!админ дня")
 
 func (h *DailyAdmin) Match(s string) bool {
 	return dailyAdminRe.MatchString(s)
@@ -59,7 +58,7 @@ type DailyPair struct {
 	Universe *game.Universe
 }
 
-var dailyPairRe = regexp.MustCompile("^!пара дня")
+var dailyPairRe = re("^!пара дня")
 
 func (h *DailyPair) Match(s string) bool {
 	return dailyPairRe.MatchString(s)

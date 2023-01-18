@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/teleutil"
-	"regexp"
 
 	"github.com/antonmedv/expr"
 	tele "gopkg.in/telebot.v3"
@@ -12,7 +11,7 @@ import (
 
 type Calculator struct{}
 
-var calculatorRe = regexp.MustCompile("^!(калькул|вычисл)[а-я]* (.*)")
+var calculatorRe = re("^!(калькул|вычисл)[а-я]* (.*)")
 
 func (h *Calculator) Match(s string) bool {
 	return calculatorRe.MatchString(s)

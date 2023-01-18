@@ -10,7 +10,6 @@ import (
 	"nechego/teleutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -23,7 +22,7 @@ type Save struct {
 	Universe *game.Universe
 }
 
-var saveRe = regexp.MustCompile("^!сохран")
+var saveRe = re("^!сохран")
 
 func (h *Save) Match(s string) bool {
 	return saveRe.MatchString(s)
@@ -38,7 +37,7 @@ func (h *Save) Handle(c tele.Context) error {
 
 type Name struct{}
 
-var nameRe = regexp.MustCompile("!имя (.*)")
+var nameRe = re("!имя (.*)")
 
 func (h *Name) Match(s string) bool {
 	return nameRe.MatchString(s)
@@ -63,7 +62,7 @@ type Inventory struct {
 	Universe *game.Universe
 }
 
-var inventoryRe = regexp.MustCompile("^!(инвентарь|лут)")
+var inventoryRe = re("^!(инвентарь|лут)")
 
 func (h *Inventory) Match(s string) bool {
 	return inventoryRe.MatchString(s)
@@ -88,7 +87,7 @@ type Catch struct {
 	Universe *game.Universe
 }
 
-var catchRe = regexp.MustCompile("^!улов")
+var catchRe = re("^!улов")
 
 func (h *Catch) Match(s string) bool {
 	return catchRe.MatchString(s)
@@ -107,7 +106,7 @@ type Drop struct {
 	Universe *game.Universe
 }
 
-var dropRe = regexp.MustCompile("^!(выкинуть|выбросить|выложить|дроп|положить) (.*)")
+var dropRe = re("^!(выкинуть|выбросить|выложить|дроп|положить) (.*)")
 
 func (h *Drop) Match(s string) bool {
 	return dropRe.MatchString(s)
@@ -137,7 +136,7 @@ type Pick struct {
 	Universe *game.Universe
 }
 
-var pickRe = regexp.MustCompile("^!(взять|подобрать|поднять) (.*)")
+var pickRe = re("^!(взять|подобрать|поднять) (.*)")
 
 func (h *Pick) Match(s string) bool {
 	return pickRe.MatchString(s)
@@ -169,7 +168,7 @@ type Floor struct {
 	Universe *game.Universe
 }
 
-var floorRe = regexp.MustCompile("^!(пол|мусор|вещи|предметы)")
+var floorRe = re("^!(пол|мусор|вещи|предметы)")
 
 func (h *Floor) Match(s string) bool {
 	return floorRe.MatchString(s)
@@ -188,7 +187,7 @@ type Market struct {
 	Universe *game.Universe
 }
 
-var marketRe = regexp.MustCompile("^!(магаз|шоп)")
+var marketRe = re("^!(магаз|шоп)")
 
 func (h *Market) Match(s string) bool {
 	return marketRe.MatchString(s)
@@ -207,7 +206,7 @@ type NameMarket struct {
 	Universe *game.Universe
 }
 
-var nameMarketRe = regexp.MustCompile("^!назвать магазин (.*)")
+var nameMarketRe = re("^!назвать магазин (.*)")
 
 func (h *NameMarket) Match(s string) bool {
 	return nameMarketRe.MatchString(s)
@@ -230,7 +229,7 @@ type Buy struct {
 	Universe *game.Universe
 }
 
-var buyRe = regexp.MustCompile("^!купить (.*)")
+var buyRe = re("^!купить (.*)")
 
 func (h *Buy) Match(s string) bool {
 	return buyRe.MatchString(s)
@@ -260,7 +259,7 @@ type Eat struct {
 	Universe *game.Universe
 }
 
-var eatRe = regexp.MustCompile("^!(с[ъь]есть|еда) (.*)")
+var eatRe = re("^!(с[ъь]есть|еда) (.*)")
 
 func (h *Eat) Match(s string) bool {
 	return eatRe.MatchString(s)
@@ -297,7 +296,7 @@ type EatQuick struct {
 	Universe *game.Universe
 }
 
-var eatQuickRe = regexp.MustCompile("^!еда")
+var eatQuickRe = re("^!еда")
 
 func (h *EatQuick) Match(s string) bool {
 	return eatQuickRe.MatchString(s)
@@ -322,7 +321,7 @@ type Fish struct {
 	Universe *game.Universe
 }
 
-var fishRe = regexp.MustCompile("^!(р[ыі]балка|ловля рыб)")
+var fishRe = re("^!(р[ыі]балка|ловля рыб)")
 
 func (h *Fish) Match(s string) bool {
 	return fishRe.MatchString(s)
@@ -367,7 +366,7 @@ type Status struct {
 	Universe *game.Universe
 }
 
-var statusRe = regexp.MustCompile("^!статус (.*)")
+var statusRe = re("^!статус (.*)")
 
 func (h *Status) Match(s string) bool {
 	return statusRe.MatchString(s)
@@ -390,7 +389,7 @@ type Sell struct {
 	Universe *game.Universe
 }
 
-var sellRe = regexp.MustCompile("^!прода(ть|жа) (.*)")
+var sellRe = re("^!прода(ть|жа) (.*)")
 
 func (h *Sell) Match(s string) bool {
 	return sellRe.MatchString(s)
@@ -421,7 +420,7 @@ type Stack struct {
 	Universe *game.Universe
 }
 
-var stackRe = regexp.MustCompile("^!сложить")
+var stackRe = re("^!сложить")
 
 func (h *Stack) Match(s string) bool {
 	return stackRe.MatchString(s)
@@ -441,7 +440,7 @@ type Fight struct {
 	Universe *game.Universe
 }
 
-var fightRe = regexp.MustCompile("^!(драка|дуэль|поединок|атака|битва|схватка|сражение|бой|борьба)")
+var fightRe = re("^!(драка|дуэль|поединок|атака|битва|схватка|сражение|бой|борьба)")
 
 func (h *Fight) Match(s string) bool {
 	return fightRe.MatchString(s)
@@ -489,7 +488,7 @@ type Profile struct {
 	AvatarPath string
 }
 
-var profileRe = regexp.MustCompile("^!(профиль|стат)")
+var profileRe = re("^!(профиль|стат)")
 
 func (h *Profile) Match(s string) bool {
 	return profileRe.MatchString(s)
@@ -536,7 +535,7 @@ type Dice struct {
 	Universe *game.Universe
 }
 
-var diceRe = regexp.MustCompile("!кости (.*)")
+var diceRe = re("!кости (.*)")
 
 func (h *Dice) Match(s string) bool {
 	return diceRe.MatchString(s)
@@ -616,7 +615,7 @@ type TopStrong struct {
 	Universe *game.Universe
 }
 
-var topStrongRe = regexp.MustCompile("^!топ сил")
+var topStrongRe = re("^!топ сил")
 
 func (h *TopStrong) Match(s string) bool {
 	return topStrongRe.MatchString(s)
@@ -640,7 +639,7 @@ type TopRating struct {
 	Universe *game.Universe
 }
 
-var topRating = regexp.MustCompile("^!(рейтинг|ммр|эло)")
+var topRating = re("^!(рейтинг|ммр|эло)")
 
 func (h *TopRating) Match(s string) bool {
 	return topRating.MatchString(s)
@@ -664,7 +663,7 @@ type TopRich struct {
 	Universe *game.Universe
 }
 
-var topRich = regexp.MustCompile("^!топ бога[тч]")
+var topRich = re("^!топ бога[тч]")
 
 func (h *TopRich) Match(s string) bool {
 	return topRich.MatchString(s)
@@ -688,7 +687,7 @@ type Capital struct {
 	Universe *game.Universe
 }
 
-var capitalRe = regexp.MustCompile("^!капитал")
+var capitalRe = re("^!капитал")
 
 func (h *Capital) Match(s string) bool {
 	return capitalRe.MatchString(s)
@@ -720,7 +719,7 @@ type Balance struct {
 	Universe *game.Universe
 }
 
-var balanceRe = regexp.MustCompile("^!(баланс|деньги)")
+var balanceRe = re("^!(баланс|деньги)")
 
 func (h *Balance) Match(s string) bool {
 	return balanceRe.MatchString(s)
@@ -736,7 +735,7 @@ type Energy struct {
 	Universe *game.Universe
 }
 
-var energyRe = regexp.MustCompile("^!энергия")
+var energyRe = re("^!энергия")
 
 func (h *Energy) Match(s string) bool {
 	return energyRe.MatchString(s)
@@ -754,7 +753,7 @@ type NamePet struct {
 	Universe *game.Universe
 }
 
-var namePetRe = regexp.MustCompile("^!назвать (.*)")
+var namePetRe = re("^!назвать (.*)")
 
 func (h *NamePet) Match(s string) bool {
 	return namePetRe.MatchString(s)
