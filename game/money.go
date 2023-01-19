@@ -22,7 +22,7 @@ func (u *User) Poor() bool {
 
 func (u *User) SpendMoney(n int) bool {
 	if n < 0 {
-		panic(fmt.Errorf("cannot spend %v", n))
+		panic(fmt.Errorf("cannot spend %v money", n))
 	}
 	u.Stack()
 	return u.spendWallet(n) || u.spendCash(n)
@@ -53,6 +53,9 @@ func (u *User) spendCash(n int) bool {
 }
 
 func (u *User) AddMoney(n int) {
+	if n < 0 {
+		panic(fmt.Errorf("cannot add %v money", n))
+	}
 	u.Inventory.Add(&item.Item{
 		Type:         item.TypeCash,
 		Transferable: true,
