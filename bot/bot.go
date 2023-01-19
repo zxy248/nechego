@@ -95,6 +95,7 @@ func main() {
 		&handlers.Status{Universe: universe},
 		&handlers.Sell{Universe: universe},
 		&handlers.Stack{Universe: universe},
+		&handlers.Cashout{Universe: universe},
 		&handlers.Fight{Universe: universe},
 		&handlers.Profile{Universe: universe, Avatars: avatars},
 		&handlers.Avatar{Avatars: avatars},

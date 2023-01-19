@@ -1,8 +1,14 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"time"
+)
+
+var (
+	ErrNoMoney  = errors.New("insufficient money")
+	ErrBadMoney = errors.New("incorrect amount of money")
 )
 
 type Cash struct {

@@ -83,10 +83,7 @@ func (m *Market) String() string {
 	return s
 }
 
-var (
-	ErrNoMoney = errors.New("insufficient money")
-	ErrNoKey   = errors.New("key not found")
-)
+var ErrNoKey = errors.New("key not found")
 
 func (u *User) Buy(m *Market, key int) (*Product, error) {
 	p, ok := m.keys[key]

@@ -24,6 +24,7 @@ const (
 	InventoryFull        = "🗄 Ваш инвентарь заполнен."
 	BadMarketName        = "🏪 Такое название не подходит для магазина."
 	MarketRenamed        = "🏪 Вы назвали магазин."
+	SpecifyMoney         = "💵 Укажите количество средств."
 )
 
 func Mention(uid int64, name string) string {

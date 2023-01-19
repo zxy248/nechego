@@ -434,6 +434,35 @@ func (h *Stack) Handle(c tele.Context) error {
 	return c.Send("✅")
 }
 
+type Cashout struct {
+	Universe *game.Universe
+}
+
+var cashoutRe = re("^!(отложить|обнал|снять) (.*)")
+
+func (h *Cashout) Match(s string) bool {
+	return cashoutRe.MatchString(s)
+}
+
+func (h *Cashout) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+	args := teleutil.NumArg(c, cashoutRe, 2)
+	if len(args) != 1 {
+		return c.Send(format.SpecifyMoney)
+	}
+	amount := args[0]
+	if err := user.Cashout(amount); errors.Is(err, game.ErrBadMoney) {
+		return c.Send(format.SpecifyMoney)
+	} else if errors.Is(err, game.ErrNoMoney) {
+		return c.Send(format.NoMoney)
+	} else if err != nil {
+		return err
+	}
+	return c.Send(fmt.Sprintf("💵 Вы отложили %s.",
+		format.Money(amount)), tele.ModeHTML)
+}
+
 type Fight struct {
 	Universe *game.Universe
 }

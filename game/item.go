@@ -78,8 +78,15 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 }
 
 func (i *Item) bad() bool {
-	if rod, ok := i.Value.(*FishingRod); ok && rod.Durability < 0 {
-		return true
+	switch x := i.Value.(type) {
+	case *FishingRod:
+		if x.Durability < 0 {
+			return true
+		}
+	case *Cash:
+		if x.Money == 0 {
+			return true
+		}
 	}
 	if !i.Expire.IsZero() && time.Now().After(i.Expire) {
 		return true

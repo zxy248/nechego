@@ -61,6 +61,9 @@ func (u *User) RestoreEnergy(e int) {
 }
 
 func (u *User) SpendMoney(n int) bool {
+	if n < 0 {
+		panic(fmt.Errorf("cannot spend %v", n))
+	}
 	u.Stack()
 	return u.spendWallet(n) || u.spendCash(n)
 }
@@ -115,15 +118,22 @@ func (u *User) Stack() bool {
 	}
 	wallet, ok := u.Wallet()
 	if !ok {
-		u.Inventory.Add(&Item{
-			Type:         ItemTypeCash,
-			Transferable: true,
-			Value:        &Cash{Money: t},
-		})
+		u.AddMoney(t)
 		return true
 	}
 	wallet.Money += t
 	return true
+}
+
+func (u *User) Cashout(n int) error {
+	if n <= 0 {
+		return ErrBadMoney
+	}
+	if !u.SpendMoney(n) {
+		return ErrNoMoney
+	}
+	u.AddMoney(n)
+	return nil
 }
 
 func (u *User) Total() int {
