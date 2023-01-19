@@ -67,15 +67,31 @@ func (u *User) Eat(i *item.Item) bool {
 }
 
 func (u *User) EatQuick() (i *item.Item, ok bool) {
-	for _, i = range u.Inventory.Normal() {
-		switch x := i.Value.(type) {
+	for _, x := range u.Inventory.List() {
+		switch v := x.Value.(type) {
 		case *fishing.Fish:
-			if x.Price() < 2000 {
-				return i, u.Eat(i)
+			if v.Price() < 2000 {
+				return x, u.Eat(x)
 			}
 		case *food.Food:
-			return i, u.Eat(i)
+			return x, u.Eat(x)
 		}
 	}
 	return nil, false
+}
+
+func (u *User) Fish(r *fishing.Rod) *item.Item {
+	r.Durability -= 0.01
+	if rand.Float64() < 0.08 {
+		return item.Random()
+	}
+
+	quality := 1.0 + 0.5*r.Quality
+	luck := 0.9 + 0.2*u.Luck()
+	total := quality * luck
+
+	f := fishing.RandomFish()
+	f.Length *= total
+	f.Weight *= total
+	return &item.Item{Type: item.TypeFish, Transferable: true, Value: f}
 }

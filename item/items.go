@@ -63,14 +63,12 @@ func (it *Items) Filter(keep func(i *Item) bool) {
 	it.I = it.I[:n]
 }
 
-// TODO: rename to List
-func (it *Items) Normal() []*Item {
+func (it *Items) List() []*Item {
 	it.Filter(integral)
 	return it.I
 }
 
-// TODO: rename to HKList
-func (it *Items) List() []*Item {
+func (it *Items) HKList() []*Item {
 	// updates hotkeys; only for public use
 	it.Filter(integral)
 	it.updateHotkeys()
@@ -95,7 +93,7 @@ func (it *Items) Trim(n int) {
 }
 
 func (it *Items) Random() (x *Item, ok bool) {
-	items := it.Normal()
+	items := it.List()
 	if len(items) == 0 {
 		return nil, false
 	}

@@ -98,24 +98,24 @@ func (u *User) Cashout(n int) error {
 
 func (u *User) Total() int {
 	t := 0
-	for _, v := range u.Inventory.Normal() {
-		switch x := v.Value.(type) {
+	for _, x := range u.Inventory.List() {
+		switch v := x.Value.(type) {
 		case *money.Cash:
-			t += x.Money
+			t += v.Money
 		case *money.Wallet:
-			t += x.Money
+			t += v.Money
 		case *money.CreditCard:
-			t += x.Money
+			t += v.Money
 		case *money.Debt:
-			t -= x.Money
+			t -= v.Money
 		}
 	}
 	return t
 }
 
 func (u *User) InDebt() bool {
-	for _, v := range u.Inventory.Normal() {
-		if _, ok := v.Value.(*money.Debt); ok {
+	for _, x := range u.Inventory.List() {
+		if _, ok := x.Value.(*money.Debt); ok {
 			return true
 		}
 	}
