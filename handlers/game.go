@@ -453,7 +453,7 @@ func (h *Cashout) Handle(c tele.Context) error {
 	}
 	amount := args[0]
 	if err := user.Cashout(amount); errors.Is(err, game.ErrBadMoney) {
-		return c.Send(format.SpecifyMoney)
+		return c.Send(format.BadMoney)
 	} else if errors.Is(err, game.ErrNoMoney) {
 		return c.Send(format.NoMoney)
 	} else if err != nil {
