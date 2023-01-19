@@ -11,6 +11,7 @@ import (
 	"nechego/money"
 	"nechego/pets"
 	"nechego/token"
+	"nechego/tools"
 	"time"
 )
 
@@ -30,6 +31,8 @@ const (
 	TypePet
 	TypeDice
 	TypeFood
+	TypeKnife
+	TypeMeat
 )
 
 type Item struct {
@@ -74,6 +77,10 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &token.Dice{}
 	case TypeFood:
 		i.Value = &food.Food{}
+	case TypeKnife:
+		i.Value = &tools.Knife{}
+	case TypeMeat:
+		i.Value = &food.Meat{}
 	default:
 		panic(fmt.Errorf("unexpected item type %v", i.Type))
 	}
@@ -92,19 +99,33 @@ func (i *Item) SetName(s string) bool {
 }
 
 func Random() *Item {
-	items := []*Item{
-		{Type: TypeFishingRod, Value: fishing.NewRod()},
+	common := []*Item{
 		{Type: TypeFish, Value: fishing.RandomFish()},
-		{Type: TypePet, Value: pets.Random()},
 		{Type: TypeFood, Value: food.Random()},
 		{Type: TypeWallet, Value: &money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
 		{Type: TypeCash, Value: &money.Cash{Money: int(math.Abs(rand.NormFloat64() * 3000))}},
 	}
-	if rand.Float64() < 0.30 {
-		items = append(items, &Item{Type: TypeDice, Value: &token.Dice{}})
+	uncommon := []*Item{
+		{Type: TypeFishingRod, Value: fishing.NewRod()},
+		{Type: TypePet, Value: pets.Random()},
+	}
+	rare := []*Item{
+		{Type: TypeKnife, Value: &tools.Knife{Durability: 0.8 + 0.2*rand.Float64()}},
+		{Type: TypeDice, Value: &token.Dice{}},
+	}
+	epic := []*Item{
+		{Type: TypeAdmin, Expire: dates.Tomorrow(), Value: &token.Admin{}},
+	}
+
+	items := common
+	if rand.Float64() < 0.5 {
+		items = append(items, uncommon...)
+	}
+	if rand.Float64() < 0.25 {
+		items = append(items, rare...)
 	}
 	if rand.Float64() < 0.02 {
-		items = append(items, &Item{Type: TypeAdmin, Expire: dates.Tomorrow(), Value: &token.Admin{}})
+		items = append(items, epic...)
 	}
 	i := items[rand.Intn(len(items))]
 	i.Transferable = true
@@ -119,6 +140,10 @@ func integral(i *Item) bool {
 		}
 	case *money.Cash:
 		if x.Money == 0 {
+			return false
+		}
+	case *tools.Knife:
+		if x.Durability < 0 {
 			return false
 		}
 	}

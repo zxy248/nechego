@@ -92,6 +92,7 @@ func main() {
 		&handlers.Eat{Universe: universe},
 		&handlers.EatQuick{Universe: universe},
 		&handlers.Fish{Universe: universe},
+		&handlers.Craft{Universe: universe},
 		&handlers.Status{Universe: universe},
 		&handlers.Sell{Universe: universe},
 		&handlers.Stack{Universe: universe},
@@ -130,7 +131,7 @@ func main() {
 	}
 	counter := 0
 	go func() {
-		for range time.NewTicker(time.Minute * 1).C {
+		for range time.NewTicker(1 * time.Minute).C {
 			universe.ForEachWorld(func(w *game.World) {
 				w.Market.Refill()
 				for _, u := range w.Users {

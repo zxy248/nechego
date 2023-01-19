@@ -28,6 +28,7 @@ const (
 	MarketRenamed        = "🏪 Вы назвали магазин."
 	SpecifyMoney         = "💵 Укажите количество средств."
 	BadMoney             = "💵 Некорректное количество средств."
+	CannotCraft          = "🛠 Эти предметы нельзя объединить."
 )
 
 func Mention(uid int64, name string) string {
@@ -36,6 +37,14 @@ func Mention(uid int64, name string) string {
 
 func Item(i *item.Item) string {
 	return fmt.Sprintf("<code>%s</code>", i.Value)
+}
+
+func ItemsComma(items []*item.Item) string {
+	r := make([]string, 0, len(items))
+	for _, x := range items {
+		r = append(r, Item(x))
+	}
+	return strings.Join(r, ", ")
 }
 
 func NumItem(n int, i *item.Item) string {

@@ -62,6 +62,17 @@ func (u *User) Eat(i *item.Item) bool {
 		u.Inventory.Remove(i)
 		u.RestoreEnergy(int(x.Nutrition() * 100))
 		return true
+	case *food.Meat:
+		u.Inventory.Remove(i)
+		switch x.Species.Size() {
+		case pets.Small:
+			u.RestoreEnergy(10 + rand.Intn(10))
+		case pets.Medium:
+			u.RestoreEnergy(20 + rand.Intn(10))
+		case pets.Big:
+			u.RestoreEnergy(30 + rand.Intn(10))
+		}
+		return true
 	}
 	return false
 }
@@ -74,6 +85,8 @@ func (u *User) EatQuick() (i *item.Item, ok bool) {
 				return x, u.Eat(x)
 			}
 		case *food.Food:
+			return x, u.Eat(x)
+		case *food.Meat:
 			return x, u.Eat(x)
 		}
 	}

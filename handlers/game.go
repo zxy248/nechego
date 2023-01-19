@@ -8,6 +8,7 @@ import (
 	"nechego/avatar"
 	"nechego/format"
 	"nechego/game"
+	"nechego/item"
 	"nechego/money"
 	"nechego/teleutil"
 	"strings"
@@ -359,6 +360,37 @@ func (h *Fish) Handle(c tele.Context) error {
 	user.Inventory.Add(item)
 	return c.Send(fmt.Sprintf("🎣 %s получает %s",
 		teleutil.Mention(c, user), format.Item(item)), tele.ModeHTML)
+}
+
+type Craft struct {
+	Universe *game.Universe
+}
+
+var craftRe = re("^!крафт (.*)")
+
+func (h *Craft) Match(s string) bool {
+	return craftRe.MatchString(s)
+}
+
+func (h *Craft) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	keys := teleutil.NumArg(c, craftRe, 1)
+	recipe := []*item.Item{}
+	for _, k := range keys {
+		i, ok := user.Inventory.ByKey(k)
+		if !ok {
+			return c.Send(format.BadKey(k), tele.ModeHTML)
+		}
+		recipe = append(recipe, i)
+	}
+	result, ok := user.Craft(recipe)
+	if !ok {
+		return c.Send(format.CannotCraft)
+	}
+	return c.Send(fmt.Sprintf("🛠 %s получает %s.",
+		teleutil.Mention(c, user), format.ItemsComma(result)), tele.ModeHTML)
 }
 
 type Status struct {
