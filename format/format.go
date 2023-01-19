@@ -6,7 +6,9 @@ import (
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/game"
+	"nechego/item"
 	"nechego/modifier"
+	"nechego/money"
 	"strings"
 )
 
@@ -32,15 +34,15 @@ func Mention(uid int64, name string) string {
 	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, html.EscapeString(name))
 }
 
-func Item(i *game.Item) string {
+func Item(i *item.Item) string {
 	return fmt.Sprintf("<code>%s</code>", i.Value)
 }
 
-func NumItem(n int, i *game.Item) string {
+func NumItem(n int, i *item.Item) string {
 	return fmt.Sprintf("<code>%d ≡ </code> %s", n, Item(i))
 }
 
-func Items(items []*game.Item) string {
+func Items(items []*item.Item) string {
 	if len(items) == 0 {
 		return Empty
 	}
@@ -51,7 +53,7 @@ func Items(items []*game.Item) string {
 	return strings.Join(lines, "\n")
 }
 
-func Catch(items []*game.Item) string {
+func Catch(items []*item.Item) string {
 	lines := []string{}
 	price, weight := 0.0, 0.0
 	for i, v := range items {
@@ -82,7 +84,7 @@ func Products(products []*game.Product) string {
 }
 
 func Money(q int) string {
-	return fmt.Sprintf("<code>%d ₴</code>", q)
+	return fmt.Sprintf("<code>%d %s</code>", q, money.Symbol)
 }
 
 func Weight(w float64) string {
@@ -101,7 +103,7 @@ func EnergyRemaining(e int) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
-func Eat(i *game.Item) string {
+func Eat(i *item.Item) string {
 	emoji, verb := "🍊", "съели"
 	if x, ok := i.Value.(*food.Food); ok && x.Beverage() {
 		emoji, verb = "🥤", "выпили"

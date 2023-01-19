@@ -5,13 +5,17 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/fishing"
+	"nechego/item"
+	"nechego/money"
 	"nechego/valid"
 	"strings"
 )
 
+var ErrNoKey = errors.New("key not found")
+
 type Product struct {
 	Price int
-	Item  *Item
+	Item  *item.Item
 }
 
 type Market struct {
@@ -34,20 +38,21 @@ func (m *Market) Refill() {
 }
 
 func randomProduct() *Product {
-	p, i := 0, randomItem()
+	p := 0
+	i := item.Random()
 	switch i.Type {
-	case ItemTypeFishingRod:
+	case item.TypeFishingRod:
 		p = 2500 + rand.Intn(7500)
-	case ItemTypeFish:
+	case item.TypeFish:
 		f := i.Value.(*fishing.Fish)
 		p = int(f.Price() * (0.5 + 1.5*rand.Float64()))
-	case ItemTypePet:
+	case item.TypePet:
 		p = 500 + rand.Intn(99500)
-	case ItemTypeDice:
+	case item.TypeDice:
 		p = 5000 + rand.Intn(25000)
-	case ItemTypeFood:
+	case item.TypeFood:
 		p = 250 + rand.Intn(1750)
-	case ItemTypeAdminToken:
+	case item.TypeAdmin:
 		p = 500_000 + rand.Intn(4_500_000)
 	default:
 		return randomProduct()
@@ -83,15 +88,13 @@ func (m *Market) String() string {
 	return s
 }
 
-var ErrNoKey = errors.New("key not found")
-
 func (u *User) Buy(m *Market, key int) (*Product, error) {
 	p, ok := m.keys[key]
 	if !ok {
 		return nil, ErrNoKey
 	}
 	if !u.SpendMoney(p.Price) {
-		return nil, ErrNoMoney
+		return nil, money.ErrNoMoney
 	}
 	delete(m.keys, key)
 	for i, v := range m.P {

@@ -8,6 +8,7 @@ import (
 	"nechego/avatar"
 	"nechego/format"
 	"nechego/game"
+	"nechego/money"
 	"nechego/teleutil"
 	"strings"
 	"time"
@@ -126,7 +127,7 @@ func (h *Drop) Handle(c tele.Context) error {
 		}
 		c.Send(fmt.Sprintf("🚮 Вы выбросили %s.", format.Item(item)), tele.ModeHTML)
 	}
-	world.Floor.Retain(10)
+	world.Floor.Trim(10)
 	return nil
 }
 
@@ -452,9 +453,9 @@ func (h *Cashout) Handle(c tele.Context) error {
 		return c.Send(format.SpecifyMoney)
 	}
 	amount := args[0]
-	if err := user.Cashout(amount); errors.Is(err, game.ErrBadMoney) {
+	if err := user.Cashout(amount); errors.Is(err, money.ErrBadMoney) {
 		return c.Send(format.BadMoney)
-	} else if errors.Is(err, game.ErrNoMoney) {
+	} else if errors.Is(err, money.ErrNoMoney) {
 		return c.Send(format.NoMoney)
 	} else if err != nil {
 		return err
@@ -495,7 +496,7 @@ func (h *Fight) Handle(c tele.Context) error {
 	winner, loser, rating := user.Fight(opnt)
 	winnerMent := teleutil.Mention(c, winner.TUID)
 	if i, ok := loser.Inventory.Random(); ok && rand.Float64() < 1.0/8 {
-		if i.Type != game.ItemTypeWallet && loser.Inventory.Move(world.Floor, i) {
+		if _, ok := i.Value.(*money.Wallet); !ok && loser.Inventory.Move(world.Floor, i) {
 			c.Send(fmt.Sprintf("🥊 %s выбивает %s из проигравшего.",
 				winnerMent, format.Item(i)), tele.ModeHTML)
 		}

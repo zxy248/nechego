@@ -1,5 +1,11 @@
 package game
 
+import (
+	"nechego/dates"
+	"nechego/item"
+	"nechego/token"
+)
+
 func (w *World) DailyEblan() (u *User, ok bool) {
 	for _, u = range w.Users {
 		if u.Eblan() {
@@ -11,10 +17,10 @@ func (w *World) DailyEblan() (u *User, ok bool) {
 
 func (w *World) rollDailyEblan() *User {
 	u := w.RandomUser()
-	u.Inventory.Add(&Item{
-		Type:   ItemTypeEblanToken,
-		Value:  &EblanToken{},
-		Expire: tomorrow(),
+	u.Inventory.Add(&item.Item{
+		Type:   item.TypeEblan,
+		Value:  &token.Eblan{},
+		Expire: dates.Tomorrow(),
 	})
 	return u
 }
@@ -30,10 +36,10 @@ func (w *World) DailyAdmin() (u *User, ok bool) {
 
 func (w *World) rollDailyAdmin() *User {
 	u := w.RandomUser()
-	u.Inventory.Add(&Item{
-		Type:         ItemTypeAdminToken,
-		Value:        &AdminToken{},
-		Expire:       tomorrow(),
+	u.Inventory.Add(&item.Item{
+		Type:         item.TypeAdmin,
+		Value:        &token.Admin{},
+		Expire:       dates.Tomorrow(),
 		Transferable: true,
 	})
 	return u
@@ -67,10 +73,10 @@ func (w *World) rollDailyPair() (pair []*User, ok bool) {
 	return pair, true
 }
 
-func pairToken() *Item {
-	return &Item{
-		Type:   ItemTypePairToken,
-		Value:  &PairToken{},
-		Expire: tomorrow(),
+func pairToken() *item.Item {
+	return &item.Item{
+		Type:   item.TypePair,
+		Value:  &token.Pair{},
+		Expire: dates.Tomorrow(),
 	}
 }

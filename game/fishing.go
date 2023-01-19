@@ -1,55 +1,33 @@
 package game
 
 import (
-	"fmt"
 	"math/rand"
 	"nechego/fishing"
+	"nechego/item"
 )
 
-type FishingRod struct {
-	Quality    float64 // from 0 to 1
-	Durability float64 // from 0 to 1
-}
-
-func (f FishingRod) String() string {
-	lvls := [...]string{"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"}
-	lvl := lvls[int(f.Quality*float64(len(lvls)))]
-	dur := f.Durability * 100
-	return fmt.Sprintf("🎣 Удочка (%s, %.f%%)", lvl, dur)
-}
-
-func NewFishingRod() *FishingRod {
-	f := &FishingRod{
-		Quality:    rand.NormFloat64()*0.2 + 0.5,
-		Durability: rand.Float64()*0.2 + 0.8,
-	}
-	if f.Quality < 0 || f.Quality > 1 {
-		return NewFishingRod()
-	}
-	return f
-}
-
-func (u *User) FishingRod() (f *FishingRod, ok bool) {
-	for _, v := range u.Inventory.normalize() {
-		switch f := v.Value.(type) {
-		case *FishingRod:
-			return f, true
+func (u *User) FishingRod() (r *fishing.Rod, ok bool) {
+	for _, v := range u.Inventory.Normal() {
+		switch r := v.Value.(type) {
+		case *fishing.Rod:
+			return r, true
 		}
 	}
 	return nil, false
 }
 
-func (u *User) Fish(rod *FishingRod) *Item {
-	rod.Durability -= 0.01
-
+func (u *User) Fish(r *fishing.Rod) *item.Item {
+	r.Durability -= 0.01
 	if rand.Float64() < 0.08 {
-		return randomItem()
+		return item.Random()
 	}
+
+	quality := 1.0 + 0.5*r.Quality
+	luck := 0.9 + 0.2*u.Luck()
+	total := quality * luck
+
 	f := fishing.RandomFish()
-	q := 1.0 + 0.5*rod.Quality
-	l := 0.9 + 0.2*u.Luck()
-	m := q * l
-	f.Length *= m
-	f.Weight *= m
-	return &Item{Type: ItemTypeFish, Transferable: true, Value: f}
+	f.Length *= total
+	f.Weight *= total
+	return &item.Item{Type: item.TypeFish, Transferable: true, Value: f}
 }

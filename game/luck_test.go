@@ -2,6 +2,7 @@ package game
 
 import (
 	"math"
+	"nechego/dates"
 	"testing"
 )
 
@@ -69,7 +70,7 @@ func TestLuck(t *testing.T) {
 		)
 		lucks := make([]float64, n)
 		for i := range lucks {
-			date := today().AddDate(0, 0, i)
+			date := dates.Today().AddDate(0, 0, i)
 			lucks[i] = luck(date, id)
 		}
 		for i, x := range lucks {

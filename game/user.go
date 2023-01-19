@@ -1,29 +1,18 @@
 package game
 
 import (
-	"encoding/binary"
-	"fmt"
-	"hash/fnv"
-	"math"
 	"math/rand"
-	"nechego/elo"
 	"nechego/fishing"
 	"nechego/food"
-	"nechego/modifier"
+	"nechego/item"
 	"nechego/pets"
 	"time"
 )
 
-type Gender int
-
 const (
-	GenderUnknown Gender = iota
-	GenderMale
-	GenderFemale
-	GenderTrans
+	InventorySize = 10
+	InventoryCap  = 17
 )
-
-const EnergyCap = 100
 
 type User struct {
 	TUID      int64
@@ -34,199 +23,18 @@ type User struct {
 	Birthday  time.Time
 	Gender    Gender
 	Status    string
-	Inventory *Items
+	Inventory *item.Items
 }
 
 func NewUser(tuid int64) *User {
 	return &User{
 		TUID:      tuid,
 		Rating:    1500,
-		Inventory: NewItems(),
+		Inventory: item.NewItems(),
 	}
 }
 
-func (u *User) SpendEnergy(e int) bool {
-	if u.Energy < e {
-		return false
-	}
-	u.Energy -= e
-	return true
-}
-
-func (u *User) RestoreEnergy(e int) {
-	u.Energy += e
-	if u.Energy > EnergyCap {
-		u.Energy = EnergyCap
-	}
-}
-
-func (u *User) SpendMoney(n int) bool {
-	if n < 0 {
-		panic(fmt.Errorf("cannot spend %v", n))
-	}
-	u.Stack()
-	return u.spendWallet(n) || u.spendCash(n)
-}
-
-func (u *User) spendWallet(n int) bool {
-	w, ok := u.Wallet()
-	if !ok {
-		return false
-	}
-	if w.Money < n {
-		return false
-	}
-	w.Money -= n
-	return true
-}
-
-func (u *User) spendCash(n int) bool {
-	c, ok := u.Cash()
-	if !ok {
-		return false
-	}
-	if c.Money < n {
-		return false
-	}
-	c.Money -= n
-	return true
-}
-
-func (u *User) AddMoney(n int) {
-	u.Inventory.Add(&Item{
-		Type:         ItemTypeCash,
-		Transferable: true,
-		Value:        &Cash{Money: n},
-	})
-}
-
-func (u *User) Stack() bool {
-	t := 0
-	u.Inventory.Filter(func(i *Item) bool {
-		switch x := i.Value.(type) {
-		case *Cash:
-			t += x.Money
-			return false
-		case *Wallet:
-			t += x.Money
-			x.Money = 0
-		}
-		return true
-	})
-	if t == 0 {
-		return false
-	}
-	wallet, ok := u.Wallet()
-	if !ok {
-		u.AddMoney(t)
-		return true
-	}
-	wallet.Money += t
-	return true
-}
-
-func (u *User) Cashout(n int) error {
-	if n <= 0 {
-		return ErrBadMoney
-	}
-	if !u.SpendMoney(n) {
-		return ErrNoMoney
-	}
-	u.AddMoney(n)
-	return nil
-}
-
-func (u *User) Total() int {
-	t := 0
-	for _, v := range u.Inventory.normalize() {
-		switch x := v.Value.(type) {
-		case *Cash:
-			t += x.Money
-		case *Wallet:
-			t += x.Money
-		case *CreditCard:
-			t += x.Money
-		case *Debt:
-			t -= x.Money
-		}
-	}
-	return t
-}
-
-func (u *User) InDebt() bool {
-	for _, v := range u.Inventory.normalize() {
-		switch v.Value.(type) {
-		case *Debt:
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) Eblan() bool {
-	for _, v := range u.Inventory.normalize() {
-		switch v.Value.(type) {
-		case *EblanToken:
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) Admin() bool {
-	for _, v := range u.Inventory.normalize() {
-		switch v.Value.(type) {
-		case *AdminToken:
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) Pair() bool {
-	for _, v := range u.Inventory.normalize() {
-		switch v.Value.(type) {
-		case *PairToken:
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) Pet() (p *pets.Pet, ok bool) {
-	for _, x := range u.Inventory.normalize() {
-		if p, ok = x.Value.(*pets.Pet); ok {
-			return
-		}
-	}
-	return nil, false
-}
-
-func (u *User) Rich() bool {
-	return u.Total() > 1000000
-}
-
-func (u *User) Poor() bool {
-	return u.Total() < 3000
-}
-
-func (u *User) Luck() float64 {
-	return luck(today(), u.TUID)
-}
-
-func luck(t time.Time, id int64) float64 {
-	return checksum(t.UnixNano(), id, 497611803913981554)
-}
-
-func checksum(x ...any) float64 {
-	h := fnv.New32()
-	for _, v := range x {
-		binary.Write(h, binary.LittleEndian, v)
-	}
-	return float64(h.Sum32()) / math.MaxUint32
-}
-
-func (u *User) Eat(i *Item) bool {
+func (u *User) Eat(i *item.Item) bool {
 	switch x := i.Value.(type) {
 	case *fishing.Fish:
 		u.Inventory.Remove(i)
@@ -258,8 +66,8 @@ func (u *User) Eat(i *Item) bool {
 	return false
 }
 
-func (u *User) EatQuick() (i *Item, ok bool) {
-	for _, i = range u.Inventory.normalize() {
+func (u *User) EatQuick() (i *item.Item, ok bool) {
+	for _, i = range u.Inventory.Normal() {
 		switch x := i.Value.(type) {
 		case *fishing.Fish:
 			if x.Price() < 2000 {
@@ -270,125 +78,4 @@ func (u *User) EatQuick() (i *Item, ok bool) {
 		}
 	}
 	return nil, false
-}
-
-func (u *User) Sell(i *Item) (profit int, ok bool) {
-	if !i.Transferable {
-		return 0, false
-	}
-	if ok = u.Inventory.Remove(i); !ok {
-		return 0, false
-	}
-	switch x := i.Value.(type) {
-	case *fishing.Fish:
-		n := int(x.Price())
-		u.AddMoney(n)
-		return n, true
-	default:
-		// cannot sell; return item back
-		u.Inventory.Add(i)
-	}
-	return 0, false
-}
-
-func (u *User) Strength() float64 {
-	return 10 * (1.0 + u.Modset().Sum())
-}
-
-func (u *User) Fight(opponent *User) (winner, loser *User, r float64) {
-	if u == opponent {
-		panic("user cannot be an opponent to themself")
-	}
-	if u.power() > opponent.power() {
-		winner, loser = u, opponent
-	} else {
-		winner, loser = opponent, u
-	}
-	r = elo.EloDelta(winner.Rating, loser.Rating, elo.KDefault, elo.ScoreWin)
-	winner.Rating += r
-	loser.Rating -= r
-	return
-}
-
-func (u *User) power() float64 {
-	return (5*u.Luck() + u.Strength()) * rand.Float64()
-}
-
-func (u *User) Modset() modifier.Set {
-	set := modifier.Set{}
-	if u.Admin() {
-		set.Add(modifier.Admin)
-	}
-	if u.Eblan() {
-		set.Add(modifier.Eblan)
-	}
-	if u.Energy == 0 {
-		set.Add(modifier.NoEnergy)
-	}
-	if u.Energy == EnergyCap {
-		set.Add(modifier.FullEnergy)
-	}
-	if u.Energy > EnergyCap {
-		set.Add(modifier.MuchEnergy)
-	}
-	if u.Rich() {
-		set.Add(modifier.Rich)
-	}
-	if u.Poor() {
-		set.Add(modifier.Poor)
-	}
-	if u.InDebt() {
-		set.Add(modifier.Debtor)
-	}
-	if u.Inventory.Count() > InventorySize {
-		set.Add(modifier.Heavy)
-	}
-	if l, ok := luckModifier(u.Luck()); ok {
-		set.Add(l)
-	}
-	if _, ok := u.FishingRod(); ok {
-		set.Add(modifier.Fisher)
-	}
-	if p, ok := u.Pet(); ok {
-		q := 0.05
-		switch p.Species.Quality() {
-		case pets.Rare:
-			q = 0.10
-		case pets.Exotic:
-			q = 0.15
-		case pets.Legendary:
-			q = 0.20
-		}
-		r := ""
-		if p.Species.Quality() != pets.Common {
-			r = fmt.Sprintf("%s ", p.Species.Quality())
-		}
-		set.Add(&modifier.Mod{
-			Emoji:       p.Species.Emoji(),
-			Multiplier:  q,
-			Description: fmt.Sprintf("У вас есть %sпитомец: <code>%s</code>", r, p),
-		})
-	}
-	return set
-}
-
-func luckModifier(l float64) (m *modifier.Mod, ok bool) {
-	var x *modifier.Mod
-	switch {
-	case l < 0.05:
-		x = modifier.TerribleLuck
-	case l < 0.20:
-		x = modifier.BadLuck
-	case l > 0.95:
-		x = modifier.ExcellentLuck
-	case l > 0.80:
-		x = modifier.GoodLuck
-	default:
-		return nil, false
-	}
-	return &modifier.Mod{
-		Emoji:       x.Emoji,
-		Multiplier:  0,
-		Description: x.Description,
-	}, true
 }

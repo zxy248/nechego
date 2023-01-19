@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"nechego/item"
 	"os"
 	"path/filepath"
 	"sync"
@@ -77,7 +78,7 @@ func (u *Universe) SaveAll() error {
 type World struct {
 	TGID     int64
 	Users    []*User
-	Floor    *Items
+	Floor    *item.Items
 	Market   *Market
 	Casino   *Casino
 	Messages int
@@ -89,7 +90,7 @@ func NewWorld(id int64) *World {
 	return &World{
 		TGID:   id,
 		Users:  []*User{},
-		Floor:  NewItems(),
+		Floor:  item.NewItems(),
 		Market: NewMarket(),
 		Casino: &Casino{Timeout: time.Second * 25},
 	}
@@ -126,11 +127,7 @@ func (w *World) Save(name string) error {
 }
 
 func (w *World) AddUser(u *User) {
-	u.Inventory.Add(&Item{
-		Type:         ItemTypeCash,
-		Transferable: true,
-		Value:        &Cash{Money: 3000},
-	})
+	u.AddMoney(3000)
 	w.Users = append(w.Users, u)
 }
 
