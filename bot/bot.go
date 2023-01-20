@@ -6,9 +6,7 @@ import (
 	"nechego/game"
 	"nechego/handlers"
 	"os"
-	"os/signal"
 	"runtime/debug"
-	"syscall"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -49,6 +47,7 @@ func main() {
 	universe := game.NewUniverse("universe")
 	avatars := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
 	hello := &handlers.Hello{Path: "data/hello.json"}
+	roll := &handlers.Roll{Universe: universe}
 	router := &Router{}
 	router.Handlers = []handlers.Handler{
 		&handlers.Pic{Path: "data/pic"},
@@ -128,41 +127,16 @@ func main() {
 			debug.PrintStack()
 		})),
 	}
-	counter := 0
-	go func() {
-		for range time.NewTicker(1 * time.Minute).C {
-			universe.ForEachWorld(func(w *game.World) {
-				w.Market.Refill()
-				for _, u := range w.Users {
-					if u.Inventory.Count() > game.InventorySize && counter%2 == 0 {
-						continue
-					}
-					u.RestoreEnergy(1)
-				}
-			})
-			counter++
-		}
-	}()
+	go refillMarket(universe)
+	go restoreEnergy(universe)
+	done := stopper(bot, universe)
 
-	interrupt := make(chan os.Signal, 1)
-	done := make(chan struct{}, 1)
-	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-interrupt
-		log.Println("Stopping the bot...")
-		bot.Stop()
-		log.Println("Saving the universe...")
-		if err := universe.SaveAll(); err != nil {
-			log.Fatal(err)
-		}
-		done <- struct{}{}
-	}()
-	rollHandler := &handlers.Roll{Universe: universe}
-	bot.Handle(tele.OnDice, router.wrap(rollHandler.Handle))
+	bot.Handle(tele.OnDice, router.wrap(roll.Handle))
 	bot.Handle(tele.OnUserJoined, router.wrap(hello.Handle))
 	bot.Handle(tele.OnText, router.OnText)
 	bot.Handle(tele.OnPhoto, router.OnText)
 	bot.Start()
+
 	<-done
 	log.Println("Successful shutdown.")
 }
