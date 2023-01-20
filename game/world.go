@@ -34,6 +34,9 @@ func (u *Universe) worldPath(id int64) string {
 }
 
 func (u *Universe) ForEachWorld(action func(*World)) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
 	for _, w := range u.worlds {
 		w.Lock()
 		action(w)
