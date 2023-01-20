@@ -78,7 +78,6 @@ func main() {
 		&handlers.Name{},
 		&handlers.Who{Universe: universe},
 		&handlers.List{Universe: universe},
-		&handlers.Save{Universe: universe},
 		&handlers.DailyEblan{Universe: universe},
 		&handlers.DailyAdmin{Universe: universe},
 		&handlers.DailyPair{Universe: universe},

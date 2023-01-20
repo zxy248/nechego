@@ -18,23 +18,6 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-type Save struct {
-	Universe *game.Universe
-}
-
-var saveRe = re("^!сохран")
-
-func (h *Save) Match(s string) bool {
-	return saveRe.MatchString(s)
-}
-
-func (h *Save) Handle(c tele.Context) error {
-	if err := h.Universe.SaveAll(); err != nil {
-		return err
-	}
-	return c.Send("💾 Игра сохранена.")
-}
-
 type Name struct{}
 
 var nameRe = re("!имя (.*)")
