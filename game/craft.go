@@ -11,6 +11,14 @@ import (
 type craftFunc func(recipe []*item.Item) (result []*item.Item, ok bool)
 
 func (u *User) Craft(recipe []*item.Item) (result []*item.Item, ok bool) {
+	set := map[*item.Item]bool{}
+	for _, x := range recipe {
+		set[x] = true
+	}
+	if len(set) != len(recipe) {
+		return nil, false
+	}
+
 	funcs := [...]craftFunc{
 		craftRod,
 		craftMeat,

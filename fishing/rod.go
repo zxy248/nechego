@@ -28,7 +28,7 @@ func (r Rod) level() string {
 		q = (q - 1) / (0.1 * float64(len(greeks)))
 		return greeks[int(q*float64(len(greeks)))]
 	default:
-		panic(fmt.Errorf("unexpected quality %v", r.Quality))
+		return "ℵ"
 	}
 }
 
