@@ -111,7 +111,8 @@ func LoadWorld(name string) (*World, error) {
 }
 
 func (w *World) Save(name string) error {
-	os.Rename(name, fmt.Sprintf("%s-%d", name, time.Now().Unix()))
+	const layout = "06-01-02-15-04-05"
+	os.Rename(name, fmt.Sprintf("%s-%s", name, time.Now().Format(layout)))
 	f, err := os.Create(name)
 	if err != nil {
 		return err
