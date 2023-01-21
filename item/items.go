@@ -103,3 +103,7 @@ func (it *Items) Random() (x *Item, ok bool) {
 func (it *Items) Count() int {
 	return len(it.I)
 }
+
+func (it *Items) PushFront(i []*Item) {
+	it.I = append(i, it.I...)
+}

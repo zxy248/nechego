@@ -79,10 +79,10 @@ func NumArgAll(c tele.Context, re *regexp.Regexp, n int) []int {
 }
 
 func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
+	const limit = 7
 	nums := NumArgAll(c, re, n)
-	const lim = 5
-	if len(nums) > lim {
-		nums = nums[:lim]
+	if len(nums) > limit {
+		nums = nums[:limit]
 	}
 	return nums
 }

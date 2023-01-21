@@ -81,6 +81,7 @@ func main() {
 		&handlers.DailyAdmin{Universe: universe},
 		&handlers.DailyPair{Universe: universe},
 		&handlers.Inventory{Universe: universe},
+		&handlers.Sort{Universe: universe},
 		&handlers.Catch{Universe: universe},
 		&handlers.Drop{Universe: universe},
 		&handlers.Pick{Universe: universe},

@@ -66,6 +66,42 @@ func (h *Inventory) Handle(c tele.Context) error {
 	return c.Send(head+list, tele.ModeHTML)
 }
 
+type Sort struct {
+	Universe *game.Universe
+}
+
+var sortRe = re("^!сорт (.*)")
+
+func (h *Sort) Match(s string) bool {
+	return sortRe.MatchString(s)
+}
+
+func (h *Sort) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	items := []*item.Item{}
+	seen := map[*item.Item]bool{}
+	for _, k := range teleutil.NumArg(c, sortRe, 1) {
+		x, ok := user.Inventory.ByKey(k)
+		if !ok {
+			return c.Send(format.BadKey(k), tele.ModeHTML)
+		}
+		if !seen[x] {
+			items = append(items, x)
+		}
+		seen[x] = true
+	}
+
+	for _, x := range items {
+		if !user.Inventory.Remove(x) {
+			panic(fmt.Errorf("sort: cannot remove %v", x))
+		}
+	}
+	user.Inventory.PushFront(items)
+	return c.Send(format.InventorySorted)
+}
+
 type Catch struct {
 	Universe *game.Universe
 }
