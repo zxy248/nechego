@@ -227,3 +227,25 @@ func SMS(sms *phone.SMS) string {
 func SMSMaxLen(l int) string {
 	return fmt.Sprintf("✉ Максимальная длина сообщения %d символов.", l)
 }
+
+type Contact struct {
+	Name   string
+	Number phone.Number
+}
+
+func (c Contact) String() string {
+	return fmt.Sprintf("<b>→ %s:</b> %s", c.Number, c.Name)
+}
+
+func Contacts(cc []Contact) string {
+	if len(cc) == 0 {
+		return "👥 Контактов нет."
+	}
+	head := "<b>👥 Контакты</b>\n"
+	lines := make([]string, 0, len(cc))
+	for _, c := range cc {
+		lines = append(lines, c.String())
+	}
+	tail := strings.Join(lines, "\n")
+	return head + tail
+}

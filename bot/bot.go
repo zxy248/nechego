@@ -115,6 +115,7 @@ func main() {
 		&handlers.NamePet{Universe: universe},
 		&handlers.SendSMS{Universe: universe},
 		&handlers.ReceiveSMS{Universe: universe},
+		&handlers.Contacts{Universe: universe},
 		hello,
 	}
 	router.Middleware = []Wrapper{

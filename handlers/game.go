@@ -905,3 +905,30 @@ func (h *SendSMS) Handle(c tele.Context) error {
 	world.SMS.Send(p.Number, receiver, msg)
 	return c.Send(format.SMSSent)
 }
+
+type Contacts struct {
+	Universe *game.Universe
+}
+
+var contactsRe = re("^!контакты")
+
+func (h *Contacts) Match(s string) bool {
+	return contactsRe.MatchString(s)
+}
+
+func (h *Contacts) Handle(c tele.Context) error {
+	world, _ := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	contacts := []format.Contact{}
+	for _, u := range world.Users {
+		if p, ok := u.Phone(); ok {
+			member := teleutil.Member(c, tele.ChatID(u.TUID))
+			contacts = append(contacts, format.Contact{
+				Name:   teleutil.Name(member),
+				Number: p.Number},
+			)
+		}
+	}
+	return c.Send(format.Contacts(contacts), tele.ModeHTML)
+}
