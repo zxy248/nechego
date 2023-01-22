@@ -577,14 +577,15 @@ func (h *Profile) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	const profile = "📇 <b>%s %s</b>\n<code>%s  %s  %s  %s  %s</code>\n\n%s\n\n%s\n\n%s"
+	const profile = "📇 <b>%s %s</b>\n<code>%-22s %s\n%-22s %s\n%-22s %s</code>\n\n%s\n\n%s\n\n%s"
 	mods := user.Modset().List()
 	out := fmt.Sprintf(profile,
 		format.ModifierTitles(mods),
 		teleutil.Mention(c, c.Sender()),
 		format.Energy(user.Energy),
-		format.Rating(user.Rating),
+		format.Balance(user.Total()),
 		format.Strength(user.Strength()),
+		format.Rating(user.Rating),
 		format.Luck(user.Luck()),
 		format.Messages(user.Messages),
 		format.ModifierDescriptions(mods),

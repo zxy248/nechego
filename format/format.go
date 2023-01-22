@@ -97,12 +97,16 @@ func Money(q int) string {
 	return fmt.Sprintf("<code>%d %s</code>", q, money.Symbol)
 }
 
+func Balance(q int) string {
+	return "💵 " + Money(q)
+}
+
 func Weight(w float64) string {
 	return fmt.Sprintf("<code>%.2f кг ⚖️</code>", w)
 }
 
 func Energy(e int) string {
-	return fmt.Sprintf("<code>%d ⚡</code>", e)
+	return fmt.Sprintf("<code>⚡ %d</code>", e)
 }
 
 func EnergyOutOf(e, max int) string {
@@ -126,19 +130,19 @@ func Fish(f *fishing.Fish) string {
 }
 
 func Rating(r float64) string {
-	return fmt.Sprintf("<code>%.1f ⚜️</code>", r)
+	return fmt.Sprintf("<code>⚜️ %.1f</code>", r)
 }
 
 func Strength(s float64) string {
-	return fmt.Sprintf("<code>%.1f 💪</code>", s)
+	return fmt.Sprintf("<code>💪 %.1f</code>", s)
 }
 
 func Luck(l float64) string {
-	return fmt.Sprintf("<code>%.1f 🍀</code>", 10*l)
+	return fmt.Sprintf("<code>🍀 %.1f</code>", 10*l)
 }
 
 func Messages(n int) string {
-	return fmt.Sprintf("<code>%d ✉️</code>", n)
+	return fmt.Sprintf("<code>✉️ %d</code>", n)
 }
 
 func Status(s string) string {
