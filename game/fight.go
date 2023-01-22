@@ -66,6 +66,9 @@ func (u *User) Modset() modifier.Set {
 	if _, ok := u.FishingRod(); ok {
 		set.Add(modifier.Fisher)
 	}
+	if _, ok := u.Phone(); ok {
+		set.Add(modifier.Phone)
+	}
 	if p, ok := u.Pet(); ok {
 		q := 0.05
 		switch p.Species.Quality() {
