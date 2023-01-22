@@ -926,8 +926,8 @@ func (h *Contacts) Handle(c tele.Context) error {
 			member := teleutil.Member(c, tele.ChatID(u.TUID))
 			contacts = append(contacts, format.Contact{
 				Name:   teleutil.Name(member),
-				Number: p.Number},
-			)
+				Number: p.Number,
+			})
 		}
 	}
 	return c.Send(format.Contacts(contacts), tele.ModeHTML)
