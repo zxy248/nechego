@@ -124,7 +124,7 @@ func (c DeleterContext) Send(what interface{}, opts ...interface{}) error {
 	if err != nil {
 		return err
 	}
-	time.AfterFunc(5*time.Minute, func() { c.Bot().Delete(msg) })
+	deleteLater(c.Bot(), msg)
 	return nil
 }
 
@@ -132,6 +132,11 @@ type DeleteMessage struct{}
 
 func (m *DeleteMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
+		deleteLater(c.Bot(), c.Message())
 		return next(DeleterContext{c})
 	}
+}
+
+func deleteLater(b *tele.Bot, m *tele.Message) {
+	time.AfterFunc(5*time.Minute, func() { b.Delete(m) })
 }
