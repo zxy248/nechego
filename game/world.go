@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/item"
+	"nechego/phone"
 	"os"
 	"path/filepath"
 	"sync"
@@ -85,6 +86,7 @@ type World struct {
 	Market   *Market
 	Casino   *Casino
 	Messages int
+	SMS      phone.Database
 
 	sync.Mutex `json:"-"`
 }
@@ -96,6 +98,7 @@ func NewWorld(id int64) *World {
 		Floor:  item.NewItems(),
 		Market: NewMarket(),
 		Casino: &Casino{Timeout: time.Second * 25},
+		SMS:    phone.Database{},
 	}
 }
 

@@ -10,6 +10,7 @@ import (
 	"nechego/game"
 	"nechego/item"
 	"nechego/money"
+	"nechego/phone"
 	"nechego/teleutil"
 	"strings"
 	"time"
@@ -844,4 +845,63 @@ func (h *NamePet) Handle(c tele.Context) error {
 	}
 	return c.Send(fmt.Sprintf("🐈 Вы назвали питомца <code>%s</code>.",
 		name), tele.ModeHTML)
+}
+
+type ReceiveSMS struct {
+	Universe *game.Universe
+}
+
+var receiveSMSRe = re("^!смс")
+
+func (h *ReceiveSMS) Match(s string) bool {
+	return receiveSMSRe.MatchString(s)
+}
+
+func (h *ReceiveSMS) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	p, ok := user.Phone()
+	if !ok {
+		return c.Send(format.NoPhone)
+	}
+	mention := teleutil.Mention(c, user)
+	smses := world.SMS.Receive(p.Number)
+	return c.Send(format.SMSes(mention, smses), tele.ModeHTML)
+}
+
+type SendSMS struct {
+	Universe *game.Universe
+}
+
+var sendSMSRe = re("^!смс ([-0-9]*) (.*)")
+
+func (h *SendSMS) Match(s string) bool {
+	return sendSMSRe.MatchString(s)
+}
+
+func (h *SendSMS) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	p, ok := user.Phone()
+	if !ok {
+		return c.Send(format.NoPhone)
+	}
+
+	a := teleutil.Args(c, sendSMSRe)
+	num, msg := a[1], a[2]
+
+	const max = 80
+	if utf8.RuneCountInString(msg) > max {
+		return c.Send(format.SMSMaxLen(max))
+	}
+
+	receiver, err := phone.MakeNumber(num)
+	if err != nil {
+		return c.Send(format.BadPhone)
+	}
+
+	world.SMS.Send(p.Number, receiver, msg)
+	return c.Send(format.SMSSent)
 }

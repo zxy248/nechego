@@ -56,6 +56,8 @@ func randomProduct() *Product {
 		p = 500_000 + rand.Intn(4_500_000)
 	case item.TypeKnife:
 		p = 1000 + rand.Intn(9000)
+	case item.TypePhone:
+		p = 10000 + rand.Intn(40000)
 	default:
 		return randomProduct()
 	}

@@ -9,7 +9,9 @@ import (
 	"nechego/item"
 	"nechego/modifier"
 	"nechego/money"
+	"nechego/phone"
 	"strings"
+	"time"
 )
 
 const (
@@ -30,6 +32,9 @@ const (
 	BadMoney             = "💵 Некорректное количество средств."
 	CannotCraft          = "🛠 Эти предметы нельзя объединить."
 	InventorySorted      = "🗃 Инвентарь отсортирован."
+	NoPhone              = "📱 У вас нет телефона."
+	SMSSent              = "✉ Сообщение отправлено."
+	BadPhone             = "☎ Некорректный формат номера."
 )
 
 func Mention(uid int64, name string) string {
@@ -49,7 +54,11 @@ func ItemsComma(items []*item.Item) string {
 }
 
 func NumItem(n int, i *item.Item) string {
-	return fmt.Sprintf("<code>%d ≡ </code> %s", n, Item(i))
+	return NumString(n, Item(i))
+}
+
+func NumString(n int, s string) string {
+	return fmt.Sprintf("<code>%d ≡ </code> %s", n, s)
 }
 
 func Items(items []*item.Item) string {
@@ -191,4 +200,30 @@ func ModifierTitles(m []*modifier.Mod) string {
 
 func Percentage(p float64) string {
 	return fmt.Sprintf("%.1f%%", p*100)
+}
+
+func SMSes(mention string, smses []*phone.SMS) string {
+	if len(smses) == 0 {
+		return fmt.Sprintf("<b>✉ %s: Новых сообщений нет.</b>", mention)
+	}
+	lines := make([]string, 0, len(smses))
+	for _, sms := range smses {
+		lines = append(lines, SMS(sms))
+	}
+	head := fmt.Sprintf("<b>✉ %s: Сообщения</b>\n", mention)
+	end := strings.Join(lines, "\n")
+	return head + end
+}
+
+func SMS(sms *phone.SMS) string {
+	format := "2006/02/01"
+	if sms.Time.YearDay() == time.Now().YearDay() {
+		format = "15:04"
+	}
+	return fmt.Sprintf("<code>|%s|</code> <b>%s:</b> %s",
+		sms.Time.Format(format), sms.Sender, sms.Text)
+}
+
+func SMSMaxLen(l int) string {
+	return fmt.Sprintf("✉ Максимальная длина сообщения %d символов.", l)
 }

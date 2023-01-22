@@ -113,6 +113,8 @@ func main() {
 		&handlers.Energy{Universe: universe},
 		&handlers.NameMarket{Universe: universe},
 		&handlers.NamePet{Universe: universe},
+		&handlers.SendSMS{Universe: universe},
+		&handlers.ReceiveSMS{Universe: universe},
 		hello,
 	}
 	router.Middleware = []Wrapper{

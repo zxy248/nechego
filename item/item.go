@@ -10,6 +10,7 @@ import (
 	"nechego/food"
 	"nechego/money"
 	"nechego/pets"
+	"nechego/phone"
 	"nechego/token"
 	"nechego/tools"
 	"time"
@@ -33,6 +34,7 @@ const (
 	TypeFood
 	TypeKnife
 	TypeMeat
+	TypePhone
 )
 
 type Item struct {
@@ -81,6 +83,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &tools.Knife{}
 	case TypeMeat:
 		i.Value = &food.Meat{}
+	case TypePhone:
+		i.Value = &phone.Phone{}
 	default:
 		panic(fmt.Errorf("unexpected item type %v", i.Type))
 	}
@@ -108,6 +112,7 @@ func Random() *Item {
 	uncommon := []*Item{
 		{Type: TypeFishingRod, Value: fishing.NewRod()},
 		{Type: TypePet, Value: pets.Random()},
+		{Type: TypePhone, Value: phone.NewPhone()},
 	}
 	rare := []*Item{
 		{Type: TypeKnife, Value: &tools.Knife{Durability: 0.8 + 0.2*rand.Float64()}},

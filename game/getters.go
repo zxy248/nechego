@@ -4,6 +4,7 @@ import (
 	"nechego/fishing"
 	"nechego/money"
 	"nechego/pets"
+	"nechego/phone"
 	"nechego/token"
 )
 
@@ -74,6 +75,15 @@ func (u *User) FishingRod() (r *fishing.Rod, ok bool) {
 	for _, x := range u.Inventory.List() {
 		if r, ok := x.Value.(*fishing.Rod); ok {
 			return r, true
+		}
+	}
+	return nil, false
+}
+
+func (u *User) Phone() (p *phone.Phone, ok bool) {
+	for _, x := range u.Inventory.List() {
+		if p, ok := x.Value.(*phone.Phone); ok {
+			return p, true
 		}
 	}
 	return nil, false
