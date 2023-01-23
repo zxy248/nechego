@@ -77,16 +77,19 @@ func filter(in <-chan *file, out chan<- *file, keep func(*file) bool) {
 }
 
 func (d *Danbooru) pipeline(pics chan<- *Pic, errs chan<- error, keep func(*file) bool) {
-	const getters, downloaders = 2, 4
-
-	files := make(chan *file)
+	const (
+		getters     = 2
+		filters     = 1
+		downloaders = 4
+	)
+	files := make(chan *file, getters)
+	filtered := make(chan *file, filters)
 	for i := 0; i < getters; i++ {
 		go getter(d.URL, files, errs)
 	}
-
-	filtered := make(chan *file)
-	go filter(files, filtered, keep)
-
+	for i := 0; i < filters; i++ {
+		go filter(files, filtered, keep)
+	}
 	for i := 0; i < downloaders; i++ {
 		go downloader(filtered, pics, errs)
 	}
