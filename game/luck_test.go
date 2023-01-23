@@ -16,7 +16,7 @@ func TestLuck(t *testing.T) {
 		u := &User{TUID: int64(i)}
 		l := u.Luck()
 		if l < 0 || l >= 1 {
-			t.Errorf("l == %v, want [0, 1)", l)
+			t.Errorf("l = %v, want [0, 1)", l)
 		}
 		if l < min {
 			min = l
@@ -42,7 +42,7 @@ func TestLuck(t *testing.T) {
 		}
 		for _, b := range buckets {
 			if math.Abs(float64(len(b))-sample/n) > epsilon {
-				t.Errorf("len(b) == %v, want %v±%v", len(b), want, epsilon)
+				t.Errorf("len(b) = %v, want %v±%v", len(b), want, epsilon)
 			}
 		}
 	})
@@ -52,14 +52,14 @@ func TestLuck(t *testing.T) {
 			epsilon = 0.01
 		)
 		if math.Abs(avg-want) > epsilon {
-			t.Errorf("avg == %v, want %v±%v", avg, want, epsilon)
+			t.Errorf("avg = %v, want %v±%v", avg, want, epsilon)
 		}
 	})
 	t.Run("distance", func(t *testing.T) {
 		const want = 0.98
 		diff := max - min
 		if diff < want {
-			t.Errorf("diff == %v, want >= %v", diff, want)
+			t.Errorf("diff = %v, want >= %v", diff, want)
 		}
 	})
 	t.Run("delta", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestLuck(t *testing.T) {
 				}
 				delta := math.Abs(x - y)
 				if math.Abs(delta) < epsilon {
-					t.Errorf("delta == %v, want < %v", delta, epsilon)
+					t.Errorf("delta = %v, want < %v", delta, epsilon)
 				}
 			}
 		}

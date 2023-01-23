@@ -18,14 +18,14 @@ func TestNumberString(t *testing.T) {
 	}
 	for _, x := range table {
 		if x.num.String() != x.str {
-			t.Errorf("num == %v, want %v", x.num, x.str)
+			t.Errorf("num = %v, want %v", x.num, x.str)
 		}
 		num, err := MakeNumber(x.str)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if num != x.num {
-			t.Errorf("num == %v, want %v", num, x.num)
+			t.Errorf("num = %v, want %v", num, x.num)
 		}
 	}
 }
@@ -35,7 +35,7 @@ func TestRandomNumber(t *testing.T) {
 		const want = 8
 		num := RandomNumber()
 		if len(num.String()) != want {
-			t.Errorf("len == %v, want %v", len(num.String()), want)
+			t.Errorf("len = %v, want %v", len(num.String()), want)
 		}
 	}
 }
