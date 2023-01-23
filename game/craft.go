@@ -49,19 +49,18 @@ func craftRod(recipe []*item.Item) (result []*item.Item, ok bool) {
 	if !ok {
 		return nil, false
 	}
-	durability := (r0.Durability + r1.Durability) + 0.1
-	if durability > 1 {
-		durability = 1
+	rod := &fishing.Rod{
+		Quality:    (r0.Quality+r1.Quality)/2 + 0.1,
+		Durability: (r0.Durability + r1.Durability) + 0.1,
 	}
-	rod := &item.Item{
+	if rod.Durability > 1 {
+		rod.Durability = 1
+	}
+	return []*item.Item{{
 		Type:         item.TypeFishingRod,
 		Transferable: true,
-		Value: &fishing.Rod{
-			Quality:    (r0.Quality+r1.Quality)/2 + 0.1,
-			Durability: durability,
-		},
-	}
-	return []*item.Item{rod}, true
+		Value:        rod,
+	}}, true
 }
 
 func craftMeat(recipe []*item.Item) (result []*item.Item, ok bool) {
