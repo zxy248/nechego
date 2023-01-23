@@ -21,6 +21,9 @@ const (
 	SuperKontik
 	AdrenalineRush
 	Burn
+	Ramen
+	Hotdog
+	RitterSport
 )
 
 var beverages = map[Type]bool{
@@ -51,6 +54,9 @@ var data = map[Type]struct {
 	SuperKontik:        {"🍩", 0.10, "Супер-Контик"},
 	AdrenalineRush:     {"🦎", 0.20, "Напиток Adrenaline Rush"},
 	Burn:               {"🔥", 0.20, "Напиток Burn"},
+	Ramen:              {"🍜", 0.20, "Доширак"},
+	Hotdog:             {"🌭", 0.16, "Хот-дог"},
+	RitterSport:        {"🍫", 0.16, "Риттер Спорт"},
 }
 
 type Food struct {
