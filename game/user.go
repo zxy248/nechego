@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	InventorySize = 10
-	InventoryCap  = 17
+	InventorySize = 15
+	InventoryCap  = 20
 )
 
 type User struct {
