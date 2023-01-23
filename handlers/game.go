@@ -578,11 +578,15 @@ func (h *Profile) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	if u, ok := teleutil.Reply(c); ok {
+		user = world.UserByID(u.ID)
+	}
+
 	const profile = "📇 <b>%s %s</b>\n<code>%-22s %s\n%-22s %s\n%-22s %s</code>\n\n%s\n\n%s\n\n%s"
 	mods := user.Modset().List()
 	out := fmt.Sprintf(profile,
 		format.ModifierTitles(mods),
-		teleutil.Mention(c, c.Sender()),
+		teleutil.Mention(c, user),
 		format.Energy(user.Energy),
 		format.Balance(user.Total()),
 		format.Strength(user.Strength()),
@@ -593,7 +597,7 @@ func (h *Profile) Handle(c tele.Context) error {
 		format.ModifierEmojis(mods),
 		format.Status(user.Status),
 	)
-	if a, ok := h.Avatars.Get(c.Sender().ID); ok {
+	if a, ok := h.Avatars.Get(user.TUID); ok {
 		a.Caption = out
 		return c.Send(a, tele.ModeHTML)
 	}
