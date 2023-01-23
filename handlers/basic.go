@@ -395,7 +395,7 @@ func (h *Soy) Handle(c tele.Context) error {
 
 type Danbooru struct{}
 
-var danbooruRe = re("^!данб.?ру")
+var danbooruRe = re("^!данб.ру")
 
 func (h *Danbooru) Match(s string) bool {
 	return danbooruRe.MatchString(s)
@@ -421,7 +421,7 @@ func (h *Danbooru) Handle(c tele.Context) error {
 
 type Fap struct{}
 
-var fapRe = re("^!(др.?ч|фап)")
+var fapRe = re("^!(др[ао]ч|фап)")
 
 func (h *Fap) Match(s string) bool {
 	return fapRe.MatchString(s)
