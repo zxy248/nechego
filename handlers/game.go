@@ -542,10 +542,10 @@ func (h *Fight) Handle(c tele.Context) error {
 		return c.Send(format.NoEnergy)
 	}
 	c.Send(fmt.Sprintf("⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs.</i></b> <b>%s</b> <code>[%.2f]</code>",
-		teleutil.Mention(c, user.TUID), user.Strength(),
-		teleutil.Mention(c, opnt.TUID), opnt.Strength()),
+		teleutil.Mention(c, user.TUID), user.Strength(world),
+		teleutil.Mention(c, opnt.TUID), opnt.Strength(world)),
 		tele.ModeHTML)
-	winner, loser, rating := user.Fight(opnt)
+	winner, loser, rating := world.Fight(user, opnt)
 	winnerMent := teleutil.Mention(c, winner.TUID)
 	if i, ok := loser.Inventory.Random(); ok && rand.Float64() < 1.0/8 {
 		if _, ok := i.Value.(*money.Wallet); !ok && loser.Inventory.Move(world.Floor, i) {
@@ -583,13 +583,13 @@ func (h *Profile) Handle(c tele.Context) error {
 	}
 
 	const profile = "📇 <b>%s %s</b>\n<code>%-22s %s\n%-22s %s\n%-22s %s</code>\n\n%s\n\n%s\n\n%s"
-	mods := user.Modset().List()
+	mods := user.Modset(world).List()
 	out := fmt.Sprintf(profile,
 		format.ModifierTitles(mods),
 		teleutil.Mention(c, user),
 		format.Energy(user.Energy),
 		format.Balance(user.Total()),
-		format.Strength(user.Strength()),
+		format.Strength(user.Strength(world)),
 		format.Rating(user.Rating),
 		format.Luck(user.Luck()),
 		format.Messages(user.Messages),
@@ -707,7 +707,7 @@ func (h *TopStrong) Handle(c tele.Context) error {
 	list := []string{"🏋️‍♀️ <b>Самые сильные пользователи</b>"}
 	for i, u := range users {
 		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, teleutil.Mention(c, u.TUID), format.Strength(u.Strength())))
+			i+1, teleutil.Mention(c, u.TUID), format.Strength(u.Strength(world))))
 	}
 	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
 }
@@ -911,7 +911,7 @@ func (h *SendSMS) Handle(c tele.Context) error {
 	}
 
 	world.SMS.Send(p.Number, receiver, msg)
-	return c.Send(format.SMSSent)
+	return c.Send(format.MessageSent(p.Number, receiver), tele.ModeHTML)
 }
 
 type Contacts struct {

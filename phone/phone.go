@@ -7,6 +7,10 @@ import (
 
 type Database map[Number][]*SMS
 
+func (db Database) Count(n Number) int {
+	return len(db[n])
+}
+
 func (db Database) Receive(n Number) []*SMS {
 	r, ok := db[n]
 	if !ok {

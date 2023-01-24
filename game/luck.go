@@ -5,7 +5,6 @@ import (
 	"hash/fnv"
 	"math"
 	"nechego/dates"
-	"nechego/modifier"
 	"time"
 )
 
@@ -25,25 +24,4 @@ func checksum(x ...any) float64 {
 		binary.Write(h, binary.LittleEndian, v)
 	}
 	return float64(h.Sum32()) / math.MaxUint32
-}
-
-func luckModifier(l float64) (m *modifier.Mod, ok bool) {
-	var x *modifier.Mod
-	switch {
-	case l < 0.05:
-		x = modifier.TerribleLuck
-	case l < 0.20:
-		x = modifier.BadLuck
-	case l > 0.95:
-		x = modifier.ExcellentLuck
-	case l > 0.80:
-		x = modifier.GoodLuck
-	default:
-		return nil, false
-	}
-	return &modifier.Mod{
-		Emoji:       x.Emoji,
-		Multiplier:  0,
-		Description: x.Description,
-	}, true
 }

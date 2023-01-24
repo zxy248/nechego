@@ -11,10 +11,33 @@ import (
 func deleteMessage(c tele.Context, m *tele.Message) {
 	f := func() { c.Bot().Delete(m) }
 	switch context.HandlerID(c) {
-	case handlers.WhoHandler, handlers.InfaHandler:
+	case
+		handlers.WhoHandler,
+		handlers.ListHandler,
+		handlers.TopHandler,
+		handlers.InfaHandler,
+		handlers.PicHandler,
+		handlers.BasiliHandler,
+		handlers.CasperHandler,
+		handlers.ZeusHandler,
+		handlers.CatHandler,
+		handlers.AnimeHandler,
+		handlers.FurryHandler,
+		handlers.FlagHandler,
+		handlers.PersonHandler,
+		handlers.HorseHandler,
+		handlers.ArtHandler,
+		handlers.CarHandler,
+		handlers.SoyHandler,
+		handlers.DanbooruHandler,
+		handlers.FapHandler:
 		return
 	case handlers.SendSMSHandler:
-		time.AfterFunc(2*time.Second, f)
+		if m.Sender.IsBot {
+			time.AfterFunc(7*time.Second, f)
+		} else {
+			f()
+		}
 	default:
 		time.AfterFunc(10*time.Minute, f)
 	}

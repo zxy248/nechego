@@ -33,7 +33,6 @@ const (
 	CannotCraft          = "🛠 Эти предметы нельзя объединить."
 	InventorySorted      = "🗃 Инвентарь отсортирован."
 	NoPhone              = "📱 У вас нет телефона."
-	SMSSent              = "✉ Сообщение отправлено."
 	BadPhone             = "☎ Некорректный формат номера."
 )
 
@@ -248,4 +247,9 @@ func Contacts(cc []Contact) string {
 	}
 	tail := strings.Join(lines, "\n")
 	return head + tail
+}
+
+func MessageSent(sender, receiver phone.Number) string {
+	return fmt.Sprintf("📱 Сообщение отправлено.\n\n"+
+		"✉ <code>%v</code> → <code>%v</code>", sender, receiver)
 }
