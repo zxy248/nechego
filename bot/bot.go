@@ -1,37 +1,64 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"nechego/avatar"
+	"nechego/bot/context"
+	"nechego/bot/middleware"
 	"nechego/game"
 	"nechego/handlers"
 	"os"
-	"runtime/debug"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
-	"gopkg.in/telebot.v3/middleware"
 )
 
 type Router struct {
 	Handlers   []handlers.Handler
-	Middleware []Wrapper
+	Special    map[handlers.HandlerID]handlers.Handler
+	Middleware []middleware.Wrapper
 }
 
-func (r *Router) wrap(f tele.HandlerFunc) tele.HandlerFunc {
+func (r *Router) HandlerFunc(endpoint string) tele.HandlerFunc {
+	var f tele.HandlerFunc
+	switch endpoint {
+	case tele.OnText, tele.OnPhoto:
+		special := []handlers.Handler{}
+		for _, h := range r.Special {
+			special = append(special, h)
+		}
+		all := append(r.Handlers, special...)
+
+		f = func(c tele.Context) error {
+			for _, h := range all {
+				if h.Match(c.Text()) {
+					context.SetHandlerID(c, h.Self())
+					return h.Handle(c)
+				}
+			}
+			return nil
+
+		}
+	case tele.OnDice:
+		f = func(c tele.Context) error {
+			h := handlers.RollHandler
+			context.SetHandlerID(c, h)
+			return r.Special[h].Handle(c)
+		}
+	case tele.OnUserJoined:
+		f = func(c tele.Context) error {
+			h := handlers.HelloHandler
+			context.SetHandlerID(c, h)
+			return r.Special[h].Handle(c)
+		}
+	default:
+		panic(fmt.Errorf("unexpected endpoint %s", endpoint))
+	}
 	for _, w := range r.Middleware {
 		f = w.Wrap(f)
 	}
 	return f
-}
-
-func (r *Router) OnText(c tele.Context) error {
-	for _, h := range r.Handlers {
-		if h.Match(c.Text()) {
-			return r.wrap(h.Handle)(c)
-		}
-	}
-	return nil
 }
 
 func main() {
@@ -46,8 +73,6 @@ func main() {
 
 	universe := game.NewUniverse("universe")
 	avatars := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
-	hello := &handlers.Hello{Path: "data/hello.json"}
-	roll := &handlers.Roll{Universe: universe}
 	router := &Router{}
 	router.Handlers = []handlers.Handler{
 		&handlers.Pic{Path: "data/pic"},
@@ -116,29 +141,34 @@ func main() {
 		&handlers.SendSMS{Universe: universe},
 		&handlers.ReceiveSMS{Universe: universe},
 		&handlers.Contacts{Universe: universe},
-		hello,
 	}
-	router.Middleware = []Wrapper{
-		&RandomPhoto{Avatars: avatars},
-		&MessageIncrementer{Universe: universe},
-		&IgnoreBanned{Universe: universe},
-		&DeleteMessage{},
-		&LogMessage{},
-		&IgnoreForwarded{},
-		&RequireSupergroup{},
-		WrapperFunc(middleware.Recover(func(err error) {
-			log.Print(err)
-			debug.PrintStack()
-		})),
+	router.Special = map[handlers.HandlerID]handlers.Handler{
+		handlers.HelloHandler: &handlers.Hello{Path: "data/hello.json"},
+		handlers.RollHandler:  &handlers.Roll{Universe: universe},
+	}
+	router.Middleware = []middleware.Wrapper{
+		&middleware.RandomPhoto{Avatars: avatars},
+		&middleware.IncrementCounters{Universe: universe},
+		&middleware.IgnoreBanned{Universe: universe},
+		&middleware.DeleteMessage{},
+		&middleware.LogMessage{},
+		&middleware.IgnoreForwarded{},
+		&middleware.RequireSupergroup{},
+		middleware.Recover,
 	}
 	go refillMarket(universe)
 	go restoreEnergy(universe)
 	done := stopper(bot, universe)
 
-	bot.Handle(tele.OnDice, router.wrap(roll.Handle))
-	bot.Handle(tele.OnUserJoined, router.wrap(hello.Handle))
-	bot.Handle(tele.OnText, router.OnText)
-	bot.Handle(tele.OnPhoto, router.OnText)
+	endpoints := [...]string{
+		tele.OnText,
+		tele.OnDice,
+		tele.OnUserJoined,
+		tele.OnPhoto,
+	}
+	for _, e := range endpoints {
+		bot.Handle(e, router.HandlerFunc(e))
+	}
 	bot.Start()
 
 	<-done

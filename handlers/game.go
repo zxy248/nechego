@@ -661,6 +661,10 @@ type Roll struct {
 	Universe *game.Universe
 }
 
+func (h *Roll) Match(s string) bool {
+	return false
+}
+
 func (h *Roll) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
