@@ -6,11 +6,24 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
-type Number int
+const numberExpr = `(\d\d)-?(\d\d)-?(\d\d)`
 
-var numberRe = regexp.MustCompile(`(\d\d)-?(\d\d)-?(\d\d)`)
+var numberRe = regexp.MustCompile(numberExpr)
+
+func NumberExpr() string {
+	x := &strings.Builder{}
+	for _, r := range numberExpr {
+		if r != '(' && r != ')' {
+			x.WriteRune(r)
+		}
+	}
+	return x.String()
+}
+
+type Number int
 
 func MakeNumber(s string) (Number, error) {
 	b := make([]int, 0, 3)

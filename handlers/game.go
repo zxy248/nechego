@@ -37,7 +37,7 @@ func (h *Name) Handle(c tele.Context) error {
 		return err
 	}
 	if err := c.Bot().SetAdminTitle(c.Chat(), c.Sender(), name); err != nil {
-		return err
+		return c.Send("🚪 Пожалуйста, перезайдите в беседу.")
 	}
 	return c.Send(fmt.Sprintf("Имя <b>%s</b> установлено ✅", name), tele.ModeHTML)
 }
@@ -882,7 +882,7 @@ type SendSMS struct {
 	Universe *game.Universe
 }
 
-var sendSMSRe = re("^!смс ([-0-9]*) (.*)")
+var sendSMSRe = re(fmt.Sprintf("^!смс *(%s) *(.+)", phone.NumberExpr()))
 
 func (h *SendSMS) Match(s string) bool {
 	return sendSMSRe.MatchString(s)
