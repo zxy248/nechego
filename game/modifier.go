@@ -7,45 +7,29 @@ import (
 )
 
 func (u *User) Modset(w *World) modifier.Set {
+	table := []struct {
+		predicate func() bool
+		modifier  *modifier.Mod
+	}{
+		{u.Admin, modifier.Admin},
+		{u.Eblan, modifier.Eblan},
+		{u.Rich, modifier.Rich},
+		{u.Poor, modifier.Poor},
+		{func() bool { return u.Energy < EnergyCap/10 }, modifier.NoEnergy},
+		{func() bool { return u.Energy == EnergyCap }, modifier.FullEnergy},
+		{func() bool { return u.Inventory.Count() > InventorySize }, modifier.Heavy},
+		{func() bool { _, ok := u.FishingRod(); return ok }, modifier.Fisher},
+		{func() bool { _, ok := u.Phone(); return ok }, modifier.Phone},
+		{func() bool { p, ok := u.Phone(); return ok && w.SMS.Count(p.Number) > 0 }, modifier.SMS},
+	}
 	set := modifier.Set{}
-	if u.Admin() {
-		set.Add(modifier.Admin)
-	}
-	if u.Eblan() {
-		set.Add(modifier.Eblan)
-	}
-	if u.Energy == 0 {
-		set.Add(modifier.NoEnergy)
-	}
-	if u.Energy == EnergyCap {
-		set.Add(modifier.FullEnergy)
-	}
-	if u.Energy > EnergyCap {
-		set.Add(modifier.MuchEnergy)
-	}
-	if u.Rich() {
-		set.Add(modifier.Rich)
-	}
-	if u.Poor() {
-		set.Add(modifier.Poor)
-	}
-	if u.InDebt() {
-		set.Add(modifier.Debtor)
-	}
-	if u.Inventory.Count() > InventorySize {
-		set.Add(modifier.Heavy)
+	for _, x := range table {
+		if x.predicate() {
+			set.Add(x.modifier)
+		}
 	}
 	if l, ok := luckModifier(u.Luck()); ok {
 		set.Add(l)
-	}
-	if _, ok := u.FishingRod(); ok {
-		set.Add(modifier.Fisher)
-	}
-	if p, ok := u.Phone(); ok {
-		set.Add(modifier.Phone)
-		if w.SMS.Count(p.Number) > 0 {
-			set.Add(modifier.SMS)
-		}
 	}
 	if p, ok := u.Pet(); ok {
 		set.Add(petModifier(p))
@@ -68,33 +52,32 @@ func luckModifier(l float64) (m *modifier.Mod, ok bool) {
 		return nil, false
 	}
 	return &modifier.Mod{
-		Emoji: x.Emoji,
+		Emoji:       x.Emoji,
+		Description: x.Description,
 		// no need for multiplier, luck is already
 		// used in strength calculation
-		Multiplier:  0,
-		Description: x.Description,
 	}, true
 }
 
 func petModifier(p *pets.Pet) *modifier.Mod {
-	var q float64
+	var multiplier float64
 	switch p.Species.Quality() {
 	case pets.Common:
-		q = 0.05
+		multiplier = 0.05
 	case pets.Rare:
-		q = 0.10
+		multiplier = 0.10
 	case pets.Exotic:
-		q = 0.15
+		multiplier = 0.15
 	case pets.Legendary:
-		q = 0.20
+		multiplier = 0.20
 	}
-	r := ""
+	prefix := ""
 	if p.Species.Quality() != pets.Common {
-		r = fmt.Sprintf("%s ", p.Species.Quality())
+		prefix = fmt.Sprintf("%s ", p.Species.Quality())
 	}
 	return &modifier.Mod{
 		Emoji:       p.Species.Emoji(),
-		Multiplier:  q,
-		Description: fmt.Sprintf("У вас есть %sпитомец: <code>%s</code>", r, p),
+		Multiplier:  multiplier,
+		Description: fmt.Sprintf("У вас есть %sпитомец: <code>%s</code>", prefix, p),
 	}
 }
