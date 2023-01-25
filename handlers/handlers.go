@@ -6,7 +6,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-//go:generate handlerplate basic.go calc.go daily.go game.go
+//go:generate handlerplate basic.go calc.go daily.go game.go phone.go
 
 type Handler interface {
 	Match(s string) bool
