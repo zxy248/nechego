@@ -99,7 +99,7 @@ func (u *User) Fish(r *fishing.Rod) *item.Item {
 		return item.Random()
 	}
 
-	quality := 1.0 + 0.5*r.Quality
+	quality := 1.0 + 0.5*float64(r.Quality)
 	luck := 0.9 + 0.2*u.Luck()
 	total := quality * luck
 

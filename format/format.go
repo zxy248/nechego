@@ -219,7 +219,7 @@ func SMS(sms *phone.SMS) string {
 	if sms.Time.YearDay() == time.Now().YearDay() {
 		format = "15:04"
 	}
-	return fmt.Sprintf("<code>|%s|</code> <b>%s:</b> %s",
+	return fmt.Sprintf("<code>|%s|</code> <code>%s</code><b>:</b> %s",
 		sms.Time.Format(format), sms.Sender, sms.Text)
 }
 
@@ -233,7 +233,7 @@ type Contact struct {
 }
 
 func (c Contact) String() string {
-	return fmt.Sprintf("<b>→ %s:</b> %s", c.Number, c.Name)
+	return fmt.Sprintf("<b>→ <code>%s</code>:</b> %s", c.Number, c.Name)
 }
 
 func Contacts(cc []Contact) string {
