@@ -141,6 +141,7 @@ func main() {
 		&handlers.SendSMS{Universe: universe},
 		&handlers.ReceiveSMS{Universe: universe},
 		&handlers.Contacts{Universe: universe},
+		&handlers.Spam{Universe: universe},
 	}
 	router.Special = map[handlers.HandlerID]handlers.Handler{
 		handlers.HelloHandler: &handlers.Hello{Path: "data/hello.json"},

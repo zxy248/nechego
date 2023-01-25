@@ -253,3 +253,7 @@ func MessageSent(sender, receiver phone.Number) string {
 	return fmt.Sprintf("📱 Сообщение отправлено.\n\n"+
 		"✉ <code>%v</code> → <code>%v</code>", sender, receiver)
 }
+
+func SpamSent(price int) string {
+	return fmt.Sprintf("✉ Вы совершили рассылку за %s.", Money(price))
+}

@@ -27,7 +27,7 @@ import (
 
 type Infa struct{}
 
-var infaRe = re("!инфа ?(.*)")
+var infaRe = re("^!инфа ?(.*)")
 
 func (h *Infa) Match(s string) bool {
 	return infaRe.MatchString(s)
@@ -56,7 +56,7 @@ type Who struct {
 	Universe *game.Universe
 }
 
-var whoRe = re("!кто ?(.*)")
+var whoRe = re("^!кто ?(.*)")
 
 func (h *Who) Match(s string) bool {
 	return whoRe.MatchString(s)

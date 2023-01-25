@@ -32,7 +32,7 @@ func deleteMessage(c tele.Context, m *tele.Message) {
 		handlers.DanbooruHandler,
 		handlers.FapHandler:
 		return
-	case handlers.SendSMSHandler:
+	case handlers.SendSMSHandler, handlers.SpamHandler:
 		if m.Sender.IsBot {
 			time.AfterFunc(7*time.Second, f)
 		} else {

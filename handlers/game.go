@@ -21,7 +21,7 @@ import (
 
 type Name struct{}
 
-var nameRe = re("!имя (.*)")
+var nameRe = re("^!имя (.*)")
 
 func (h *Name) Match(s string) bool {
 	return nameRe.MatchString(s)
@@ -608,7 +608,7 @@ type Dice struct {
 	Universe *game.Universe
 }
 
-var diceRe = re("!кости (.*)")
+var diceRe = re("^!кости (.*)")
 
 func (h *Dice) Match(s string) bool {
 	return diceRe.MatchString(s)
@@ -888,6 +888,8 @@ func (h *SendSMS) Match(s string) bool {
 	return sendSMSRe.MatchString(s)
 }
 
+const maxSMSLen = 120
+
 func (h *SendSMS) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
@@ -899,17 +901,13 @@ func (h *SendSMS) Handle(c tele.Context) error {
 
 	a := teleutil.Args(c, sendSMSRe)
 	num, msg := a[1], a[2]
-
-	const max = 80
-	if utf8.RuneCountInString(msg) > max {
-		return c.Send(format.SMSMaxLen(max))
+	if utf8.RuneCountInString(msg) > maxSMSLen {
+		return c.Send(format.SMSMaxLen(maxSMSLen))
 	}
-
 	receiver, err := phone.MakeNumber(num)
 	if err != nil {
 		return c.Send(format.BadPhone)
 	}
-
 	world.SMS.Send(p.Number, receiver, msg)
 	return c.Send(format.MessageSent(p.Number, receiver), tele.ModeHTML)
 }
@@ -939,4 +937,39 @@ func (h *Contacts) Handle(c tele.Context) error {
 		}
 	}
 	return c.Send(format.Contacts(contacts), tele.ModeHTML)
+}
+
+type Spam struct {
+	Universe *game.Universe
+}
+
+var spamRe = re("^!(спам|рассылка) (.*)")
+
+func (h *Spam) Match(s string) bool {
+	return spamRe.MatchString(s)
+}
+
+func (h *Spam) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	p, ok := user.Phone()
+	if !ok {
+		return c.Send(format.NoPhone)
+	}
+
+	msg := teleutil.Args(c, spamRe)[2]
+	if utf8.RuneCountInString(msg) > maxSMSLen {
+		return c.Send(format.SMSMaxLen(maxSMSLen))
+	}
+	const price = 2000
+	if !user.SpendMoney(price) {
+		return c.Send(format.NoMoney)
+	}
+	for _, u := range world.Users {
+		if q, ok := u.Phone(); ok {
+			world.SMS.Send(p.Number, q.Number, msg)
+		}
+	}
+	return c.Send(format.SpamSent(price), tele.ModeHTML)
 }

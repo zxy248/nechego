@@ -73,6 +73,7 @@ const (
 	ReceiveSMSHandler
 	SendSMSHandler
 	ContactsHandler
+	SpamHandler
 )
 
 func (_ *Infa) Self() HandlerID       { return InfaHandler }
@@ -143,3 +144,4 @@ func (_ *NamePet) Self() HandlerID    { return NamePetHandler }
 func (_ *ReceiveSMS) Self() HandlerID { return ReceiveSMSHandler }
 func (_ *SendSMS) Self() HandlerID    { return SendSMSHandler }
 func (_ *Contacts) Self() HandlerID   { return ContactsHandler }
+func (_ *Spam) Self() HandlerID       { return SpamHandler }
