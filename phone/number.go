@@ -9,28 +9,27 @@ import (
 	"strings"
 )
 
-const numberExpr = `(\d\d)-?(\d\d)-?(\d\d)`
-
-var numberRe = regexp.MustCompile(numberExpr)
-
-func NumberExpr() string {
-	x := &strings.Builder{}
-	for _, r := range numberExpr {
-		if r != '(' && r != ')' {
-			x.WriteRune(r)
+var (
+	numberExpr = regexp.MustCompile(`(\d\d)-?(\d\d)-?(\d\d)`)
+	NumberExpr = func() string {
+		x := &strings.Builder{}
+		for _, r := range numberExpr.String() {
+			if r != '(' && r != ')' {
+				x.WriteRune(r)
+			}
 		}
-	}
-	return x.String()
-}
+		return x.String()
+	}()
+)
 
 type Number int
 
 func MakeNumber(s string) (Number, error) {
 	b := make([]int, 0, 3)
-	if !numberRe.MatchString(s) {
+	if !numberExpr.MatchString(s) {
 		return 0, errors.New("bad number format")
 	}
-	p := numberRe.FindStringSubmatch(s)
+	p := numberExpr.FindStringSubmatch(s)
 	for _, x := range p[1:] {
 		n, err := strconv.Atoi(x)
 		if err != nil {

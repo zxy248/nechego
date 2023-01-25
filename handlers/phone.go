@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"nechego/format"
 	"nechego/game"
 	"nechego/phone"
@@ -10,6 +9,8 @@ import (
 
 	tele "gopkg.in/telebot.v3"
 )
+
+const smsMaxLen = 120
 
 type ReceiveSMS struct {
 	Universe *game.Universe
@@ -38,13 +39,11 @@ type SendSMS struct {
 	Universe *game.Universe
 }
 
-var sendSMSRe = re(fmt.Sprintf("^!смс *(%s) *(.+)", phone.NumberExpr()))
+var sendSMSRe = re("^!смс *(" + phone.NumberExpr + ") *(.+)")
 
 func (h *SendSMS) Match(s string) bool {
 	return sendSMSRe.MatchString(s)
 }
-
-const smsMaxLen = 120
 
 func (h *SendSMS) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
