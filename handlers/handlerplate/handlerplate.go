@@ -16,6 +16,9 @@ import (
 )
 
 func main() {
+	log.SetFlags(0)
+	log.SetPrefix("handlerplate: ")
+
 	files := os.Args[1:]
 	if len(files) == 0 {
 		log.Fatal("no files to process")
@@ -71,7 +74,7 @@ func (g *generator) scanTypes(r io.Reader) {
 func (g *generator) format() []byte {
 	src, err := format.Source(g.buf.Bytes())
 	if err != nil {
-		panic(err)
+		log.Fatalf("formatting source: %s", err)
 	}
 	return src
 }
