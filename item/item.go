@@ -45,10 +45,11 @@ type Item struct {
 }
 
 func (i *Item) UnmarshalJSON(data []byte) error {
+	// Necessary to prevent infinite recursion.
 	type ItemWrapper *Item
 
 	var raw json.RawMessage
-	wrapped := ItemWrapper(i) // prevent infinite recursion
+	wrapped := ItemWrapper(i)
 	wrapped.Value = &raw
 	if err := json.Unmarshal(data, wrapped); err != nil {
 		return err

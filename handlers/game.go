@@ -55,7 +55,7 @@ func (h *Inventory) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	items := user.Inventory.HKList()
+	items := user.Inventory.HkList()
 	warn := ""
 	if user.Inventory.Count() > game.InventorySize {
 		warn = " (!)"
@@ -117,7 +117,7 @@ func (h *Catch) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", teleutil.Mention(c, user))
-	list := format.Catch(user.Inventory.HKList())
+	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
 }
 
@@ -198,7 +198,7 @@ func (h *Floor) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	head := "<b>🗃️ Предметы</b>\n"
-	list := format.Items(world.Floor.HKList())
+	list := format.Items(world.Floor.HkList())
 	return c.Send(head+list, tele.ModeHTML)
 }
 

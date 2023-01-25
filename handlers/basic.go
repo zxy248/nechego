@@ -124,7 +124,7 @@ func (h *Top) Handle(c tele.Context) error {
 }
 
 type Mouse struct {
-	Path string // path to video file
+	Path string // Path to the video file.
 }
 
 var mouseRe = re("^!мыш")
@@ -138,7 +138,7 @@ func (h *Mouse) Handle(c tele.Context) error {
 }
 
 type Tiktok struct {
-	Path string // path to directory with webms
+	Path string // Path to the directory with WebMs.
 }
 
 var tiktokRe = re("^!тикток")

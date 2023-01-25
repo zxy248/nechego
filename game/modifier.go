@@ -54,8 +54,8 @@ func luckModifier(l float64) (m *modifier.Mod, ok bool) {
 	return &modifier.Mod{
 		Emoji:       x.Emoji,
 		Description: x.Description,
-		// no need for multiplier, luck is already
-		// used in strength calculation
+		// There is no need to specify the multiplier: value is
+		// already used in strength computation.
 	}, true
 }
 

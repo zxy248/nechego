@@ -4,8 +4,8 @@ import "fmt"
 
 type Fish struct {
 	Species
-	Weight float64 // kilograms
-	Length float64 // meters
+	Weight float64 // Weight in kilograms.
+	Length float64 // Length in meters.
 }
 
 func RandomFish() *Fish {

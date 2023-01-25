@@ -129,16 +129,19 @@ func (u *User) Sell(i *item.Item) (profit int, ok bool) {
 	if !i.Transferable {
 		return 0, false
 	}
+
+	// The item will be either sold or returned back to the inventory.
 	if ok = u.Inventory.Remove(i); !ok {
 		return 0, false
 	}
+
 	switch x := i.Value.(type) {
 	case *fishing.Fish:
 		n := int(x.Price())
 		u.AddMoney(n)
 		return n, true
 	default:
-		// cannot sell; return item back
+		// Item of this type cannot be sold; return it back.
 		u.Inventory.Add(i)
 	}
 	return 0, false

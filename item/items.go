@@ -68,8 +68,8 @@ func (it *Items) List() []*Item {
 	return it.I
 }
 
-func (it *Items) HKList() []*Item {
-	// updates hotkeys; only for public use
+func (it *Items) HkList() []*Item {
+	// Updates hotkeys. Do not use this function internally.
 	it.Filter(integral)
 	it.updateHotkeys()
 	return it.I
