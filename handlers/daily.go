@@ -12,7 +12,7 @@ type DailyEblan struct {
 	Universe *game.Universe
 }
 
-var dailyEblanRe = re("^![ие][б6п]?л[ап]н[а-я]* дня")
+var dailyEblanRe = re("^![ие][б6п]?л[ап]н[а-я]*")
 
 func (h *DailyEblan) Match(s string) bool {
 	return dailyEblanRe.MatchString(s)
@@ -35,7 +35,7 @@ type DailyAdmin struct {
 	Universe *game.Universe
 }
 
-var dailyAdminRe = re("^!админ дня")
+var dailyAdminRe = re("^!админ")
 
 func (h *DailyAdmin) Match(s string) bool {
 	return dailyAdminRe.MatchString(s)
@@ -58,7 +58,7 @@ type DailyPair struct {
 	Universe *game.Universe
 }
 
-var dailyPairRe = re("^!пара дня")
+var dailyPairRe = re("^!пара")
 
 func (h *DailyPair) Match(s string) bool {
 	return dailyPairRe.MatchString(s)
