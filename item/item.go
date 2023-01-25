@@ -106,31 +106,38 @@ func Random() *Item {
 	common := []*Item{
 		{Type: TypeFish, Value: fishing.RandomFish()},
 		{Type: TypeFood, Value: food.Random()},
-		{Type: TypeWallet, Value: &money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
 		{Type: TypeCash, Value: &money.Cash{Money: int(math.Abs(rand.NormFloat64() * 3000))}},
 	}
 	uncommon := []*Item{
+		{Type: TypeWallet, Value: &money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
 		{Type: TypeFishingRod, Value: fishing.NewRod()},
-		{Type: TypePet, Value: pets.Random()},
-		{Type: TypePhone, Value: phone.NewPhone()},
 	}
 	rare := []*Item{
+		{Type: TypePet, Value: pets.Random()},
 		{Type: TypeKnife, Value: &tools.Knife{Durability: 0.8 + 0.2*rand.Float64()}},
-		{Type: TypeDice, Value: &token.Dice{}},
 	}
 	epic := []*Item{
+		{Type: TypePhone, Value: phone.NewPhone()},
+		{Type: TypeDice, Value: &token.Dice{}},
+	}
+	legendary := []*Item{
 		{Type: TypeAdmin, Expire: dates.Tomorrow(), Value: &token.Admin{}},
 	}
-
-	items := common
-	if rand.Float64() < 0.5 {
-		items = append(items, uncommon...)
+	table := []struct {
+		threshold float64
+		list      []*Item
+	}{
+		{1.0, common},
+		{0.5, uncommon},
+		{0.25, rare},
+		{0.12, epic},
+		{0.02, legendary},
 	}
-	if rand.Float64() < 0.25 {
-		items = append(items, rare...)
-	}
-	if rand.Float64() < 0.02 {
-		items = append(items, epic...)
+	items := []*Item{}
+	for _, x := range table {
+		if rand.Float64() < x.threshold {
+			items = append(items, x.list...)
+		}
 	}
 	i := items[rand.Intn(len(items))]
 	i.Transferable = true
