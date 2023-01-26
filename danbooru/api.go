@@ -14,6 +14,14 @@ type file struct {
 	Rating Rating `json:"rating"`
 }
 
+// errStatusCode is an error containing the status code of a response.
+type errStatusCode int
+
+func (e errStatusCode) Error() string {
+	code := int(e)
+	return fmt.Sprintf("bad status code: %s (%d)", http.StatusText(code), code)
+}
+
 func get(url string) (*file, error) {
 	r, err := http.Get(url)
 	if err != nil {
@@ -21,7 +29,7 @@ func get(url string) (*file, error) {
 	}
 	defer r.Body.Close()
 	if r.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status code %s", http.StatusText(r.StatusCode))
+		return nil, errStatusCode(r.StatusCode)
 	}
 
 	var f file
