@@ -24,11 +24,20 @@ const (
 	Ramen
 	Hotdog
 	RitterSport
+	HotCat
+	Jaguar
+	Beer
+	IceCream
+	Juice
 )
 
 var beverages = map[Type]bool{
 	AdrenalineRush: true,
 	Burn:           true,
+	HotCat:         true,
+	Jaguar:         true,
+	Beer:           true,
+	Juice:          true,
 }
 
 func (t Type) Emoji() string      { return data[t].Emoji }
@@ -57,6 +66,11 @@ var data = map[Type]struct {
 	Ramen:              {"🍜", 0.20, "Доширак"},
 	Hotdog:             {"🌭", 0.16, "Хот-дог"},
 	RitterSport:        {"🍫", 0.16, "Риттер Спорт"},
+	HotCat:             {"🐱", 0.20, "Напиток HotCat"},
+	Jaguar:             {"🐾", 0.20, "Напиток Jaguar"},
+	Beer:               {"🍺", 0.10, "Пиво"},
+	IceCream:           {"🍦", 0.08, "Мороженое"},
+	Juice:              {"🧃", 0.08, "Сок"},
 }
 
 type Food struct {
