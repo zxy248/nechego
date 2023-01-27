@@ -12,7 +12,7 @@ type Rod struct {
 	Durability float64
 }
 
-// NewRod returns a Rod with random quality and random durability.
+// NewRod returns a new Rod with random quality and random durability.
 func NewRod() *Rod {
 	return &Rod{randomQuality(), randomDurability()}
 }

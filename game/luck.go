@@ -10,9 +10,9 @@ import (
 )
 
 // Luck is a dynamic luck modifier.
-// If the luck value is low, the resulting modifier is good.
-// If the luck value is high, the resulting modifier is bad.
-// If the luck value is average, the resulting modifier is nil.
+// If the luck value is high, returns a positive modifier.
+// If the luck value is low, returns a negative modifier.
+// If the luck value is average, returns nil, false.
 type Luck float64
 
 func (l Luck) Mod() (m *modifier.Mod, ok bool) {
