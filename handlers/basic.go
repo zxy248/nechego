@@ -402,7 +402,7 @@ func (h *Danbooru) Match(s string) bool {
 }
 
 func (h *Danbooru) Handle(c tele.Context) error {
-	pic, err := danbooru.Get()
+	pic, err := danbooru.Get(danbooru.All)
 	if err != nil {
 		return err
 	}
@@ -428,7 +428,7 @@ func (h *Fap) Match(s string) bool {
 }
 
 func (h *Fap) Handle(c tele.Context) error {
-	pic, err := danbooru.GetNSFW()
+	pic, err := danbooru.Get(danbooru.NSFW)
 	if err != nil {
 		return err
 	}

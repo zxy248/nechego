@@ -2,47 +2,69 @@ package danbooru
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 )
 
+// MaxSize is a maximum size of a photo allowed by Telegram.
+const MaxSize = 5 << 20 // 5 MB
+
+// Picture type.
+// Used to access a corresponding filter function.
+const (
+	All int = iota
+	NSFW
+
+	typN
+)
+
+// keep returns true if a file has a URL and its size is small enough
+// for a Telegram photo.
+var keep = func(f *file) bool { return f.URL != "" && f.Size < MaxSize }
+
+// filters corresponding to each picture type.
+var filters = [...]func(*file) bool{
+	All:  keep,
+	NSFW: func(f *file) bool { return keep(f) && f.Rating.NSFW() },
+}
+
+// Pic contains the picture's bytes and its rating.
 type Pic struct {
 	Data []byte
 	Rating
 }
 
+// Danbooru structure represents the Danbooru API and holds the
+// bufferized picture channels of each type.
 type Danbooru struct {
-	URL     string
-	MaxSize int
-	Timeout time.Duration
-	pics    chan *Pic
-	nsfw    chan *Pic
+	URL      string
+	Timeout  time.Duration
+	channels [typN]chan *Pic
 }
 
 // New starts workers filling buffer channels and returns Danbooru.
-// maxSize is a maximum size of a picture after which it is filtered.
-// timeout specifies the time interval after which Get functions will timeout.
-func New(url string, maxSize int, timeout time.Duration) *Danbooru {
+// Get function will return error after the specified timeout.
+func New(url string, timeout time.Duration) *Danbooru {
 	d := &Danbooru{
 		URL:     url,
-		MaxSize: maxSize,
 		Timeout: timeout,
-		pics:    make(chan *Pic, 32),
-		nsfw:    make(chan *Pic, 32),
 	}
 	errs := make(chan error, 1)
-	test := func(f *file) bool { return f.URL != "" && f.Size < d.MaxSize }
-	testNSFW := func(f *file) bool { return test(f) && f.Rating.NSFW() }
-	d.pipeline(d.pics, errs, test)
-	d.pipeline(d.nsfw, errs, testNSFW)
+	for i := 0; i < typN; i++ {
+		ch := make(chan *Pic, 32)
+		d.pipeline(ch, errs, filters[i])
+		d.channels[i] = ch
+	}
 	go func() {
 		for err := range errs {
 			var code errStatusCode
 			if errors.As(err, &code) && code == http.StatusTooManyRequests {
 				// StatusTooManyRequests arises frequently when
 				// multiple workers are filling the picture
-				// channels during application start. Skip it.
+				// channels during application start.
+				// This type of error can be safely ignored.
 				continue
 			}
 			log.Printf("danbooru: %s", err)
@@ -51,20 +73,15 @@ func New(url string, maxSize int, timeout time.Duration) *Danbooru {
 	return d
 }
 
-func (d *Danbooru) Get() (*Pic, error) {
+// Get returns a picture of the specified type from one of the channels.
+func (d *Danbooru) Get(typ int) (*Pic, error) {
+	if typ < 0 || typ >= typN {
+		return nil, fmt.Errorf("unexpected type %d", typ)
+	}
 	select {
-	case p := <-d.pics:
+	case p := <-d.channels[typ]:
 		return p, nil
 	case <-time.After(d.Timeout):
 		return nil, errors.New("danbooru: Get timeout")
-	}
-}
-
-func (d *Danbooru) GetNSFW() (*Pic, error) {
-	select {
-	case p := <-d.nsfw:
-		return p, nil
-	case <-time.After(d.Timeout):
-		return nil, errors.New("danbooru: GetNSFW timeout")
 	}
 }
