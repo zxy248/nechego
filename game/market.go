@@ -3,10 +3,16 @@ package game
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/rand"
 	"nechego/fishing"
+	"nechego/food"
 	"nechego/item"
 	"nechego/money"
+	"nechego/pets"
+	"nechego/phone"
+	"nechego/token"
+	"nechego/tools"
 	"nechego/valid"
 	"strings"
 )
@@ -28,37 +34,61 @@ func NewMarket() *Market {
 	return &Market{P: []*Product{}}
 }
 
+// Refill adds a new random product to the market.
+// If the number of products at the market would exceed a threshold,
+// older products will be removed.
 func (m *Market) Refill() {
+	const trim = 10
 	product := randomProduct()
 	m.Add(product)
-	const maxitems = 10
-	if len(m.P) > maxitems {
-		m.P = m.P[len(m.P)-maxitems:]
+	if len(m.P) > trim {
+		m.P = m.P[len(m.P)-trim:]
 	}
 }
 
+// randomProduct returns a random product that can be sold at the market.
 func randomProduct() *Product {
-	p := 0
+	// normalize returns the absolute value of x as int.
+	normalize := func(x float64) int { return int(math.Abs(x)) }
+
+	// price returns a normally distributed positive int.
+	price := func(mean, stddev float64) int {
+		return normalize(mean + stddev*rand.NormFloat64())
+	}
+
+	var p int
 	i := item.Random()
-	switch i.Type {
-	case item.TypeFishingRod:
-		p = 2500 + rand.Intn(7500)
-	case item.TypeFish:
-		f := i.Value.(*fishing.Fish)
-		p = int(f.Price() * (0.5 + 1.5*rand.Float64()))
-	case item.TypePet:
-		p = 500 + rand.Intn(99500)
-	case item.TypeDice:
-		p = 5000 + rand.Intn(25000)
-	case item.TypeFood:
-		p = 250 + rand.Intn(1750)
-	case item.TypeAdmin:
-		p = 500_000 + rand.Intn(4_500_000)
-	case item.TypeKnife:
-		p = 1000 + rand.Intn(9000)
-	case item.TypePhone:
-		p = 10000 + rand.Intn(40000)
+	switch x := i.Value.(type) {
+	case *fishing.Rod:
+		p = price(5000, 2500)
+	case *fishing.Fish:
+		p = normalize(x.Price() * (1.0 + 0.25*rand.NormFloat64()))
+	case *pets.Pet:
+		switch q := x.Species.Quality(); q {
+		case pets.Common:
+			p = price(3000, 1500)
+		case pets.Rare:
+			p = price(10000, 5000)
+		case pets.Exotic:
+			p = price(50000, 25000)
+		case pets.Legendary:
+			p = price(200_000, 100_000)
+		default:
+			panic(fmt.Errorf("unexpected pet type %d", q))
+		}
+	case *token.Dice:
+		p = price(25000, 10000)
+	case *food.Food:
+		p = price(1000, 500)
+	case *token.Admin:
+		p = price(2_500_000, 1_000_000)
+	case *tools.Knife:
+		p = price(5000, 2000)
+	case *phone.Phone:
+		p = price(20000, 10000)
 	default:
+		// This type of item cannot be sold at the market.
+		// Reroll.
 		return randomProduct()
 	}
 	return &Product{p, i}
