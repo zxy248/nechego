@@ -108,3 +108,14 @@ func (u *User) Fish(r *fishing.Rod) *item.Item {
 	f.Weight *= total
 	return &item.Item{Type: item.TypeFish, Transferable: true, Value: f}
 }
+
+// InventoryFull returns true if the item count is greater than InventorySize.
+func (u *User) InventoryFull() bool {
+	return u.Inventory.Count() > InventorySize
+}
+
+// HasSMS return true if the user has unread SMS.
+func (u *User) HasSMS(w *World) bool {
+	p, ok := u.Phone()
+	return ok && w.SMS.Count(p.Number) > 0
+}

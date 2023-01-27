@@ -165,36 +165,12 @@ func BadKey(k int) string {
 	return fmt.Sprintf("🔖 Предмет %s не найден.", Key(k))
 }
 
-func ModifierEmojis(m []*modifier.Mod) string {
-	emojis := []string{}
-	for _, x := range m {
-		if x.Emoji != "" {
-			emojis = append(emojis, x.Emoji)
-		}
+func Modset(s modifier.Set) string {
+	list := []string{}
+	for _, x := range s.List() {
+		list = append(list, x.Emoji+" "+x.Description)
 	}
-	return fmt.Sprintf("<code>%s</code>", strings.Join(emojis, "·"))
-}
-
-func ModifierDescriptions(m []*modifier.Mod) string {
-	descs := []string{}
-	for _, x := range m {
-		descs = append(descs, x.Description)
-	}
-	return fmt.Sprintf("<i>%s</i>", strings.Join(descs, "\n"))
-}
-
-func ModifierTitles(m []*modifier.Mod) string {
-	titles := []string{}
-	for _, x := range m {
-		if x.Title != "" {
-			titles = append(titles, x.Title)
-		}
-	}
-	if len(titles) == 0 {
-		titles = append(titles, "пользователь")
-	}
-	titles[0] = strings.Title(titles[0])
-	return strings.Join(titles, " ")
+	return fmt.Sprintf("<i>%s</i>", strings.Join(list, "\n"))
 }
 
 func Percentage(p float64) string {

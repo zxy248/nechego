@@ -1,83 +1,59 @@
 package game
 
 import (
-	"fmt"
+	"nechego/item"
 	"nechego/modifier"
-	"nechego/pets"
 )
 
 func (u *User) Modset(w *World) modifier.Set {
+	set := modifier.Set{}
+	moders := []modifier.Moder{
+		Luck(u.Luck()),
+	}
+
+	// If the predicate is true, the corresponding modifier will
+	// be added to the set.
 	table := []struct {
 		predicate func() bool
 		modifier  *modifier.Mod
 	}{
-		{u.Admin, modifier.Admin},
-		{u.Eblan, modifier.Eblan},
 		{u.Rich, modifier.Rich},
 		{u.Poor, modifier.Poor},
-		{func() bool { return u.Energy < EnergyCap/10 }, modifier.NoEnergy},
-		{func() bool { return u.Energy == EnergyCap }, modifier.FullEnergy},
-		{func() bool { return u.Inventory.Count() > InventorySize }, modifier.Heavy},
-		{func() bool { _, ok := u.FishingRod(); return ok }, modifier.Fisher},
-		{func() bool { _, ok := u.Phone(); return ok }, modifier.Phone},
-		{func() bool { p, ok := u.Phone(); return ok && w.SMS.Count(p.Number) > 0 }, modifier.SMS},
+		{u.LowEnergy, modifier.NoEnergy},
+		{u.FullEnergy, modifier.FullEnergy},
+		{u.InventoryFull, modifier.Heavy},
+		{func() bool { return u.HasSMS(w) }, modifier.SMS},
 	}
-	set := modifier.Set{}
 	for _, x := range table {
 		if x.predicate() {
-			set.Add(x.modifier)
+			moders = append(moders, x.modifier)
 		}
 	}
-	if l, ok := luckModifier(u.Luck()); ok {
-		set.Add(l)
+
+	// Item modifiers.
+	// If the same item type is encountered more than once, the
+	// modifier will not be applied.
+	seen := map[item.Type]bool{}
+	for _, x := range u.Inventory.List() {
+		if seen[x.Type] {
+			continue
+		}
+		seen[x.Type] = true
+
+		moder, ok := x.Value.(modifier.Moder)
+		if !ok {
+			continue
+		}
+		if m, ok := moder.Mod(); ok {
+			set.Add(m)
+		}
 	}
-	if p, ok := u.Pet(); ok {
-		set.Add(petModifier(p))
+
+	// Apply modifiers.
+	for _, moder := range moders {
+		if m, ok := moder.Mod(); ok {
+			set.Add(m)
+		}
 	}
 	return set
-}
-
-func luckModifier(l float64) (m *modifier.Mod, ok bool) {
-	var x *modifier.Mod
-	switch {
-	case l < 0.05:
-		x = modifier.TerribleLuck
-	case l < 0.20:
-		x = modifier.BadLuck
-	case l > 0.95:
-		x = modifier.ExcellentLuck
-	case l > 0.80:
-		x = modifier.GoodLuck
-	default:
-		return nil, false
-	}
-	return &modifier.Mod{
-		Emoji:       x.Emoji,
-		Description: x.Description,
-		// There is no need to specify the multiplier: value is
-		// already used in strength computation.
-	}, true
-}
-
-func petModifier(p *pets.Pet) *modifier.Mod {
-	var multiplier float64
-	switch p.Species.Quality() {
-	case pets.Common:
-		multiplier = 0.05
-	case pets.Rare:
-		multiplier = 0.10
-	case pets.Exotic:
-		multiplier = 0.15
-	case pets.Legendary:
-		multiplier = 0.20
-	}
-	prefix := ""
-	if p.Species.Quality() != pets.Common {
-		prefix = fmt.Sprintf("%s ", p.Species.Quality())
-	}
-	return &modifier.Mod{
-		Emoji:       p.Species.Emoji(),
-		Multiplier:  multiplier,
-		Description: fmt.Sprintf("У вас есть %sпитомец: <code>%s</code>", prefix, p),
-	}
 }

@@ -3,6 +3,7 @@ package pets
 import (
 	"fmt"
 	"math/rand"
+	"nechego/modifier"
 	"nechego/valid"
 	"strings"
 	"time"
@@ -52,4 +53,30 @@ func (p *Pet) SetName(s string) bool {
 	}
 	p.Name = strings.Title(s)
 	return true
+}
+
+func (p *Pet) Mod() (m *modifier.Mod, ok bool) {
+	if p == nil {
+		return nil, false
+	}
+	var multiplier float64
+	switch p.Species.Quality() {
+	case Common:
+		multiplier = 0.05
+	case Rare:
+		multiplier = 0.10
+	case Exotic:
+		multiplier = 0.15
+	case Legendary:
+		multiplier = 0.20
+	}
+	prefix := ""
+	if p.Species.Quality() != Common {
+		prefix = fmt.Sprintf("%s ", p.Species.Quality())
+	}
+	return &modifier.Mod{
+		Emoji:       "🐱",
+		Multiplier:  multiplier,
+		Description: fmt.Sprintf("У вас есть %sпитомец: <code>%s</code>", prefix, p),
+	}, true
 }

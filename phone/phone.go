@@ -2,6 +2,7 @@ package phone
 
 import (
 	"fmt"
+	"nechego/modifier"
 	"time"
 )
 
@@ -53,4 +54,12 @@ func NewPhone() *Phone {
 
 func (p *Phone) String() string {
 	return fmt.Sprintf("📱 Смартфон (%s)", p.Number)
+}
+
+func (p *Phone) Mod() (m *modifier.Mod, ok bool) {
+	return &modifier.Mod{
+		Emoji:       "📱",
+		Multiplier:  +0.05,
+		Description: "У вас есть смартфон.",
+	}, true
 }

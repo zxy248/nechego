@@ -581,19 +581,22 @@ func (h *Profile) Handle(c tele.Context) error {
 		user = world.UserByID(u.ID)
 	}
 
-	const profile = "📇 <b>%s %s</b>\n<code>%-22s %s\n%-22s %s\n%-22s %s</code>\n\n%s\n\n%s\n\n%s"
-	mods := user.Modset(world).List()
+	const profile = `<b>📇 %s: Профиль</b>
+<code>%-22s %s</code>
+<code>%-22s %s</code>
+<code>%-22s %s</code>
+
+%s
+
+%s`
 	out := fmt.Sprintf(profile,
-		format.ModifierTitles(mods),
 		teleutil.Mention(c, user),
-		format.Energy(user.Energy),
-		format.Balance(user.Total()),
-		format.Strength(user.Strength(world)),
-		format.Rating(user.Rating),
-		format.Luck(user.Luck()),
-		format.Messages(user.Messages),
-		format.ModifierDescriptions(mods),
-		format.ModifierEmojis(mods),
+
+		format.Energy(user.Energy), format.Balance(user.Total()),
+		format.Strength(user.Strength(world)), format.Rating(user.Rating),
+		format.Luck(user.Luck()), format.Messages(user.Messages),
+
+		format.Modset(user.Modset(world)),
 		format.Status(user.Status),
 	)
 	if a, ok := h.Avatars.Get(user.TUID); ok {
