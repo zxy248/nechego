@@ -127,7 +127,7 @@ func main() {
 		&handlers.Dice{Universe: universe},
 		&handlers.TurnOn{Universe: universe},
 		&handlers.TurnOff{Universe: universe},
-		&handlers.Ban{Universe: universe},
+		&handlers.Ban{Universe: universe, DurationHr: 2},
 		&handlers.Unban{Universe: universe},
 		&handlers.TopStrong{Universe: universe},
 		&handlers.TopRating{Universe: universe},

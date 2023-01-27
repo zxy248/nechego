@@ -10,20 +10,22 @@ import (
 )
 
 const (
+	// InventorySize is a threshold for applying a debuff.
 	InventorySize = 15
-	InventoryCap  = 20
+
+	// InventoryCap is a threshold for locking commands related to
+	// the inventory system.
+	InventoryCap = 20
 )
 
 type User struct {
-	TUID      int64
-	Energy    int
-	Rating    float64
-	Messages  int
-	Banned    bool
-	Birthday  time.Time
-	Gender    Gender
-	Status    string
-	Inventory *item.Items
+	TUID        int64       // Telegram ID.
+	Energy      int         // Energy level, from 0 to EnergyCap.
+	Rating      float64     // Elo rating in fights.
+	Messages    int         // Number of messages sent.
+	BannedUntil time.Time   // Time after which the user is unbanned.
+	Status      string      // Status displayed in the profile.
+	Inventory   *item.Items // Personal items.
 }
 
 func NewUser(tuid int64) *User {

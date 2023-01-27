@@ -671,7 +671,8 @@ func (h *TurnOff) Handle(c tele.Context) error {
 }
 
 type Ban struct {
-	Universe *game.Universe
+	Universe   *game.Universe
+	DurationHr int // Ban duration in hours.
 }
 
 var banRe = re("^!бан")
@@ -691,8 +692,9 @@ func (h *Ban) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}
-	world.UserByID(reply.ID).Banned = true
-	return c.Send(format.UserBanned)
+	duration := time.Hour * time.Duration(h.DurationHr)
+	world.UserByID(reply.ID).BannedUntil = time.Now().Add(duration)
+	return c.Send(format.UserBanned(h.DurationHr))
 }
 
 type Unban struct {
@@ -716,6 +718,6 @@ func (h *Unban) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}
-	world.UserByID(reply.ID).Banned = false
+	world.UserByID(reply.ID).BannedUntil = time.Time{}
 	return c.Send(format.UserUnbanned)
 }
