@@ -15,7 +15,7 @@ func (e *Energy) Spend(x Energy) bool {
 	if x < 0 {
 		panic(fmt.Errorf("cannot spend %v energy", x))
 	}
-	if *e-x < 0 {
+	if *e < x {
 		return false
 	}
 	*e -= x
@@ -23,7 +23,7 @@ func (e *Energy) Spend(x Energy) bool {
 }
 
 // Add restores x energy.
-// Clamps at 1 if the resulting energy level is greater than 1.
+// Clamps at the upper bound of the range.
 func (e *Energy) Add(x Energy) {
 	if x < 0 {
 		panic(fmt.Errorf("cannot add %v energy", x))
@@ -63,7 +63,7 @@ func (e *Energy) Low() bool {
 
 // Full returns true if the energy level is close to 1.
 func (e *Energy) Full() bool {
-	if *e > 0.98 {
+	if *e > 0.97 {
 		return true
 	}
 	return false

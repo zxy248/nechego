@@ -113,7 +113,7 @@ func Weight(w float64) string {
 }
 
 func Energy(e game.Energy) string {
-	return fmt.Sprintf("<code>⚡ %.1f%%</code>", 100*e)
+	return fmt.Sprintf("<code>⚡ %.f%%</code>", 100*e)
 }
 
 func EnergyRemaining(e game.Energy) string {
