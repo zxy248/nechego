@@ -20,6 +20,7 @@ func (f *Fish) Light() bool     { return f.Weight < f.NormalWeight() }
 func (f *Fish) Heavy() bool     { return f.Weight > f.NormalWeight()+f.weightStdDev() }
 func (f *Fish) Cheap() bool     { return f.Price() < cheapThreshold }
 func (f *Fish) Expensive() bool { return f.Price() > expensiveThreshold }
+
 func (f *Fish) String() string {
 	var length, weight string
 	if f.Length < 1.0 {
@@ -33,4 +34,11 @@ func (f *Fish) String() string {
 		weight = fmt.Sprintf("%.2f кг", f.Weight)
 	}
 	return fmt.Sprintf("🐟 %s (%s, %s)", f.Species, weight, length)
+}
+
+func (f *Fish) Nutrition() float64 {
+	if f.Heavy() {
+		return 0.24
+	}
+	return 0.18
 }

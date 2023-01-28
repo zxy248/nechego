@@ -5,7 +5,6 @@ import (
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/item"
-	"nechego/pets"
 	"time"
 )
 
@@ -20,7 +19,7 @@ const (
 
 type User struct {
 	TUID        int64       // Telegram ID.
-	Energy      int         // Energy level, from 0 to EnergyCap.
+	Energy      Energy      // Energy level.
 	Rating      float64     // Elo rating in fights.
 	Messages    int         // Number of messages sent.
 	BannedUntil time.Time   // Time after which the user is unbanned.
@@ -36,49 +35,19 @@ func NewUser(tuid int64) *User {
 	}
 }
 
+// Eat restores user's energy and removes the specified item from the
+// inventory if it can be eaten. If it cannot be eaten, returns false.
 func (u *User) Eat(i *item.Item) bool {
-	switch x := i.Value.(type) {
-	case *fishing.Fish:
-		u.Inventory.Remove(i)
-		if x.Heavy() {
-			u.RestoreEnergy(25 + rand.Intn(10))
-		} else {
-			u.RestoreEnergy(15 + rand.Intn(10))
-		}
-		return true
-	case *pets.Pet:
-		if x.Name != "" {
-			return false
-		}
-		u.Inventory.Remove(i)
-		switch x.Species.Size() {
-		case pets.Small:
-			u.RestoreEnergy(5 + rand.Intn(10))
-		case pets.Medium:
-			u.RestoreEnergy(15 + rand.Intn(10))
-		case pets.Big:
-			u.RestoreEnergy(25 + rand.Intn(10))
-		}
-		return true
-	case *food.Food:
-		u.Inventory.Remove(i)
-		u.RestoreEnergy(int(x.Nutrition() * 100))
-		return true
-	case *food.Meat:
-		u.Inventory.Remove(i)
-		switch x.Species.Size() {
-		case pets.Small:
-			u.RestoreEnergy(10 + rand.Intn(10))
-		case pets.Medium:
-			u.RestoreEnergy(20 + rand.Intn(10))
-		case pets.Big:
-			u.RestoreEnergy(30 + rand.Intn(10))
-		}
-		return true
+	n, ok := i.Value.(food.Nutritioner)
+	if !ok {
+		return false
 	}
-	return false
+	u.Energy.Add(Energy(n.Nutrition() + 0.04*rand.Float64()))
+	u.Inventory.Remove(i)
+	return true
 }
 
+// EatQuick finds the first sensibly eatable item and calls Eat.
 func (u *User) EatQuick() (i *item.Item, ok bool) {
 	for _, x := range u.Inventory.List() {
 		switch v := x.Value.(type) {
@@ -86,9 +55,7 @@ func (u *User) EatQuick() (i *item.Item, ok bool) {
 			if v.Price() < 2000 {
 				return x, u.Eat(x)
 			}
-		case *food.Food:
-			return x, u.Eat(x)
-		case *food.Meat:
+		case *food.Food, *food.Meat:
 			return x, u.Eat(x)
 		}
 	}

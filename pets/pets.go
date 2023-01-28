@@ -80,3 +80,15 @@ func (p *Pet) Mod() (m *modifier.Mod, ok bool) {
 		Description: fmt.Sprintf("У вас есть %sпитомец: <code>%s</code>", prefix, p),
 	}, true
 }
+
+func (p *Pet) Nutrition() float64 {
+	switch p.Species.Size() {
+	case Small:
+		return 0.06
+	case Medium:
+		return 0.12
+	case Big:
+		return 0.18
+	}
+	panic(fmt.Errorf("unexpected pet size %v", p.Species.Size()))
+}

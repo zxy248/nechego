@@ -295,7 +295,7 @@ func (h *Eat) Handle(c tele.Context) error {
 		}
 	}()
 	for _, key := range teleutil.NumArg(c, eatRe, 2) {
-		if user.Energy == game.EnergyCap {
+		if user.Energy.Full() {
 			return c.Send(format.NotHungry)
 		}
 		item, ok := user.Inventory.ByKey(key)
@@ -325,7 +325,7 @@ func (h *EatQuick) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.Energy == game.EnergyCap {
+	if user.Energy.Full() {
 		return c.Send(format.NotHungry)
 	}
 	i, ok := user.EatQuick()
@@ -357,7 +357,7 @@ func (h *Fish) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("🎣 Приобретите удочку в магазине, прежде чем рыбачить.")
 	}
-	if !user.SpendEnergy(20) {
+	if !user.Energy.Spend(0.2) {
 		return c.Send(format.NoEnergy)
 	}
 	item := user.Fish(rod)
@@ -537,7 +537,7 @@ func (h *Fight) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	opnt := world.UserByID(reply.ID)
-	if !user.SpendEnergy(25) {
+	if !user.Energy.Spend(0.25) {
 		return c.Send(format.NoEnergy)
 	}
 	c.Send(fmt.Sprintf("⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs.</i></b> <b>%s</b> <code>[%.2f]</code>",
@@ -823,9 +823,13 @@ func (h *Energy) Match(s string) bool {
 func (h *Energy) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
+
+	emoji := "🔋"
+	if user.Energy < 0.5 {
+		emoji = "🪫"
+	}
 	return c.Send(fmt.Sprintf("%s Запас энергии: %s",
-		tern(user.Energy < game.EnergyCap/2, "🪫", "🔋"),
-		format.EnergyOutOf(user.Energy, game.EnergyCap)), tele.ModeHTML)
+		emoji, format.Energy(user.Energy)), tele.ModeHTML)
 }
 
 type NamePet struct {

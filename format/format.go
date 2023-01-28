@@ -112,15 +112,11 @@ func Weight(w float64) string {
 	return fmt.Sprintf("<code>%.2f кг ⚖️</code>", w)
 }
 
-func Energy(e int) string {
-	return fmt.Sprintf("<code>⚡ %d</code>", e)
+func Energy(e game.Energy) string {
+	return fmt.Sprintf("<code>⚡ %.1f%%</code>", 100*e)
 }
 
-func EnergyOutOf(e, max int) string {
-	return fmt.Sprintf("<code>%d из %d ⚡</code>", e, max)
-}
-
-func EnergyRemaining(e int) string {
+func EnergyRemaining(e game.Energy) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 

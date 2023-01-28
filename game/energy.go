@@ -1,38 +1,70 @@
 package game
 
-import "fmt"
-
-const (
-	EnergyCap = 100
-	LowEnergy = EnergyCap / 10
+import (
+	"fmt"
+	"nechego/modifier"
 )
 
-// SpendEnergy subtracts e energy and returns true.
-// If the user's energy would become negative, do nothing and return false.
-func (u *User) SpendEnergy(e int) bool {
-	if e < 0 {
-		panic(fmt.Errorf("cannot spend %v energy", e))
+// Energy represents the user's energy level.
+// It must be in the range [0, 1].
+type Energy float64
+
+// Spend subtracts x energy and returns true on success.
+// Returns false if the energy level would drop below zero.
+func (e *Energy) Spend(x Energy) bool {
+	if x < 0 {
+		panic(fmt.Errorf("cannot spend %v energy", x))
 	}
-	if u.Energy < e {
+	if *e-x < 0 {
 		return false
 	}
-	u.Energy -= e
+	*e -= x
 	return true
 }
 
-// RestoreEnergy adds e energy, clamping at EnergyCap.
-func (u *User) RestoreEnergy(e int) {
-	if e < 0 {
-		panic(fmt.Errorf("cannot restore %v energy", e))
+// Add restores x energy.
+// Clamps at 1 if the resulting energy level is greater than 1.
+func (e *Energy) Add(x Energy) {
+	if x < 0 {
+		panic(fmt.Errorf("cannot add %v energy", x))
 	}
-	u.Energy += e
-	if u.Energy > EnergyCap {
-		u.Energy = EnergyCap
+	*e += x
+	if *e > 1 {
+		*e = 1
 	}
 }
 
-// LowEnergy is true if the user's energy is below LowEnergy.
-func (u *User) LowEnergy() bool { return u.Energy < LowEnergy }
+// Mod returns a modifier corresponding to the energy level.
+func (e *Energy) Mod() (m *modifier.Mod, ok bool) {
+	if e.Low() {
+		return &modifier.Mod{
+			Emoji:       "😣",
+			Multiplier:  -0.2,
+			Description: "Вы чувствуете себя уставшим.",
+		}, true
+	}
+	if e.Full() {
+		return &modifier.Mod{
+			Emoji:       "⚡️",
+			Multiplier:  0.1,
+			Description: "Вы полны сил.",
+		}, true
+	}
+	return nil, false
+}
 
-// FullEnergy is true if the user's energy is equal to EnergyCap.
-func (u *User) FullEnergy() bool { return u.Energy == EnergyCap }
+// Low returns true if the energy level is close to 0.
+func (e *Energy) Low() bool {
+	if *e < 0.1 {
+		return true
+	}
+	return false
+}
+
+// Full returns true if the energy level is close to 1.
+func (e *Energy) Full() bool {
+	if *e > 0.98 {
+		return true
+	}
+	return false
+}
