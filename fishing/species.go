@@ -69,7 +69,7 @@ func (t Constitution) NormalLength(weight float64) float64 {
 	case Regular:
 		c *= math.SqrtPi
 	default:
-		panic(fmt.Errorf("unexpected constitution %d", t))
+		panic(fmt.Sprintf("unexpected constitution %d", t))
 	}
 	return math.Pow(weight/c, 1.0/b)
 }

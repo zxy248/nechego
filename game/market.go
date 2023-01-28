@@ -77,7 +77,7 @@ func randomProduct() *Product {
 		case pets.Legendary:
 			p = price(200_000, 100_000)
 		default:
-			panic(fmt.Errorf("unexpected pet type %d", q))
+			panic(fmt.Sprintf("unexpected pet type %d", q))
 		}
 	case *token.Dice:
 		p = price(25000, 10000)
@@ -157,7 +157,7 @@ func (u *User) Sell(i *item.Item) (profit int, ok bool) {
 	}
 
 	// The item will be either sold or returned back to the inventory.
-	if ok = u.Inventory.Remove(i); !ok {
+	if !u.Inventory.Remove(i) {
 		return 0, false
 	}
 

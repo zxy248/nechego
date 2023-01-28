@@ -34,7 +34,7 @@ func (q Quality) String() string {
 	case Legendary:
 		return "легендарный"
 	default:
-		panic(fmt.Errorf("unexpected quality %d", q))
+		panic(fmt.Sprintf("unexpected quality %d", q))
 	}
 }
 

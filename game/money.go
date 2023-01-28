@@ -45,7 +45,7 @@ func (b *Balance) Total() int {
 // false.
 func (b *Balance) Spend(n int) bool {
 	if n < 0 {
-		panic(fmt.Errorf("cannot spend %v money", n))
+		panic(fmt.Sprintf("cannot spend %d money", n))
 	}
 	b.Stack()
 	for _, x := range b.inventory.List() {
@@ -62,7 +62,7 @@ func (b *Balance) Spend(n int) bool {
 // Add adds a cash item of the specified value to the inventory.
 func (b *Balance) Add(n int) {
 	if n < 0 {
-		panic(fmt.Errorf("cannot add %v money", n))
+		panic(fmt.Sprintf("cannot add %d money", n))
 	}
 	b.inventory.Add(&item.Item{
 		Type:         item.TypeCash,

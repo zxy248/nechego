@@ -95,7 +95,7 @@ func (h *Sort) Handle(c tele.Context) error {
 
 	for _, x := range items {
 		if !user.Inventory.Remove(x) {
-			panic(fmt.Errorf("sort: cannot remove %v", x))
+			panic(fmt.Sprintf("sort: cannot remove %v", x))
 		}
 	}
 	user.Inventory.PushFront(items)
@@ -142,10 +142,9 @@ func (h *Drop) Handle(c tele.Context) error {
 				format.Key(key)), tele.ModeHTML)
 		}
 		if !user.Inventory.Move(world.Floor, item) {
-			return c.Send(fmt.Sprintf("♻ Вы не можете выбросить %s.",
-				format.Item(item)), tele.ModeHTML)
+			return c.Send(format.CannotDrop(item), tele.ModeHTML)
 		}
-		c.Send(fmt.Sprintf("🚮 Вы выбросили %s.", format.Item(item)), tele.ModeHTML)
+		c.Send(format.Drop(teleutil.Mention(c, user), item), tele.ModeHTML)
 	}
 	world.Floor.Trim(10)
 	return nil
@@ -268,8 +267,11 @@ func (h *Buy) Handle(c tele.Context) error {
 		} else if err != nil {
 			return c.Send(format.NoMoney, tele.ModeHTML)
 		}
-		c.Send(fmt.Sprintf("🛒 Вы приобрели %s за %s.",
-			format.Item(p.Item), format.Money(p.Price)), tele.ModeHTML)
+		c.Send(fmt.Sprintf("🛒 %s покупает %s за %s.",
+			teleutil.Mention(c, user),
+			format.Item(p.Item),
+			format.Money(p.Price)),
+			tele.ModeHTML)
 	}
 	return nil
 }

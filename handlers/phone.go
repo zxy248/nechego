@@ -126,5 +126,5 @@ func (h *Spam) Handle(c tele.Context) error {
 			world.SMS.Send(p.Number, q.Number, msg)
 		}
 	}
-	return c.Send(format.SpamSent(price), tele.ModeHTML)
+	return c.Send(format.SpamSent(teleutil.Mention(c, user), price), tele.ModeHTML)
 }

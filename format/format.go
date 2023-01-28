@@ -21,12 +21,12 @@ const (
 	AdminsOnly           = "⚠️ Эта команда доступна только администрации."
 	RepostMessage        = "✉️ Перешлите сообщение пользователя."
 	UserUnbanned         = "✅ Пользователь разблокирован."
-	CannotAttackYourself = "🛡️ Вы не можете напасть на самого себя."
-	NoFood               = "🍊 У вас закончилась подходящая еда."
+	CannotAttackYourself = "🛡️ Нельзя напасть на самого себя."
+	NoFood               = "🍊 Подходящей еды нет."
 	NotHungry            = "🍊 Вы не хотите есть."
-	InventoryFull        = "🗄 Ваш инвентарь заполнен."
+	InventoryFull        = "🗄 Инвентарь заполнен."
 	BadMarketName        = "🏪 Такое название не подходит для магазина."
-	MarketRenamed        = "🏪 Вы назвали магазин."
+	MarketRenamed        = "🏪 Магазин переименован."
 	SpecifyMoney         = "💵 Укажите количество средств."
 	BadMoney             = "💵 Некорректное количество средств."
 	CannotCraft          = "🛠 Эти предметы нельзя объединить."
@@ -225,8 +225,8 @@ func MessageSent(sender, receiver phone.Number) string {
 		"✉ <code>%v</code> → <code>%v</code>", sender, receiver)
 }
 
-func SpamSent(price int) string {
-	return fmt.Sprintf("✉ Вы совершили рассылку за %s.", Money(price))
+func SpamSent(mention string, price int) string {
+	return fmt.Sprintf("✉ %s совершает рассылку за %s.", mention, Money(price))
 }
 
 func UserBanned(hours int) string {
@@ -239,4 +239,12 @@ func UserBanned(hours int) string {
 
 	}
 	return fmt.Sprintf("🚫 Пользователь заблокирован на %d час%s.", hours, suffix)
+}
+
+func CannotDrop(i *item.Item) string {
+	return fmt.Sprintf("♻ Нельзя выложить %s.", Item(i))
+}
+
+func Drop(mention string, i *item.Item) string {
+	return fmt.Sprintf("♻ %s выкладывает %s.", mention, Item(i))
 }

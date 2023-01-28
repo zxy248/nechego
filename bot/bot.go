@@ -53,7 +53,7 @@ func (r *Router) HandlerFunc(endpoint string) tele.HandlerFunc {
 			return r.Special[h].Handle(c)
 		}
 	default:
-		panic(fmt.Errorf("unexpected endpoint %s", endpoint))
+		panic(fmt.Sprintf("unexpected endpoint %s", endpoint))
 	}
 	for _, w := range r.Middleware {
 		f = w.Wrap(f)

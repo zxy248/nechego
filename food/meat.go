@@ -22,5 +22,5 @@ func (x Meat) Nutrition() float64 {
 	case pets.Big:
 		return 0.22
 	}
-	panic(fmt.Errorf("unexpected meat size %v", x.Species.Size()))
+	panic(fmt.Sprintf("unexpected meat size %v", x.Species.Size()))
 }

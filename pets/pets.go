@@ -90,5 +90,5 @@ func (p *Pet) Nutrition() float64 {
 	case Big:
 		return 0.18
 	}
-	panic(fmt.Errorf("unexpected pet size %v", p.Species.Size()))
+	panic(fmt.Sprintf("unexpected pet size %v", p.Species.Size()))
 }

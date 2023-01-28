@@ -31,7 +31,7 @@ func Mention(c tele.Context, user any) string {
 	case *game.User:
 		member = Member(c, tele.ChatID(x.TUID))
 	default:
-		panic(fmt.Errorf("unexpected type %T", x))
+		panic(fmt.Sprintf("unexpected type %T", x))
 	}
 	return format.Mention(member.User.ID, Name(member))
 }
@@ -97,7 +97,7 @@ func Reply(c tele.Context) (u *tele.User, ok bool) {
 func Lock(c tele.Context, u *game.Universe) (*game.World, *game.User) {
 	world, err := u.World(c.Chat().ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get world: %w", err))
+		panic(fmt.Sprintf("cannot get world: %s", err))
 	}
 	world.Lock()
 	user := world.UserByID(c.Sender().ID)

@@ -13,7 +13,7 @@ type Energy float64
 // Returns false if the energy level would drop below zero.
 func (e *Energy) Spend(x Energy) bool {
 	if x < 0 {
-		panic(fmt.Errorf("cannot spend %v energy", x))
+		panic(fmt.Sprintf("cannot spend %v energy", x))
 	}
 	if *e < x {
 		return false
@@ -26,7 +26,7 @@ func (e *Energy) Spend(x Energy) bool {
 // Clamps at the upper bound of the range.
 func (e *Energy) Add(x Energy) {
 	if x < 0 {
-		panic(fmt.Errorf("cannot add %v energy", x))
+		panic(fmt.Sprintf("cannot add %v energy", x))
 	}
 	*e += x
 	if *e > 1 {

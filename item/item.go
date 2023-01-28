@@ -25,8 +25,11 @@ const (
 	TypePair
 	TypeCash
 	TypeWallet
-	TypeCreditCard // TODO: remove on wipe
-	TypeDebt       // TODO: remove on wipe
+
+	// TODO: Remove after wipe.
+	TypeCreditCard
+	TypeDebt
+
 	TypeFishingRod
 	TypeFish
 	TypePet
@@ -66,10 +69,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &money.Cash{}
 	case TypeWallet:
 		i.Value = &money.Wallet{}
-	case TypeCreditCard:
-		// TODO: remove on wipe
-	case TypeDebt:
-		// TODO: remove on wipe
+	case TypeCreditCard, TypeDebt:
+		// TODO: Remove after wipe.
 	case TypeFishingRod:
 		i.Value = &fishing.Rod{}
 	case TypeFish:
@@ -87,7 +88,7 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 	case TypePhone:
 		i.Value = &phone.Phone{}
 	default:
-		panic(fmt.Errorf("unexpected item type %v", i.Type))
+		panic(fmt.Sprintf("unexpected item type %v", i.Type))
 	}
 	return json.Unmarshal(raw, i.Value)
 }
