@@ -101,7 +101,7 @@ func Products(products []*game.Product) string {
 }
 
 func Money(q int) string {
-	return fmt.Sprintf("<code>%d %s</code>", q, money.Symbol)
+	return fmt.Sprintf("<code>%d %s</code>", q, money.Currency)
 }
 
 func Balance(q int) string {

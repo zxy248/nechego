@@ -10,6 +10,7 @@ func (u *User) Modset(w *World) modifier.Set {
 	moders := []modifier.Moder{
 		Luck(u.Luck()),
 		&u.Energy,
+		u.Balance(),
 	}
 
 	// If the predicate is true, the corresponding modifier will
@@ -18,8 +19,6 @@ func (u *User) Modset(w *World) modifier.Set {
 		predicate func() bool
 		modifier  *modifier.Mod
 	}{
-		{u.Rich, modifier.Rich},
-		{u.Poor, modifier.Poor},
 		{u.InventoryFull, modifier.Heavy},
 		{func() bool { return u.HasSMS(w) }, modifier.SMS},
 	}

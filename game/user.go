@@ -8,15 +8,14 @@ import (
 	"time"
 )
 
+// The number of items in the user's inventory for applying various
+// types of restrictions.
 const (
-	// InventorySize is a threshold for applying a debuff.
 	InventorySize = 15
-
-	// InventoryCap is a threshold for locking commands related to
-	// the inventory system.
-	InventoryCap = 20
+	InventoryCap  = 20
 )
 
+// User represents a player.
 type User struct {
 	TUID        int64       // Telegram ID.
 	Energy      Energy      // Energy level.
@@ -62,6 +61,8 @@ func (u *User) EatQuick() (i *item.Item, ok bool) {
 	return nil, false
 }
 
+// Fish returns a new random item to be added to the user's inventory
+// and decreases durability of the fishing rod r.
 func (u *User) Fish(r *fishing.Rod) *item.Item {
 	r.Durability -= 0.01
 	if rand.Float64() < 0.08 {
@@ -78,12 +79,13 @@ func (u *User) Fish(r *fishing.Rod) *item.Item {
 	return &item.Item{Type: item.TypeFish, Transferable: true, Value: f}
 }
 
-// InventoryFull returns true if the item count is greater than InventorySize.
+// InventoryFull returns true if the item count in the user's
+// inventory exceeds inventory size.
 func (u *User) InventoryFull() bool {
 	return u.Inventory.Count() > InventorySize
 }
 
-// HasSMS return true if the user has unread SMS.
+// HasSMS returns true if the user has unread SMS.
 func (u *User) HasSMS(w *World) bool {
 	p, ok := u.Phone()
 	return ok && w.SMS.Count(p.Number) > 0

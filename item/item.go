@@ -25,8 +25,8 @@ const (
 	TypePair
 	TypeCash
 	TypeWallet
-	TypeCreditCard
-	TypeDebt
+	TypeCreditCard // TODO: remove on wipe
+	TypeDebt       // TODO: remove on wipe
 	TypeFishingRod
 	TypeFish
 	TypePet
@@ -67,9 +67,9 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 	case TypeWallet:
 		i.Value = &money.Wallet{}
 	case TypeCreditCard:
-		i.Value = &money.CreditCard{}
+		// TODO: remove on wipe
 	case TypeDebt:
-		i.Value = &money.Debt{}
+		// TODO: remove on wipe
 	case TypeFishingRod:
 		i.Value = &fishing.Rod{}
 	case TypeFish:

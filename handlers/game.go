@@ -480,10 +480,8 @@ func (h *Stack) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.Stack() {
-		return c.Send("💵 Вы сложили деньги.")
-	}
-	return c.Send("✅")
+	user.Balance().Stack()
+	return c.Send("💵 Вы сложили деньги.")
 }
 
 type Cashout struct {
@@ -504,7 +502,7 @@ func (h *Cashout) Handle(c tele.Context) error {
 		return c.Send(format.SpecifyMoney)
 	}
 	amount := args[0]
-	if err := user.Cashout(amount); errors.Is(err, money.ErrBadMoney) {
+	if err := user.Balance().Cashout(amount); errors.Is(err, money.ErrBadMoney) {
 		return c.Send(format.BadMoney)
 	} else if errors.Is(err, money.ErrNoMoney) {
 		return c.Send(format.NoMoney)
@@ -592,7 +590,7 @@ func (h *Profile) Handle(c tele.Context) error {
 	out := fmt.Sprintf(profile,
 		teleutil.Mention(c, user),
 
-		format.Energy(user.Energy), format.Balance(user.Total()),
+		format.Energy(user.Energy), format.Balance(user.Balance().Total()),
 		format.Strength(user.Strength(world)), format.Rating(user.Rating),
 		format.Luck(user.Luck()), format.Messages(user.Messages),
 
@@ -636,7 +634,7 @@ func (h *Dice) Handle(c tele.Context) error {
 	if world.Casino.GameGoing() {
 		return c.Send("🎲 Игра уже идет.")
 	}
-	if !user.SpendMoney(bet) {
+	if !user.Balance().Spend(bet) {
 		return c.Send("💵 Недостаточно средств.")
 	}
 	if err := world.Casino.PlayDice(
@@ -679,12 +677,12 @@ func (h *Roll) Handle(c tele.Context) error {
 	switch score := c.Message().Dice.Value; {
 	case score > game.CasinoScore:
 		win := game.Bet * 2
-		game.Player.AddMoney(win)
+		game.Player.Balance().Add(win)
 		return c.Send(fmt.Sprintf("💥 Вы выиграли %s",
 			format.Money(win)), tele.ModeHTML)
 	case score == game.CasinoScore:
 		draw := game.Bet
-		game.Player.AddMoney(draw)
+		game.Player.Balance().Add(draw)
 		return c.Send("🎲 Ничья.")
 	}
 	return c.Send("😵 Вы проиграли.")
@@ -757,7 +755,7 @@ func (h *TopRich) Handle(c tele.Context) error {
 	list := []string{"💵 <b>Самые богатые пользователи</b>"}
 	for i, u := range users {
 		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, teleutil.Mention(c, u.TUID), format.Money(u.Total())))
+			i+1, teleutil.Mention(c, u.TUID), format.Money(u.Balance().Total())))
 	}
 	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
 }
@@ -780,7 +778,7 @@ func (h *Capital) Handle(c tele.Context) error {
 	users := world.SortedUsers(game.ByWealth)
 	users = users[:min(len(users), 5)]
 	rich := users[0]
-	balance := rich.Total()
+	balance := rich.Balance().Total()
 	list := []string{
 		fmt.Sprintf("💸 Капитал беседы <b>%s</b>: %s\n",
 			c.Chat().Title, format.Money(total)),
@@ -807,7 +805,8 @@ func (h *Balance) Match(s string) bool {
 func (h *Balance) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
-	return c.Send(fmt.Sprintf("💵 Ваш баланс: %s", format.Money(user.Total())), tele.ModeHTML)
+	return c.Send(fmt.Sprintf("💵 Ваш баланс: %s",
+		format.Money(user.Balance().Total())), tele.ModeHTML)
 }
 
 type Energy struct {

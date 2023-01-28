@@ -2,147 +2,133 @@ package game
 
 import (
 	"fmt"
-	"nechego/fishing"
 	"nechego/item"
+	"nechego/modifier"
 	"nechego/money"
 )
 
-const (
-	RichThreshold = 1_000_000
-	PoorThreshold = 3_000
-)
-
-func (u *User) Rich() bool {
-	return u.Total() >= RichThreshold
+// Balance represents the user's money.
+type Balance struct {
+	inventory *item.Items
 }
 
-func (u *User) Poor() bool {
-	return u.Total() < PoorThreshold
+func (u *User) Balance() *Balance {
+	return &Balance{u.Inventory}
 }
 
-func (u *User) SpendMoney(n int) bool {
-	if n < 0 {
-		panic(fmt.Errorf("cannot spend %v money", n))
-	}
-	u.Stack()
-	return u.spendWallet(n) || u.spendCash(n)
+// Rich is true if there is a lot of money on the balance.
+func (b *Balance) Rich() bool {
+	return b.Total() > 1_000_000
 }
 
-func (u *User) spendWallet(n int) bool {
-	w, ok := u.Wallet()
-	if !ok {
-		return false
-	}
-	if w.Money < n {
-		return false
-	}
-	w.Money -= n
-	return true
+// Poor is true if there is almost no money on the balance.
+func (b *Balance) Poor() bool {
+	return b.Total() < 3000
 }
 
-func (u *User) spendCash(n int) bool {
-	c, ok := u.Cash()
-	if !ok {
-		return false
-	}
-	if c.Money < n {
-		return false
-	}
-	c.Money -= n
-	return true
-}
-
-func (u *User) AddMoney(n int) {
-	if n < 0 {
-		panic(fmt.Errorf("cannot add %v money", n))
-	}
-	u.Inventory.Add(&item.Item{
-		Type:         item.TypeCash,
-		Transferable: true,
-		Value:        &money.Cash{Money: n},
-	})
-}
-
-func (u *User) Stack() bool {
+// Total returns the aggregated amount of money on the balance.
+func (b *Balance) Total() int {
 	t := 0
-	u.Inventory.Filter(func(i *item.Item) bool {
-		switch x := i.Value.(type) {
-		case *money.Cash:
-			t += x.Money
-			return false
-		case *money.Wallet:
-			t += x.Money
-			x.Money = 0
-		}
-		return true
-	})
-	if t == 0 {
-		return false
-	}
-	wallet, ok := u.Wallet()
-	if !ok {
-		u.AddMoney(t)
-		return true
-	}
-	wallet.Money += t
-	return true
-}
-
-func (u *User) Cashout(n int) error {
-	if n <= 0 {
-		return money.ErrBadMoney
-	}
-	if !u.SpendMoney(n) {
-		return money.ErrNoMoney
-	}
-	u.AddMoney(n)
-	return nil
-}
-
-func (u *User) Total() int {
-	t := 0
-	for _, x := range u.Inventory.List() {
+	for _, x := range b.inventory.List() {
 		switch v := x.Value.(type) {
 		case *money.Cash:
 			t += v.Money
 		case *money.Wallet:
 			t += v.Money
-		case *money.CreditCard:
-			t += v.Money
-		case *money.Debt:
-			t -= v.Money
 		}
 	}
 	return t
 }
 
-func (u *User) InDebt() bool {
-	for _, x := range u.Inventory.List() {
-		if _, ok := x.Value.(*money.Debt); ok {
+// Spend subtracts the specified amount of money from the balance and
+// returns true. If there is not enough money on the balance, returns
+// false.
+func (b *Balance) Spend(n int) bool {
+	if n < 0 {
+		panic(fmt.Errorf("cannot spend %v money", n))
+	}
+	b.Stack()
+	for _, x := range b.inventory.List() {
+		if x.Type != item.TypeCash && x.Type != item.TypeWallet {
+			continue
+		}
+		if v, ok := x.Value.(Spender); ok && v.Spend(n) {
 			return true
 		}
 	}
 	return false
 }
 
-func (u *User) Sell(i *item.Item) (profit int, ok bool) {
-	if !i.Transferable {
-		return 0, false
+// Add adds a cash item of the specified value to the inventory.
+func (b *Balance) Add(n int) {
+	if n < 0 {
+		panic(fmt.Errorf("cannot add %v money", n))
 	}
+	b.inventory.Add(&item.Item{
+		Type:         item.TypeCash,
+		Transferable: true,
+		Value:        &money.Cash{Money: n},
+	})
+}
 
-	// The item will be either sold or returned back to the inventory.
-	if ok = u.Inventory.Remove(i); !ok {
-		return 0, false
+// Stack aggregates all money found in the inventory in a single slot.
+func (b *Balance) Stack() {
+	total := 0
+	var wallet *money.Wallet
+	b.inventory.Filter(func(i *item.Item) bool {
+		switch x := i.Value.(type) {
+		case *money.Cash:
+			total += x.Money
+			// Don't keep zero value cash.
+			return false
+		case *money.Wallet:
+			// Stack money to the first wallet found.
+			if wallet == nil {
+				wallet = x
+			}
+			total += x.Money
+			x.Money = 0
+		}
+		return true
+	})
+	if total == 0 {
+		return
 	}
+	if wallet == nil {
+		b.Add(total)
+		return
+	}
+	wallet.Money += total
+}
 
-	switch x := i.Value.(type) {
-	case *fishing.Fish:
-		n := int(x.Price())
-		u.AddMoney(n)
-		return n, true
-	default:
-		// Item of this type cannot be sold; return it back.
-		u.Inventory.Add(i)
+// Cashout adds a cash item of the specified value to the inventory if
+// there is enough money to do so.
+func (b *Balance) Cashout(n int) error {
+	if n <= 0 {
+		return money.ErrBadMoney
 	}
-	return 0, false
+	if !b.Spend(n) {
+		return money.ErrNoMoney
+	}
+	b.Add(n)
+	return nil
+}
+
+// Mod returns a modifier corresponding to the amount of money on the balance.
+func (b *Balance) Mod() (m *modifier.Mod, ok bool) {
+	if b.Rich() {
+		return &modifier.Mod{
+			Emoji:       "🎩",
+			Multiplier:  +0.05,
+			Description: "Вы богаты.",
+		}, true
+	}
+	if b.Poor() {
+		return &modifier.Mod{
+			Emoji:       "🗑️",
+			Multiplier:  -0.05,
+			Description: "Вы бедны.",
+		}, true
+	}
+	return nil, false
 }

@@ -2,28 +2,15 @@ package game
 
 import (
 	"nechego/fishing"
-	"nechego/money"
 	"nechego/pets"
 	"nechego/phone"
 	"nechego/token"
 )
 
-func (u *User) Cash() (c *money.Cash, ok bool) {
-	for _, x := range u.Inventory.List() {
-		if c, ok := x.Value.(*money.Cash); ok {
-			return c, true
-		}
-	}
-	return nil, false
-}
-
-func (u *User) Wallet() (w *money.Wallet, ok bool) {
-	for _, x := range u.Inventory.List() {
-		if w, ok := x.Value.(*money.Wallet); ok {
-			return w, true
-		}
-	}
-	return nil, false
+// Spender is implemented by any value that can be partially spended.
+// Spend returns true on success or false on failure.
+type Spender interface {
+	Spend(n int) bool
 }
 
 func (u *User) Dice() (d *token.Dice, ok bool) {

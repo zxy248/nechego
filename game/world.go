@@ -134,7 +134,7 @@ func (w *World) Save(name string) error {
 }
 
 func (w *World) AddUser(u *User) {
-	u.AddMoney(3000)
+	u.Balance().Add(5000)
 	w.Users = append(w.Users, u)
 }
 
@@ -167,7 +167,7 @@ func (w *World) UserByID(tuid int64) *User {
 
 func (w *World) Capital() (total, avg int) {
 	for _, w := range w.Users {
-		total += w.Total()
+		total += w.Balance().Total()
 	}
 	return total, total / len(w.Users)
 }

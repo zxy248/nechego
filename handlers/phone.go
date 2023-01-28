@@ -118,7 +118,7 @@ func (h *Spam) Handle(c tele.Context) error {
 		return c.Send(format.SMSMaxLen(smsMaxLen))
 	}
 	const price = 2000
-	if !user.SpendMoney(price) {
+	if !user.Balance().Spend(price) {
 		return c.Send(format.NoMoney)
 	}
 	for _, u := range world.Users {

@@ -3,10 +3,9 @@ package money
 import (
 	"errors"
 	"fmt"
-	"time"
 )
 
-const Symbol = "₴"
+const Currency = "₴"
 
 var (
 	ErrNoMoney  = errors.New("insufficient money")
@@ -17,35 +16,30 @@ type Cash struct {
 	Money int
 }
 
+func (c *Cash) Spend(n int) bool {
+	if c.Money >= n {
+		c.Money -= n
+		return true
+	}
+	return false
+}
+
 func (c Cash) String() string {
-	return fmt.Sprintf("💵 Наличные (%d %s)", c.Money, Symbol)
+	return fmt.Sprintf("💵 Наличные (%d %s)", c.Money, Currency)
 }
 
 type Wallet struct {
 	Money int
 }
 
+func (w *Wallet) Spend(n int) bool {
+	if w.Money >= n {
+		w.Money -= n
+		return true
+	}
+	return false
+}
+
 func (w Wallet) String() string {
-	return fmt.Sprintf("💰 Кошелек (%d %s)", w.Money, Symbol)
-}
-
-type CreditCard struct {
-	Bank    int
-	Number  int
-	Expires time.Time
-	Money   int
-}
-
-func (c CreditCard) String() string {
-	return fmt.Sprintf("💳 Кредитная карта (%d %s)", c.Money, Symbol)
-}
-
-type Debt struct {
-	CreditorID int
-	Money      int
-	Percent    int
-}
-
-func (d Debt) String() string {
-	return fmt.Sprintf("💵 Долг (%d %s, %d%%)", d.Money, Symbol, d.Percent)
+	return fmt.Sprintf("💰 Кошелек (%d %s)", w.Money, Currency)
 }

@@ -22,5 +22,5 @@ func ByElo(w *World, a, b *User) bool {
 }
 
 func ByWealth(w *World, a, b *User) bool {
-	return a.Total() > b.Total()
+	return a.Balance().Total() > b.Balance().Total()
 }

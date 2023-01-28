@@ -19,17 +19,20 @@ import (
 
 var ErrNoKey = errors.New("key not found")
 
+// Product is an item with price to be sold on the market.
 type Product struct {
 	Price int
 	Item  *item.Item
 }
 
+// Market represents a place where a user can buy products.
 type Market struct {
-	P    []*Product
-	Name string
-	keys map[int]*Product
+	P    []*Product       // P is a list of products on sale.
+	Name string           // Name of the market.
+	keys map[int]*Product // keys for product selection.
 }
 
+// NewMarket returns a new Market with no products on sale.
 func NewMarket() *Market {
 	return &Market{P: []*Product{}}
 }
@@ -94,10 +97,12 @@ func randomProduct() *Product {
 	return &Product{p, i}
 }
 
+// Add adds a new product to the market.
 func (m *Market) Add(p *Product) {
 	m.P = append(m.P, p)
 }
 
+// Products returns a list of products at the market.
 func (m *Market) Products() []*Product {
 	m.keys = map[int]*Product{}
 	for i, p := range m.P {
@@ -106,6 +111,7 @@ func (m *Market) Products() []*Product {
 	return m.P
 }
 
+// SetName sets the market's name.
 func (m *Market) SetName(s string) bool {
 	if !valid.Name(s) {
 		return false
@@ -122,12 +128,14 @@ func (m *Market) String() string {
 	return s
 }
 
+// Buy removes the product specified by key from the market and adds
+// it to the user's inventory if there is enough money on the balance.
 func (u *User) Buy(m *Market, key int) (*Product, error) {
 	p, ok := m.keys[key]
 	if !ok {
 		return nil, ErrNoKey
 	}
-	if !u.SpendMoney(p.Price) {
+	if !u.Balance().Spend(p.Price) {
 		return nil, money.ErrNoMoney
 	}
 	delete(m.keys, key)
@@ -139,4 +147,28 @@ func (u *User) Buy(m *Market, key int) (*Product, error) {
 	}
 	u.Inventory.Add(p.Item)
 	return p, nil
+}
+
+// Sell removes the specified item from the inventory and adds money
+// if the item can be sold.
+func (u *User) Sell(i *item.Item) (profit int, ok bool) {
+	if !i.Transferable {
+		return 0, false
+	}
+
+	// The item will be either sold or returned back to the inventory.
+	if ok = u.Inventory.Remove(i); !ok {
+		return 0, false
+	}
+
+	switch x := i.Value.(type) {
+	case *fishing.Fish:
+		profit = int(x.Price())
+	default:
+		// Item of this type cannot be sold; return it back.
+		u.Inventory.Add(i)
+		return 0, false
+	}
+	u.Balance().Add(profit)
+	return profit, true
 }
