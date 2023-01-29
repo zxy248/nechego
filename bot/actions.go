@@ -24,10 +24,10 @@ func refillMarket(universe *game.Universe) {
 // restoreEnergy restores the energy levels of all users in the
 // universe at a specified time interval.
 func restoreEnergy(universe *game.Universe) {
-	for range time.NewTicker(5 * time.Minute).C {
+	for range time.NewTicker(time.Minute).C {
 		universe.ForEachWorld(func(w *game.World) {
 			for _, u := range w.Users {
-				e := game.Energy(0.05)
+				e := game.Energy(0.01)
 				if u.InventoryFull() {
 					e /= 2
 				}

@@ -12,7 +12,7 @@ type Details struct {
 }
 
 func (d *Details) String() string {
-	return fmt.Sprintf("⚙️ Детали (%d)", d.Count)
+	return fmt.Sprintf("⚙️ Детали (%d шт.)", d.Count)
 }
 
 // Spend subtracts n details from the count.

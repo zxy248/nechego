@@ -35,7 +35,7 @@ var species = map[Species]struct {
 	Grayling:    {"Хариус", 0.7, 1.4, Regular, 800, false},
 	Trout:       {"Форель", 2.0, 10.0, Regular, 1000, true},
 	Char:        {"Голец", 0.01, 0.025, Long, 50, false},
-	Sturgeon:    {"Осетр", 18.0, 80.0, Long, 5000, true},
+	Sturgeon:    {"Осетр", 18.0, 80.0, Long, 2000, true},
 	Sterlet:     {"Стерлядь", 1.5, 8.0, Long, 1300, true},
 	Carp:        {"Карп", 1.5, 24.0, Belly, 360, false},
 	Goldfish:    {"Карась", 0.5, 5.0, Belly, 70, false},

@@ -3,6 +3,7 @@ package format
 import (
 	"fmt"
 	"html"
+	"math/rand"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/game"
@@ -33,6 +34,8 @@ const (
 	InventorySorted      = "🗃 Инвентарь отсортирован."
 	NoPhone              = "📱 У вас нет телефона."
 	BadPhone             = "☎ Некорректный формат номера."
+	BuyFishingRod        = "🎣 Приобретите удочку в магазине, прежде чем рыбачить."
+	FishingRodBroke      = "🎣 Удочка сломалась."
 )
 
 func Mention(uid int64, name string) string {
@@ -113,7 +116,7 @@ func Weight(w float64) string {
 }
 
 func Energy(e game.Energy) string {
-	return fmt.Sprintf("<code>⚡ %.f%%</code>", 100*e)
+	return fmt.Sprintf("<code>⚡ %.1f%%</code>", 100*e)
 }
 
 func EnergyRemaining(e game.Energy) string {
@@ -268,4 +271,20 @@ func CannotSell(i *item.Item) string {
 func Sell(mention string, i *item.Item, profit int) string {
 	return fmt.Sprintf("💵 %s продает %s и зарабатывает %s.",
 		mention, Item(i), Money(profit))
+}
+
+func BadFishOutcome() string {
+	outcomes := [...]string{
+		"Вы не смогли выудить рыбу.",
+		"Рыба сорвалась с крючка.",
+		"Рыба сорвала леску.",
+		"Рыба скрылась в водорослях.",
+		"Рыба выскользнула из рук.",
+		"Вы отпустили рыбу обратно в воду.",
+	}
+	return "🎣 " + outcomes[rand.Intn(len(outcomes))]
+}
+
+func FishCatch(mention string, i *item.Item) string {
+	return fmt.Sprintf("🎣 %s получает %s.", mention, Item(i))
 }

@@ -106,11 +106,11 @@ func Random() *Item {
 		{Type: TypeFish, Value: fishing.RandomFish()},
 		{Type: TypeFood, Value: food.Random()},
 		{Type: TypeCash, Value: &money.Cash{Money: int(math.Abs(rand.NormFloat64() * 3000))}},
-		{Type: TypeDetails, Value: details.Random()},
 	}
 	uncommon := []*Item{
 		{Type: TypeWallet, Value: &money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
 		{Type: TypeFishingRod, Value: fishing.NewRod()},
+		{Type: TypeDetails, Value: details.Random()},
 	}
 	rare := []*Item{
 		{Type: TypePet, Value: pets.Random()},

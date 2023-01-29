@@ -167,6 +167,8 @@ func (u *User) Sell(i *item.Item) (profit int, ok bool) {
 	switch x := i.Value.(type) {
 	case *fishing.Fish:
 		profit = int(x.Price())
+	case *details.Details:
+		profit = 100 * x.Count
 	default:
 		// Item of this type cannot be sold; return it back.
 		u.Inventory.Add(i)

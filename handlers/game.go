@@ -356,30 +356,24 @@ func (h *Fish) Handle(c tele.Context) error {
 	}
 	rod, ok := user.FishingRod()
 	if !ok {
-		return c.Send("🎣 Приобретите удочку в магазине, прежде чем рыбачить.")
+		return c.Send(format.BuyFishingRod)
 	}
 	if !user.Energy.Spend(0.2) {
 		return c.Send(format.NoEnergy)
 	}
 	item := user.Fish(rod)
 	if rod.Durability < 0 {
-		c.Send("🎣 Ваша удочка сломалась.")
+		c.Send(format.FishingRodBroke)
 	}
-	chance := rand.Float64() + (-0.02 + 0.04*user.Luck())
-	if chance < 0.5 {
-		outcomes := [...]string{
-			"Вы не смогли выудить рыбу.",
-			"Рыба сорвалась с крючка.",
-			"Рыба сорвала леску.",
-			"Рыба скрылась в водорослях.",
-			"Рыба выскользнула из рук.",
-			"Вы отпустили рыбу обратно в воду.",
-		}
-		return c.Send("🎣 " + outcomes[rand.Intn(len(outcomes))])
+	if fishSuccessChance(user) < 0.5 {
+		return c.Send(format.BadFishOutcome())
 	}
 	user.Inventory.Add(item)
-	return c.Send(fmt.Sprintf("🎣 %s получает %s",
-		teleutil.Mention(c, user), format.Item(item)), tele.ModeHTML)
+	return c.Send(format.FishCatch(teleutil.Mention(c, user), item), tele.ModeHTML)
+}
+
+func fishSuccessChance(u *game.User) float64 {
+	return rand.Float64() + (-0.02 + 0.04*u.Luck())
 }
 
 type Craft struct {
