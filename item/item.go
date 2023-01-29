@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"nechego/dates"
+	"nechego/details"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/money"
@@ -25,11 +26,6 @@ const (
 	TypePair
 	TypeCash
 	TypeWallet
-
-	// TODO: Remove after wipe.
-	TypeCreditCard
-	TypeDebt
-
 	TypeFishingRod
 	TypeFish
 	TypePet
@@ -38,6 +34,7 @@ const (
 	TypeKnife
 	TypeMeat
 	TypePhone
+	TypeDetails
 )
 
 type Item struct {
@@ -69,8 +66,6 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &money.Cash{}
 	case TypeWallet:
 		i.Value = &money.Wallet{}
-	case TypeCreditCard, TypeDebt:
-		// TODO: Remove after wipe.
 	case TypeFishingRod:
 		i.Value = &fishing.Rod{}
 	case TypeFish:
@@ -87,6 +82,8 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &food.Meat{}
 	case TypePhone:
 		i.Value = &phone.Phone{}
+	case TypeDetails:
+		i.Value = &details.Details{}
 	default:
 		panic(fmt.Sprintf("unexpected item type %v", i.Type))
 	}
@@ -109,6 +106,7 @@ func Random() *Item {
 		{Type: TypeFish, Value: fishing.RandomFish()},
 		{Type: TypeFood, Value: food.Random()},
 		{Type: TypeCash, Value: &money.Cash{Money: int(math.Abs(rand.NormFloat64() * 3000))}},
+		{Type: TypeDetails, Value: details.Random()},
 	}
 	uncommon := []*Item{
 		{Type: TypeWallet, Value: &money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
@@ -158,6 +156,10 @@ func integral(i *Item) bool {
 		}
 	case *tools.Knife:
 		if x.Durability < 0 {
+			return false
+		}
+	case *details.Details:
+		if x.Count == 0 {
 			return false
 		}
 	}

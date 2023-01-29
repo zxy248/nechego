@@ -17,11 +17,11 @@ type Cash struct {
 }
 
 func (c *Cash) Spend(n int) bool {
-	if c.Money >= n {
-		c.Money -= n
-		return true
+	if c.Money < n {
+		return false
 	}
-	return false
+	c.Money -= n
+	return true
 }
 
 func (c Cash) String() string {
@@ -33,11 +33,11 @@ type Wallet struct {
 }
 
 func (w *Wallet) Spend(n int) bool {
-	if w.Money >= n {
-		w.Money -= n
-		return true
+	if w.Money < n {
+		return false
 	}
-	return false
+	w.Money -= n
+	return true
 }
 
 func (w Wallet) String() string {

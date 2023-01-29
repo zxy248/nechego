@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"nechego/details"
 	"nechego/item"
 	"nechego/modifier"
 	"nechego/money"
@@ -73,12 +74,13 @@ func (b *Balance) Add(n int) {
 
 // Stack aggregates all money found in the inventory in a single slot.
 func (b *Balance) Stack() {
-	total := 0
+	nMoney := 0
+	nDetails := 0
 	var wallet *money.Wallet
 	b.inventory.Filter(func(i *item.Item) bool {
 		switch x := i.Value.(type) {
 		case *money.Cash:
-			total += x.Money
+			nMoney += x.Money
 			// Don't keep zero value cash.
 			return false
 		case *money.Wallet:
@@ -86,19 +88,29 @@ func (b *Balance) Stack() {
 			if wallet == nil {
 				wallet = x
 			}
-			total += x.Money
+			nMoney += x.Money
 			x.Money = 0
+		case *details.Details:
+			nDetails += x.Count
+			// Don't keep zero value details.
+			return false
 		}
 		return true
 	})
-	if total == 0 {
-		return
+	if nMoney != 0 {
+		if wallet != nil {
+			wallet.Money += nMoney
+		} else {
+			b.Add(nMoney)
+		}
 	}
-	if wallet == nil {
-		b.Add(total)
-		return
+	if nDetails != 0 {
+		b.inventory.Add(&item.Item{
+			Type:         item.TypeDetails,
+			Transferable: true,
+			Value:        &details.Details{Count: nDetails},
+		})
 	}
-	wallet.Money += total
 }
 
 // Cashout adds a cash item of the specified value to the inventory if

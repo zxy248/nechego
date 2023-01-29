@@ -8,6 +8,7 @@ import (
 	"nechego/avatar"
 	"nechego/format"
 	"nechego/game"
+	"nechego/game/recipes"
 	"nechego/item"
 	"nechego/money"
 	"nechego/teleutil"
@@ -170,14 +171,12 @@ func (h *Pick) Handle(c tele.Context) error {
 	for _, key := range teleutil.NumArg(c, pickRe, 2) {
 		item, ok := world.Floor.ByKey(key)
 		if !ok {
-			return c.Send(fmt.Sprintf("🗄 Предмета %s нет на полу.",
-				format.Key(key)), tele.ModeHTML)
+			return c.Send(format.NotOnFloor(key), tele.ModeHTML)
 		}
 		if !world.Floor.Move(user.Inventory, item) {
-			return c.Send(fmt.Sprintf("♻ Вы не можете взять %s.",
-				format.Item(item)), tele.ModeHTML)
+			return c.Send(format.CannotPick(item), tele.ModeHTML)
 		}
-		c.Send(fmt.Sprintf("🫳 Вы взяли %s.", format.Item(item)), tele.ModeHTML)
+		c.Send(format.Pick(teleutil.Mention(c, user), item), tele.ModeHTML)
 	}
 	return nil
 }
@@ -406,7 +405,7 @@ func (h *Craft) Handle(c tele.Context) error {
 		}
 		recipe = append(recipe, i)
 	}
-	result, ok := user.Craft(recipe)
+	result, ok := recipes.Craft(user.Inventory, recipe)
 	if !ok {
 		return c.Send(format.CannotCraft)
 	}
@@ -459,11 +458,9 @@ func (h *Sell) Handle(c tele.Context) error {
 		}
 		profit, ok := user.Sell(item)
 		if !ok {
-			return c.Send(fmt.Sprintf("🏪 Вы не можете продать %s.",
-				format.Item(item)), tele.ModeHTML)
+			return c.Send(format.CannotSell(item), tele.ModeHTML)
 		}
-		c.Send(fmt.Sprintf("💵 Вы продали %s, заработав %s.",
-			format.Item(item), format.Money(profit)), tele.ModeHTML)
+		c.Send(format.Sell(teleutil.Mention(c, user), item, profit), tele.ModeHTML)
 	}
 	return nil
 }
@@ -483,7 +480,7 @@ func (h *Stack) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	user.Balance().Stack()
-	return c.Send("💵 Вы сложили деньги.")
+	return c.Send("🗄 Вы сложили вещи.")
 }
 
 type Cashout struct {
@@ -850,14 +847,16 @@ func (h *NamePet) Handle(c tele.Context) error {
 	name := teleutil.Args(c, namePetRe)[1]
 	pet, ok := user.Pet()
 	if !ok {
-		return c.Send("🐈 У вас нет питомца.")
+		return c.Send("🐱 У вас нет питомца.")
 	}
+
+	emoji := pet.Species.Emoji()
 	if pet.Name != "" {
-		return c.Send("🐈 У вашего питомца уже есть имя.")
+		return c.Send(fmt.Sprintf("%s У вашего питомца уже есть имя.", emoji))
 	}
 	if !pet.SetName(name) {
-		return c.Send("🐈 Такое имя не подходит для питомца.")
+		return c.Send(fmt.Sprintf("%s Такое имя не подходит для питомца.", emoji))
 	}
-	return c.Send(fmt.Sprintf("🐈 Вы назвали питомца <code>%s</code>.",
-		name), tele.ModeHTML)
+	return c.Send(fmt.Sprintf("%s Вы назвали питомца <code>%s</code>.",
+		emoji, name), tele.ModeHTML)
 }

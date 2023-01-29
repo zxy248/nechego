@@ -24,7 +24,7 @@ const (
 	CannotAttackYourself = "🛡️ Нельзя напасть на самого себя."
 	NoFood               = "🍊 Подходящей еды нет."
 	NotHungry            = "🍊 Вы не хотите есть."
-	InventoryFull        = "🗄 Инвентарь заполнен."
+	InventoryFull        = "🗄 Инвентарь переполнен."
 	BadMarketName        = "🏪 Такое название не подходит для магазина."
 	MarketRenamed        = "🏪 Магазин переименован."
 	SpecifyMoney         = "💵 Укажите количество средств."
@@ -247,4 +247,25 @@ func CannotDrop(i *item.Item) string {
 
 func Drop(mention string, i *item.Item) string {
 	return fmt.Sprintf("♻ %s выкладывает %s.", mention, Item(i))
+}
+
+func CannotPick(i *item.Item) string {
+	return fmt.Sprintf("♻ Нельзя взять %s.", Item(i))
+}
+
+func Pick(mention string, i *item.Item) string {
+	return fmt.Sprintf("🫳 %s берет %s.", mention, Item(i))
+}
+
+func NotOnFloor(key int) string {
+	return fmt.Sprintf("🗄 Предмета %s нет на полу.", Key(key))
+}
+
+func CannotSell(i *item.Item) string {
+	return fmt.Sprintf("🏪 Нельзя продать %s.", Item(i))
+}
+
+func Sell(mention string, i *item.Item, profit int) string {
+	return fmt.Sprintf("💵 %s продает %s и зарабатывает %s.",
+		mention, Item(i), Money(profit))
 }

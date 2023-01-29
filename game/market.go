@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"nechego/details"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/item"
@@ -89,6 +90,8 @@ func randomProduct() *Product {
 		p = price(5000, 2000)
 	case *phone.Phone:
 		p = price(20000, 10000)
+	case *details.Details:
+		p = price(5000, 2500)
 	default:
 		// This type of item cannot be sold at the market.
 		// Reroll.

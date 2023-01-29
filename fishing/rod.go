@@ -8,28 +8,18 @@ import (
 
 // Rod represents a fishing rod.
 type Rod struct {
-	Quality    float64
+	Level      int
 	Durability float64
 }
 
 // NewRod returns a new Rod with random quality and random durability.
 func NewRod() *Rod {
-	return &Rod{randomQuality(), randomDurability()}
+	return &Rod{1, randomDurability()}
 }
 
 func (r Rod) String() string {
-	return fmt.Sprintf("🎣 Удочка (%.1f, %.f%%)",
-		10*r.Quality, 100*r.Durability)
-}
-
-// randomQuality returns a normally distributed value
-// (mean = 0.5, stddev = 0.2) in the range [0, 1].
-func randomQuality() float64 {
-	q := 0.5 + 0.2*rand.NormFloat64()
-	if q < 0 || q > 1 {
-		return randomQuality()
-	}
-	return q
+	return fmt.Sprintf("🎣 Удочка (%d ур., %.f%%)",
+		r.Level, 100*r.Durability)
 }
 
 // randomDurability returns a random value in the range [0.8, 1.0).
@@ -40,7 +30,7 @@ func randomDurability() float64 {
 func (r *Rod) Mod() (m *modifier.Mod, ok bool) {
 	return &modifier.Mod{
 		Emoji:       "🎣",
-		Multiplier:  +0.05,
+		Multiplier:  0.02 * float64(r.Level),
 		Description: "Вы можете рыбачить.",
 	}, true
 }
