@@ -6,6 +6,10 @@ import (
 )
 
 func Name(s string) bool {
+	allowed := map[rune]bool{
+		' ': true,
+		'-': true,
+	}
 	if !utf8.ValidString(s) {
 		return false
 	}
@@ -13,7 +17,7 @@ func Name(s string) bool {
 		return false
 	}
 	for _, r := range s {
-		if !unicode.Is(unicode.Cyrillic, r) && r != ' ' {
+		if !unicode.Is(unicode.Cyrillic, r) && !allowed[r] {
 			return false
 		}
 	}

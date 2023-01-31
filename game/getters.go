@@ -2,14 +2,16 @@ package game
 
 import (
 	"nechego/fishing"
+	"nechego/item"
 	"nechego/pets"
 	"nechego/phone"
 	"nechego/token"
 )
 
 // Spender is implemented by any value that can be partially spended.
-// Spend returns true on success or false on failure.
 type Spender interface {
+	// Spend must return true on success, or false if the value
+	// cannot be spended by n.
 	Spend(n int) bool
 }
 
@@ -74,4 +76,12 @@ func (u *User) Phone() (p *phone.Phone, ok bool) {
 		}
 	}
 	return nil, false
+}
+
+func (u *User) FishingNet() (n *fishing.Net, ok bool) {
+	x, ok := u.Inventory.ByType(item.TypeFishingNet)
+	if !ok {
+		return nil, false
+	}
+	return x.Value.(*fishing.Net), true
 }

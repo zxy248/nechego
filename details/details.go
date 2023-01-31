@@ -29,3 +29,10 @@ func Random() *Details {
 	c := int(1 + 30*math.Abs(rand.NormFloat64()))
 	return &Details{c}
 }
+
+// Thread is used to craft a fishing net.
+type Thread struct{}
+
+func (t *Thread) String() string {
+	return fmt.Sprintf("🧵 Нить")
+}

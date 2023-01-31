@@ -69,8 +69,25 @@ func MakeMeat(recipe []*item.Item) (result []*item.Item, ok bool) {
 	knife.Durability -= 0.1
 	pet := recipe[1].Value.(*pets.Pet)
 	meat := &food.Meat{Species: pet.Species}
+	// TODO: use item.New
 	return []*item.Item{
 		{Type: item.TypeMeat, Value: meat},
 		{Type: item.TypeKnife, Value: knife},
 	}, true
+}
+
+func MakeFishingNet(recipe []*item.Item) (result []*item.Item, ok bool) {
+	if !(template{
+		item.TypeDetails,
+		item.TypeThread,
+		item.TypeThread,
+		item.TypeThread,
+	}.match(recipe)) {
+		return nil, false
+	}
+	d := recipe[0].Value.(*details.Details)
+	if !d.Spend(50) {
+		return nil, false
+	}
+	return []*item.Item{item.New(fishing.NewNet())}, true
 }

@@ -117,6 +117,7 @@ func (h *Catch) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	user.UnloadNet()
 	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", teleutil.Mention(c, user))
 	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
@@ -307,7 +308,7 @@ func (h *Eat) Handle(c tele.Context) error {
 			return c.Send("🤮")
 		}
 		ate = true
-		c.Send(format.Eat(item), tele.ModeHTML)
+		c.Send(format.Eat(teleutil.Mention(c, user), item), tele.ModeHTML)
 	}
 	return nil
 }
@@ -333,7 +334,7 @@ func (h *EatQuick) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.NoFood)
 	}
-	return c.Send(format.Eat(i)+"\n\n"+
+	return c.Send(format.Eat(teleutil.Mention(c, user), i)+"\n\n"+
 		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
@@ -370,6 +371,54 @@ func (h *Fish) Handle(c tele.Context) error {
 	}
 	user.Inventory.Add(item)
 	return c.Send(format.FishCatch(teleutil.Mention(c, user), item), tele.ModeHTML)
+}
+
+type CastNet struct {
+	Universe *game.Universe
+}
+
+var castNetRe = re("^!закинуть сеть")
+
+func (h *CastNet) Match(s string) bool {
+	return castNetRe.MatchString(s)
+}
+
+func (h *CastNet) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	err := user.CastNet()
+	if errors.Is(err, game.ErrNoNet) {
+		return c.Send(format.NoNet)
+	} else if errors.Is(err, game.ErrNetAlreadyCast) {
+		return c.Send(format.NetAlreadyCast)
+	} else if errors.Is(err, game.ErrFishInNet) {
+		return c.Send(format.FishInNet)
+	} else if err != nil {
+		return err
+	}
+	return c.Send(format.CastNet)
+}
+
+type DrawNet struct {
+	Universe *game.Universe
+}
+
+var drawNetRe = re("^!вытянуть сеть")
+
+func (h *DrawNet) Match(s string) bool {
+	return drawNetRe.MatchString(s)
+}
+
+func (h *DrawNet) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	net, ok := user.DrawNew()
+	if !ok {
+		return c.Send(format.NetNotCasted)
+	}
+	return c.Send(format.DrawNet(net), tele.ModeHTML)
 }
 
 func fishSuccessChance(u *game.User) float64 {

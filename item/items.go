@@ -45,6 +45,15 @@ func (it *Items) ByKey(k int) (x *Item, ok bool) {
 	return x, true
 }
 
+func (it *Items) ByType(t Type) (x *Item, ok bool) {
+	for _, x := range it.List() {
+		if x.Type == t {
+			return x, true
+		}
+	}
+	return nil, false
+}
+
 func (it *Items) updateHotkeys() {
 	it.keys = map[int]*Item{}
 	for i, v := range it.I {

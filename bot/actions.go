@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"nechego/game"
 	"os"
 	"os/signal"
@@ -32,6 +33,19 @@ func restoreEnergy(universe *game.Universe) {
 					e /= 2
 				}
 				u.Energy.Add(e)
+			}
+		})
+	}
+}
+
+// fillNet fills the active fishing nets.
+func fillNet(universe *game.Universe) {
+	for range time.NewTicker(20 * time.Minute).C {
+		universe.ForEachWorld(func(w *game.World) {
+			for _, u := range w.Users {
+				if rand.Float64() < 0.5 {
+					u.FillNet()
+				}
 			}
 		})
 	}

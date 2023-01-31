@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"math/rand"
 	"nechego/fishing"
 	"nechego/food"
@@ -17,13 +18,14 @@ const (
 
 // User represents a player.
 type User struct {
-	TUID        int64       // Telegram ID.
-	Energy      Energy      // Energy level.
-	Rating      float64     // Elo rating in fights.
-	Messages    int         // Number of messages sent.
-	BannedUntil time.Time   // Time after which the user is unbanned.
-	Status      string      // Status displayed in the profile.
-	Inventory   *item.Items // Personal items.
+	TUID        int64        // Telegram ID.
+	Energy      Energy       // Energy level.
+	Rating      float64      // Elo rating in fights.
+	Messages    int          // Number of messages sent.
+	BannedUntil time.Time    // Time after which the user is unbanned.
+	Status      string       // Status displayed in the profile.
+	Inventory   *item.Items  // Personal items.
+	Net         *fishing.Net // Net if currently cast.
 }
 
 func NewUser(tuid int64) *User {
@@ -76,7 +78,73 @@ func (u *User) Fish(r *fishing.Rod) *item.Item {
 	f := fishing.RandomFish()
 	f.Length *= total
 	f.Weight *= total
-	return &item.Item{Type: item.TypeFish, Transferable: true, Value: f}
+	return item.New(f)
+}
+
+var (
+	ErrNoNet          = errors.New("no fishing net in inventory")
+	ErrNetAlreadyCast = errors.New("fishing net is already cast")
+	ErrFishInNet      = errors.New("there is fish in fishing net")
+)
+
+// CastNet removes the fishing net from the inventory and casts it.
+func (u *User) CastNet() error {
+	if u.Net != nil {
+		return ErrNetAlreadyCast
+	}
+	x, ok := u.Inventory.ByType(item.TypeFishingNet)
+	if !ok {
+		return ErrNoNet
+	}
+	net := x.Value.(*fishing.Net)
+	if net.Count() != 0 {
+		return ErrFishInNet
+	}
+	u.Inventory.Remove(x)
+	u.Net = net
+	return nil
+}
+
+// DrawNet returns the fishing net to the user's inventory if it is
+// currently cast.
+func (u *User) DrawNew() (n *fishing.Net, ok bool) {
+	if u.Net == nil {
+		return nil, false
+	}
+	net := u.Net
+	u.Net = nil
+	net.Durability -= 0.1
+	u.Inventory.Add(item.New(net))
+	return net, true
+}
+
+// FillNet fills the fishing net with a fish.
+func (u *User) FillNet() {
+	if u.Net == nil {
+		return
+	}
+	u.Net.Fill()
+}
+
+// UnloadNet moves all the fish from the fishing net (if exists) to
+// the inventory. If the fishing net is broken, removes it from the
+// inventory.
+func (u *User) UnloadNet() {
+	x, ok := u.Inventory.ByType(item.TypeFishingNet)
+	if !ok {
+		return
+	}
+	net := x.Value.(*fishing.Net)
+	if net.Count() == 0 {
+		return
+	}
+	if net.Broken() {
+		u.Inventory.Remove(x)
+	}
+	catch := net.Unload()
+	for _, f := range catch {
+		u.Inventory.Add(item.New(f))
+	}
 }
 
 // InventoryFull returns true if the item count in the user's

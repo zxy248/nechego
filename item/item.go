@@ -35,6 +35,8 @@ const (
 	TypeMeat
 	TypePhone
 	TypeDetails
+	TypeThread
+	TypeFishingNet
 )
 
 type Item struct {
@@ -84,6 +86,10 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		i.Value = &phone.Phone{}
 	case TypeDetails:
 		i.Value = &details.Details{}
+	case TypeThread:
+		i.Value = &details.Thread{}
+	case TypeFishingNet:
+		i.Value = &fishing.Net{}
 	default:
 		panic(fmt.Sprintf("unexpected item type %v", i.Type))
 	}
@@ -111,6 +117,7 @@ func Random() *Item {
 		{Type: TypeWallet, Value: &money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
 		{Type: TypeFishingRod, Value: fishing.NewRod()},
 		{Type: TypeDetails, Value: details.Random()},
+		{Type: TypeThread, Value: &details.Thread{}},
 	}
 	rare := []*Item{
 		{Type: TypePet, Value: pets.Random()},

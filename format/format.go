@@ -11,7 +11,6 @@ import (
 	"nechego/modifier"
 	"nechego/money"
 	"nechego/phone"
-	"strings"
 	"time"
 )
 
@@ -36,6 +35,11 @@ const (
 	BadPhone             = "☎ Некорректный формат номера."
 	BuyFishingRod        = "🎣 Приобретите удочку в магазине, прежде чем рыбачить."
 	FishingRodBroke      = "🎣 Удочка сломалась."
+	NoNet                = "🕸 У вас нет рыболовной сети."
+	NetAlreadyCast       = "🕸 Рыболовная сеть уже закинута."
+	FishInNet            = "🕸 Нельзя закинуть рыболовную сеть, в которой есть рыба."
+	CastNet              = "🕸 Рыболовная сеть закинута."
+	NetNotCasted         = "🕸 Рыболовная сеть еще не закинута."
 )
 
 func Mention(uid int64, name string) string {
@@ -47,11 +51,11 @@ func Item(i *item.Item) string {
 }
 
 func ItemsComma(items []*item.Item) string {
-	r := make([]string, 0, len(items))
+	c := NewConnector(", ")
 	for _, x := range items {
-		r = append(r, Item(x))
+		c.Add(Item(x))
 	}
-	return strings.Join(r, ", ")
+	return c.String()
 }
 
 func NumItem(n int, i *item.Item) string {
@@ -66,41 +70,40 @@ func Items(items []*item.Item) string {
 	if len(items) == 0 {
 		return Empty
 	}
-	lines := make([]string, 0, len(items))
+	c := NewConnector("\n")
 	for i, v := range items {
-		lines = append(lines, NumItem(i, v))
+		c.Add(NumItem(i, v))
 	}
-	return strings.Join(lines, "\n")
+	return c.String()
 }
 
 func Catch(items []*item.Item) string {
-	lines := []string{}
+	if len(items) == 0 {
+		return Empty
+	}
+	c := NewConnector("\n")
 	price, weight := 0.0, 0.0
 	for i, v := range items {
 		if f, ok := v.Value.(*fishing.Fish); ok {
 			price += f.Price()
 			weight += f.Weight
-			lines = append(lines, NumItem(i, v))
+			c.Add(NumItem(i, v))
 		}
 	}
-	if len(lines) == 0 {
-		return Empty
-	}
-	tail := fmt.Sprintf("Стоимость: %s\nВес: %s",
-		Money(int(price)), Weight(weight))
-	lines = append(lines, tail)
-	return strings.Join(lines, "\n")
+	c.Add(fmt.Sprintf("Стоимость: %s\nВес: %s",
+		Money(int(price)), Weight(weight)))
+	return c.String()
 }
 
 func Products(products []*game.Product) string {
 	if len(products) == 0 {
 		return Empty
 	}
-	lines := make([]string, 0, len(products))
+	c := NewConnector("\n")
 	for i, p := range products {
-		lines = append(lines, NumItem(i, p.Item)+", "+Money(p.Price))
+		c.Add(fmt.Sprintf("%s, %s", NumItem(i, p.Item), Money(p.Price)))
 	}
-	return strings.Join(lines, "\n")
+	return c.String()
 }
 
 func Money(q int) string {
@@ -123,12 +126,12 @@ func EnergyRemaining(e game.Energy) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
-func Eat(i *item.Item) string {
-	emoji, verb := "🍊", "съели"
+func Eat(mention string, i *item.Item) string {
+	emoji, verb := "🍊", "съел(а)"
 	if x, ok := i.Value.(*food.Food); ok && x.Beverage() {
-		emoji, verb = "🥤", "выпили"
+		emoji, verb = "🥤", "выпил(а)"
 	}
-	return fmt.Sprintf("%s Вы %s %s.", emoji, verb, Item(i))
+	return fmt.Sprintf("%s %s %s %s.", emoji, mention, verb, Item(i))
 }
 
 func Fish(f *fishing.Fish) string {
@@ -164,11 +167,11 @@ func BadKey(k int) string {
 }
 
 func Modset(s modifier.Set) string {
-	list := []string{}
+	c := NewConnector("\n")
 	for _, x := range s.List() {
-		list = append(list, x.Emoji+" "+x.Description)
+		c.Add(fmt.Sprintf("<i>%s %s</i>", x.Emoji, x.Description))
 	}
-	return fmt.Sprintf("<i>%s</i>", strings.Join(list, "\n"))
+	return c.String()
 }
 
 func Percentage(p float64) string {
@@ -179,13 +182,12 @@ func SMSes(mention string, smses []*phone.SMS) string {
 	if len(smses) == 0 {
 		return fmt.Sprintf("<b>✉ %s: Новых сообщений нет.</b>", mention)
 	}
-	lines := make([]string, 0, len(smses))
+	c := NewConnector("\n")
+	c.Add(fmt.Sprintf("<b>✉ %s: Сообщения</b>", mention))
 	for _, sms := range smses {
-		lines = append(lines, SMS(sms))
+		c.Add(SMS(sms))
 	}
-	head := fmt.Sprintf("<b>✉ %s: Сообщения</b>\n", mention)
-	end := strings.Join(lines, "\n")
-	return head + end
+	return c.String()
 }
 
 func SMS(sms *phone.SMS) string {
@@ -214,13 +216,12 @@ func Contacts(cc []Contact) string {
 	if len(cc) == 0 {
 		return "👥 Контактов нет."
 	}
-	head := "<b>👥 Контакты</b>\n"
-	lines := make([]string, 0, len(cc))
-	for _, c := range cc {
-		lines = append(lines, c.String())
+	c := NewConnector("\n")
+	c.Add("<b>👥 Контакты</b>")
+	for _, contact := range cc {
+		c.Add(contact.String())
 	}
-	tail := strings.Join(lines, "\n")
-	return head + tail
+	return c.String()
 }
 
 func MessageSent(sender, receiver phone.Number) string {
@@ -287,4 +288,20 @@ func BadFishOutcome() string {
 
 func FishCatch(mention string, i *item.Item) string {
 	return fmt.Sprintf("🎣 %s получает %s.", mention, Item(i))
+}
+
+func DrawNet(net *fishing.Net) string {
+	const s = `<b>🕸 Сеть вытянута.</b> Улов - <code>%d рыб%s</code>.
+
+<i>🐟 Используйте команду <code>!улов</code>, чтобы разгрузить сеть.</i>`
+
+	count := net.Count()
+	suffix := ""
+	switch count {
+	case 1:
+		suffix = "а"
+	case 2, 3, 4:
+		suffix = "ы"
+	}
+	return fmt.Sprintf(s, count, suffix)
 }

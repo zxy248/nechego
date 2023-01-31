@@ -61,9 +61,17 @@ func (r *Router) HandlerFunc(endpoint string) tele.HandlerFunc {
 	return f
 }
 
+var token = os.Getenv("NECHEGO_TOKEN")
+
+func init() {
+	if token == "" {
+		log.Fatal("$NECHEGO_TOKEN not set")
+	}
+}
+
 func main() {
 	pref := tele.Settings{
-		Token:  os.Getenv("NECHEGO_TOKEN"),
+		Token:  token,
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	}
 	bot, err := tele.NewBot(pref)
@@ -75,15 +83,13 @@ func main() {
 	avatars := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
 	router := &Router{}
 	router.Handlers = []handlers.Handler{
+		// Pictures.
 		&handlers.Pic{Path: "data/pic"},
 		&handlers.Basili{Path: "data/basili"},
 		&handlers.Casper{Path: "data/casper"},
 		&handlers.Zeus{Path: "data/zeus"},
 		&handlers.Mouse{Path: "data/mouse.mp4"},
 		&handlers.Tiktok{Path: "data/tiktok/"},
-		&handlers.Game{},
-		&handlers.Infa{},
-		&handlers.Weather{},
 		&handlers.Cat{},
 		&handlers.Anime{},
 		&handlers.Furry{},
@@ -98,46 +104,69 @@ func main() {
 		&handlers.Masyunya{},
 		&handlers.Poppy{},
 		&handlers.Sima{},
+
+		// Fun.
+		&handlers.Game{},
+		&handlers.Infa{},
+		&handlers.Weather{},
 		&handlers.Calculator{},
 		&handlers.Name{},
 		&handlers.Who{Universe: universe},
 		&handlers.List{Universe: universe},
+		&handlers.TurnOn{Universe: universe},
+		&handlers.TurnOff{Universe: universe},
+		&handlers.Top{Universe: universe},
+
+		// Daily.
 		&handlers.DailyEblan{Universe: universe},
 		&handlers.DailyAdmin{Universe: universe},
 		&handlers.DailyPair{Universe: universe},
+
+		// Economy.
 		&handlers.Inventory{Universe: universe},
 		&handlers.Sort{Universe: universe},
-		&handlers.Catch{Universe: universe},
 		&handlers.Drop{Universe: universe},
 		&handlers.Pick{Universe: universe},
 		&handlers.Floor{Universe: universe},
-		&handlers.Market{Universe: universe},
-		&handlers.Buy{Universe: universe},
-		&handlers.Eat{Universe: universe},
-		&handlers.EatQuick{Universe: universe},
-		&handlers.Fish{Universe: universe},
-		&handlers.Craft{Universe: universe},
-		&handlers.Status{Universe: universe},
-		&handlers.Sell{Universe: universe},
 		&handlers.Stack{Universe: universe},
 		&handlers.Cashout{Universe: universe},
-		&handlers.Fight{Universe: universe},
-		&handlers.Profile{Universe: universe, Avatars: avatars},
-		&handlers.Avatar{Avatars: avatars},
+		&handlers.Capital{Universe: universe},
+		&handlers.Balance{Universe: universe},
+
+		// Market.
+		&handlers.Market{Universe: universe},
+		&handlers.Buy{Universe: universe},
+		&handlers.Sell{Universe: universe},
+		&handlers.NameMarket{Universe: universe},
+
+		// Actions.
+		&handlers.Craft{Universe: universe},
+		&handlers.Fish{Universe: universe},
+		&handlers.DrawNet{Universe: universe},
+		&handlers.CastNet{Universe: universe},
+		&handlers.Catch{Universe: universe},
 		&handlers.Dice{Universe: universe},
-		&handlers.TurnOn{Universe: universe},
-		&handlers.TurnOff{Universe: universe},
+		&handlers.Fight{Universe: universe},
+		&handlers.Eat{Universe: universe},
+		&handlers.EatQuick{Universe: universe},
+
+		// Admin.
 		&handlers.Ban{Universe: universe, DurationHr: 2},
 		&handlers.Unban{Universe: universe},
+
+		// Top.
 		&handlers.TopStrong{Universe: universe},
 		&handlers.TopRating{Universe: universe},
 		&handlers.TopRich{Universe: universe},
-		&handlers.Top{Universe: universe},
-		&handlers.Capital{Universe: universe},
-		&handlers.Balance{Universe: universe},
+
+		// Profile.
+		&handlers.Status{Universe: universe},
+		&handlers.Profile{Universe: universe, Avatars: avatars},
+		&handlers.Avatar{Avatars: avatars},
 		&handlers.Energy{Universe: universe},
-		&handlers.NameMarket{Universe: universe},
 		&handlers.NamePet{Universe: universe},
+
+		// Phone.
 		&handlers.SendSMS{Universe: universe},
 		&handlers.ReceiveSMS{Universe: universe},
 		&handlers.Contacts{Universe: universe},
@@ -159,6 +188,7 @@ func main() {
 	}
 	go refillMarket(universe)
 	go restoreEnergy(universe)
+	go fillNet(universe)
 	done := stopper(bot, universe)
 
 	endpoints := [...]string{
