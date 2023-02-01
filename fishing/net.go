@@ -21,30 +21,36 @@ func NewNet() *Net {
 	}
 }
 
-// Count returns the number of fish caught in the net.
+// Count returns the number of fish caught in the fishing net.
 func (n *Net) Count() int {
 	return len(n.Fish)
 }
 
-// Broken returns true if the net's durability is below 0.
+// Broken returns true if the fishing net's durability is below 0.
 func (n *Net) Broken() bool {
 	return n.Durability < 0
 }
 
-// Fill adds a random fish to the net.
+// NetDurabilityDecrement is substracted from the fishing net's
+// durability every time it fills with fish.
+const NetDurabilityDecrement = 0.01
+
+// Fill adds a random fish to the fishing net.
 func (n *Net) Fill() {
 	if len(n.Fish) < n.Capacity {
+		n.Durability -= 0.01
 		n.Fish = append(n.Fish, RandomFish())
 	}
 }
 
-// Unload returns the list of caught fish and empties the net.
+// Unload returns the list of caught fish and empties the fishing net.
 func (n *Net) Unload() (catch []*Fish) {
 	catch = n.Fish
 	n.Fish = []*Fish{}
 	return
 }
 
+// String returns the textual representation of the fishing net.
 func (n *Net) String() string {
 	return fmt.Sprintf("🕸 Рыболовная сеть (%d/%d, %.f%%)",
 		n.Count(), n.Capacity, 100*n.Durability)

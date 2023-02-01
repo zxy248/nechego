@@ -65,11 +65,7 @@ func (b *Balance) Add(n int) {
 	if n < 0 {
 		panic(fmt.Sprintf("cannot add %d money", n))
 	}
-	b.inventory.Add(&item.Item{
-		Type:         item.TypeCash,
-		Transferable: true,
-		Value:        &money.Cash{Money: n},
-	})
+	b.inventory.Add(item.New(&money.Cash{Money: n}))
 }
 
 // Stack aggregates all money found in the inventory in a single slot.
@@ -105,11 +101,7 @@ func (b *Balance) Stack() {
 		}
 	}
 	if nDetails != 0 {
-		b.inventory.Add(&item.Item{
-			Type:         item.TypeDetails,
-			Transferable: true,
-			Value:        &details.Details{Count: nDetails},
-		})
+		b.inventory.Add(item.New(&details.Details{Count: nDetails}))
 	}
 }
 

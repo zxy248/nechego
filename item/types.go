@@ -1,6 +1,7 @@
 package item
 
 import (
+	"fmt"
 	"nechego/details"
 	"nechego/fishing"
 	"nechego/food"
@@ -11,18 +12,30 @@ import (
 	"nechego/tools"
 )
 
-func New(x any) *Item {
-	i := &Item{
-		Type:         TypeOf(x),
-		Transferable: true,
-		Value:        x,
-	}
-	if i.Type == TypeEblan || i.Type == TypePair {
-		i.Transferable = false
-	}
-	return i
-}
+// Dynamic type of an item corresponding to the actual types.
+type Type int
 
+const (
+	TypeUnknown Type = iota
+	TypeEblan
+	TypeAdmin
+	TypePair
+	TypeCash
+	TypeWallet
+	TypeFishingRod
+	TypeFish
+	TypePet
+	TypeDice
+	TypeFood
+	TypeKnife
+	TypeMeat
+	TypePhone
+	TypeDetails
+	TypeThread
+	TypeFishingNet
+)
+
+// TypeOf returns Type of x.
 func TypeOf(x any) Type {
 	switch x.(type) {
 	case *token.Eblan:
@@ -59,5 +72,46 @@ func TypeOf(x any) Type {
 		return TypeFishingNet
 	default:
 		return TypeUnknown
+	}
+}
+
+// ValueOf returns the dynamic value of the specified type.
+// Panics if the type t is not supported.
+func ValueOf(t Type) any {
+	switch t {
+	case TypeEblan:
+		return &token.Eblan{}
+	case TypeAdmin:
+		return &token.Admin{}
+	case TypePair:
+		return &token.Pair{}
+	case TypeCash:
+		return &money.Cash{}
+	case TypeWallet:
+		return &money.Wallet{}
+	case TypeFishingRod:
+		return &fishing.Rod{}
+	case TypeFish:
+		return &fishing.Fish{}
+	case TypePet:
+		return &pets.Pet{}
+	case TypeDice:
+		return &token.Dice{}
+	case TypeFood:
+		return &food.Food{}
+	case TypeKnife:
+		return &tools.Knife{}
+	case TypeMeat:
+		return &food.Meat{}
+	case TypePhone:
+		return &phone.Phone{}
+	case TypeDetails:
+		return &details.Details{}
+	case TypeThread:
+		return &details.Thread{}
+	case TypeFishingNet:
+		return &fishing.Net{}
+	default:
+		panic(fmt.Sprintf("unexpected item type %v", t))
 	}
 }

@@ -22,7 +22,7 @@ func UpgradeFishingRod(recipe []*item.Item) (result []*item.Item, ok bool) {
 	}
 	r.Level++
 	r.Durability = (r.Durability + q.Durability) / 2
-	return []*item.Item{{Type: item.TypeFishingRod, Value: r}}, true
+	return []*item.Item{item.New(r)}, true
 }
 
 func RepairFishingRod(recipe []*item.Item) (result []*item.Item, ok bool) {
@@ -38,10 +38,7 @@ func RepairFishingRod(recipe []*item.Item) (result []*item.Item, ok bool) {
 	}
 	d.Spend(resource)
 	r.Durability += float64(resource) * 0.01
-	return []*item.Item{
-		{Type: item.TypeFishingRod, Value: r},
-		{Type: item.TypeDetails, Value: d},
-	}, true
+	return []*item.Item{item.New(r), item.New(d)}, true
 }
 
 func DustFishingRod(recipe []*item.Item) (result []*item.Item, ok bool) {
@@ -50,7 +47,7 @@ func DustFishingRod(recipe []*item.Item) (result []*item.Item, ok bool) {
 	}
 	r := recipe[0].Value.(*fishing.Rod)
 	d := &details.Details{Count: r.Level * 10}
-	return []*item.Item{{Type: item.TypeDetails, Value: d}}, true
+	return []*item.Item{item.New(d)}, true
 }
 
 func DustPhone(recipe []*item.Item) (result []*item.Item, ok bool) {
@@ -58,7 +55,7 @@ func DustPhone(recipe []*item.Item) (result []*item.Item, ok bool) {
 		return nil, false
 	}
 	d := &details.Details{Count: 50}
-	return []*item.Item{{Type: item.TypePhone, Value: d}}, true
+	return []*item.Item{item.New(d)}, true
 }
 
 func MakeMeat(recipe []*item.Item) (result []*item.Item, ok bool) {
@@ -69,11 +66,7 @@ func MakeMeat(recipe []*item.Item) (result []*item.Item, ok bool) {
 	knife.Durability -= 0.1
 	pet := recipe[1].Value.(*pets.Pet)
 	meat := &food.Meat{Species: pet.Species}
-	// TODO: use item.New
-	return []*item.Item{
-		{Type: item.TypeMeat, Value: meat},
-		{Type: item.TypeKnife, Value: knife},
-	}, true
+	return []*item.Item{item.New(meat), item.New(knife)}, true
 }
 
 func MakeFishingNet(recipe []*item.Item) (result []*item.Item, ok bool) {
@@ -89,5 +82,5 @@ func MakeFishingNet(recipe []*item.Item) (result []*item.Item, ok bool) {
 	if !d.Spend(50) {
 		return nil, false
 	}
-	return []*item.Item{item.New(fishing.NewNet())}, true
+	return []*item.Item{item.New(fishing.NewNet()), item.New(d)}, true
 }

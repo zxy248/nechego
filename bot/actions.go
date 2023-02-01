@@ -38,12 +38,12 @@ func restoreEnergy(universe *game.Universe) {
 	}
 }
 
-// fillNet fills the active fishing nets.
+// fillNet fills the users' cast fishing nets.
 func fillNet(universe *game.Universe) {
-	for range time.NewTicker(20 * time.Minute).C {
+	for range time.NewTicker(time.Minute).C {
 		universe.ForEachWorld(func(w *game.World) {
 			for _, u := range w.Users {
-				if rand.Float64() < 0.5 {
+				if rand.Float64() < 0.04 {
 					u.FillNet()
 				}
 			}

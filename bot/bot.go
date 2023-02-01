@@ -105,18 +105,6 @@ func main() {
 		&handlers.Poppy{},
 		&handlers.Sima{},
 
-		// Fun.
-		&handlers.Game{},
-		&handlers.Infa{},
-		&handlers.Weather{},
-		&handlers.Calculator{},
-		&handlers.Name{},
-		&handlers.Who{Universe: universe},
-		&handlers.List{Universe: universe},
-		&handlers.TurnOn{Universe: universe},
-		&handlers.TurnOff{Universe: universe},
-		&handlers.Top{Universe: universe},
-
 		// Daily.
 		&handlers.DailyEblan{Universe: universe},
 		&handlers.DailyAdmin{Universe: universe},
@@ -144,6 +132,7 @@ func main() {
 		&handlers.Fish{Universe: universe},
 		&handlers.DrawNet{Universe: universe},
 		&handlers.CastNet{Universe: universe},
+		&handlers.Net{Universe: universe},
 		&handlers.Catch{Universe: universe},
 		&handlers.Dice{Universe: universe},
 		&handlers.Fight{Universe: universe},
@@ -171,6 +160,18 @@ func main() {
 		&handlers.ReceiveSMS{Universe: universe},
 		&handlers.Contacts{Universe: universe},
 		&handlers.Spam{Universe: universe},
+
+		// Fun.
+		&handlers.Game{},
+		&handlers.Infa{},
+		&handlers.Weather{},
+		&handlers.Calculator{},
+		&handlers.Name{},
+		&handlers.Who{Universe: universe},
+		&handlers.List{Universe: universe},
+		&handlers.TurnOn{Universe: universe},
+		&handlers.TurnOff{Universe: universe},
+		&handlers.Top{Universe: universe},
 	}
 	router.Special = map[handlers.HandlerID]handlers.Handler{
 		handlers.HelloHandler: &handlers.Hello{Path: "data/hello.json"},

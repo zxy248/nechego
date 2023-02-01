@@ -421,6 +421,27 @@ func (h *DrawNet) Handle(c tele.Context) error {
 	return c.Send(format.DrawNet(net), tele.ModeHTML)
 }
 
+type Net struct {
+	Universe *game.Universe
+}
+
+var netRe = re("^!сеть")
+
+func (h *Net) Match(s string) bool {
+	return netRe.MatchString(s)
+}
+
+func (h *Net) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	net, ok := user.FishingNet()
+	if !ok {
+		return c.Send(format.NoNet)
+	}
+	return c.Send(format.Net(net), tele.ModeHTML)
+}
+
 func fishSuccessChance(u *game.User) float64 {
 	return rand.Float64() + (-0.02 + 0.04*u.Luck())
 }

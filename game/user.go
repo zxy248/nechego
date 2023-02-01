@@ -25,7 +25,7 @@ type User struct {
 	BannedUntil time.Time    // Time after which the user is unbanned.
 	Status      string       // Status displayed in the profile.
 	Inventory   *item.Items  // Personal items.
-	Net         *fishing.Net // Net if currently cast.
+	Net         *fishing.Net // Net if currently cast, else nil.
 }
 
 func NewUser(tuid int64) *User {
@@ -87,7 +87,7 @@ var (
 	ErrFishInNet      = errors.New("there is fish in fishing net")
 )
 
-// CastNet removes the fishing net from the inventory and casts it.
+// CastNet removes the fishing net from the user's inventory and casts it.
 func (u *User) CastNet() error {
 	if u.Net != nil {
 		return ErrNetAlreadyCast
@@ -113,12 +113,11 @@ func (u *User) DrawNew() (n *fishing.Net, ok bool) {
 	}
 	net := u.Net
 	u.Net = nil
-	net.Durability -= 0.1
 	u.Inventory.Add(item.New(net))
 	return net, true
 }
 
-// FillNet fills the fishing net with a fish.
+// FillNet fills the cast fishing net.
 func (u *User) FillNet() {
 	if u.Net == nil {
 		return
@@ -126,20 +125,15 @@ func (u *User) FillNet() {
 	u.Net.Fill()
 }
 
-// UnloadNet moves all the fish from the fishing net (if exists) to
-// the inventory. If the fishing net is broken, removes it from the
-// inventory.
+// UnloadNet moves the caught fish from the fishing net (if exists) to
+// the user's inventory.
 func (u *User) UnloadNet() {
-	x, ok := u.Inventory.ByType(item.TypeFishingNet)
+	net, ok := u.FishingNet()
 	if !ok {
 		return
 	}
-	net := x.Value.(*fishing.Net)
 	if net.Count() == 0 {
 		return
-	}
-	if net.Broken() {
-		u.Inventory.Remove(x)
 	}
 	catch := net.Unload()
 	for _, f := range catch {

@@ -291,11 +291,21 @@ func FishCatch(mention string, i *item.Item) string {
 }
 
 func DrawNet(net *fishing.Net) string {
-	const s = `<b>🕸 Сеть вытянута.</b> Улов - <code>%d рыб%s</code>.
+	const s = `<b>🕸 Сеть вытянута.</b> Внутри находится <code>%s</code>.
 
 <i>🐟 Используйте команду <code>!улов</code>, чтобы разгрузить сеть.</i>`
+	return fmt.Sprintf(s, fish(net.Count()))
+}
 
-	count := net.Count()
+func Net(n *fishing.Net) string {
+	const s = `<b>🕸 У вас есть рыболовная сеть на <code>%d</code> слотов.</b>
+🐟 В сети находится <code>%s</code>.
+
+<i>Команды: <code>!закинуть сеть</code>, <code>!вытянуть сеть</code>.</i>`
+	return fmt.Sprintf(s, n.Capacity, fish(n.Count()))
+}
+
+func fish(count int) string {
 	suffix := ""
 	switch count {
 	case 1:
@@ -303,5 +313,5 @@ func DrawNet(net *fishing.Net) string {
 	case 2, 3, 4:
 		suffix = "ы"
 	}
-	return fmt.Sprintf(s, count, suffix)
+	return fmt.Sprintf("%d рыб%s", count, suffix)
 }

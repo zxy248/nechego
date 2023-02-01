@@ -5,6 +5,8 @@ import (
 	"unicode/utf8"
 )
 
+// Name returns true if s is a string consisting of cyrillic
+// characters, ' ' or '-'.
 func Name(s string) bool {
 	allowed := map[rune]bool{
 		' ': true,

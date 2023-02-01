@@ -4,19 +4,24 @@ import (
 	"math/rand"
 )
 
+// Items represents a list of items. Entries in the list are
+// accessible by keys.
 type Items struct {
 	I    []*Item
 	keys map[int]*Item
 }
 
+// NewItems returns an empty Items.
 func NewItems() *Items {
 	return &Items{I: []*Item{}}
 }
 
+// Add appends the item x to the item list.
 func (it *Items) Add(x *Item) {
 	it.I = append(it.I, x)
 }
 
+// Remove removes the item x from the item list.
 func (it *Items) Remove(x *Item) bool {
 	for i, v := range it.I {
 		if v == x {
@@ -28,6 +33,7 @@ func (it *Items) Remove(x *Item) bool {
 	return false
 }
 
+// Contain returns true if the item x is in the list.
 func (it *Items) Contain(x *Item) bool {
 	for _, v := range it.I {
 		if v == x {
@@ -37,6 +43,8 @@ func (it *Items) Contain(x *Item) bool {
 	return false
 }
 
+// ByKey gets an item from the list by the key k.
+// If there is no such item, ok is false.
 func (it *Items) ByKey(k int) (x *Item, ok bool) {
 	x, ok = it.keys[k]
 	if !ok || !it.Contain(x) {
@@ -45,6 +53,8 @@ func (it *Items) ByKey(k int) (x *Item, ok bool) {
 	return x, true
 }
 
+// ByType gets the first item of the type t from the list.
+// If there is no such item, ok is false.
 func (it *Items) ByType(t Type) (x *Item, ok bool) {
 	for _, x := range it.List() {
 		if x.Type == t {
@@ -54,6 +64,7 @@ func (it *Items) ByType(t Type) (x *Item, ok bool) {
 	return nil, false
 }
 
+// updateHotkeys remaps the items.
 func (it *Items) updateHotkeys() {
 	it.keys = map[int]*Item{}
 	for i, v := range it.I {
@@ -61,6 +72,8 @@ func (it *Items) updateHotkeys() {
 	}
 }
 
+// Filter goes through the item list and retains only those for which
+// keep is true.
 func (it *Items) Filter(keep func(i *Item) bool) {
 	n := 0
 	for _, x := range it.I {

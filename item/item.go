@@ -2,7 +2,6 @@ package item
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"math/rand"
 	"nechego/dates"
@@ -17,39 +16,38 @@ import (
 	"time"
 )
 
-type Type int
-
-const (
-	TypeUnknown Type = iota
-	TypeEblan
-	TypeAdmin
-	TypePair
-	TypeCash
-	TypeWallet
-	TypeFishingRod
-	TypeFish
-	TypePet
-	TypeDice
-	TypeFood
-	TypeKnife
-	TypeMeat
-	TypePhone
-	TypeDetails
-	TypeThread
-	TypeFishingNet
-)
-
+// Item represents an item in the world.
 type Item struct {
-	Type         Type
-	Transferable bool
-	Expire       time.Time
-	Value        any
+	Type         Type      // Type of the underlying item value.
+	Transferable bool      // Transferable is true if the item can be transfered.
+	Expire       time.Time // Expire specifies the time after which the item is gone.
+	Value        any       // Value of the actual object.
 }
 
+// New wraps an item value in Item.
+func New(x any) *Item {
+	i := &Item{
+		Type:         TypeOf(x),
+		Transferable: true,
+		Value:        x,
+	}
+	switch i.Type {
+	case TypeEblan, TypePair:
+		i.Transferable = false
+	}
+	switch i.Type {
+	case TypeEblan, TypePair, TypeAdmin:
+		i.Expire = dates.Tomorrow()
+	}
+	return i
+}
+
+// UnmarshalJSON decodes the Item from its textual representation.
 func (i *Item) UnmarshalJSON(data []byte) error {
 	// Necessary to prevent infinite recursion.
 	type ItemWrapper *Item
 
+	// Value should be decoded after Type is known.
 	var raw json.RawMessage
 	wrapped := ItemWrapper(i)
 	wrapped.Value = &raw
@@ -57,42 +55,9 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	switch i.Type {
-	case TypeEblan:
-		i.Value = &token.Eblan{}
-	case TypeAdmin:
-		i.Value = &token.Admin{}
-	case TypePair:
-		i.Value = &token.Pair{}
-	case TypeCash:
-		i.Value = &money.Cash{}
-	case TypeWallet:
-		i.Value = &money.Wallet{}
-	case TypeFishingRod:
-		i.Value = &fishing.Rod{}
-	case TypeFish:
-		i.Value = &fishing.Fish{}
-	case TypePet:
-		i.Value = &pets.Pet{}
-	case TypeDice:
-		i.Value = &token.Dice{}
-	case TypeFood:
-		i.Value = &food.Food{}
-	case TypeKnife:
-		i.Value = &tools.Knife{}
-	case TypeMeat:
-		i.Value = &food.Meat{}
-	case TypePhone:
-		i.Value = &phone.Phone{}
-	case TypeDetails:
-		i.Value = &details.Details{}
-	case TypeThread:
-		i.Value = &details.Thread{}
-	case TypeFishingNet:
-		i.Value = &fishing.Net{}
-	default:
-		panic(fmt.Sprintf("unexpected item type %v", i.Type))
-	}
+	// Now the dynamic type is accessible; assign and unmarshal
+	// the underliying object.
+	wrapped.Value = ValueOf(i.Type)
 	return json.Unmarshal(raw, i.Value)
 }
 
@@ -100,6 +65,8 @@ type SetNamer interface {
 	SetName(s string) bool
 }
 
+// SetName sets the name of the underlying object if it implements the
+// SetNamer interface.
 func (i *Item) SetName(s string) bool {
 	if x, ok := i.Value.(SetNamer); ok {
 		return x.SetName(s)
@@ -107,32 +74,33 @@ func (i *Item) SetName(s string) bool {
 	return false
 }
 
+// Random returns a random item.
 func Random() *Item {
-	common := []*Item{
-		{Type: TypeFish, Value: fishing.RandomFish()},
-		{Type: TypeFood, Value: food.Random()},
-		{Type: TypeCash, Value: &money.Cash{Money: int(math.Abs(rand.NormFloat64() * 3000))}},
+	common := []any{
+		fishing.RandomFish(),
+		food.Random(),
+		&money.Cash{Money: int(math.Abs(rand.NormFloat64() * 3000))},
 	}
-	uncommon := []*Item{
-		{Type: TypeWallet, Value: &money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))}},
-		{Type: TypeFishingRod, Value: fishing.NewRod()},
-		{Type: TypeDetails, Value: details.Random()},
-		{Type: TypeThread, Value: &details.Thread{}},
+	uncommon := []any{
+		&money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))},
+		fishing.NewRod(),
+		details.Random(),
+		&details.Thread{},
 	}
-	rare := []*Item{
-		{Type: TypePet, Value: pets.Random()},
-		{Type: TypeKnife, Value: &tools.Knife{Durability: 0.8 + 0.2*rand.Float64()}},
+	rare := []any{
+		pets.Random(),
+		&tools.Knife{Durability: 0.8 + 0.2*rand.Float64()},
 	}
-	epic := []*Item{
-		{Type: TypePhone, Value: phone.NewPhone()},
-		{Type: TypeDice, Value: &token.Dice{}},
+	epic := []any{
+		phone.NewPhone(),
+		&token.Dice{},
 	}
-	legendary := []*Item{
-		{Type: TypeAdmin, Expire: dates.Tomorrow(), Value: &token.Admin{}},
+	legendary := []any{
+		&token.Admin{},
 	}
 	table := []struct {
 		threshold float64
-		list      []*Item
+		list      []any
 	}{
 		{1.0, common},
 		{0.5, uncommon},
@@ -140,17 +108,17 @@ func Random() *Item {
 		{0.12, epic},
 		{0.02, legendary},
 	}
-	items := []*Item{}
+	items := []any{}
 	for _, x := range table {
 		if rand.Float64() < x.threshold {
 			items = append(items, x.list...)
 		}
 	}
-	i := items[rand.Intn(len(items))]
-	i.Transferable = true
-	return i
+	return New(items[rand.Intn(len(items))])
 }
 
+// integral returns true if the item is OK, and returns false if the
+// item should be removed.
 func integral(i *Item) bool {
 	switch x := i.Value.(type) {
 	case *fishing.Rod:
@@ -167,6 +135,10 @@ func integral(i *Item) bool {
 		}
 	case *details.Details:
 		if x.Count == 0 {
+			return false
+		}
+	case *fishing.Net:
+		if x.Count() == 0 && x.Broken() {
 			return false
 		}
 	}

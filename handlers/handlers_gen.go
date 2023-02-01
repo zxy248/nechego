@@ -56,6 +56,7 @@ const (
 	FishHandler
 	CastNetHandler
 	DrawNetHandler
+	NetHandler
 	CraftHandler
 	StatusHandler
 	SellHandler
@@ -129,6 +130,7 @@ func (_ *EatQuick) Self() HandlerID   { return EatQuickHandler }
 func (_ *Fish) Self() HandlerID       { return FishHandler }
 func (_ *CastNet) Self() HandlerID    { return CastNetHandler }
 func (_ *DrawNet) Self() HandlerID    { return DrawNetHandler }
+func (_ *Net) Self() HandlerID        { return NetHandler }
 func (_ *Craft) Self() HandlerID      { return CraftHandler }
 func (_ *Status) Self() HandlerID     { return StatusHandler }
 func (_ *Sell) Self() HandlerID       { return SellHandler }
