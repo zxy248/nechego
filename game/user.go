@@ -117,7 +117,7 @@ func (u *User) DrawNew() (n *fishing.Net, ok bool) {
 	return net, true
 }
 
-// FillNet fills the cast fishing net.
+// FillNet adds a random fish to the cast fishing net.
 func (u *User) FillNet() {
 	if u.Net == nil {
 		return

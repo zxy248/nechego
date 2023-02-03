@@ -31,11 +31,8 @@ func (n *Net) Broken() bool {
 	return n.Durability < 0
 }
 
-// NetDurabilityDecrement is substracted from the fishing net's
-// durability every time it fills with fish.
-const NetDurabilityDecrement = 0.01
-
-// Fill adds a random fish to the fishing net.
+// Fill adds a random fish to the fishing net and slightly decreases
+// its durability.
 func (n *Net) Fill() {
 	if len(n.Fish) < n.Capacity {
 		n.Durability -= 0.01

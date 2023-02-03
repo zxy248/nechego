@@ -12,7 +12,8 @@ import (
 	"nechego/tools"
 )
 
-// Dynamic type of an item corresponding to the actual types.
+// The dynamic type of an Item corresponding to the actual type of its
+// underlying value.
 type Type int
 
 const (
@@ -35,7 +36,7 @@ const (
 	TypeFishingNet
 )
 
-// TypeOf returns Type of x.
+// TypeOf returns a Type corresponding to the actual type of x.
 func TypeOf(x any) Type {
 	switch x.(type) {
 	case *token.Eblan:

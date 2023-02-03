@@ -24,7 +24,7 @@ func TestRandom(t *testing.T) {
 			}
 		}
 		if x.Type == TypeUnknown {
-			t.Errorf("%v: item type unknown", x)
+			t.Errorf("item type of %v is unknown", x)
 		}
 		typ := TypeOf(x.Value)
 		if typ != x.Type {

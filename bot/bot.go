@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"nechego/avatar"
 	"nechego/bot/context"
 	"nechego/bot/middleware"
@@ -64,6 +65,8 @@ func (r *Router) HandlerFunc(endpoint string) tele.HandlerFunc {
 var token = os.Getenv("NECHEGO_TOKEN")
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
+
 	if token == "" {
 		log.Fatal("$NECHEGO_TOKEN not set")
 	}

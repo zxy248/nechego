@@ -1,6 +1,7 @@
 package recipes
 
 import (
+	"math"
 	"nechego/details"
 	"nechego/fishing"
 	"nechego/food"
@@ -31,13 +32,16 @@ func RepairFishingRod(recipe []*item.Item) (result []*item.Item, ok bool) {
 	}
 	d := recipe[0].Value.(*details.Details)
 	r := recipe[1].Value.(*fishing.Rod)
-	need := int((1 - r.Durability) * 100)
+	need := int(math.Ceil((1 - r.Durability) * 100))
 	resource := d.Count
 	if need < resource {
 		resource = need
 	}
 	d.Spend(resource)
 	r.Durability += float64(resource) * 0.01
+	if r.Durability > 1 {
+		r.Durability = 1
+	}
 	return []*item.Item{item.New(r), item.New(d)}, true
 }
 

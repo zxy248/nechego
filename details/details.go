@@ -30,7 +30,7 @@ func Random() *Details {
 	return &Details{c}
 }
 
-// Thread is used to craft a fishing net.
+// Thread is used for crafting.
 type Thread struct{}
 
 func (t *Thread) String() string {

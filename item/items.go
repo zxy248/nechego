@@ -4,8 +4,8 @@ import (
 	"math/rand"
 )
 
-// Items represents a list of items. Entries in the list are
-// accessible by keys.
+// Items represents a list of items.
+// Entries in the list are accessible by keys.
 type Items struct {
 	I    []*Item
 	keys map[int]*Item
@@ -30,6 +30,7 @@ func (it *Items) Remove(x *Item) bool {
 			return true
 		}
 	}
+	// Item not found.
 	return false
 }
 
@@ -85,18 +86,23 @@ func (it *Items) Filter(keep func(i *Item) bool) {
 	it.I = it.I[:n]
 }
 
+// List returns the filtered item list.
 func (it *Items) List() []*Item {
 	it.Filter(integral)
 	return it.I
 }
 
+// HkList updates the hotkeys and returns the filtered item list.
 func (it *Items) HkList() []*Item {
-	// Updates hotkeys. Do not use this function internally.
+	// Do not use this function internally.
 	it.Filter(integral)
 	it.updateHotkeys()
 	return it.I
 }
 
+// Move removes the item from the items it and adds it to the items
+// dst. Returns false if the item is not transferable or cannot be
+// removed.
 func (it *Items) Move(dst *Items, x *Item) bool {
 	if !x.Transferable {
 		return false
@@ -108,12 +114,15 @@ func (it *Items) Move(dst *Items, x *Item) bool {
 	return true
 }
 
+// Trim retains only the last n items of the list.
 func (it *Items) Trim(n int) {
 	if len(it.I) > n {
 		it.I = it.I[len(it.I)-n:]
 	}
 }
 
+// Random returns a random item from the list.
+// If there is no items in the list, ok is false.
 func (it *Items) Random() (x *Item, ok bool) {
 	items := it.List()
 	if len(items) == 0 {
@@ -122,10 +131,12 @@ func (it *Items) Random() (x *Item, ok bool) {
 	return items[rand.Intn(len(items))], true
 }
 
+// Count returns the number of items in the list.
 func (it *Items) Count() int {
 	return len(it.I)
 }
 
+// PushFront adds the items i to the head of the list.
 func (it *Items) PushFront(i []*Item) {
 	it.I = append(i, it.I...)
 }

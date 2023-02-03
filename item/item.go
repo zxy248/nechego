@@ -2,7 +2,6 @@ package item
 
 import (
 	"encoding/json"
-	"math"
 	"math/rand"
 	"nechego/dates"
 	"nechego/details"
@@ -24,7 +23,7 @@ type Item struct {
 	Value        any       // Value of the actual object.
 }
 
-// New wraps an item value in Item.
+// New returns an Item of the value x.
 func New(x any) *Item {
 	i := &Item{
 		Type:         TypeOf(x),
@@ -42,7 +41,7 @@ func New(x any) *Item {
 	return i
 }
 
-// UnmarshalJSON decodes the Item from its textual representation.
+// UnmarshalJSON implements the json.Unmarshaler interface.
 func (i *Item) UnmarshalJSON(data []byte) error {
 	// Necessary to prevent infinite recursion.
 	type ItemWrapper *Item
@@ -61,6 +60,7 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(raw, i.Value)
 }
 
+// SetNamer is implemented by any value that can change its name.
 type SetNamer interface {
 	SetName(s string) bool
 }
@@ -76,45 +76,37 @@ func (i *Item) SetName(s string) bool {
 
 // Random returns a random item.
 func Random() *Item {
-	common := []any{
-		fishing.RandomFish(),
-		food.Random(),
-		&money.Cash{Money: int(math.Abs(rand.NormFloat64() * 3000))},
+	pool := map[float64][]any{
+		1.0: {
+			fishing.RandomFish(),
+			food.Random(),
+			money.NewCash(),
+		},
+		0.5: {
+			money.NewWallet(),
+			fishing.NewRod(),
+			details.Random(),
+			&details.Thread{},
+		},
+		0.25: {
+			pets.Random(),
+			tools.NewKnife(),
+		},
+		0.12: {
+			phone.NewPhone(),
+			&token.Dice{},
+		},
+		0.02: {
+			&token.Admin{},
+		},
 	}
-	uncommon := []any{
-		&money.Wallet{Money: int(math.Abs(rand.NormFloat64() * 10000))},
-		fishing.NewRod(),
-		details.Random(),
-		&details.Thread{},
-	}
-	rare := []any{
-		pets.Random(),
-		&tools.Knife{Durability: 0.8 + 0.2*rand.Float64()},
-	}
-	epic := []any{
-		phone.NewPhone(),
-		&token.Dice{},
-	}
-	legendary := []any{
-		&token.Admin{},
-	}
-	table := []struct {
-		threshold float64
-		list      []any
-	}{
-		{1.0, common},
-		{0.5, uncommon},
-		{0.25, rare},
-		{0.12, epic},
-		{0.02, legendary},
-	}
-	items := []any{}
-	for _, x := range table {
-		if rand.Float64() < x.threshold {
-			items = append(items, x.list...)
+	i := []any{}
+	for threshold, list := range pool {
+		if rand.Float64() < threshold {
+			i = append(i, list...)
 		}
 	}
-	return New(items[rand.Intn(len(items))])
+	return New(i[rand.Intn(len(i))])
 }
 
 // integral returns true if the item is OK, and returns false if the

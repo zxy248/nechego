@@ -13,10 +13,6 @@ import (
 	"time"
 )
 
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
 type Universe struct {
 	worlds map[int64]*World
 	dir    string
