@@ -2,9 +2,9 @@ package game
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/rand"
+	"nechego/fishing"
 	"nechego/item"
 	"nechego/phone"
 	"os"
@@ -12,68 +12,6 @@ import (
 	"sync"
 	"time"
 )
-
-type Universe struct {
-	worlds map[int64]*World
-	dir    string
-	mu     sync.Mutex
-}
-
-func NewUniverse(dir string) *Universe {
-	return &Universe{
-		dir:    dir,
-		worlds: map[int64]*World{},
-	}
-}
-
-func (u *Universe) worldPath(id int64) string {
-	return filepath.Join(u.dir, fmt.Sprintf("world%d.json", id))
-}
-
-func (u *Universe) ForEachWorld(action func(*World)) {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-
-	for _, w := range u.worlds {
-		w.Lock()
-		action(w)
-		w.Unlock()
-	}
-}
-
-func (u *Universe) World(id int64) (*World, error) {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-
-	w, ok := u.worlds[id]
-	if !ok {
-		p := u.worldPath(id)
-		if err := os.MkdirAll(filepath.Dir(p), 0777); err != nil {
-			return nil, err
-		}
-		w, err := LoadWorld(p)
-		if errors.Is(err, os.ErrNotExist) {
-			w = NewWorld(id)
-		} else if err != nil {
-			return nil, err
-		}
-		u.worlds[id] = w
-		return w, nil
-	}
-	return w, nil
-}
-
-func (u *Universe) SaveAll() error {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-
-	for _, w := range u.worlds {
-		if err := w.Save(u.worldPath(w.TGID)); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 type World struct {
 	TGID     int64
@@ -83,22 +21,28 @@ type World struct {
 	Casino   *Casino
 	Messages int
 	SMS      phone.Database
+	History  *fishing.History
 
 	sync.Mutex `json:"-"`
 }
 
 func NewWorld(id int64) *World {
 	return &World{
-		TGID:   id,
-		Users:  []*User{},
-		Floor:  item.NewItems(),
-		Market: NewMarket(),
-		Casino: &Casino{Timeout: time.Second * 25},
-		SMS:    phone.Database{},
+		TGID:    id,
+		Users:   []*User{},
+		Floor:   item.NewItems(),
+		Market:  NewMarket(),
+		Casino:  &Casino{Timeout: time.Second * 25},
+		SMS:     phone.Database{},
+		History: &fishing.History{},
 	}
 }
 
 func LoadWorld(name string) (*World, error) {
+	if err := os.MkdirAll(filepath.Dir(name), 0777); err != nil {
+		return nil, err
+	}
+
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err

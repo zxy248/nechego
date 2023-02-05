@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 	"math/rand"
+	"nechego/fishing"
 	"nechego/game"
+	"nechego/handlers"
 	"os"
 	"os/signal"
 	"syscall"
@@ -70,4 +72,16 @@ func stopper(bot *tele.Bot, universe *game.Universe) (done chan struct{}) {
 		done <- struct{}{}
 	}()
 	return done
+}
+
+// worldInitializer returns a function that creates fishing record
+// channels and starts the record announcer.
+func worldInitializer(bot *tele.Bot) func(w *game.World) {
+	return func(w *game.World) {
+		weightRecords := w.History.Records(fishing.Weight)
+		lengthRecords := w.History.Records(fishing.Length)
+		priceRecords := w.History.Records(fishing.Price)
+		tgid := tele.ChatID(w.TGID)
+		handlers.RecordAnnouncer(bot, tgid, weightRecords, lengthRecords, priceRecords)
+	}
 }

@@ -2,7 +2,7 @@ package teleutil
 
 import (
 	"fmt"
-	"nechego/format"
+	"html"
 	"nechego/game"
 	"regexp"
 	"strconv"
@@ -33,7 +33,8 @@ func Mention(c tele.Context, user any) string {
 	default:
 		panic(fmt.Sprintf("unexpected type %T", x))
 	}
-	return format.Mention(member.User.ID, Name(member))
+	const format = `<a href="tg://user?id=%d">%s</a>`
+	return fmt.Sprintf(format, member.User.ID, html.EscapeString(Name(member)))
 }
 
 func Args(c tele.Context, re *regexp.Regexp) []string {

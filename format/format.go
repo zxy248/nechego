@@ -2,7 +2,6 @@ package format
 
 import (
 	"fmt"
-	"html"
 	"math/rand"
 	"nechego/fishing"
 	"nechego/food"
@@ -11,6 +10,7 @@ import (
 	"nechego/modifier"
 	"nechego/money"
 	"nechego/phone"
+	"strconv"
 	"time"
 )
 
@@ -40,11 +40,8 @@ const (
 	FishInNet            = "🕸 Нельзя закинуть рыболовную сеть, в которой есть рыба."
 	CastNet              = "🕸 Рыболовная сеть закинута."
 	NetNotCasted         = "🕸 Рыболовная сеть еще не закинута."
+	NoFishingRecords     = "🏆 Рекордов пока нет."
 )
-
-func Mention(uid int64, name string) string {
-	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, uid, html.EscapeString(name))
-}
 
 func Item(i *item.Item) string {
 	return fmt.Sprintf("<code>%s</code>", i.Value)
@@ -314,4 +311,42 @@ func fish(count int) string {
 		suffix = "ы"
 	}
 	return fmt.Sprintf("%d рыб%s", count, suffix)
+}
+
+func NewRecord(e *fishing.Entry, p fishing.Parameter) string {
+	var p1, p2 string
+	switch p {
+	case fishing.Weight:
+		p1, p2 = "весу", "тяжелая"
+	case fishing.Length:
+		p1, p2 = "длине", "большая"
+	case fishing.Price:
+		p1, p2 = "цене", "дорогая"
+	}
+	c := NewConnector("\n")
+	c.Add("<b>🎉 Установлен новый рекорд по %s рыбы!</b>")
+	c.Add("%s это самая %s рыба из всех пойманных.")
+	return fmt.Sprintf(c.String(), p1, Fish(e.Fish), p2)
+}
+
+func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) string {
+	c := NewConnector("\n")
+	c.Add("<b>🏆 Книга рекордов 🎣</b>")
+	c.Add("")
+	c.Add("<b>💰 Самые дорогие рыбы:</b>")
+	for i, e := range price {
+		n := fmt.Sprintf("<b><i>%s</i></b>. ", mention(e.TUID, strconv.Itoa(1+i)))
+		c.Add(n + Fish(e.Fish) + ", " + Money(int(e.Fish.Price())))
+	}
+	c.Add("")
+	c.Add("<b>⚖ Самая тяжелая рыба:</b>")
+	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", mention(weight.TUID, "→"), Fish(weight.Fish)))
+	c.Add("")
+	c.Add("<b>📐 Самая большая рыба:</b>")
+	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", mention(length.TUID, "→"), Fish(length.Fish)))
+	return c.String()
+}
+
+func mention(id int64, name string) string {
+	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, name)
 }

@@ -6,6 +6,7 @@ import (
 	"html"
 	"math/rand"
 	"nechego/avatar"
+	"nechego/fishing"
 	"nechego/format"
 	"nechego/game"
 	"nechego/game/recipes"
@@ -117,7 +118,10 @@ func (h *Catch) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	user.UnloadNet()
+	caught := user.UnloadNet()
+	for _, f := range caught {
+		world.History.Add(user.TUID, f)
+	}
 	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", teleutil.Mention(c, user))
 	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
@@ -369,6 +373,9 @@ func (h *Fish) Handle(c tele.Context) error {
 	if fishSuccessChance(user) < 0.5 {
 		return c.Send(format.BadFishOutcome())
 	}
+	if f, ok := item.Value.(*fishing.Fish); ok {
+		world.History.Add(user.TUID, f)
+	}
 	user.Inventory.Add(item)
 	return c.Send(format.FishCatch(teleutil.Mention(c, user), item), tele.ModeHTML)
 }
@@ -444,6 +451,48 @@ func (h *Net) Handle(c tele.Context) error {
 
 func fishSuccessChance(u *game.User) float64 {
 	return rand.Float64() + (-0.02 + 0.04*u.Luck())
+}
+
+// RecordAnnouncer starts goroutines listening on the given record
+// channels. If a new record arrives on the channel, sends a record
+// announcement to the group.
+func RecordAnnouncer(bot *tele.Bot, to tele.Recipient, weight, length, price chan *fishing.Entry) {
+	m := map[fishing.Parameter]chan *fishing.Entry{
+		fishing.Weight: weight,
+		fishing.Length: length,
+		fishing.Price:  price,
+	}
+	for p, c := range m {
+		go func(p fishing.Parameter, c chan *fishing.Entry) {
+			for r := range c {
+				bot.Send(to, format.NewRecord(r, p), tele.ModeHTML)
+			}
+		}(p, c)
+	}
+}
+
+type FishingRecords struct {
+	Universe *game.Universe
+}
+
+var fishingRecordsRe = re("^!рекорды")
+
+func (h *FishingRecords) Match(s string) bool {
+	return fishingRecordsRe.MatchString(s)
+}
+
+func (h *FishingRecords) Handle(c tele.Context) error {
+	world, _ := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+	byPrice := world.History.Top(fishing.Price, 10)
+	byWeight := world.History.Top(fishing.Weight, 1)
+	byLength := world.History.Top(fishing.Length, 1)
+	for _, top := range [][]*fishing.Entry{byPrice, byWeight, byLength} {
+		if len(top) == 0 {
+			return c.Send(format.NoFishingRecords)
+		}
+	}
+	return c.Send(format.FishingRecords(byPrice, byWeight[0], byLength[0]), tele.ModeHTML)
 }
 
 type Craft struct {

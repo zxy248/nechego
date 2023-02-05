@@ -127,18 +127,16 @@ func (u *User) FillNet() {
 
 // UnloadNet moves the caught fish from the fishing net (if exists) to
 // the user's inventory.
-func (u *User) UnloadNet() {
+func (u *User) UnloadNet() []*fishing.Fish {
 	net, ok := u.FishingNet()
 	if !ok {
-		return
-	}
-	if net.Count() == 0 {
-		return
+		return []*fishing.Fish{}
 	}
 	catch := net.Unload()
 	for _, f := range catch {
 		u.Inventory.Add(item.New(f))
 	}
+	return catch
 }
 
 // InventoryFull returns true if the item count in the user's

@@ -82,7 +82,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	universe := game.NewUniverse("universe")
+	universe := game.NewUniverse("universe", worldInitializer(bot))
 	avatars := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
 	router := &Router{}
 	router.Handlers = []handlers.Handler{
@@ -141,6 +141,7 @@ func main() {
 		&handlers.Fight{Universe: universe},
 		&handlers.Eat{Universe: universe},
 		&handlers.EatQuick{Universe: universe},
+		&handlers.FishingRecords{Universe: universe},
 
 		// Admin.
 		&handlers.Ban{Universe: universe, DurationHr: 2},
