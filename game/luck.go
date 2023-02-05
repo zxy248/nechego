@@ -27,7 +27,7 @@ func (l Luck) Mod() (m *modifier.Mod, ok bool) {
 		return &modifier.Mod{
 			Emoji:       "🌧",
 			Multiplier:  -0.02,
-			Description: "Вам не везет.",
+			Description: "Вам не везёт.",
 		}, true
 	case l > 0.95:
 		return &modifier.Mod{
@@ -39,7 +39,7 @@ func (l Luck) Mod() (m *modifier.Mod, ok bool) {
 		return &modifier.Mod{
 			Emoji:       "🤞",
 			Multiplier:  +0.04,
-			Description: "Вам везет.",
+			Description: "Вам везёт.",
 		}, true
 	}
 	return nil, false

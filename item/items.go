@@ -89,7 +89,7 @@ func (it *Items) Filter(keep func(i *Item) bool) {
 // List returns the filtered item list.
 func (it *Items) List() []*Item {
 	it.Filter(integral)
-	return it.I
+	return it.list()
 }
 
 // HkList updates the hotkeys and returns the filtered item list.
@@ -97,7 +97,14 @@ func (it *Items) HkList() []*Item {
 	// Do not use this function internally.
 	it.Filter(integral)
 	it.updateHotkeys()
-	return it.I
+	return it.list()
+}
+
+// list returns a copy of it.I.
+func (it *Items) list() []*Item {
+	l := make([]*Item, len(it.I))
+	copy(l, it.I)
+	return l
 }
 
 // Move removes the item from the items it and adds it to the items

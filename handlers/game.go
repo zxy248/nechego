@@ -118,10 +118,6 @@ func (h *Catch) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	caught := user.UnloadNet()
-	for _, f := range caught {
-		world.History.Add(user.TUID, f)
-	}
 	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", teleutil.Mention(c, user))
 	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
@@ -384,7 +380,7 @@ type CastNet struct {
 	Universe *game.Universe
 }
 
-var castNetRe = re("^!закинуть сеть")
+var castNetRe = re("^!закинуть")
 
 func (h *CastNet) Match(s string) bool {
 	return castNetRe.MatchString(s)
@@ -411,7 +407,7 @@ type DrawNet struct {
 	Universe *game.Universe
 }
 
-var drawNetRe = re("^!вытянуть сеть")
+var drawNetRe = re("^!вытянуть")
 
 func (h *DrawNet) Match(s string) bool {
 	return drawNetRe.MatchString(s)
@@ -424,6 +420,10 @@ func (h *DrawNet) Handle(c tele.Context) error {
 	net, ok := user.DrawNew()
 	if !ok {
 		return c.Send(format.NetNotCasted)
+	}
+	caught := user.UnloadNet()
+	for _, f := range caught {
+		world.History.Add(user.TUID, f)
 	}
 	return c.Send(format.DrawNet(net), tele.ModeHTML)
 }
@@ -553,7 +553,7 @@ type Sell struct {
 	Universe *game.Universe
 }
 
-var sellRe = re("^!прода(ть|жа) (.*)")
+var sellRe = re("^!продать (.*)")
 
 func (h *Sell) Match(s string) bool {
 	return sellRe.MatchString(s)
@@ -563,19 +563,57 @@ func (h *Sell) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	items := teleutil.NumArg(c, sellRe, 2)
-	for _, key := range items {
+	itemKeys := teleutil.NumArg(c, sellRe, 2)
+	total := 0
+	sold := []*item.Item{}
+	for _, key := range itemKeys {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
-			return c.Send(format.BadKey(key), tele.ModeHTML)
+			c.Send(format.BadKey(key), tele.ModeHTML)
+			continue
 		}
 		profit, ok := user.Sell(item)
 		if !ok {
-			return c.Send(format.CannotSell(item), tele.ModeHTML)
+			c.Send(format.CannotSell(item), tele.ModeHTML)
+			continue
 		}
-		c.Send(format.Sell(teleutil.Mention(c, user), item, profit), tele.ModeHTML)
+		total += profit
+		sold = append(sold, item)
 	}
-	return nil
+	return c.Send(format.Sold(teleutil.Mention(c, user), total, sold...), tele.ModeHTML)
+}
+
+type SellQuick struct {
+	Universe *game.Universe
+}
+
+var sellQuickRe = re("^!продать")
+
+func (h *SellQuick) Match(s string) bool {
+	return sellQuickRe.MatchString(s)
+}
+
+func (h *SellQuick) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	inventory := user.Inventory.List()
+	total := 0
+	sold := []*item.Item{}
+	for _, item := range inventory {
+		fish, ok := item.Value.(*fishing.Fish)
+		if !ok || fish.Price() < 2000 {
+			continue
+		}
+		profit, ok := user.Sell(item)
+		if !ok {
+			c.Send(format.CannotSell(item), tele.ModeHTML)
+			continue
+		}
+		total += profit
+		sold = append(sold, item)
+	}
+	return c.Send(format.Sold(teleutil.Mention(c, user), total, sold...), tele.ModeHTML)
 }
 
 type Stack struct {

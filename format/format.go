@@ -39,8 +39,9 @@ const (
 	NetAlreadyCast       = "🕸 Рыболовная сеть уже закинута."
 	FishInNet            = "🕸 Нельзя закинуть рыболовную сеть, в которой есть рыба."
 	CastNet              = "🕸 Рыболовная сеть закинута."
-	NetNotCasted         = "🕸 Рыболовная сеть еще не закинута."
+	NetNotCasted         = "🕸 Рыболовная сеть ещё не закинута."
 	NoFishingRecords     = "🏆 Рекордов пока нет."
+	NothingSold          = "💵 Ничего не продано."
 )
 
 func Item(i *item.Item) string {
@@ -255,7 +256,7 @@ func CannotPick(i *item.Item) string {
 }
 
 func Pick(mention string, i *item.Item) string {
-	return fmt.Sprintf("🫳 %s берет %s.", mention, Item(i))
+	return fmt.Sprintf("🫳 %s берёт %s.", mention, Item(i))
 }
 
 func NotOnFloor(key int) string {
@@ -266,9 +267,16 @@ func CannotSell(i *item.Item) string {
 	return fmt.Sprintf("🏪 Нельзя продать %s.", Item(i))
 }
 
-func Sell(mention string, i *item.Item, profit int) string {
-	return fmt.Sprintf("💵 %s продает %s и зарабатывает %s.",
-		mention, Item(i), Money(profit))
+func Sold(mention string, profit int, items ...*item.Item) string {
+	if len(items) == 0 {
+		return NothingSold
+	}
+	c := NewConnector(", ")
+	for _, x := range items {
+		c.Add(Item(x))
+	}
+	return fmt.Sprintf("💵 %s продаёт %s и зарабатывает %s.",
+		mention, c.String(), Money(profit))
 }
 
 func BadFishOutcome() string {
@@ -288,18 +296,22 @@ func FishCatch(mention string, i *item.Item) string {
 }
 
 func DrawNet(net *fishing.Net) string {
-	const s = `<b>🕸 Сеть вытянута.</b> Внутри находится <code>%s</code>.
-
-<i>🐟 Используйте команду <code>!улов</code>, чтобы разгрузить сеть.</i>`
-	return fmt.Sprintf(s, fish(net.Count()))
+	n := net.Count()
+	caught := "Поймано"
+	if n == 1 {
+		caught = "Поймана"
+	}
+	c := NewConnector("\n")
+	c.Add("<b>🕸 Сеть вытянута.</b>")
+	c.Add("<i>🐟 %s <code>%s</code>.</i>")
+	return fmt.Sprintf(c.String(), caught, fish(n))
 }
 
 func Net(n *fishing.Net) string {
-	const s = `<b>🕸 У вас есть рыболовная сеть на <code>%d</code> слотов.</b>
-🐟 В сети находится <code>%s</code>.
-
-<i>Команды: <code>!закинуть сеть</code>, <code>!вытянуть сеть</code>.</i>`
-	return fmt.Sprintf(s, n.Capacity, fish(n.Count()))
+	c := NewConnector("\n")
+	c.Add("<b>🕸 У вас есть рыболовная сеть на <code>%d</code> слотов.</b>")
+	c.Add("<i>🐟 Команды: <code>!закинуть</code>, <code>!вытянуть</code>.</i>")
+	return fmt.Sprintf(c.String(), n.Capacity)
 }
 
 func fish(count int) string {
@@ -317,7 +329,7 @@ func NewRecord(e *fishing.Entry, p fishing.Parameter) string {
 	var p1, p2 string
 	switch p {
 	case fishing.Weight:
-		p1, p2 = "весу", "тяжелая"
+		p1, p2 = "весу", "тяжёлая"
 	case fishing.Length:
 		p1, p2 = "длине", "большая"
 	case fishing.Price:
@@ -339,7 +351,7 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 		c.Add(n + Fish(e.Fish) + ", " + Money(int(e.Fish.Price())))
 	}
 	c.Add("")
-	c.Add("<b>⚖ Самая тяжелая рыба:</b>")
+	c.Add("<b>⚖ Самая тяжёлая рыба:</b>")
 	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", mention(weight.TUID, "→"), Fish(weight.Fish)))
 	c.Add("")
 	c.Add("<b>📐 Самая большая рыба:</b>")

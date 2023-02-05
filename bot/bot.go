@@ -128,6 +128,7 @@ func main() {
 		&handlers.Market{Universe: universe},
 		&handlers.Buy{Universe: universe},
 		&handlers.Sell{Universe: universe},
+		&handlers.SellQuick{Universe: universe},
 		&handlers.NameMarket{Universe: universe},
 
 		// Actions.

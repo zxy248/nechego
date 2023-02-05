@@ -59,5 +59,5 @@ func (w *Wallet) Spend(n int) bool {
 }
 
 func (w Wallet) String() string {
-	return fmt.Sprintf("💰 Кошелек (%d %s)", w.Money, Currency)
+	return fmt.Sprintf("💰 Кошелёк (%d %s)", w.Money, Currency)
 }

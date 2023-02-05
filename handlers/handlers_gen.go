@@ -61,6 +61,7 @@ const (
 	CraftHandler
 	StatusHandler
 	SellHandler
+	SellQuickHandler
 	StackHandler
 	CashoutHandler
 	FightHandler
@@ -136,6 +137,7 @@ func (_ *FishingRecords) Self() HandlerID { return FishingRecordsHandler }
 func (_ *Craft) Self() HandlerID          { return CraftHandler }
 func (_ *Status) Self() HandlerID         { return StatusHandler }
 func (_ *Sell) Self() HandlerID           { return SellHandler }
+func (_ *SellQuick) Self() HandlerID      { return SellQuickHandler }
 func (_ *Stack) Self() HandlerID          { return StackHandler }
 func (_ *Cashout) Self() HandlerID        { return CashoutHandler }
 func (_ *Fight) Self() HandlerID          { return FightHandler }
