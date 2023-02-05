@@ -58,8 +58,8 @@ func (u *Universe) World(id int64) (*World, error) {
 
 	w, ok := u.worlds[id]
 	if !ok {
-		// Invariant: the world in not initialized; this case holds only
-		// once for each world.
+		// Invariant: the world in not initialized.
+		// This case holds only once for each world.
 		var err error
 		w, err = LoadWorld(u.worldPath(id))
 		if errors.Is(err, os.ErrNotExist) {

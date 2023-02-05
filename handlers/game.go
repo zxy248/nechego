@@ -563,10 +563,9 @@ func (h *Sell) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	itemKeys := teleutil.NumArg(c, sellRe, 2)
 	total := 0
 	sold := []*item.Item{}
-	for _, key := range itemKeys {
+	for _, key := range teleutil.NumArg(c, sellRe, 2) {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			c.Send(format.BadKey(key), tele.ModeHTML)
@@ -597,10 +596,9 @@ func (h *SellQuick) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	inventory := user.Inventory.List()
 	total := 0
 	sold := []*item.Item{}
-	for _, item := range inventory {
+	for _, item := range user.Inventory.List() {
 		fish, ok := item.Value.(*fishing.Fish)
 		if !ok || fish.Price() < 2000 {
 			continue
