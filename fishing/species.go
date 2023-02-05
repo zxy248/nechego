@@ -49,6 +49,8 @@ var species = map[Species]struct {
 	Bleak:       {"Уклейка", 0.02, 0.06, Regular, 400, false},
 	Nase:        {"Подуст", 0.4, 1.6, Regular, 180, false},
 	Taimen:      {"Таймень", 4.0, 70.0, Long, 900, true},
+	Beluga:      {"Белуга", 18.0, 100.0, Long, 1800, true},
+	Masu:        {"Сима", 1.5, 10.0, Regular, 600, true},
 }
 
 type Constitution int
@@ -112,6 +114,8 @@ const (
 	Bleak
 	Nase
 	Taimen
+	Beluga
+	Masu
 )
 
 func RandomSpecies() Species {
