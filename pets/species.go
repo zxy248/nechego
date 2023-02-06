@@ -122,6 +122,8 @@ const (
 	Parrot
 	Dragon
 	Caterpillar
+	Dodo
+	Otter
 )
 
 func randomSpecies() Species {

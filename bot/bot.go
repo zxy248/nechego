@@ -188,6 +188,7 @@ func main() {
 		&middleware.IgnoreBanned{Universe: universe},
 		&middleware.DeleteMessage{},
 		&middleware.LogMessage{},
+		&middleware.IgnoreSpam{Universe: universe},
 		&middleware.IgnoreForwarded{},
 		&middleware.RequireSupergroup{},
 		middleware.Recover,

@@ -114,7 +114,7 @@ func Random() *Item {
 func integral(i *Item) bool {
 	switch x := i.Value.(type) {
 	case *fishing.Rod:
-		if x.Durability < 0 {
+		if x.Broken() {
 			return false
 		}
 	case *money.Cash:

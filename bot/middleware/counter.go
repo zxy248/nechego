@@ -14,8 +14,8 @@ type IncrementCounters struct {
 func (m *IncrementCounters) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		world, user := teleutil.Lock(c, m.Universe)
-		world.Messages++
-		user.Messages++
+		user.UpdateMessage()
+		world.UpdateMessage()
 		world.Unlock()
 		return next(c)
 	}

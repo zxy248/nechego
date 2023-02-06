@@ -95,4 +95,6 @@ var species = map[Species]struct {
 	Parrot:      {"🦜", "попугай", 0.20, Small},
 	Dragon:      {"🐲", "дракон", 0.01, Big},
 	Caterpillar: {"🐛", "гусеница", 0.02, Small},
+	Dodo:        {"🦤", "додо", 0.01, Small},
+	Otter:       {"🦦", "выдра", 0.03, Medium},
 }

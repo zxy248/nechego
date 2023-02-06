@@ -5,34 +5,40 @@ type Moder interface {
 	Mod() (m *Mod, ok bool)
 }
 
+// Mod represents a modifier.
 type Mod struct {
 	Emoji       string
-	Multiplier  float64
 	Description string
+	Multiplier  float64
 }
 
+// Mod trivially implements the Moder interface.
 func (x *Mod) Mod() (m *Mod, ok bool) {
 	return x, true
 }
 
 var (
-	Heavy        = &Mod{"🪨", -0.35, "Ваш инвентарь переполнен."}
-	RatingFirst  = &Mod{"🥇", +0.03, "Вы на 1-м месте в рейтинге."}
-	RatingSecond = &Mod{"🥈", +0.02, "Вы на 2-м месте в рейтинге."}
-	RatingThird  = &Mod{"🥉", +0.01, "Вы на 3-м месте в рейтинге."}
-	SMS          = &Mod{"📩", 0.0, "У вас есть непрочитанные сообщения."}
+	Heavy        = &Mod{"🪨", "Ваш инвентарь переполнен.", -0.35}
+	RatingFirst  = &Mod{"🥇", "Вы на 1-м месте в рейтинге.", +0.03}
+	RatingSecond = &Mod{"🥈", "Вы на 2-м месте в рейтинге.", +0.02}
+	RatingThird  = &Mod{"🥉", "Вы на 3-м месте в рейтинге.", +0.01}
+	SMS          = &Mod{"📩", "У вас есть непрочитанные сообщения.", 0.0}
 )
 
+// Set represents active modifiers.
 type Set map[*Mod]bool
 
+// Active is true if the given modifier is present in the set.
 func (s Set) Active(m *Mod) bool {
 	return s[m]
 }
 
+// Add adds the given modifier to the set.
 func (s Set) Add(m *Mod) {
 	s[m] = true
 }
 
+// List returns all modifiers from the set.
 func (s Set) List() []*Mod {
 	r := []*Mod{}
 	for m := range s {
@@ -41,6 +47,7 @@ func (s Set) List() []*Mod {
 	return r
 }
 
+// Sum returns the sum of all multipliers in the set.
 func (s Set) Sum() float64 {
 	r := 0.0
 	for m := range s {

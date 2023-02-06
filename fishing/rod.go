@@ -35,3 +35,8 @@ func (r *Rod) Mod() (m *modifier.Mod, ok bool) {
 		Description: "Вы можете рыбачить.",
 	}, true
 }
+
+// Broken returns true if the rod's durability is below zero.
+func (r *Rod) Broken() bool {
+	return r.Durability < 0
+}

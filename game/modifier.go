@@ -28,16 +28,34 @@ func (u *User) Modset(w *World) modifier.Set {
 		}
 	}
 
+	// Buff modifiers.
+	for _, b := range u.Buffs.List() {
+		moders = append(moders, b)
+	}
+
+	top := w.SortedUsers(ByElo)
+	if len(top) >= 3 {
+		switch u {
+		case top[0]:
+			moders = append(moders, modifier.RatingFirst)
+		case top[1]:
+			moders = append(moders, modifier.RatingSecond)
+		case top[2]:
+			moders = append(moders, modifier.RatingThird)
+		}
+	}
+
 	// Item modifiers.
 	// If the same item type is encountered more than once, the
 	// modifier will not be applied.
-	seen := map[item.Type]bool{}
+	seen := map[item.Type]int{item.TypeFishingRod: 0}
 	for _, x := range u.Inventory.List() {
-		if seen[x.Type] {
-			continue
+		if n, ok := seen[x.Type]; ok {
+			if n > 0 {
+				continue
+			}
+			seen[x.Type]++
 		}
-		seen[x.Type] = true
-
 		moder, ok := x.Value.(modifier.Moder)
 		if !ok {
 			continue

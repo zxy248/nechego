@@ -368,11 +368,11 @@ func (h *Fish) Handle(c tele.Context) error {
 	if !user.Energy.Spend(0.2) {
 		return c.Send(format.NoEnergy)
 	}
-	item := user.Fish(rod)
-	if rod.Durability < 0 {
+	item, caught := user.Fish(rod)
+	if rod.Broken() {
 		c.Send(format.FishingRodBroke)
 	}
-	if fishSuccessChance(user) < 0.5 {
+	if !caught {
 		return c.Send(format.BadFishOutcome())
 	}
 	if f, ok := item.Value.(*fishing.Fish); ok {
@@ -401,8 +401,6 @@ func (h *CastNet) Handle(c tele.Context) error {
 		return c.Send(format.NoNet)
 	} else if errors.Is(err, game.ErrNetAlreadyCast) {
 		return c.Send(format.NetAlreadyCast)
-	} else if errors.Is(err, game.ErrFishInNet) {
-		return c.Send(format.FishInNet)
 	} else if err != nil {
 		return err
 	}
@@ -454,10 +452,6 @@ func (h *Net) Handle(c tele.Context) error {
 		return c.Send(format.NoNet)
 	}
 	return c.Send(format.Net(net), tele.ModeHTML)
-}
-
-func fishSuccessChance(u *game.User) float64 {
-	return rand.Float64() + (-0.02 + 0.04*u.Luck())
 }
 
 // RecordAnnouncer starts goroutines listening on the given record

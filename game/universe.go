@@ -67,6 +67,7 @@ func (u *Universe) World(id int64) (*World, error) {
 		} else if err != nil {
 			return nil, err
 		}
+		w.migrate()
 		u.initWorld(w)
 		u.worlds[id] = w
 	}
