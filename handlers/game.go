@@ -118,6 +118,12 @@ func (h *Catch) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	if net, ok := user.FishingNet(); ok {
+		caught := user.UnloadNet(net)
+		for _, f := range caught {
+			world.History.Add(user.TUID, f)
+		}
+	}
 	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", teleutil.Mention(c, user))
 	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
@@ -421,11 +427,12 @@ func (h *DrawNet) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.NetNotCasted)
 	}
-	caught := user.UnloadNet()
+	err := c.Send(format.DrawNet(net), tele.ModeHTML)
+	caught := user.UnloadNet(net)
 	for _, f := range caught {
 		world.History.Add(user.TUID, f)
 	}
-	return c.Send(format.DrawNet(net), tele.ModeHTML)
+	return err
 }
 
 type Net struct {
@@ -565,7 +572,7 @@ func (h *Sell) Handle(c tele.Context) error {
 
 	total := 0
 	sold := []*item.Item{}
-	for _, key := range teleutil.NumArg(c, sellRe, 2) {
+	for _, key := range teleutil.NumArg(c, sellRe, 1) {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			c.Send(format.BadKey(key), tele.ModeHTML)
