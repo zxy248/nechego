@@ -57,6 +57,7 @@ func (u *User) Eat(i *item.Item) bool {
 }
 
 // EatQuick finds the first sensibly eatable item and calls Eat.
+// If there is no food in the inventory, returns (nil, false).
 func (u *User) EatQuick() (i *item.Item, ok bool) {
 	for _, x := range u.Inventory.List() {
 		switch v := x.Value.(type) {

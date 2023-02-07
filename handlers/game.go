@@ -266,20 +266,21 @@ func (h *Buy) Handle(c tele.Context) error {
 	if user.Inventory.Count() > game.InventoryCap {
 		return c.Send(format.InventoryFull)
 	}
+	bought := []*item.Item{}
+	cost := 0
 	for _, key := range teleutil.NumArg(c, buyRe, 1) {
 		p, err := user.Buy(world.Market, key)
 		if errors.Is(err, game.ErrNoKey) {
-			return c.Send(format.BadKey(key), tele.ModeHTML)
+			c.Send(format.BadKey(key), tele.ModeHTML)
+			break
 		} else if err != nil {
-			return c.Send(format.NoMoney, tele.ModeHTML)
+			c.Send(format.NoMoney, tele.ModeHTML)
+			break
 		}
-		c.Send(fmt.Sprintf("🛒 %s покупает %s за %s.",
-			teleutil.Mention(c, user),
-			format.Item(p.Item),
-			format.Money(p.Price)),
-			tele.ModeHTML)
+		bought = append(bought, p.Item)
+		cost += p.Price
 	}
-	return nil
+	return c.Send(format.Bought(teleutil.Mention(c, user), cost, bought...), tele.ModeHTML)
 }
 
 type Eat struct {
@@ -296,27 +297,25 @@ func (h *Eat) Handle(c tele.Context) error {
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	ate := false
-	defer func() {
-		if ate {
-			c.Send(format.EnergyRemaining(user.Energy), tele.ModeHTML)
-		}
-	}()
+	if user.Energy.Full() {
+		return c.Send(format.NotHungry)
+	}
+	eaten := []*item.Item{}
 	for _, key := range teleutil.NumArg(c, eatRe, 2) {
-		if user.Energy.Full() {
-			return c.Send(format.NotHungry)
-		}
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
-			return c.Send(format.BadKey(key), tele.ModeHTML)
+			c.Send(format.BadKey(key), tele.ModeHTML)
+			break
 		}
 		if !user.Eat(item) {
-			return c.Send("🤮")
+			c.Send(format.CannotEat(item), tele.ModeHTML)
+			break
 		}
-		ate = true
-		c.Send(format.Eat(teleutil.Mention(c, user), item), tele.ModeHTML)
+		eaten = append(eaten, item)
 	}
-	return nil
+	return c.Send(format.Eaten(teleutil.Mention(c, user), eaten...)+"\n\n"+
+		format.EnergyRemaining(user.Energy), tele.ModeHTML)
+
 }
 
 type EatQuick struct {
@@ -336,12 +335,16 @@ func (h *EatQuick) Handle(c tele.Context) error {
 	if user.Energy.Full() {
 		return c.Send(format.NotHungry)
 	}
-	i, ok := user.EatQuick()
-	if !ok {
-		return c.Send(format.NoFood)
+	eaten := []*item.Item{}
+	for !user.Energy.Full() {
+		x, ok := user.EatQuick()
+		if !ok {
+			break
+		}
+		eaten = append(eaten, x)
 	}
-	return c.Send(format.Eat(teleutil.Mention(c, user), i)+"\n\n"+
-		format.EnergyRemaining(user.Energy), tele.ModeHTML)
+	return c.Send(format.Eaten(teleutil.Mention(c, user), eaten...)+
+		"\n\n"+format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
 type Fish struct {

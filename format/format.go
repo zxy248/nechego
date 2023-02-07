@@ -41,6 +41,7 @@ const (
 	NetNotCasted         = "🕸 Рыболовная сеть ещё не закинута."
 	NoFishingRecords     = "🏆 Рекордов пока нет."
 	NothingSold          = "💵 Ничего не продано."
+	NothingBought        = "💵 Ничего не куплено."
 )
 
 func Item(i *item.Item) string {
@@ -123,12 +124,27 @@ func EnergyRemaining(e game.Energy) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
-func Eat(mention string, i *item.Item) string {
-	emoji, verb := "🍊", "съел(а)"
-	if x, ok := i.Value.(*food.Food); ok && x.Beverage() {
-		emoji, verb = "🥤", "выпил(а)"
+func Eaten(mention string, eaten ...*item.Item) string {
+	if len(eaten) == 0 {
+		return NoFood
 	}
-	return fmt.Sprintf("%s %s %s %s.", emoji, mention, verb, Item(i))
+	emoji, verb := "🥤", "выпил(а)"
+	c := NewConnector(", ")
+	for _, x := range eaten {
+		if f, ok := x.Value.(*food.Food); !ok || !f.Beverage() {
+			emoji, verb = "🍊", "съел(а)"
+		}
+		c.Add(Item(x))
+	}
+	return fmt.Sprintf("%s %s %s %s.", emoji, mention, verb, c.String())
+}
+
+func CannotEat(i ...*item.Item) string {
+	c := NewConnector(", ")
+	for _, x := range i {
+		c.Add(Item(x))
+	}
+	return fmt.Sprintf("🤮 Нельзя съесть %s.", c.String())
 }
 
 func Fish(f *fishing.Fish) string {
@@ -266,16 +282,28 @@ func CannotSell(i *item.Item) string {
 	return fmt.Sprintf("🏪 Нельзя продать %s.", Item(i))
 }
 
-func Sold(mention string, profit int, items ...*item.Item) string {
-	if len(items) == 0 {
+func Sold(mention string, profit int, sold ...*item.Item) string {
+	if len(sold) == 0 {
 		return NothingSold
 	}
 	c := NewConnector(", ")
-	for _, x := range items {
+	for _, x := range sold {
 		c.Add(Item(x))
 	}
 	return fmt.Sprintf("💵 %s продаёт %s и зарабатывает %s.",
 		mention, c.String(), Money(profit))
+}
+
+func Bought(mention string, cost int, bought ...*item.Item) string {
+	if len(bought) == 0 {
+		return NothingBought
+	}
+	c := NewConnector(", ")
+	for _, x := range bought {
+		c.Add(Item(x))
+	}
+	return fmt.Sprintf("🛒 %s покупает %s за %s.",
+		mention, c.String(), Money(cost))
 }
 
 func BadFishOutcome() string {
@@ -294,16 +322,16 @@ func FishCatch(mention string, i *item.Item) string {
 	return fmt.Sprintf("🎣 %s получает %s.", mention, Item(i))
 }
 
-func DrawNet(net *fishing.Net) string {
-	n := net.Count()
+func DrawNet(n *fishing.Net) string {
+	count := n.Count()
 	caught := "Поймано"
-	if n == 1 {
+	if count == 1 {
 		caught = "Поймана"
 	}
 	c := NewConnector("\n")
 	c.Add("<b>🕸 Сеть вытянута.</b>")
 	c.Add("<i>🐟 %s <code>%s</code>.</i>")
-	return fmt.Sprintf(c.String(), caught, fish(n))
+	return fmt.Sprintf(c.String(), caught, fish(count))
 }
 
 func Net(n *fishing.Net) string {
@@ -358,6 +386,6 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 	return c.String()
 }
 
-func mention(id int64, name string) string {
-	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, name)
+func mention(id int64, text string) string {
+	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, text)
 }
