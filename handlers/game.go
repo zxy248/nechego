@@ -687,6 +687,9 @@ func (h *Fight) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	opnt := world.UserByID(reply.ID)
+	if time.Since(opnt.LastMessage) > 10*time.Minute {
+		return c.Send(format.NotOnline)
+	}
 	if !user.Energy.Spend(0.25) {
 		return c.Send(format.NoEnergy)
 	}
