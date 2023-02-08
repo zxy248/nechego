@@ -6,6 +6,7 @@ import (
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/game"
+	"nechego/game/pvp"
 	"nechego/item"
 	"nechego/modifier"
 	"nechego/money"
@@ -43,6 +44,10 @@ const (
 	NothingSold          = "💵 Ничего не продано."
 	NothingBought        = "💵 Ничего не куплено."
 	NotOnline            = "🚫 Этот пользователь не в сети."
+	CannotBan            = "😖 Этого пользователя нельзя забанить."
+	CannotFight          = "🛡 С этим пользователем нельзя подраться."
+	FightVersusPvE       = "🛡 Оппонент находится в PvE режиме."
+	FightFromPvE         = "🛡 Вы находитесь в PvE режиме."
 )
 
 func Item(i *item.Item) string {
@@ -389,4 +394,32 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 
 func mention(id int64, text string) string {
 	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, text)
+}
+
+func PvPMode() string {
+	return "⚔ PvP режим активирован."
+}
+
+func PvEMode() string {
+	minutes := pvp.WaitForPvE / time.Minute
+	return fmt.Sprintf("🛡 PvE режим активируется через %d минут.", minutes)
+}
+
+func Fight(mentionA, mentionB string, strengthA, strengthB float64) string {
+	const fighter = "<b>%s</b> <code>[%.2f]</code>"
+	const versus = "<b><i>vs.</i></b>"
+	const fight = "⚔️ " + fighter + " " + versus + " " + fighter
+	return fmt.Sprintf(fight, mentionA, strengthA, mentionB, strengthB)
+}
+
+func LoserDrop(mention string, i *item.Item) string {
+	return fmt.Sprintf("🥊 %s выбивает %s из проигравшего.", mention, Item(i))
+}
+
+func AttackerDrop(mention string, i *item.Item) string {
+	return fmt.Sprintf("🌀 %s уронил %s во время драки.", mention, Item(i))
+}
+
+func Win(mention string, elo float64) string {
+	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", mention, elo)
 }

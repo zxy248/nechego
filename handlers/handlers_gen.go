@@ -65,6 +65,7 @@ const (
 	StackHandler
 	CashoutHandler
 	FightHandler
+	PvPHandler
 	ProfileHandler
 	DiceHandler
 	RollHandler
@@ -141,6 +142,7 @@ func (_ *SellQuick) Self() HandlerID      { return SellQuickHandler }
 func (_ *Stack) Self() HandlerID          { return StackHandler }
 func (_ *Cashout) Self() HandlerID        { return CashoutHandler }
 func (_ *Fight) Self() HandlerID          { return FightHandler }
+func (_ *PvP) Self() HandlerID            { return PvPHandler }
 func (_ *Profile) Self() HandlerID        { return ProfileHandler }
 func (_ *Dice) Self() HandlerID           { return DiceHandler }
 func (_ *Roll) Self() HandlerID           { return RollHandler }

@@ -5,6 +5,7 @@ import (
 	"nechego/buff"
 	"nechego/fishing"
 	"nechego/food"
+	"nechego/game/pvp"
 	"nechego/item"
 	"time"
 )
@@ -28,6 +29,8 @@ type User struct {
 	Net         *fishing.Net // Net if currently cast, else nil.
 	LastMessage time.Time    // When was the last message sent?
 	Buffs       buff.Set     // Active buffs.
+	Developer   bool         // Flag of a game developer.
+	CombatMode  pvp.Mode     // PvP or PvE.
 }
 
 func NewUser(tuid int64) *User {
@@ -82,11 +85,4 @@ func (u *User) InventoryFull() bool {
 func (u *User) HasSMS(w *World) bool {
 	p, ok := u.Phone()
 	return ok && w.SMS.Count(p.Number) > 0
-}
-
-// UpdateMessage increments the number of messages and updates the
-// time of the last message.
-func (u *User) UpdateMessage() {
-	u.Messages++
-	u.LastMessage = time.Now()
 }

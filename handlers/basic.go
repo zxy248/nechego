@@ -692,8 +692,12 @@ func (h *Ban) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}
+	target := world.UserByID(reply.ID)
+	if target.Developer {
+		return c.Send(format.CannotBan)
+	}
 	duration := time.Hour * time.Duration(h.DurationHr)
-	world.UserByID(reply.ID).BannedUntil = time.Now().Add(duration)
+	target.BannedUntil = time.Now().Add(duration)
 	return c.Send(format.UserBanned(h.DurationHr))
 }
 

@@ -9,6 +9,7 @@ import (
 	"nechego/fishing"
 	"nechego/format"
 	"nechego/game"
+	"nechego/game/pvp"
 	"nechego/game/recipes"
 	"nechego/item"
 	"nechego/money"
@@ -676,6 +677,7 @@ func (h *Fight) Match(s string) bool {
 }
 
 func (h *Fight) Handle(c tele.Context) error {
+	// Sanity check before locking the world.
 	reply, ok := teleutil.Reply(c)
 	if !ok {
 		return c.Send(format.RepostMessage)
@@ -683,36 +685,75 @@ func (h *Fight) Handle(c tele.Context) error {
 	if c.Sender().ID == reply.ID {
 		return c.Send(format.CannotAttackYourself)
 	}
+
 	world, user := teleutil.Lock(c, h.Universe)
 	defer world.Unlock()
-
 	opnt := world.UserByID(reply.ID)
+
+	// Are both fighters in PvP mode?
+	if user.CombatMode.Status() == pvp.PvE {
+		return c.Send(format.FightFromPvE)
+	}
+	if opnt.CombatMode.Status() == pvp.PvE {
+		return c.Send(format.FightVersusPvE)
+	}
+
+	// Is opponent can fight back?
 	if time.Since(opnt.LastMessage) > 10*time.Minute {
 		return c.Send(format.NotOnline)
 	}
+
 	if !user.Energy.Spend(0.25) {
 		return c.Send(format.NoEnergy)
 	}
-	c.Send(fmt.Sprintf("⚔️ <b>%s</b> <code>[%.2f]</code> <b><i>vs.</i></b> <b>%s</b> <code>[%.2f]</code>",
-		teleutil.Mention(c, user.TUID), user.Strength(world),
-		teleutil.Mention(c, opnt.TUID), opnt.Strength(world)),
-		tele.ModeHTML)
-	winner, loser, rating := world.Fight(user, opnt)
-	winnerMent := teleutil.Mention(c, winner.TUID)
-	if i, ok := loser.Inventory.Random(); ok && rand.Float64() < 1.0/8 {
-		if _, ok := i.Value.(*money.Wallet); !ok && loser.Inventory.Move(world.Floor, i) {
-			c.Send(fmt.Sprintf("🥊 %s выбивает %s из проигравшего.",
-				winnerMent, format.Item(i)), tele.ModeHTML)
+
+	// Fight begins.
+	c.Send(format.Fight(
+		teleutil.Mention(c, user.TUID),
+		teleutil.Mention(c, opnt.TUID),
+		user.Strength(world),
+		opnt.Strength(world),
+	), tele.ModeHTML)
+	win, lose, elo := world.Fight(user, opnt)
+
+	if i, ok := lose.Inventory.Random(); ok && rand.Float64() < 1.0/4 {
+		// Items drops from the loser.
+		if lose.Inventory.Move(world.Floor, i) {
+			c.Send(format.LoserDrop(teleutil.Mention(c, win), i), tele.ModeHTML)
 		}
 	}
 	if i, ok := user.Inventory.Random(); ok && rand.Float64() < 1.0/12 {
+		// Items drops from the attacker.
 		if user.Inventory.Move(world.Floor, i) {
-			c.Send(fmt.Sprintf("🌀 %s уронил %s во время драки.",
-				teleutil.Mention(c, user.TUID), format.Item(i)), tele.ModeHTML)
+			c.Send(format.AttackerDrop(teleutil.Mention(c, user), i), tele.ModeHTML)
 		}
 	}
-	return c.Send(fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.",
-		winnerMent, rating), tele.ModeHTML)
+
+	return c.Send(format.Win(teleutil.Mention(c, win), elo), tele.ModeHTML)
+}
+
+type PvP struct {
+	Universe *game.Universe
+}
+
+var pvpRe = re("^!пвп")
+
+func (h *PvP) Match(s string) bool {
+	return pvpRe.MatchString(s)
+}
+
+func (h *PvP) Handle(c tele.Context) error {
+	world, user := teleutil.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	status := user.CombatMode.Toggle()
+	switch status {
+	case pvp.PvE:
+		return c.Send(format.PvEMode())
+	case pvp.PvP:
+		return c.Send(format.PvPMode())
+	}
+	return fmt.Errorf("unknown combat mode %v", status)
 }
 
 type Profile struct {

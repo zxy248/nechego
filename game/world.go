@@ -15,15 +15,14 @@ import (
 )
 
 type World struct {
-	TGID        int64
-	Users       []*User
-	Floor       *item.Items
-	Market      *Market
-	Casino      *Casino
-	Messages    int
-	LastMessage time.Time
-	SMS         phone.Database
-	History     *fishing.History
+	TGID     int64
+	Users    []*User
+	Floor    *item.Items
+	Market   *Market
+	Casino   *Casino
+	Messages int
+	SMS      phone.Database
+	History  *fishing.History
 
 	sync.Mutex `json:"-"`
 }
@@ -112,13 +111,6 @@ func (w *World) Capital() (total, avg int) {
 		total += w.Balance().Total()
 	}
 	return total, total / len(w.Users)
-}
-
-// UpdateMessage increments the number of messages and updates the
-// time of the last message.
-func (w *World) UpdateMessage() {
-	w.Messages++
-	w.LastMessage = time.Now()
 }
 
 // migrate makes the world consistent with new features.
