@@ -1,6 +1,9 @@
 package pvp
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 const WaitForPvE = 15 * time.Minute
 
@@ -11,6 +14,16 @@ const (
 	PvE Status = iota
 	PvP
 )
+
+func (s Status) String() string {
+	switch s {
+	case PvE:
+		return "PvE"
+	case PvP:
+		return "PvP"
+	}
+	panic(fmt.Sprintf("unexpected status %d", s))
+}
 
 // Combat mode.
 // Do not use the fields of this structure directly; they are public

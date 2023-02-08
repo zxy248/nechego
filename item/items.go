@@ -25,8 +25,7 @@ func (it *Items) Add(x *Item) {
 func (it *Items) Remove(x *Item) bool {
 	for i, v := range it.I {
 		if v == x {
-			it.I[i] = it.I[len(it.I)-1]
-			it.I = it.I[:len(it.I)-1]
+			it.I = append(it.I[:i], it.I[i+1:]...)
 			return true
 		}
 	}

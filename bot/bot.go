@@ -146,8 +146,9 @@ func main() {
 		&handlers.FishingRecords{Universe: universe},
 
 		// Admin.
-		&handlers.Ban{Universe: universe, DurationHr: 2},
-		&handlers.Unban{Universe: universe},
+		// Handlers are commented out due to abuse of admin rights.
+		//     &handlers.Ban{Universe: universe, DurationHr: 1},
+		//     &handlers.Unban{Universe: universe},
 
 		// Top.
 		&handlers.TopStrong{Universe: universe},

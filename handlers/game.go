@@ -13,7 +13,7 @@ import (
 	"nechego/game/recipes"
 	"nechego/item"
 	"nechego/money"
-	"nechego/teleutil"
+	tu "nechego/teleutil"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -30,12 +30,12 @@ func (h *Name) Match(s string) bool {
 }
 
 func (h *Name) Handle(c tele.Context) error {
-	name := html.EscapeString(teleutil.Args(c, nameRe)[1])
+	name := html.EscapeString(tu.Args(c, nameRe)[1])
 	const maxlen = 16
 	if utf8.RuneCountInString(name) > maxlen {
 		return c.Send(fmt.Sprintf("⚠️ Максимальная длина имени %d символов.", maxlen))
 	}
-	if err := teleutil.Promote(c, teleutil.Member(c, c.Sender())); err != nil {
+	if err := tu.Promote(c, tu.Member(c, c.Sender())); err != nil {
 		return err
 	}
 	if err := c.Bot().SetAdminTitle(c.Chat(), c.Sender(), name); err != nil {
@@ -55,7 +55,7 @@ func (h *Inventory) Match(s string) bool {
 }
 
 func (h *Inventory) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	items := user.Inventory.HkList()
@@ -64,7 +64,7 @@ func (h *Inventory) Handle(c tele.Context) error {
 		warn = " (!)"
 	}
 	head := fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>\n",
-		teleutil.Mention(c, user), len(items), game.InventorySize, warn)
+		tu.Mention(c, user), len(items), game.InventorySize, warn)
 	list := format.Items(items)
 	return c.Send(head+list, tele.ModeHTML)
 }
@@ -80,12 +80,12 @@ func (h *Sort) Match(s string) bool {
 }
 
 func (h *Sort) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	items := []*item.Item{}
 	seen := map[*item.Item]bool{}
-	for _, k := range teleutil.NumArg(c, sortRe, 1) {
+	for _, k := range tu.NumArg(c, sortRe, 1) {
 		x, ok := user.Inventory.ByKey(k)
 		if !ok {
 			return c.Send(format.BadKey(k), tele.ModeHTML)
@@ -116,7 +116,7 @@ func (h *Catch) Match(s string) bool {
 }
 
 func (h *Catch) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if net, ok := user.FishingNet(); ok {
@@ -125,7 +125,7 @@ func (h *Catch) Handle(c tele.Context) error {
 			world.History.Add(user.TUID, f)
 		}
 	}
-	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", teleutil.Mention(c, user))
+	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", tu.Mention(c, user))
 	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
 }
@@ -141,10 +141,10 @@ func (h *Drop) Match(s string) bool {
 }
 
 func (h *Drop) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	for _, key := range teleutil.NumArg(c, dropRe, 2) {
+	for _, key := range tu.NumArg(c, dropRe, 2) {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			return c.Send(fmt.Sprintf("🗄 Предмета %s нет в инвентаре.",
@@ -153,7 +153,7 @@ func (h *Drop) Handle(c tele.Context) error {
 		if !user.Inventory.Move(world.Floor, item) {
 			return c.Send(format.CannotDrop(item), tele.ModeHTML)
 		}
-		c.Send(format.Drop(teleutil.Mention(c, user), item), tele.ModeHTML)
+		c.Send(format.Drop(tu.Mention(c, user), item), tele.ModeHTML)
 	}
 	world.Floor.Trim(10)
 	return nil
@@ -170,13 +170,13 @@ func (h *Pick) Match(s string) bool {
 }
 
 func (h *Pick) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if user.Inventory.Count() > game.InventoryCap {
 		return c.Send(format.InventoryFull)
 	}
-	for _, key := range teleutil.NumArg(c, pickRe, 2) {
+	for _, key := range tu.NumArg(c, pickRe, 2) {
 		item, ok := world.Floor.ByKey(key)
 		if !ok {
 			return c.Send(format.NotOnFloor(key), tele.ModeHTML)
@@ -184,7 +184,7 @@ func (h *Pick) Handle(c tele.Context) error {
 		if !world.Floor.Move(user.Inventory, item) {
 			return c.Send(format.CannotPick(item), tele.ModeHTML)
 		}
-		c.Send(format.Pick(teleutil.Mention(c, user), item), tele.ModeHTML)
+		c.Send(format.Pick(tu.Mention(c, user), item), tele.ModeHTML)
 	}
 	return nil
 }
@@ -200,7 +200,7 @@ func (h *Floor) Match(s string) bool {
 }
 
 func (h *Floor) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	head := "<b>🗃️ Предметы</b>\n"
@@ -219,7 +219,7 @@ func (h *Market) Match(s string) bool {
 }
 
 func (h *Market) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	head := fmt.Sprintf("<b>%s</b>\n", world.Market)
@@ -238,12 +238,12 @@ func (h *NameMarket) Match(s string) bool {
 }
 
 func (h *NameMarket) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 	if !user.Admin() {
 		return c.Send(format.AdminsOnly)
 	}
-	name := teleutil.Args(c, nameMarketRe)[1]
+	name := tu.Args(c, nameMarketRe)[1]
 	if !world.Market.SetName(name) {
 		return c.Send(format.BadMarketName)
 	}
@@ -261,7 +261,7 @@ func (h *Buy) Match(s string) bool {
 }
 
 func (h *Buy) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if user.Inventory.Count() > game.InventoryCap {
@@ -269,7 +269,7 @@ func (h *Buy) Handle(c tele.Context) error {
 	}
 	bought := []*item.Item{}
 	cost := 0
-	for _, key := range teleutil.NumArg(c, buyRe, 1) {
+	for _, key := range tu.NumArg(c, buyRe, 1) {
 		p, err := user.Buy(world.Market, key)
 		if errors.Is(err, game.ErrNoKey) {
 			c.Send(format.BadKey(key), tele.ModeHTML)
@@ -281,7 +281,7 @@ func (h *Buy) Handle(c tele.Context) error {
 		bought = append(bought, p.Item)
 		cost += p.Price
 	}
-	return c.Send(format.Bought(teleutil.Mention(c, user), cost, bought...), tele.ModeHTML)
+	return c.Send(format.Bought(tu.Mention(c, user), cost, bought...), tele.ModeHTML)
 }
 
 type Eat struct {
@@ -295,14 +295,14 @@ func (h *Eat) Match(s string) bool {
 }
 
 func (h *Eat) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if user.Energy.Full() {
 		return c.Send(format.NotHungry)
 	}
 	eaten := []*item.Item{}
-	for _, key := range teleutil.NumArg(c, eatRe, 2) {
+	for _, key := range tu.NumArg(c, eatRe, 2) {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			c.Send(format.BadKey(key), tele.ModeHTML)
@@ -314,7 +314,7 @@ func (h *Eat) Handle(c tele.Context) error {
 		}
 		eaten = append(eaten, item)
 	}
-	return c.Send(format.Eaten(teleutil.Mention(c, user), eaten...)+"\n\n"+
+	return c.Send(format.Eaten(tu.Mention(c, user), eaten...)+"\n\n"+
 		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 
 }
@@ -330,7 +330,7 @@ func (h *EatQuick) Match(s string) bool {
 }
 
 func (h *EatQuick) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if user.Energy.Full() {
@@ -344,7 +344,7 @@ func (h *EatQuick) Handle(c tele.Context) error {
 		}
 		eaten = append(eaten, x)
 	}
-	return c.Send(format.Eaten(teleutil.Mention(c, user), eaten...)+
+	return c.Send(format.Eaten(tu.Mention(c, user), eaten...)+
 		"\n\n"+format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
@@ -359,7 +359,7 @@ func (h *Fish) Match(s string) bool {
 }
 
 func (h *Fish) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if user.Inventory.Count() > game.InventoryCap {
@@ -383,7 +383,7 @@ func (h *Fish) Handle(c tele.Context) error {
 		world.History.Add(user.TUID, f)
 	}
 	user.Inventory.Add(item)
-	return c.Send(format.FishCatch(teleutil.Mention(c, user), item), tele.ModeHTML)
+	return c.Send(format.FishCatch(tu.Mention(c, user), item), tele.ModeHTML)
 }
 
 type CastNet struct {
@@ -397,7 +397,7 @@ func (h *CastNet) Match(s string) bool {
 }
 
 func (h *CastNet) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	err := user.CastNet()
@@ -422,7 +422,7 @@ func (h *DrawNet) Match(s string) bool {
 }
 
 func (h *DrawNet) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	net, ok := user.DrawNew()
@@ -448,7 +448,7 @@ func (h *Net) Match(s string) bool {
 }
 
 func (h *Net) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	net, ok := user.FishingNet()
@@ -487,7 +487,7 @@ func (h *FishingRecords) Match(s string) bool {
 }
 
 func (h *FishingRecords) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 	byPrice := world.History.Top(fishing.Price, 10)
 	byWeight := world.History.Top(fishing.Weight, 1)
@@ -511,10 +511,10 @@ func (h *Craft) Match(s string) bool {
 }
 
 func (h *Craft) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	keys := teleutil.NumArg(c, craftRe, 1)
+	keys := tu.NumArg(c, craftRe, 1)
 	recipe := []*item.Item{}
 	for _, k := range keys {
 		i, ok := user.Inventory.ByKey(k)
@@ -528,7 +528,7 @@ func (h *Craft) Handle(c tele.Context) error {
 		return c.Send(format.CannotCraft)
 	}
 	return c.Send(fmt.Sprintf("🛠 %s получает %s.",
-		teleutil.Mention(c, user), format.ItemsComma(result)), tele.ModeHTML)
+		tu.Mention(c, user), format.ItemsComma(result)), tele.ModeHTML)
 }
 
 type Status struct {
@@ -542,10 +542,10 @@ func (h *Status) Match(s string) bool {
 }
 
 func (h *Status) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	status := teleutil.Args(c, statusRe)[1]
+	status := tu.Args(c, statusRe)[1]
 	const maxlen = 120
 	if utf8.RuneCountInString(status) > maxlen {
 		return c.Send(fmt.Sprintf("💬 Максимальная длина статуса %d символов.", maxlen))
@@ -565,12 +565,12 @@ func (h *Sell) Match(s string) bool {
 }
 
 func (h *Sell) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	total := 0
 	sold := []*item.Item{}
-	for _, key := range teleutil.NumArg(c, sellRe, 1) {
+	for _, key := range tu.NumArg(c, sellRe, 1) {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			c.Send(format.BadKey(key), tele.ModeHTML)
@@ -584,7 +584,7 @@ func (h *Sell) Handle(c tele.Context) error {
 		total += profit
 		sold = append(sold, item)
 	}
-	return c.Send(format.Sold(teleutil.Mention(c, user), total, sold...), tele.ModeHTML)
+	return c.Send(format.Sold(tu.Mention(c, user), total, sold...), tele.ModeHTML)
 }
 
 type SellQuick struct {
@@ -598,7 +598,7 @@ func (h *SellQuick) Match(s string) bool {
 }
 
 func (h *SellQuick) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	total := 0
@@ -616,7 +616,7 @@ func (h *SellQuick) Handle(c tele.Context) error {
 		total += profit
 		sold = append(sold, item)
 	}
-	return c.Send(format.Sold(teleutil.Mention(c, user), total, sold...), tele.ModeHTML)
+	return c.Send(format.Sold(tu.Mention(c, user), total, sold...), tele.ModeHTML)
 }
 
 type Stack struct {
@@ -630,7 +630,7 @@ func (h *Stack) Match(s string) bool {
 }
 
 func (h *Stack) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	user.Balance().Stack()
@@ -648,9 +648,9 @@ func (h *Cashout) Match(s string) bool {
 }
 
 func (h *Cashout) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
-	args := teleutil.NumArg(c, cashoutRe, 2)
+	args := tu.NumArg(c, cashoutRe, 2)
 	if len(args) != 1 {
 		return c.Send(format.SpecifyMoney)
 	}
@@ -678,7 +678,7 @@ func (h *Fight) Match(s string) bool {
 
 func (h *Fight) Handle(c tele.Context) error {
 	// Sanity check before locking the world.
-	reply, ok := teleutil.Reply(c)
+	reply, ok := tu.Reply(c)
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}
@@ -686,7 +686,7 @@ func (h *Fight) Handle(c tele.Context) error {
 		return c.Send(format.CannotAttackYourself)
 	}
 
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 	opnt := world.UserByID(reply.ID)
 
@@ -698,7 +698,7 @@ func (h *Fight) Handle(c tele.Context) error {
 		return c.Send(format.FightVersusPvE)
 	}
 
-	// Is opponent can fight back?
+	// Can opponent fight back?
 	if time.Since(opnt.LastMessage) > 10*time.Minute {
 		return c.Send(format.NotOnline)
 	}
@@ -708,28 +708,33 @@ func (h *Fight) Handle(c tele.Context) error {
 	}
 
 	// Fight begins.
-	c.Send(format.Fight(
-		teleutil.Mention(c, user.TUID),
-		teleutil.Mention(c, opnt.TUID),
-		user.Strength(world),
-		opnt.Strength(world),
-	), tele.ModeHTML)
+	errs := []error{}
 	win, lose, elo := world.Fight(user, opnt)
+	errs = append(errs,
+		c.Send(format.Fight(
+			tu.Mention(c, user.TUID),
+			tu.Mention(c, opnt.TUID),
+			user.Strength(world),
+			opnt.Strength(world),
+		), tele.ModeHTML))
+	// The winner takes a random item.
+	if i, ok := lose.Inventory.Random(); ok &&
+		rand.Float64() < 1.0/8 &&
+		lose.Inventory.Move(win.Inventory, i) {
 
-	if i, ok := lose.Inventory.Random(); ok && rand.Float64() < 1.0/4 {
-		// Items drops from the loser.
-		if lose.Inventory.Move(world.Floor, i) {
-			c.Send(format.LoserDrop(teleutil.Mention(c, win), i), tele.ModeHTML)
-		}
+		m := tu.Mention(c, win)
+		errs = append(errs, c.Send(format.WinnerTook(m, i), tele.ModeHTML))
 	}
-	if i, ok := user.Inventory.Random(); ok && rand.Float64() < 1.0/12 {
-		// Items drops from the attacker.
-		if user.Inventory.Move(world.Floor, i) {
-			c.Send(format.AttackerDrop(teleutil.Mention(c, user), i), tele.ModeHTML)
-		}
-	}
+	// The attacker drops a random item.
+	if i, ok := user.Inventory.Random(); ok &&
+		rand.Float64() < 1.0/16 &&
+		user.Inventory.Move(world.Floor, i) {
 
-	return c.Send(format.Win(teleutil.Mention(c, win), elo), tele.ModeHTML)
+		m := tu.Mention(c, user)
+		errs = append(errs, c.Send(format.AttackerDrop(m, i), tele.ModeHTML))
+	}
+	errs = append(errs, c.Send(format.Win(tu.Mention(c, win), elo), tele.ModeHTML))
+	return errors.Join(errs...)
 }
 
 type PvP struct {
@@ -743,7 +748,7 @@ func (h *PvP) Match(s string) bool {
 }
 
 func (h *PvP) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	status := user.CombatMode.Toggle()
@@ -768,31 +773,14 @@ func (h *Profile) Match(s string) bool {
 }
 
 func (h *Profile) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if u, ok := teleutil.Reply(c); ok {
+	if u, ok := tu.Reply(c); ok {
 		user = world.UserByID(u.ID)
 	}
 
-	const profile = `<b>📇 %s: Профиль</b>
-<code>%-22s %s</code>
-<code>%-22s %s</code>
-<code>%-22s %s</code>
-
-%s
-
-%s`
-	out := fmt.Sprintf(profile,
-		teleutil.Mention(c, user),
-
-		format.Energy(user.Energy), format.Balance(user.Balance().Total()),
-		format.Strength(user.Strength(world)), format.Rating(user.Rating),
-		format.Luck(user.Luck()), format.Messages(user.Messages),
-
-		format.Modset(user.Modset(world)),
-		format.Status(user.Status),
-	)
+	out := format.Profile(tu.Mention(c, user), user, world)
 	if a, ok := h.Avatars.Get(user.TUID); ok {
 		a.Caption = out
 		return c.Send(a, tele.ModeHTML)
@@ -811,13 +799,13 @@ func (h *Dice) Match(s string) bool {
 }
 
 func (h *Dice) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if _, ok := user.Dice(); !ok {
 		return c.Send("🎲 У вас нет костей.")
 	}
-	args := teleutil.NumArg(c, diceRe, 1)
+	args := tu.NumArg(c, diceRe, 1)
 	if len(args) != 1 {
 		return c.Send("💵 Сделайте ставку.")
 	}
@@ -850,7 +838,7 @@ func (h *Dice) Handle(c tele.Context) error {
 		return err
 	}
 	return c.Send(fmt.Sprintf("🎲 %s играет на %s\nУ вас <code>%d секунд</code> на то, чтобы кинуть кости!",
-		teleutil.Mention(c, c.Sender()), format.Money(bet), world.Casino.Timeout/time.Second), tele.ModeHTML)
+		tu.Mention(c, c.Sender()), format.Money(bet), world.Casino.Timeout/time.Second), tele.ModeHTML)
 }
 
 type Roll struct {
@@ -862,7 +850,7 @@ func (h *Roll) Match(s string) bool {
 }
 
 func (h *Roll) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	game, ok := world.Casino.DiceGame()
@@ -895,7 +883,7 @@ func (h *TopStrong) Match(s string) bool {
 }
 
 func (h *TopStrong) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.SortedUsers(game.ByStrength)
@@ -903,7 +891,7 @@ func (h *TopStrong) Handle(c tele.Context) error {
 	list := []string{"🏋️‍♀️ <b>Самые сильные пользователи</b>"}
 	for i, u := range users {
 		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, teleutil.Mention(c, u.TUID), format.Strength(u.Strength(world))))
+			i+1, tu.Mention(c, u.TUID), format.Strength(u.Strength(world))))
 	}
 	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
 }
@@ -919,7 +907,7 @@ func (h *TopRating) Match(s string) bool {
 }
 
 func (h *TopRating) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.SortedUsers(game.ByElo)
@@ -927,7 +915,7 @@ func (h *TopRating) Handle(c tele.Context) error {
 	list := []string{"🏆 <b>Боевой рейтинг</b>"}
 	for i, u := range users {
 		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, teleutil.Mention(c, u.TUID), format.Rating(u.Rating)))
+			i+1, tu.Mention(c, u.TUID), format.Rating(u.Rating)))
 	}
 	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
 }
@@ -943,7 +931,7 @@ func (h *TopRich) Match(s string) bool {
 }
 
 func (h *TopRich) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.SortedUsers(game.ByWealth)
@@ -951,7 +939,7 @@ func (h *TopRich) Handle(c tele.Context) error {
 	list := []string{"💵 <b>Самые богатые пользователи</b>"}
 	for i, u := range users {
 		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, teleutil.Mention(c, u.TUID), format.Money(u.Balance().Total())))
+			i+1, tu.Mention(c, u.TUID), format.Money(u.Balance().Total())))
 	}
 	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
 }
@@ -967,7 +955,7 @@ func (h *Capital) Match(s string) bool {
 }
 
 func (h *Capital) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	total, avg := world.Capital()
@@ -981,7 +969,7 @@ func (h *Capital) Handle(c tele.Context) error {
 		fmt.Sprintf("<i>В среднем на счету: %s</i>\n",
 			format.Money(avg)),
 		fmt.Sprintf("<i>В руках магната %s %s,</i>",
-			teleutil.Mention(c, users[0].TUID), format.Money(balance)),
+			tu.Mention(c, users[0].TUID), format.Money(balance)),
 		fmt.Sprintf("<i>или %s от общего количества средств.</i>\n",
 			format.Percentage(float64(balance)/float64(total))),
 	}
@@ -999,7 +987,7 @@ func (h *Balance) Match(s string) bool {
 }
 
 func (h *Balance) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 	return c.Send(fmt.Sprintf("💵 Ваш баланс: %s",
 		format.Money(user.Balance().Total())), tele.ModeHTML)
@@ -1016,7 +1004,7 @@ func (h *Energy) Match(s string) bool {
 }
 
 func (h *Energy) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	emoji := "🔋"
@@ -1038,10 +1026,10 @@ func (h *NamePet) Match(s string) bool {
 }
 
 func (h *NamePet) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	name := teleutil.Args(c, namePetRe)[1]
+	name := tu.Args(c, namePetRe)[1]
 	pet, ok := user.Pet()
 	if !ok {
 		return c.Send("🐱 У вас нет питомца.")

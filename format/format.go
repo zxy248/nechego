@@ -412,8 +412,8 @@ func Fight(mentionA, mentionB string, strengthA, strengthB float64) string {
 	return fmt.Sprintf(fight, mentionA, strengthA, mentionB, strengthB)
 }
 
-func LoserDrop(mention string, i *item.Item) string {
-	return fmt.Sprintf("🥊 %s выбивает %s из проигравшего.", mention, Item(i))
+func WinnerTook(mention string, i *item.Item) string {
+	return fmt.Sprintf("🥊 %s забирает %s у проигравшего.", mention, Item(i))
 }
 
 func AttackerDrop(mention string, i *item.Item) string {
@@ -422,4 +422,30 @@ func AttackerDrop(mention string, i *item.Item) string {
 
 func Win(mention string, elo float64) string {
 	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", mention, elo)
+}
+
+func CombatStatus(s pvp.Status) string {
+	return fmt.Sprintf("<code>[%v]</code>", s)
+}
+
+func Profile(mention string, u *game.User, w *game.World) string {
+	const profile = `<b>📇 %s %s: Профиль</b>
+<code>%-22s %s</code>
+<code>%-22s %s</code>
+<code>%-22s %s</code>
+
+%s
+
+%s`
+	return fmt.Sprintf(
+		profile,
+		mention, CombatStatus(u.CombatMode.Status()),
+
+		Energy(u.Energy), Balance(u.Balance().Total()),
+		Strength(u.Strength(w)), Rating(u.Rating),
+		Luck(u.Luck()), Messages(u.Messages),
+
+		Modset(u.Modset(w)),
+		Status(u.Status),
+	)
 }
