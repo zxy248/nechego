@@ -13,7 +13,7 @@ import (
 	"nechego/danbooru"
 	"nechego/format"
 	"nechego/game"
-	"nechego/teleutil"
+	tu "nechego/teleutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -48,7 +48,7 @@ func (h *Infa) Handle(c tele.Context) error {
 		"Уверяю вас в том, что %s с вероятностью %d%%",
 	}
 	return c.Send(fmt.Sprintf(templates[rand.Intn(len(templates))],
-		teleutil.Args(c, infaRe)[1],
+		tu.Args(c, infaRe)[1],
 		rand.Intn(101)))
 }
 
@@ -71,8 +71,8 @@ func (h *Who) Handle(c tele.Context) error {
 	defer w.Unlock()
 
 	user := w.RandomUser()
-	return c.Send(teleutil.Mention(c, user.TUID)+" "+
-		html.EscapeString(teleutil.Args(c, whoRe)[1]), tele.ModeHTML)
+	return c.Send(tu.Mention(c, user.TUID)+" "+
+		html.EscapeString(tu.Args(c, whoRe)[1]), tele.ModeHTML)
 }
 
 type List struct {
@@ -86,14 +86,14 @@ func (h *List) Match(s string) bool {
 }
 
 func (h *List) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.RandomUsers(3 + rand.Intn(3))
-	arg := teleutil.Args(c, listRe)[1]
+	arg := tu.Args(c, listRe)[1]
 	s := []string{fmt.Sprintf("<b>📝 Список %s</b>", arg)}
 	for _, u := range users {
-		mention := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(u.TUID)))
+		mention := tu.Mention(c, tu.Member(c, tele.ChatID(u.TUID)))
 		s = append(s, fmt.Sprintf("<b>•</b> %s", mention))
 	}
 	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
@@ -110,14 +110,14 @@ func (h *Top) Match(s string) bool {
 }
 
 func (h *Top) Handle(c tele.Context) error {
-	world, _ := teleutil.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.RandomUsers(3 + rand.Intn(3))
-	arg := teleutil.Args(c, topRe)[1]
+	arg := tu.Args(c, topRe)[1]
 	s := []string{fmt.Sprintf("<b>🏆 Топ %s</b>", arg)}
 	for i, u := range users {
-		mention := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(u.TUID)))
+		mention := tu.Mention(c, tu.Member(c, tele.ChatID(u.TUID)))
 		s = append(s, fmt.Sprintf("<i>%d.</i> %s", i+1, mention))
 	}
 	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
@@ -189,7 +189,7 @@ func (h *Weather) Handle(c tele.Context) error {
 		`Давление+—+%P\n` +
 		`Фаза+луны+—+%m\n` +
 		`УФ-индекс+—+%u\n`
-	city := url.PathEscape(teleutil.Args(c, weatherRe)[1])
+	city := url.PathEscape(tu.Args(c, weatherRe)[1])
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, addr+city+format, nil)
@@ -615,7 +615,8 @@ func (h *Pic) Handle(c tele.Context) error {
 }
 
 type Avatar struct {
-	Avatars *avatar.Storage
+	Universe *game.Universe
+	Avatars  *avatar.Storage
 }
 
 var avatarRe = re("^!ава")
@@ -625,13 +626,27 @@ func (h *Avatar) Match(s string) bool {
 }
 
 func (h *Avatar) Handle(c tele.Context) error {
-	if c.Message().Photo == nil {
-		if avatar, ok := h.Avatars.Get(c.Sender().ID); ok {
+	target := c.Sender().ID
+	photo := c.Message().Photo
+	if reply, ok := tu.Reply(c); ok {
+		// If the user has admin rights, they can set an
+		// avatar for other users.
+		world, user := tu.Lock(c, h.Universe)
+		admin := user.Admin()
+		world.Unlock()
+		if !admin {
+			return c.Send("📷 Нельзя установить аватар другому пользователю.")
+		}
+		target = reply.ID
+	}
+
+	if photo == nil {
+		if avatar, ok := h.Avatars.Get(target); ok {
 			return c.Send(avatar)
 		}
 		return c.Send("📷 Прикрепите изображение.")
 	}
-	if err := h.Avatars.Set(c.Sender().ID, c.Message().Photo); errors.Is(err, avatar.ErrSize) {
+	if err := h.Avatars.Set(target, photo); errors.Is(err, avatar.ErrSize) {
 		return c.Send("📷 Максимальный размер аватара %dx%d пикселей.",
 			h.Avatars.MaxWidth, h.Avatars.MaxHeight)
 	} else if err != nil {
@@ -682,13 +697,13 @@ func (h *Ban) Match(s string) bool {
 }
 
 func (h *Ban) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if !user.Admin() {
 		return c.Send(format.AdminsOnly)
 	}
-	reply, ok := teleutil.Reply(c)
+	reply, ok := tu.Reply(c)
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}
@@ -712,13 +727,13 @@ func (h *Unban) Match(s string) bool {
 }
 
 func (h *Unban) Handle(c tele.Context) error {
-	world, user := teleutil.Lock(c, h.Universe)
+	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	if !user.Admin() {
 		return c.Send(format.AdminsOnly)
 	}
-	reply, ok := teleutil.Reply(c)
+	reply, ok := tu.Reply(c)
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}

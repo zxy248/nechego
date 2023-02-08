@@ -156,9 +156,9 @@ func main() {
 		&handlers.TopRich{Universe: universe},
 
 		// Profile.
-		&handlers.Status{Universe: universe},
+		&handlers.Status{Universe: universe, MaxLength: 120},
 		&handlers.Profile{Universe: universe, Avatars: avatars},
-		&handlers.Avatar{Avatars: avatars},
+		&handlers.Avatar{Universe: universe, Avatars: avatars},
 		&handlers.Energy{Universe: universe},
 		&handlers.NamePet{Universe: universe},
 

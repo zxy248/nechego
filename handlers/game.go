@@ -532,7 +532,8 @@ func (h *Craft) Handle(c tele.Context) error {
 }
 
 type Status struct {
-	Universe *game.Universe
+	Universe  *game.Universe
+	MaxLength int
 }
 
 var statusRe = re("^!статус (.*)")
@@ -545,10 +546,18 @@ func (h *Status) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	if reply, ok := tu.Reply(c); ok {
+		// If the user has admin rights, they can set a status
+		// for other users.
+		if !user.Admin() {
+			return c.Send("💬 Нельзя установить статус другому пользователю.")
+		}
+		user = world.UserByID(reply.ID)
+	}
+
 	status := tu.Args(c, statusRe)[1]
-	const maxlen = 120
-	if utf8.RuneCountInString(status) > maxlen {
-		return c.Send(fmt.Sprintf("💬 Максимальная длина статуса %d символов.", maxlen))
+	if utf8.RuneCountInString(status) > h.MaxLength {
+		return c.Send(fmt.Sprintf("💬 Максимальная длина статуса %d символов.", h.MaxLength))
 	}
 	user.Status = status
 	return c.Send("✅ Статус установлен.")
