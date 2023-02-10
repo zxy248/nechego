@@ -262,20 +262,24 @@ func CannotDrop(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя выложить %s.", Item(i))
 }
 
-func Drop(mention string, i *item.Item) string {
-	return fmt.Sprintf("♻ %s выкладывает %s.", mention, Item(i))
+func Drop(mention string, i ...*item.Item) string {
+	c := NewConnector(", ")
+	for _, x := range i {
+		c.Add(Item(x))
+	}
+	return fmt.Sprintf("♻ %s выкладывает %s.", mention, c.String())
 }
 
 func CannotPick(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя взять %s.", Item(i))
 }
 
-func Pick(mention string, i *item.Item) string {
-	return fmt.Sprintf("🫳 %s берёт %s.", mention, Item(i))
-}
-
-func NotOnFloor(key int) string {
-	return fmt.Sprintf("🗄 Предмета %s нет на полу.", Key(key))
+func Pick(mention string, i ...*item.Item) string {
+	c := NewConnector(", ")
+	for _, x := range i {
+		c.Add(Item(x))
+	}
+	return fmt.Sprintf("🫳 %s берёт %s.", mention, c.String())
 }
 
 func CannotSell(i *item.Item) string {

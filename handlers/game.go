@@ -144,19 +144,21 @@ func (h *Drop) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	dropped := []*item.Item{}
 	for _, key := range tu.NumArg(c, dropRe, 2) {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
-			return c.Send(fmt.Sprintf("🗄 Предмета %s нет в инвентаре.",
-				format.Key(key)), tele.ModeHTML)
+			c.Send(format.BadKey(key), tele.ModeHTML)
+			break
 		}
 		if !user.Inventory.Move(world.Floor, item) {
-			return c.Send(format.CannotDrop(item), tele.ModeHTML)
+			c.Send(format.CannotDrop(item), tele.ModeHTML)
+			break
 		}
-		c.Send(format.Drop(tu.Mention(c, user), item), tele.ModeHTML)
+		dropped = append(dropped, item)
 	}
 	world.Floor.Trim(10)
-	return nil
+	return c.Send(format.Drop(tu.Mention(c, user), dropped...), tele.ModeHTML)
 }
 
 type Pick struct {
@@ -177,17 +179,20 @@ func (h *Pick) Handle(c tele.Context) error {
 		return c.Send(format.InventoryFull)
 	}
 
+	picked := []*item.Item{}
 	for _, key := range tu.NumArg(c, pickRe, 2) {
 		item, ok := world.Floor.ByKey(key)
 		if !ok {
-			return c.Send(format.NotOnFloor(key), tele.ModeHTML)
+			c.Send(format.BadKey(key), tele.ModeHTML)
+			break
 		}
 		if !world.Floor.Move(user.Inventory, item) {
-			return c.Send(format.CannotPick(item), tele.ModeHTML)
+			c.Send(format.CannotPick(item), tele.ModeHTML)
+			break
 		}
-		c.Send(format.Pick(tu.Mention(c, user), item), tele.ModeHTML)
+		picked = append(picked, item)
 	}
-	return nil
+	return c.Send(format.Pick(tu.Mention(c, user), picked...), tele.ModeHTML)
 }
 
 type Floor struct {
