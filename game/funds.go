@@ -22,7 +22,7 @@ func (f Funds) Add(source string, i *item.Item) {
 // deletes all funds. If there is no items at the source or the given
 // source is not found, returns empty slice.
 func (f Funds) Collect(sources ...string) (retrieved []*Fund) {
-	if sources == nil {
+	if len(sources) == 0 {
 		for src := range f {
 			sources = append(sources, src)
 		}

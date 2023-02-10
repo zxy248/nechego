@@ -41,8 +41,6 @@ const (
 	CastNet              = "🕸 Рыболовная сеть закинута."
 	NetNotCasted         = "🕸 Рыболовная сеть ещё не закинута."
 	NoFishingRecords     = "🏆 Рекордов пока нет."
-	NothingSold          = "💵 Ничего не продано."
-	NothingBought        = "💵 Ничего не куплено."
 	NotOnline            = "🚫 Этот пользователь не в сети."
 	CannotBan            = "😖 Этого пользователя нельзя забанить."
 	CannotFight          = "🛡 С этим пользователем нельзя подраться."
@@ -56,29 +54,17 @@ func Item(i *item.Item) string {
 	return fmt.Sprintf("<code>%s</code>", i.Value)
 }
 
-func ItemsComma(items []*item.Item) string {
-	c := NewConnector(", ")
-	for _, x := range items {
-		c.Add(Item(x))
-	}
-	return c.String()
+func Selector(key int, s string) string {
+	return fmt.Sprintf("<code>%d ≡ </code> %s", key, s)
 }
 
-func NumItem(n int, i *item.Item) string {
-	return NumString(n, Item(i))
-}
-
-func NumString(n int, s string) string {
-	return fmt.Sprintf("<code>%d ≡ </code> %s", n, s)
-}
-
-func Items(items []*item.Item) string {
-	if len(items) == 0 {
+func Items(i []*item.Item) string {
+	if len(i) == 0 {
 		return Empty
 	}
 	c := NewConnector("\n")
-	for i, v := range items {
-		c.Add(NumItem(i, v))
+	for k, x := range i {
+		c.Add(Selector(k, Item(x)))
 	}
 	return c.String()
 }
@@ -89,15 +75,15 @@ func Catch(items []*item.Item) string {
 	}
 	c := NewConnector("\n")
 	price, weight := 0.0, 0.0
-	for i, v := range items {
-		if f, ok := v.Value.(*fishing.Fish); ok {
+	for k, x := range items {
+		if f, ok := x.Value.(*fishing.Fish); ok {
 			price += f.Price()
 			weight += f.Weight
-			c.Add(NumItem(i, v))
+			c.Add(Selector(k, Item(x)))
 		}
 	}
-	c.Add(fmt.Sprintf("Стоимость: %s\nВес: %s",
-		Money(int(price)), Weight(weight)))
+	c.Add(fmt.Sprintf("Стоимость: %s", Money(int(price))))
+	c.Add(fmt.Sprintf("Вес: %s", Weight(weight)))
 	return c.String()
 }
 
@@ -106,8 +92,8 @@ func Products(products []*game.Product) string {
 		return Empty
 	}
 	c := NewConnector("\n")
-	for i, p := range products {
-		c.Add(fmt.Sprintf("%s, %s", NumItem(i, p.Item), Money(p.Price)))
+	for k, p := range products {
+		c.Add(fmt.Sprintf("%s, %s", Selector(k, Item(p.Item)), Money(p.Price)))
 	}
 	return c.String()
 }
@@ -132,13 +118,13 @@ func EnergyRemaining(e game.Energy) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
-func Eaten(mention string, eaten ...*item.Item) string {
-	if len(eaten) == 0 {
+func Eaten(mention string, i ...*item.Item) string {
+	if len(i) == 0 {
 		return NoFood
 	}
 	emoji, verb := "🥤", "выпил(а)"
 	c := NewConnector(", ")
-	for _, x := range eaten {
+	for _, x := range i {
 		if f, ok := x.Value.(*food.Food); !ok || !f.Beverage() {
 			emoji, verb = "🍊", "съел(а)"
 		}
@@ -262,7 +248,10 @@ func CannotDrop(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя выложить %s.", Item(i))
 }
 
-func Drop(mention string, i ...*item.Item) string {
+func Dropped(mention string, i ...*item.Item) string {
+	if len(i) == 0 {
+		return "♻ Ничего не выложено."
+	}
 	c := NewConnector(", ")
 	for _, x := range i {
 		c.Add(Item(x))
@@ -274,7 +263,10 @@ func CannotPick(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя взять %s.", Item(i))
 }
 
-func Pick(mention string, i ...*item.Item) string {
+func Picked(mention string, i ...*item.Item) string {
+	if len(i) == 0 {
+		return "🫳 Ничего не взято."
+	}
 	c := NewConnector(", ")
 	for _, x := range i {
 		c.Add(Item(x))
@@ -286,28 +278,39 @@ func CannotSell(i *item.Item) string {
 	return fmt.Sprintf("🏪 Нельзя продать %s.", Item(i))
 }
 
-func Sold(mention string, profit int, sold ...*item.Item) string {
-	if len(sold) == 0 {
-		return NothingSold
+func Sold(mention string, profit int, i ...*item.Item) string {
+	if len(i) == 0 {
+		return "💵 Ничего не продано."
 	}
 	c := NewConnector(", ")
-	for _, x := range sold {
+	for _, x := range i {
 		c.Add(Item(x))
 	}
 	return fmt.Sprintf("💵 %s продаёт %s и зарабатывает %s.",
 		mention, c.String(), Money(profit))
 }
 
-func Bought(mention string, cost int, bought ...*item.Item) string {
-	if len(bought) == 0 {
-		return NothingBought
+func Bought(mention string, cost int, i ...*item.Item) string {
+	if len(i) == 0 {
+		return "💵 Ничего не куплено."
 	}
 	c := NewConnector(", ")
-	for _, x := range bought {
+	for _, x := range i {
 		c.Add(Item(x))
 	}
 	return fmt.Sprintf("🛒 %s покупает %s за %s.",
 		mention, c.String(), Money(cost))
+}
+
+func Crafted(mention string, i ...*item.Item) string {
+	if len(i) == 0 {
+		return "🛠 Ничего не сделано."
+	}
+	c := NewConnector(", ")
+	for _, x := range i {
+		c.Add(Item(x))
+	}
+	return fmt.Sprintf("🛠 %s получает %s.", mention, c.String())
 }
 
 func BadFishOutcome() string {
@@ -430,7 +433,7 @@ func Profile(mention string, u *game.User, w *game.World) string {
 }
 
 func FundsCollected(mention string, f ...*game.Fund) string {
-	if f == nil {
+	if len(f) == 0 {
 		return "🧾 Средств пока нет."
 	}
 	c := NewConnector("\n")

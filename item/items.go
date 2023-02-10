@@ -142,7 +142,7 @@ func (it *Items) Count() int {
 	return len(it.I)
 }
 
-// PushFront adds the items i to the head of the list.
-func (it *Items) PushFront(i []*Item) {
+// PushFront adds the specified items to the head of the list.
+func (it *Items) PushFront(i ...*Item) {
 	it.I = append(i, it.I...)
 }

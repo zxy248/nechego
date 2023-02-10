@@ -101,7 +101,7 @@ func (h *Sort) Handle(c tele.Context) error {
 			panic(fmt.Sprintf("sort: cannot remove %v", x))
 		}
 	}
-	user.Inventory.PushFront(items)
+	user.Inventory.PushFront(items...)
 	return c.Send(format.InventorySorted)
 }
 
@@ -158,7 +158,7 @@ func (h *Drop) Handle(c tele.Context) error {
 		dropped = append(dropped, item)
 	}
 	world.Floor.Trim(10)
-	return c.Send(format.Drop(tu.Mention(c, user), dropped...), tele.ModeHTML)
+	return c.Send(format.Dropped(tu.Mention(c, user), dropped...), tele.ModeHTML)
 }
 
 type Pick struct {
@@ -192,7 +192,7 @@ func (h *Pick) Handle(c tele.Context) error {
 		}
 		picked = append(picked, item)
 	}
-	return c.Send(format.Pick(tu.Mention(c, user), picked...), tele.ModeHTML)
+	return c.Send(format.Picked(tu.Mention(c, user), picked...), tele.ModeHTML)
 }
 
 type Floor struct {
@@ -395,8 +395,8 @@ func (h *EatQuick) Handle(c tele.Context) error {
 		}
 		eaten = append(eaten, x)
 	}
-	return c.Send(format.Eaten(tu.Mention(c, user), eaten...)+
-		"\n\n"+format.EnergyRemaining(user.Energy), tele.ModeHTML)
+	return c.Send(format.Eaten(tu.Mention(c, user), eaten...)+"\n\n"+
+		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
 type Fish struct {
@@ -579,12 +579,11 @@ func (h *Craft) Handle(c tele.Context) error {
 		}
 		recipe = append(recipe, i)
 	}
-	result, ok := recipes.Craft(user.Inventory, recipe)
+	crafted, ok := recipes.Craft(user.Inventory, recipe)
 	if !ok {
 		return c.Send(format.CannotCraft)
 	}
-	return c.Send(fmt.Sprintf("🛠 %s получает %s.",
-		tu.Mention(c, user), format.ItemsComma(result)), tele.ModeHTML)
+	return c.Send(format.Crafted(tu.Mention(c, user), crafted...), tele.ModeHTML)
 }
 
 type Status struct {
@@ -639,12 +638,12 @@ func (h *Sell) Handle(c tele.Context) error {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			c.Send(format.BadKey(key), tele.ModeHTML)
-			continue
+			break
 		}
 		profit, ok := user.Sell(world, item)
 		if !ok {
 			c.Send(format.CannotSell(item), tele.ModeHTML)
-			continue
+			break
 		}
 		total += profit
 		sold = append(sold, item)
@@ -676,7 +675,7 @@ func (h *SellQuick) Handle(c tele.Context) error {
 		profit, ok := user.Sell(world, item)
 		if !ok {
 			c.Send(format.CannotSell(item), tele.ModeHTML)
-			continue
+			break
 		}
 		total += profit
 		sold = append(sold, item)
