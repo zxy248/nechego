@@ -28,9 +28,10 @@ type Product struct {
 
 // Market represents a place where a user can buy products.
 type Market struct {
-	P    []*Product       // P is a list of products on sale.
-	Name string           // Name of the market.
-	keys map[int]*Product // keys for product selection.
+	P     []*Product       // P is a list of products on sale.
+	Name  string           // Name of the market.
+	Shift Shift            // Work shift.
+	keys  map[int]*Product // keys for product selection.
 }
 
 // NewMarket returns a new Market with no products on sale.
@@ -135,28 +136,45 @@ func (m *Market) String() string {
 
 // Buy removes the product specified by key from the market and adds
 // it to the user's inventory if there is enough money on the balance.
-func (u *User) Buy(m *Market, key int) (*Product, error) {
-	p, ok := m.keys[key]
+func (u *User) Buy(w *World, key int) (*Product, error) {
+	market := w.Market
+
+	product, ok := market.keys[key]
 	if !ok {
 		return nil, ErrNoKey
 	}
-	if !u.Balance().Spend(p.Price) {
+	if !u.Balance().Spend(product.Price) {
 		return nil, money.ErrNoMoney
 	}
-	delete(m.keys, key)
-	for i, v := range m.P {
-		if v == p {
-			m.P[i] = m.P[len(m.P)-1]
-			m.P = m.P[:len(m.P)-1]
+
+	// The purchase is commited.
+	delete(market.keys, key)
+	for i, v := range market.P {
+		if v == product {
+			market.P[i] = market.P[len(market.P)-1]
+			market.P = market.P[:len(market.P)-1]
 		}
 	}
-	u.Inventory.Add(p.Item)
-	return p, nil
+	u.Inventory.Add(product.Item)
+
+	if earn := product.Price / 3; earn > 0 {
+		// The market worker earns a wage.
+		if id, ok := market.Shift.Worker(); ok {
+			worker := w.UserByID(id)
+			worker.Funds.Add("рохля", item.New(&money.Cash{Money: earn}))
+		}
+		// The strongest player takes a tax.
+		if top := w.SortedUsers(ByStrength); len(top) > 0 {
+			strongest := top[0]
+			strongest.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+		}
+	}
+	return product, nil
 }
 
 // Sell removes the specified item from the inventory and adds money
 // if the item can be sold.
-func (u *User) Sell(i *item.Item) (profit int, ok bool) {
+func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
 	if !i.Transferable {
 		return 0, false
 	}
@@ -176,6 +194,13 @@ func (u *User) Sell(i *item.Item) (profit int, ok bool) {
 		u.Inventory.Add(i)
 		return 0, false
 	}
+	// The sale is commited.
 	u.Balance().Add(profit)
+
+	// The strongest player takes a tax.
+	if top, earn := w.SortedUsers(ByStrength), profit/10; len(top) > 0 && earn > 0 {
+		strongest := top[0]
+		strongest.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+	}
 	return profit, true
 }

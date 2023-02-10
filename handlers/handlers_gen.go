@@ -50,6 +50,8 @@ const (
 	FloorHandler
 	MarketHandler
 	NameMarketHandler
+	GetJobHandler
+	QuitJobHandler
 	BuyHandler
 	EatHandler
 	EatQuickHandler
@@ -74,6 +76,7 @@ const (
 	TopRichHandler
 	CapitalHandler
 	BalanceHandler
+	FundsHandler
 	EnergyHandler
 	NamePetHandler
 	ReceiveSMSHandler
@@ -127,6 +130,8 @@ func (_ *Pick) Self() HandlerID           { return PickHandler }
 func (_ *Floor) Self() HandlerID          { return FloorHandler }
 func (_ *Market) Self() HandlerID         { return MarketHandler }
 func (_ *NameMarket) Self() HandlerID     { return NameMarketHandler }
+func (_ *GetJob) Self() HandlerID         { return GetJobHandler }
+func (_ *QuitJob) Self() HandlerID        { return QuitJobHandler }
 func (_ *Buy) Self() HandlerID            { return BuyHandler }
 func (_ *Eat) Self() HandlerID            { return EatHandler }
 func (_ *EatQuick) Self() HandlerID       { return EatQuickHandler }
@@ -151,6 +156,7 @@ func (_ *TopRating) Self() HandlerID      { return TopRatingHandler }
 func (_ *TopRich) Self() HandlerID        { return TopRichHandler }
 func (_ *Capital) Self() HandlerID        { return CapitalHandler }
 func (_ *Balance) Self() HandlerID        { return BalanceHandler }
+func (_ *Funds) Self() HandlerID          { return FundsHandler }
 func (_ *Energy) Self() HandlerID         { return EnergyHandler }
 func (_ *NamePet) Self() HandlerID        { return NamePetHandler }
 func (_ *ReceiveSMS) Self() HandlerID     { return ReceiveSMSHandler }

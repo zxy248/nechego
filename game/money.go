@@ -68,7 +68,7 @@ func (b *Balance) Add(n int) {
 	b.inventory.Add(item.New(&money.Cash{Money: n}))
 }
 
-// Stack aggregates all money found in the inventory in a single slot.
+// Stack aggregates all money and details found in the inventory.
 func (b *Balance) Stack() {
 	nMoney := 0
 	nDetails := 0

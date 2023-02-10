@@ -123,6 +123,7 @@ func main() {
 		&handlers.Cashout{Universe: universe},
 		&handlers.Capital{Universe: universe},
 		&handlers.Balance{Universe: universe},
+		&handlers.Funds{Universe: universe},
 
 		// Market.
 		&handlers.Market{Universe: universe},
@@ -130,6 +131,8 @@ func main() {
 		&handlers.Sell{Universe: universe},
 		&handlers.SellQuick{Universe: universe},
 		&handlers.NameMarket{Universe: universe},
+		&handlers.GetJob{Universe: universe},
+		&handlers.QuitJob{Universe: universe},
 
 		// Actions.
 		&handlers.Craft{Universe: universe},

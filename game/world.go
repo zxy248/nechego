@@ -90,7 +90,7 @@ func (w *World) RandomUsers(n int) []*User {
 		users[i], users[j] = users[j], users[i]
 	})
 	if len(users) < n {
-		n = len(users)
+		return users
 	}
 	return users[:n]
 }
@@ -118,6 +118,9 @@ func (w *World) migrate() {
 	for _, u := range w.Users {
 		if u.Buffs == nil {
 			u.Buffs = make(buff.Set)
+		}
+		if u.Funds == nil {
+			u.Funds = make(Funds)
 		}
 	}
 }

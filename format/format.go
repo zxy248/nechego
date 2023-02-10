@@ -48,6 +48,8 @@ const (
 	CannotFight          = "🛡 С этим пользователем нельзя подраться."
 	FightVersusPvE       = "🛡 Оппонент находится в PvE режиме."
 	FightFromPvE         = "🛡 Вы находитесь в PvE режиме."
+	CannotGetJob         = "💼 Такую работу получить пока нельзя."
+	CannotFireJob        = "💼 Вы нигде не работаете."
 )
 
 func Item(i *item.Item) string {
@@ -253,15 +255,7 @@ func SpamSent(mention string, price int) string {
 }
 
 func UserBanned(hours int) string {
-	suffix := "ов"
-	switch hours {
-	case 1:
-		suffix = ""
-	case 2, 3, 4:
-		suffix = "а"
-
-	}
-	return fmt.Sprintf("🚫 Пользователь заблокирован на %d час%s.", hours, suffix)
+	return fmt.Sprintf("🚫 Пользователь заблокирован на %d %s.", hours, declHours(hours))
 }
 
 func CannotDrop(i *item.Item) string {
@@ -329,15 +323,11 @@ func FishCatch(mention string, i *item.Item) string {
 }
 
 func DrawNet(n *fishing.Net) string {
-	count := n.Count()
-	caught := "Поймано"
-	if count == 1 {
-		caught = "Поймана"
-	}
+	m := n.Count()
 	c := NewConnector("\n")
 	c.Add("<b>🕸 Сеть вытянута.</b>")
-	c.Add("<i>🐟 %s <code>%s</code>.</i>")
-	return fmt.Sprintf(c.String(), caught, fish(count))
+	c.Add("<i>🐟 %s <code>%d %s</code>.</i>")
+	return fmt.Sprintf(c.String(), declCaught(m), m, declFish(m))
 }
 
 func Net(n *fishing.Net) string {
@@ -345,17 +335,6 @@ func Net(n *fishing.Net) string {
 	c.Add("<b>🕸 У вас есть рыболовная сеть на <code>%d</code> слотов.</b>")
 	c.Add("<i>🐟 Команды: <code>!закинуть</code>, <code>!вытянуть</code>.</i>")
 	return fmt.Sprintf(c.String(), n.Capacity)
-}
-
-func fish(count int) string {
-	suffix := ""
-	switch count {
-	case 1:
-		suffix = "а"
-	case 2, 3, 4:
-		suffix = "ы"
-	}
-	return fmt.Sprintf("%d рыб%s", count, suffix)
 }
 
 func NewRecord(e *fishing.Entry, p fishing.Parameter) string {
@@ -390,10 +369,6 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 	c.Add("<b>📐 Самая большая рыба:</b>")
 	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", mention(length.TUID, "→"), Fish(length.Fish)))
 	return c.String()
-}
-
-func mention(id int64, text string) string {
-	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, text)
 }
 
 func PvPMode() string {
@@ -448,4 +423,79 @@ func Profile(mention string, u *game.User, w *game.World) string {
 		Modset(u.Modset(w)),
 		Status(u.Status),
 	)
+}
+
+func FundsCollected(mention string, f ...*game.Fund) string {
+	if f == nil {
+		return "🧾 Средств пока нет."
+	}
+	c := NewConnector("\n")
+	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", mention))
+	for i, x := range f {
+		if rest := len(f) - i; i >= 15 && rest >= 5 {
+			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> пунктов.</i>", rest))
+			break
+		}
+		c.Add(fmt.Sprintf("<b>→</b> %s <i>(%s)</i>", Item(x.Item), x.Source))
+	}
+	return c.String()
+}
+
+func GetJob(mention string, hours int) string {
+	return fmt.Sprintf("💼 <b>%s</b> получает работу на <code>%d %s</code>.",
+		mention, hours, declHours(hours))
+}
+
+func MarketShift(mention string, s game.Shift) string {
+	return fmt.Sprintf("🪪 С <code>%d:%d</code> по <code>%d:%d</code> вас обслуживает <b>%s</b>.",
+		s.Start.Hour(), s.Start.Minute(),
+		s.End.Hour(), s.End.Minute(),
+		mention)
+}
+
+func Market(mention string, m *game.Market) string {
+	c := NewConnector("\n")
+	c.Add(fmt.Sprintf("<b>%v</b>", m))
+	if mention != "" {
+		c.Add(MarketShift(mention, m.Shift))
+	}
+	c.Add(Products(m.Products()))
+	return c.String()
+}
+
+func FireJob(mention string) string {
+	return fmt.Sprintf("💼 <b>%s</b> покидает место работы.", mention)
+}
+
+func declHours(n int) string {
+	suffix := "ов"
+	switch n {
+	case 1:
+		suffix = ""
+	case 2, 3, 4:
+		suffix = "а"
+	}
+	return "час" + suffix
+}
+
+func declFish(n int) string {
+	suffix := ""
+	switch n {
+	case 1:
+		suffix = "а"
+	case 2, 3, 4:
+		suffix = "ы"
+	}
+	return "рыб" + suffix
+}
+
+func declCaught(n int) string {
+	if n == 1 {
+		return "Поймана"
+	}
+	return "Поймано"
+}
+
+func mention(id int64, text string) string {
+	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, text)
 }

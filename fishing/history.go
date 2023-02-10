@@ -77,23 +77,23 @@ func (h *History) Top(p Parameter, n int) []*Entry {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	entires := make([]*Entry, len(h.entries))
-	copy(entires, h.entries)
-	sort.Slice(entires, func(i, j int) bool {
+	r := make([]*Entry, len(h.entries))
+	copy(r, h.entries)
+	sort.Slice(r, func(i, j int) bool {
 		switch p {
 		case Weight:
-			return entires[i].Fish.Weight > entires[j].Fish.Weight
+			return r[i].Fish.Weight > r[j].Fish.Weight
 		case Length:
-			return entires[i].Fish.Length > entires[j].Fish.Length
+			return r[i].Fish.Length > r[j].Fish.Length
 		case Price:
-			return entires[i].Fish.Price() > entires[j].Fish.Price()
+			return r[i].Fish.Price() > r[j].Fish.Price()
 		}
 		panic(fmt.Sprintf("unexpected parameter %v", p))
 	})
-	if len(entires) > n {
-		return entires[:n]
+	if len(r) < n {
+		return r
 	}
-	return entires
+	return r[:n]
 }
 
 // Records returns a new channel of the given parameter for record

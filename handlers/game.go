@@ -176,6 +176,7 @@ func (h *Pick) Handle(c tele.Context) error {
 	if user.Inventory.Count() > game.InventoryCap {
 		return c.Send(format.InventoryFull)
 	}
+
 	for _, key := range tu.NumArg(c, pickRe, 2) {
 		item, ok := world.Floor.ByKey(key)
 		if !ok {
@@ -222,9 +223,11 @@ func (h *Market) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	head := fmt.Sprintf("<b>%s</b>\n", world.Market)
-	list := format.Products(world.Market.Products())
-	return c.Send(head+list, tele.ModeHTML)
+	var mention string
+	if id, ok := world.Market.Shift.Worker(); ok {
+		mention = tu.Mention(c, id)
+	}
+	return c.Send(format.Market(mention, world.Market), tele.ModeHTML)
 }
 
 type NameMarket struct {
@@ -250,6 +253,48 @@ func (h *NameMarket) Handle(c tele.Context) error {
 	return c.Send(format.MarketRenamed)
 }
 
+type GetJob struct {
+	Universe *game.Universe
+}
+
+var getJobRe = re("^!(рохля|работа)")
+
+func (h *GetJob) Match(s string) bool {
+	return getJobRe.MatchString(s)
+}
+
+func (h *GetJob) Handle(c tele.Context) error {
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	const hours = 2
+	if !world.Market.Shift.Begin(user.TUID, hours*time.Hour) {
+		return c.Send(format.CannotGetJob)
+	}
+	return c.Send(format.GetJob(tu.Mention(c, user), hours), tele.ModeHTML)
+}
+
+type QuitJob struct {
+	Universe *game.Universe
+}
+
+var quitJobRe = re("^!(уволиться|увольнение)")
+
+func (h *QuitJob) Match(s string) bool {
+	return quitJobRe.MatchString(s)
+}
+
+func (h *QuitJob) Handle(c tele.Context) error {
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	if id, ok := world.Market.Shift.Worker(); ok && id == user.TUID {
+		world.Market.Shift.Cancel()
+		return c.Send(format.FireJob(tu.Mention(c, id)), tele.ModeHTML)
+	}
+	return c.Send(format.CannotFireJob)
+}
+
 type Buy struct {
 	Universe *game.Universe
 }
@@ -267,10 +312,11 @@ func (h *Buy) Handle(c tele.Context) error {
 	if user.Inventory.Count() > game.InventoryCap {
 		return c.Send(format.InventoryFull)
 	}
+
 	bought := []*item.Item{}
 	cost := 0
 	for _, key := range tu.NumArg(c, buyRe, 1) {
-		p, err := user.Buy(world.Market, key)
+		p, err := user.Buy(world, key)
 		if errors.Is(err, game.ErrNoKey) {
 			c.Send(format.BadKey(key), tele.ModeHTML)
 			break
@@ -365,6 +411,7 @@ func (h *Fish) Handle(c tele.Context) error {
 	if user.Inventory.Count() > game.InventoryCap {
 		return c.Send(format.InventoryFull)
 	}
+
 	rod, ok := user.FishingRod()
 	if !ok {
 		return c.Send(format.BuyFishingRod)
@@ -424,6 +471,10 @@ func (h *DrawNet) Match(s string) bool {
 func (h *DrawNet) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
+
+	if user.Inventory.Count() > game.InventoryCap {
+		return c.Send(format.InventoryFull)
+	}
 
 	net, ok := user.DrawNew()
 	if !ok {
@@ -585,7 +636,7 @@ func (h *Sell) Handle(c tele.Context) error {
 			c.Send(format.BadKey(key), tele.ModeHTML)
 			continue
 		}
-		profit, ok := user.Sell(item)
+		profit, ok := user.Sell(world, item)
 		if !ok {
 			c.Send(format.CannotSell(item), tele.ModeHTML)
 			continue
@@ -617,7 +668,7 @@ func (h *SellQuick) Handle(c tele.Context) error {
 		if !ok || fish.Price() < 2000 {
 			continue
 		}
-		profit, ok := user.Sell(item)
+		profit, ok := user.Sell(world, item)
 		if !ok {
 			c.Send(format.CannotSell(item), tele.ModeHTML)
 			continue
@@ -1000,6 +1051,32 @@ func (h *Balance) Handle(c tele.Context) error {
 	defer world.Unlock()
 	return c.Send(fmt.Sprintf("💵 Ваш баланс: %s",
 		format.Money(user.Balance().Total())), tele.ModeHTML)
+}
+
+type Funds struct {
+	Universe *game.Universe
+}
+
+var fundsRe = re("^!(зарплата|средства|получить|собрать)")
+
+func (h *Funds) Match(s string) bool {
+	return fundsRe.MatchString(s)
+}
+
+func (h *Funds) Handle(c tele.Context) error {
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	if user.Inventory.Count() > game.InventoryCap {
+		return c.Send(format.InventoryFull)
+	}
+
+	collected := user.Funds.Collect()
+	for _, f := range collected {
+		user.Inventory.Add(f.Item)
+	}
+	user.Balance().Stack()
+	return c.Send(format.FundsCollected(tu.Mention(c, user), collected...), tele.ModeHTML)
 }
 
 type Energy struct {

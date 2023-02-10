@@ -33,8 +33,8 @@ func (u *User) Modset(w *World) modifier.Set {
 		moders = append(moders, b)
 	}
 
-	top := w.SortedUsers(ByElo)
-	if len(top) >= 3 {
+	// Rating modifiers.
+	if top := w.SortedUsers(ByElo); len(top) >= 3 {
 		switch u {
 		case top[0]:
 			moders = append(moders, modifier.RatingFirst)

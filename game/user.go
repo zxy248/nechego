@@ -30,7 +30,8 @@ type User struct {
 	LastMessage time.Time    // When was the last message sent?
 	Buffs       buff.Set     // Active buffs.
 	Developer   bool         // Flag of a game developer.
-	CombatMode  pvp.Mode     // PvP or PvE.
+	CombatMode  pvp.Mode     // PvP or PvE?
+	Funds       Funds        // Collectable items.
 }
 
 func NewUser(tuid int64) *User {
@@ -38,7 +39,8 @@ func NewUser(tuid int64) *User {
 		TUID:      tuid,
 		Rating:    1500,
 		Inventory: item.NewItems(),
-		Buffs:     make(buff.Set),
+		Buffs:     buff.Set{},
+		Funds:     Funds{},
 	}
 }
 
