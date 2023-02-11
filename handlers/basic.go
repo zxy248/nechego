@@ -492,6 +492,22 @@ func (h *Sima) Handle(c tele.Context) error {
 	return c.Send(&set.Stickers[rand.Intn(len(set.Stickers))])
 }
 
+type Lageona struct{}
+
+var lageonaRe = re("^!лагеона")
+
+func (h *Lageona) Match(s string) bool {
+	return lageonaRe.MatchString(s)
+}
+
+func (h *Lageona) Handle(c tele.Context) error {
+	set, err := c.Bot().StickerSet("lageona_by_fStikBot")
+	if err != nil {
+		return err
+	}
+	return c.Send(&set.Stickers[rand.Intn(len(set.Stickers))])
+}
+
 type Hello struct {
 	Path  string
 	cache []tele.Sticker

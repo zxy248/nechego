@@ -107,6 +107,7 @@ func main() {
 		&handlers.Masyunya{},
 		&handlers.Poppy{},
 		&handlers.Sima{},
+		&handlers.Lageona{},
 
 		// Daily.
 		&handlers.DailyEblan{Universe: universe},

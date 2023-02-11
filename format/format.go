@@ -443,7 +443,7 @@ func FundsCollected(mention string, f ...*game.Fund) string {
 			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> пунктов.</i>", rest))
 			break
 		}
-		c.Add(fmt.Sprintf("<b>→</b> %s <i>(%s)</i>", Item(x.Item), x.Source))
+		c.Add(fmt.Sprintf("<b>·</b> %s <i>(%s)</i>", Item(x.Item), x.Source))
 	}
 	return c.String()
 }

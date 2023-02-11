@@ -27,6 +27,7 @@ const (
 	MasyunyaHandler
 	PoppyHandler
 	SimaHandler
+	LageonaHandler
 	HelloHandler
 	BasiliHandler
 	CasperHandler
@@ -107,6 +108,7 @@ func (_ *Fap) Self() HandlerID            { return FapHandler }
 func (_ *Masyunya) Self() HandlerID       { return MasyunyaHandler }
 func (_ *Poppy) Self() HandlerID          { return PoppyHandler }
 func (_ *Sima) Self() HandlerID           { return SimaHandler }
+func (_ *Lageona) Self() HandlerID        { return LageonaHandler }
 func (_ *Hello) Self() HandlerID          { return HelloHandler }
 func (_ *Basili) Self() HandlerID         { return BasiliHandler }
 func (_ *Casper) Self() HandlerID         { return CasperHandler }
