@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"nechego/buff"
-	"nechego/farm"
 	"nechego/fishing"
 	"nechego/item"
 	"nechego/phone"
@@ -116,18 +114,5 @@ func (w *World) Capital() (total, avg int) {
 
 // migrate makes the world consistent with new features.
 func (w *World) migrate() {
-	if w.Market.PriceList == nil {
-		w.Market.PriceList = NewPriceList()
-	}
-	for _, u := range w.Users {
-		if u.Buffs == nil {
-			u.Buffs = make(buff.Set)
-		}
-		if u.Funds == nil {
-			u.Funds = make(Funds)
-		}
-		if u.Farm == nil {
-			u.Farm = farm.New(2, 3)
-		}
-	}
+	return
 }
