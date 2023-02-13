@@ -102,7 +102,7 @@ func (f *Farm) Harvest() []*plant.Plant {
 		for c := 0; c < f.Columns; c++ {
 			p := Plot{r, c}
 			if crop := f.Grid[p]; crop.Ready() {
-				harvested[crop.Type] += 1 + rand.Intn(2)
+				harvested[crop.Type] += 1 + rand.Intn(5)
 				delete(f.Grid, p)
 			}
 		}

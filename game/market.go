@@ -228,7 +228,7 @@ func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
 	case *details.Details:
 		profit = 100 * x.Count
 	case *plant.Plant:
-		profit = w.Market.PriceList.Price(x.Type)
+		profit = w.Market.PriceList.Price(x.Type) * x.Count
 	default:
 		// Item of this type cannot be sold; return it back.
 		u.Inventory.Add(i)
