@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"nechego/dates"
 	"nechego/details"
+	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/money"
@@ -81,6 +82,7 @@ func Random() *Item {
 			fishing.RandomFish(),
 			food.Random(),
 			money.NewCash(),
+			plant.Random(),
 		},
 		0.5: {
 			money.NewWallet(),
@@ -122,7 +124,7 @@ func integral(i *Item) bool {
 			return false
 		}
 	case *tools.Knife:
-		if x.Durability < 0 {
+		if x.Broken() {
 			return false
 		}
 	case *details.Details:
@@ -131,6 +133,10 @@ func integral(i *Item) bool {
 		}
 	case *fishing.Net:
 		if x.Count() == 0 && x.Broken() {
+			return false
+		}
+	case *plant.Plant:
+		if x.Count == 0 {
 			return false
 		}
 	}

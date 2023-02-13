@@ -3,6 +3,8 @@ package format
 import (
 	"fmt"
 	"math/rand"
+	"nechego/farm"
+	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/game"
@@ -44,8 +46,8 @@ const (
 	NotOnline            = "🚫 Этот пользователь не в сети."
 	CannotBan            = "😖 Этого пользователя нельзя забанить."
 	CannotFight          = "🛡 С этим пользователем нельзя подраться."
-	FightVersusPvE       = "🛡 Оппонент находится в PvE режиме."
-	FightFromPvE         = "🛡 Вы находитесь в PvE режиме."
+	FightVersusPvE       = "🛡 Оппонент находится в <b>PvE-режиме</b>."
+	FightFromPvE         = "🛡 Вы находитесь в <b>PvE-режиме</b>."
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
 	CannotFireJob        = "💼 Вы нигде не работаете."
 )
@@ -143,6 +145,10 @@ func CannotEat(i ...*item.Item) string {
 
 func Fish(f *fishing.Fish) string {
 	return fmt.Sprintf("<code>%s</code>", f)
+}
+
+func Plant(p *plant.Plant) string {
+	return fmt.Sprintf("<code>%s</code>", p)
 }
 
 func Rating(r float64) string {
@@ -379,12 +385,12 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 }
 
 func PvPMode() string {
-	return "⚔ PvP режим активирован."
+	return "⚔ <b>PvP-режим</b> активирован."
 }
 
 func PvEMode() string {
 	minutes := pvp.WaitForPvE / time.Minute
-	return fmt.Sprintf("🛡 PvE режим активируется через %d минут.", minutes)
+	return fmt.Sprintf("🛡 <b>PvE-режим</b> активируется через <code>%d минут</code>.", minutes)
 }
 
 func Fight(mentionA, mentionB string, strengthA, strengthB float64) string {
@@ -454,7 +460,9 @@ func GetJob(mention string, hours int) string {
 }
 
 func MarketShift(mention string, s game.Shift) string {
-	return fmt.Sprintf("🪪 С <code>%d:%d</code> по <code>%d:%d</code> вас обслуживает <b>%s</b>.",
+	const clock = "<code>%02d:%02d</code>"
+	const format = "🪪 С " + clock + " по " + clock + " вас обслуживает <b>%s</b>."
+	return fmt.Sprintf(format,
 		s.Start.Hour(), s.Start.Minute(),
 		s.End.Hour(), s.End.Minute(),
 		mention)
@@ -472,6 +480,81 @@ func Market(mention string, m *game.Market) string {
 
 func FireJob(mention string) string {
 	return fmt.Sprintf("💼 <b>%s</b> покидает место работы.", mention)
+}
+
+func Farm(mention string, f *farm.Farm) string {
+	c := NewConnector("\n")
+	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма</b>", mention))
+	c.Add(f.String())
+	if free := f.Free(); free > 0 {
+		c.Add(fmt.Sprintf("<i>🌱 Можно посадить ещё %d %s</i>.", free, declPlant(free)))
+	}
+	if pending := f.Pending(); pending > 0 {
+		c.Add(fmt.Sprintf("<i>🧺 Можно собрать урожай.</i>"))
+	}
+	return c.String()
+}
+
+func CannotPlant(i *item.Item) string {
+	return fmt.Sprintf("🌱 Нельзя посадить %s.", Item(i))
+}
+
+func Planted(mention string, p ...*plant.Plant) string {
+	if len(p) == 0 {
+		return "🌱 Ничего не посажено."
+	}
+	c := NewConnector(", ")
+	for _, x := range p {
+		c.Add(Plant(x))
+	}
+	return fmt.Sprintf("🌱 %s посадил(а) %s.", mention, c.String())
+}
+
+func Harvested(mention string, p ...*plant.Plant) string {
+	if len(p) == 0 {
+		return "🧺 Ничего не собрано."
+	}
+	c := NewConnector(", ")
+	for _, x := range p {
+		c.Add(Plant(x))
+	}
+	return fmt.Sprintf("🧺 %s собрал(а) %s.", mention, c.String())
+}
+
+func PriceList(p *game.PriceList) string {
+	out := fmt.Sprintf("<b>📊 Цены на %s</b>\n", p.Updated.Format("2006.01.02"))
+	var table string
+	for i, t := range plant.Types {
+		table += fmt.Sprintf("<code>%s %20s</code>", t, Money(p.Price(t)))
+		if i%2 == 0 {
+			table += "<code>    </code>"
+		} else {
+			table += "\n"
+		}
+	}
+	return out + table
+}
+
+func FarmSize(f *farm.Farm, cost int) string {
+	c := NewConnector("\n")
+	c.Add(fmt.Sprintf("🏡 Размер вашей фермы: <b>%d × %d</b>.", f.Rows, f.Columns))
+	c.Add(fmt.Sprintf("💰 Купить землю можно за %s: <code>!апгрейд</code>.", Money(cost)))
+	return c.String()
+}
+
+func FarmUpgraded(mention string, f *farm.Farm, cost int) string {
+	c := NewConnector("\n")
+	c.Add(fmt.Sprintf("💸 <b>%s</b> приобрел(а) землю за %s.", mention, Money(cost)))
+	c.Add(fmt.Sprintf("🏡 Новый размер фермы: <b>%d × %d</b>.", f.Rows, f.Columns))
+	return c.String()
+}
+
+func CannotSplit(i *item.Item) string {
+	return fmt.Sprintf("🗃 Нельзя разделить %s.", Item(i))
+}
+
+func Splitted(mention string, i *item.Item) string {
+	return fmt.Sprintf("🗃 %s откладывает %s.", mention, Item(i))
 }
 
 func declHours(n int) string {
@@ -501,6 +584,17 @@ func declCaught(n int) string {
 		return "Поймана"
 	}
 	return "Поймано"
+}
+
+func declPlant(n int) string {
+	suffix := "й"
+	switch n {
+	case 1:
+		suffix = "е"
+	case 2, 3, 4:
+		suffix = "я"
+	}
+	return "растени" + suffix
 }
 
 func mention(id int64, text string) string {

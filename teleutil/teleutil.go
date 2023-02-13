@@ -80,12 +80,12 @@ func NumArgAll(c tele.Context, re *regexp.Regexp, n int) []int {
 }
 
 func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
-	const limit = 7
+	const limit = 10
 	nums := NumArgAll(c, re, n)
-	if len(nums) > limit {
-		nums = nums[:limit]
+	if len(nums) < limit {
+		return nums
 	}
-	return nums
+	return nums[:limit]
 }
 
 func Reply(c tele.Context) (u *tele.User, ok bool) {

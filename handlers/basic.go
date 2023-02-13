@@ -25,6 +25,18 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+type Help struct{}
+
+var helpRe = re("^!(помощь|команды|документ)")
+
+func (h *Help) Match(s string) bool {
+	return helpRe.MatchString(s)
+}
+
+func (h *Help) Handle(c tele.Context) error {
+	return c.Send("📖 <b>Документация:</b> nechego.pages.dev.", tele.ModeHTML)
+}
+
 type Infa struct{}
 
 var infaRe = re("^!инфа ?(.*)")

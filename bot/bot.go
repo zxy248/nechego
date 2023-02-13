@@ -86,6 +86,8 @@ func main() {
 	avatars := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
 	router := &Router{}
 	router.Handlers = []handlers.Handler{
+		&handlers.Help{},
+
 		// Pictures.
 		&handlers.Pic{Path: "data/pic"},
 		&handlers.Basili{Path: "data/basili"},
@@ -121,10 +123,19 @@ func main() {
 		&handlers.Pick{Universe: universe},
 		&handlers.Floor{Universe: universe},
 		&handlers.Stack{Universe: universe},
+		&handlers.Split{Universe: universe},
 		&handlers.Cashout{Universe: universe},
 		&handlers.Capital{Universe: universe},
 		&handlers.Balance{Universe: universe},
 		&handlers.Funds{Universe: universe},
+
+		// Farm.
+		&handlers.Farm{Universe: universe},
+		&handlers.Plant{Universe: universe},
+		&handlers.Harvest{Universe: universe},
+		&handlers.PriceList{Universe: universe},
+		&handlers.FarmSize{Universe: universe},
+		&handlers.UpgradeFarm{Universe: universe},
 
 		// Market.
 		&handlers.Market{Universe: universe},

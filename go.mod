@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/antonmedv/expr v1.9.0
+	golang.org/x/text v0.3.7
 	gopkg.in/telebot.v3 v3.1.2
 )
 

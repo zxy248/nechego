@@ -14,6 +14,7 @@ import (
 	"nechego/item"
 	"nechego/money"
 	tu "nechego/teleutil"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -233,6 +234,24 @@ func (h *Market) Handle(c tele.Context) error {
 		mention = tu.Mention(c, id)
 	}
 	return c.Send(format.Market(mention, world.Market), tele.ModeHTML)
+}
+
+type PriceList struct {
+	Universe *game.Universe
+}
+
+var priceListRe = re("^!(прайс-?лист|цены)")
+
+func (h *PriceList) Match(s string) bool {
+	return priceListRe.MatchString(s)
+}
+
+func (h *PriceList) Handle(c tele.Context) error {
+	world, _ := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	world.Market.PriceList.Refresh()
+	return c.Send(format.PriceList(world.Market.PriceList), tele.ModeHTML)
 }
 
 type NameMarket struct {
@@ -697,8 +716,43 @@ func (h *Stack) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	user.Balance().Stack()
+	user.Inventory.Stack()
 	return c.Send("🗄 Вы сложили вещи.")
+}
+
+type Split struct {
+	Universe *game.Universe
+}
+
+var splitRe = re(`^!отложить (\d*) (\d*)`)
+
+func (h *Split) Match(s string) bool {
+	return splitRe.MatchString(s)
+}
+
+func (h *Split) Handle(c tele.Context) error {
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	args := tu.Args(c, splitRe)
+	key, err := strconv.Atoi(args[1])
+	if err != nil {
+		return nil
+	}
+	count, err := strconv.Atoi(args[2])
+	if err != nil {
+		return nil
+	}
+	whole, ok := user.Inventory.ByKey(key)
+	if !ok {
+		return c.Send(format.BadKey(key), tele.ModeHTML)
+	}
+	part, ok := item.Split(whole, count)
+	if !ok {
+		return c.Send(format.CannotSplit(whole), tele.ModeHTML)
+	}
+	user.Inventory.Add(part)
+	return c.Send(format.Splitted(tu.Mention(c, user), part), tele.ModeHTML)
 }
 
 type Cashout struct {
@@ -756,10 +810,10 @@ func (h *Fight) Handle(c tele.Context) error {
 
 	// Are both fighters in PvP mode?
 	if user.CombatMode.Status() == pvp.PvE {
-		return c.Send(format.FightFromPvE)
+		return c.Send(format.FightFromPvE, tele.ModeHTML)
 	}
 	if opnt.CombatMode.Status() == pvp.PvE {
-		return c.Send(format.FightVersusPvE)
+		return c.Send(format.FightVersusPvE, tele.ModeHTML)
 	}
 
 	// Can opponent fight back?
@@ -818,9 +872,9 @@ func (h *PvP) Handle(c tele.Context) error {
 	status := user.CombatMode.Toggle()
 	switch status {
 	case pvp.PvE:
-		return c.Send(format.PvEMode())
+		return c.Send(format.PvEMode(), tele.ModeHTML)
 	case pvp.PvP:
-		return c.Send(format.PvPMode())
+		return c.Send(format.PvPMode(), tele.ModeHTML)
 	}
 	return fmt.Errorf("unknown combat mode %v", status)
 }
@@ -1061,7 +1115,7 @@ type Funds struct {
 	Universe *game.Universe
 }
 
-var fundsRe = re("^!(зарплата|средства|получить|собрать)")
+var fundsRe = re("^!(зарплата|средства|получить)")
 
 func (h *Funds) Match(s string) bool {
 	return fundsRe.MatchString(s)
@@ -1079,7 +1133,7 @@ func (h *Funds) Handle(c tele.Context) error {
 	for _, f := range collected {
 		user.Inventory.Add(f.Item)
 	}
-	user.Balance().Stack()
+	user.Inventory.Stack()
 	return c.Send(format.FundsCollected(tu.Mention(c, user), collected...), tele.ModeHTML)
 }
 

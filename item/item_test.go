@@ -45,6 +45,7 @@ func TestRandom(t *testing.T) {
 		TypePhone,
 		TypeDice,
 		TypeAdmin,
+		TypePlant,
 	}
 	for _, typ := range wantTypes {
 		if types[typ] == 0 {

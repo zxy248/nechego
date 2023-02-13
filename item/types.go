@@ -3,6 +3,7 @@ package item
 import (
 	"fmt"
 	"nechego/details"
+	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/money"
@@ -34,6 +35,7 @@ const (
 	TypeDetails
 	TypeThread
 	TypeFishingNet
+	TypePlant
 )
 
 // TypeOf returns a Type corresponding to the actual type of x.
@@ -71,6 +73,8 @@ func TypeOf(x any) Type {
 		return TypeThread
 	case *fishing.Net:
 		return TypeFishingNet
+	case *plant.Plant:
+		return TypePlant
 	default:
 		return TypeUnknown
 	}
@@ -112,6 +116,8 @@ func ValueOf(t Type) any {
 		return &details.Thread{}
 	case TypeFishingNet:
 		return &fishing.Net{}
+	case TypePlant:
+		return &plant.Plant{}
 	default:
 		panic(fmt.Sprintf("unexpected item type %v", t))
 	}

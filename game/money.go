@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"nechego/details"
 	"nechego/item"
 	"nechego/modifier"
 	"nechego/money"
@@ -48,7 +47,6 @@ func (b *Balance) Spend(n int) bool {
 	if n < 0 {
 		panic(fmt.Sprintf("cannot spend %d money", n))
 	}
-	b.Stack()
 	for _, x := range b.inventory.List() {
 		if x.Type != item.TypeCash && x.Type != item.TypeWallet {
 			continue
@@ -66,43 +64,6 @@ func (b *Balance) Add(n int) {
 		panic(fmt.Sprintf("cannot add %d money", n))
 	}
 	b.inventory.Add(item.New(&money.Cash{Money: n}))
-}
-
-// Stack aggregates all money and details found in the inventory.
-func (b *Balance) Stack() {
-	nMoney := 0
-	nDetails := 0
-	var wallet *money.Wallet
-	b.inventory.Filter(func(i *item.Item) bool {
-		switch x := i.Value.(type) {
-		case *money.Cash:
-			nMoney += x.Money
-			// Don't keep zero value cash.
-			return false
-		case *money.Wallet:
-			// Stack money to the first wallet found.
-			if wallet == nil {
-				wallet = x
-			}
-			nMoney += x.Money
-			x.Money = 0
-		case *details.Details:
-			nDetails += x.Count
-			// Don't keep zero value details.
-			return false
-		}
-		return true
-	})
-	if nMoney != 0 {
-		if wallet != nil {
-			wallet.Money += nMoney
-		} else {
-			b.Add(nMoney)
-		}
-	}
-	if nDetails != 0 {
-		b.inventory.Add(item.New(&details.Details{Count: nDetails}))
-	}
 }
 
 // Cashout adds a cash item of the specified value to the inventory if

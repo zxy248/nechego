@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"nechego/details"
+	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/item"
@@ -16,9 +17,39 @@ import (
 	"nechego/tools"
 	"nechego/valid"
 	"strings"
+	"time"
 )
 
 var ErrNoKey = errors.New("key not found")
+
+// PriceList is a dynamically updated list of prices.
+type PriceList struct {
+	Updated time.Time
+	Plants  map[plant.Type]int
+}
+
+func NewPriceList() *PriceList {
+	p := &PriceList{Plants: map[plant.Type]int{}}
+	p.Refresh()
+	return p
+}
+
+// Refresh updates the price list idempotently.
+func (p *PriceList) Refresh() {
+	if !p.Updated.IsZero() && time.Now().YearDay() == p.Updated.YearDay() {
+		return
+	}
+	p.Updated = time.Now()
+	for _, t := range plant.Types {
+		p.Plants[t] = int(math.Abs(500 + 2500*rand.NormFloat64()))
+	}
+}
+
+// Price returns the price of the given plant type.
+func (p *PriceList) Price(t plant.Type) int {
+	p.Refresh()
+	return p.Plants[t]
+}
 
 // Product is an item with price to be sold on the market.
 type Product struct {
@@ -28,15 +59,19 @@ type Product struct {
 
 // Market represents a place where a user can buy products.
 type Market struct {
-	P     []*Product       // P is a list of products on sale.
-	Name  string           // Name of the market.
-	Shift Shift            // Work shift.
-	keys  map[int]*Product // keys for product selection.
+	P         []*Product       // P is a list of products on sale.
+	Name      string           // Name of the market.
+	Shift     Shift            // Work shift.
+	PriceList *PriceList       // Dynamic plant prices.
+	keys      map[int]*Product // keys for product selection.
 }
 
 // NewMarket returns a new Market with no products on sale.
 func NewMarket() *Market {
-	return &Market{P: []*Product{}}
+	return &Market{
+		P:         []*Product{},
+		PriceList: NewPriceList(),
+	}
 }
 
 // Refill adds a new random product to the market.
@@ -67,7 +102,7 @@ func randomProduct() *Product {
 	case *fishing.Rod:
 		p = price(5000, 2500)
 	case *fishing.Fish:
-		p = normalize(x.Price() * (1.0 + 0.25*rand.NormFloat64()))
+		p = normalize(x.Price() * (1.0 + 0.33*rand.NormFloat64()))
 	case *pets.Pet:
 		switch q := x.Species.Quality(); q {
 		case pets.Common:
@@ -95,6 +130,8 @@ func randomProduct() *Product {
 		p = price(5000, 2500)
 	case *details.Thread:
 		p = price(5000, 2500)
+	case *plant.Plant:
+		p = price(1000, 500)
 	default:
 		// This type of item cannot be sold at the market.
 		// Reroll.
@@ -126,6 +163,7 @@ func (m *Market) SetName(s string) bool {
 	return true
 }
 
+// String returns the textual representation of the Market.
 func (m *Market) String() string {
 	s := "🏪 Магазин"
 	if m.Name != "" {
@@ -161,7 +199,7 @@ func (u *User) Buy(w *World, key int) (*Product, error) {
 		// The market worker earns a wage.
 		if id, ok := market.Shift.Worker(); ok {
 			worker := w.UserByID(id)
-			worker.Funds.Add("рохля", item.New(&money.Cash{Money: earn}))
+			worker.Funds.Add("магазин", item.New(&money.Cash{Money: earn}))
 		}
 		// The strongest player takes a tax.
 		if top := w.SortedUsers(ByStrength); len(top) > 0 {
@@ -189,6 +227,8 @@ func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
 		profit = int(x.Price())
 	case *details.Details:
 		profit = 100 * x.Count
+	case *plant.Plant:
+		profit = w.Market.PriceList.Price(x.Type)
 	default:
 		// Item of this type cannot be sold; return it back.
 		u.Inventory.Add(i)

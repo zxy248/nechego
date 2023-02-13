@@ -18,3 +18,7 @@ func NewKnife() *Knife {
 func (k Knife) String() string {
 	return fmt.Sprintf("🔪 Нож (%.f%%)", k.Durability*100)
 }
+
+func (k *Knife) Broken() bool {
+	return k.Durability < 0
+}

@@ -3,6 +3,8 @@ package game
 import (
 	"math/rand"
 	"nechego/buff"
+	"nechego/farm"
+	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/game/pvp"
@@ -32,6 +34,7 @@ type User struct {
 	Developer   bool         // Flag of a game developer.
 	CombatMode  pvp.Mode     // PvP or PvE?
 	Funds       Funds        // Collectable items.
+	Farm        *farm.Farm   // The source of vegetables.
 }
 
 func NewUser(tuid int64) *User {
@@ -41,6 +44,7 @@ func NewUser(tuid int64) *User {
 		Inventory: item.NewItems(),
 		Buffs:     buff.Set{},
 		Funds:     Funds{},
+		Farm:      farm.New(2, 3),
 	}
 }
 
@@ -51,7 +55,16 @@ func (u *User) Eat(i *item.Item) bool {
 	if !ok {
 		return false
 	}
-	u.Inventory.Remove(i)
+	switch x := i.Value.(type) {
+	case *plant.Plant:
+		if x.Count > 1 {
+			x.Count--
+		} else {
+			u.Inventory.Remove(i)
+		}
+	default:
+		u.Inventory.Remove(i)
+	}
 	u.Energy.Add(Energy(n.Nutrition() + 0.04*rand.Float64()))
 	if f, ok := i.Value.(*food.Food); ok {
 		if f.Type == food.Beer {
@@ -70,7 +83,7 @@ func (u *User) EatQuick() (i *item.Item, ok bool) {
 			if v.Price() < 2000 {
 				return x, u.Eat(x)
 			}
-		case *food.Food, *food.Meat:
+		case *food.Food, *food.Meat, *plant.Plant:
 			return x, u.Eat(x)
 		}
 	}

@@ -12,6 +12,7 @@ func deleteMessage(c tele.Context, m *tele.Message) {
 	f := func() { c.Bot().Delete(m) }
 	switch context.HandlerID(c) {
 	case
+		handlers.NoHandler,
 		handlers.WhoHandler,
 		handlers.ListHandler,
 		handlers.TopHandler,
@@ -32,7 +33,9 @@ func deleteMessage(c tele.Context, m *tele.Message) {
 		handlers.DanbooruHandler,
 		handlers.FapHandler:
 		return
-	case handlers.SendSMSHandler, handlers.SpamHandler:
+	case
+		handlers.SendSMSHandler,
+		handlers.SpamHandler:
 		if m.Sender.IsBot {
 			time.AfterFunc(7*time.Second, f)
 		} else {

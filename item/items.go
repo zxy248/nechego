@@ -2,6 +2,9 @@ package item
 
 import (
 	"math/rand"
+	"nechego/details"
+	"nechego/farm/plant"
+	"nechego/money"
 )
 
 // Items represents a list of items.
@@ -145,4 +148,108 @@ func (it *Items) Count() int {
 // PushFront adds the specified items to the head of the list.
 func (it *Items) PushFront(i ...*Item) {
 	it.I = append(i, it.I...)
+}
+
+// Stack aggregates all mergeable items.
+func (it *Items) Stack() {
+	removed := map[*Item]bool{}
+	items := it.List()
+	for i, x := range items {
+		if removed[x] {
+			continue
+		}
+		for _, y := range items[i+1:] {
+			if removed[y] {
+				continue
+			}
+			if r, ok := Merge(x, y); ok && r != nil {
+				removed[r] = true
+			}
+		}
+	}
+	for x := range removed {
+		it.Remove(x)
+	}
+}
+
+// Merge attemps to stack two items into a single one.
+// On success, the returned item should be removed if not nil.
+func Merge(a, b *Item) (remove *Item, ok bool) {
+	switch x := a.Value.(type) {
+	case *plant.Plant:
+		y, ok := b.Value.(*plant.Plant)
+		if !ok || x.Type != y.Type {
+			return nil, false
+		}
+		x.Count += y.Count
+		return b, true
+
+	case *money.Wallet:
+		switch y := b.Value.(type) {
+		case *money.Cash:
+			x.Money += y.Money
+			return b, true
+		case *money.Wallet:
+			x.Money += y.Money
+			return nil, true
+		}
+
+	case *money.Cash:
+		switch y := b.Value.(type) {
+		case *money.Cash:
+			x.Money += y.Money
+			return b, true
+		case *money.Wallet:
+			y.Money += x.Money
+			return a, true
+		}
+
+	case *details.Details:
+		y, ok := b.Value.(*details.Details)
+		if !ok {
+			return nil, false
+		}
+		x.Count += y.Count
+		return b, true
+	}
+	return nil, false
+}
+
+// Split attemps to separate the given item into two.
+// On success, the returned item should be added to the inventory.
+func Split(i *Item, n int) (j *Item, ok bool) {
+	if n <= 0 {
+		return nil, false
+	}
+	switch x := i.Value.(type) {
+	case *plant.Plant:
+		if x.Count <= n {
+			return nil, false
+		}
+		x.Count -= n
+		return New(&plant.Plant{Type: x.Type, Count: n}), true
+
+	case *money.Wallet:
+		// Not `<=`: allow empty wallet.
+		if x.Money < n {
+			return nil, false
+		}
+		x.Money -= n
+		return New(&money.Cash{Money: n}), true
+
+	case *money.Cash:
+		if x.Money <= n {
+			return nil, false
+		}
+		x.Money -= n
+		return New(&money.Cash{Money: n}), true
+
+	case *details.Details:
+		if x.Count <= n {
+			return nil, false
+		}
+		x.Count -= n
+		return New(&details.Details{Count: n}), true
+	}
+	return nil, false
 }
