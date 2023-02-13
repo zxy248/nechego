@@ -34,7 +34,7 @@ func NewWorld(id int64) *World {
 		Market:  NewMarket(),
 		Casino:  &Casino{Timeout: time.Second * 25},
 		SMS:     phone.Database{},
-		History: &fishing.History{},
+		History: fishing.NewHistory(),
 	}
 }
 

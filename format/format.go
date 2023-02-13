@@ -104,6 +104,10 @@ func Money(q int) string {
 	return fmt.Sprintf("<code>%d %s</code>", q, money.Currency)
 }
 
+func Name(s string) string {
+	return fmt.Sprintf("<b>%s</b>", s)
+}
+
 func Balance(q int) string {
 	return "💵 " + Money(q)
 }
@@ -132,7 +136,7 @@ func Eaten(mention string, i ...*item.Item) string {
 		}
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("%s %s %s %s.", emoji, mention, verb, c.String())
+	return fmt.Sprintf("%s %s %s %s.", emoji, Name(mention), verb, c.String())
 }
 
 func CannotEat(i ...*item.Item) string {
@@ -193,10 +197,10 @@ func Percentage(p float64) string {
 
 func SMSes(mention string, smses []*phone.SMS) string {
 	if len(smses) == 0 {
-		return fmt.Sprintf("<b>✉ %s: Новых сообщений нет.</b>", mention)
+		return fmt.Sprintf("<b>✉ %s: Новых сообщений нет.</b>", Name(mention))
 	}
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>✉ %s: Сообщения</b>", mention))
+	c.Add(fmt.Sprintf("<b>✉ %s: Сообщения</b>", Name(mention)))
 	for _, sms := range smses {
 		c.Add(SMS(sms))
 	}
@@ -243,7 +247,7 @@ func MessageSent(sender, receiver phone.Number) string {
 }
 
 func SpamSent(mention string, price int) string {
-	return fmt.Sprintf("✉ %s совершает рассылку за %s.", mention, Money(price))
+	return fmt.Sprintf("✉ %s совершает рассылку за %s.", Name(mention), Money(price))
 }
 
 func UserBanned(hours int) string {
@@ -262,7 +266,7 @@ func Dropped(mention string, i ...*item.Item) string {
 	for _, x := range i {
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("♻ %s выкладывает %s.", mention, c.String())
+	return fmt.Sprintf("♻ %s выкладывает %s.", Name(mention), c.String())
 }
 
 func CannotPick(i *item.Item) string {
@@ -277,7 +281,7 @@ func Picked(mention string, i ...*item.Item) string {
 	for _, x := range i {
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("🫳 %s берёт %s.", mention, c.String())
+	return fmt.Sprintf("🫳 %s берёт %s.", Name(mention), c.String())
 }
 
 func CannotSell(i *item.Item) string {
@@ -293,7 +297,7 @@ func Sold(mention string, profit int, i ...*item.Item) string {
 		c.Add(Item(x))
 	}
 	return fmt.Sprintf("💵 %s продаёт %s и зарабатывает %s.",
-		mention, c.String(), Money(profit))
+		Name(mention), c.String(), Money(profit))
 }
 
 func Bought(mention string, cost int, i ...*item.Item) string {
@@ -305,7 +309,7 @@ func Bought(mention string, cost int, i ...*item.Item) string {
 		c.Add(Item(x))
 	}
 	return fmt.Sprintf("🛒 %s покупает %s за %s.",
-		mention, c.String(), Money(cost))
+		Name(mention), c.String(), Money(cost))
 }
 
 func Crafted(mention string, i ...*item.Item) string {
@@ -316,7 +320,7 @@ func Crafted(mention string, i ...*item.Item) string {
 	for _, x := range i {
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("🛠 %s получает %s.", mention, c.String())
+	return fmt.Sprintf("🛠 %s получает %s.", Name(mention), c.String())
 }
 
 func BadFishOutcome() string {
@@ -332,7 +336,7 @@ func BadFishOutcome() string {
 }
 
 func FishCatch(mention string, i *item.Item) string {
-	return fmt.Sprintf("🎣 %s получает %s.", mention, Item(i))
+	return fmt.Sprintf("🎣 %s получает %s.", Name(mention), Item(i))
 }
 
 func DrawNet(n *fishing.Net) string {
@@ -394,22 +398,22 @@ func PvEMode() string {
 }
 
 func Fight(mentionA, mentionB string, strengthA, strengthB float64) string {
-	const fighter = "<b>%s</b> <code>[%.2f]</code>"
+	const fighter = "%s <code>[%.2f]</code>"
 	const versus = "<b><i>vs.</i></b>"
 	const fight = "⚔️ " + fighter + " " + versus + " " + fighter
-	return fmt.Sprintf(fight, mentionA, strengthA, mentionB, strengthB)
+	return fmt.Sprintf(fight, Name(mentionA), strengthA, Name(mentionB), strengthB)
 }
 
 func WinnerTook(mention string, i *item.Item) string {
-	return fmt.Sprintf("🥊 %s забирает %s у проигравшего.", mention, Item(i))
+	return fmt.Sprintf("🥊 %s забирает %s у проигравшего.", Name(mention), Item(i))
 }
 
 func AttackerDrop(mention string, i *item.Item) string {
-	return fmt.Sprintf("🌀 %s уронил %s во время драки.", mention, Item(i))
+	return fmt.Sprintf("🌀 %s уронил %s во время драки.", Name(mention), Item(i))
 }
 
 func Win(mention string, elo float64) string {
-	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", mention, elo)
+	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", Name(mention), elo)
 }
 
 func CombatStatus(s pvp.Status) string {
@@ -427,7 +431,7 @@ func Profile(mention string, u *game.User, w *game.World) string {
 %s`
 	return fmt.Sprintf(
 		profile,
-		mention, CombatStatus(u.CombatMode.Status()),
+		Name(mention), CombatStatus(u.CombatMode.Status()),
 
 		Energy(u.Energy), Balance(u.Balance().Total()),
 		Strength(u.Strength(w)), Rating(u.Rating),
@@ -443,7 +447,7 @@ func FundsCollected(mention string, f ...*game.Fund) string {
 		return "🧾 Средств пока нет."
 	}
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", mention))
+	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", Name(mention)))
 	for i, x := range f {
 		if rest := len(f) - i; i >= 15 && rest >= 5 {
 			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> пунктов.</i>", rest))
@@ -455,17 +459,17 @@ func FundsCollected(mention string, f ...*game.Fund) string {
 }
 
 func GetJob(mention string, hours int) string {
-	return fmt.Sprintf("💼 <b>%s</b> получает работу на <code>%d %s</code>.",
-		mention, hours, declHours(hours))
+	return fmt.Sprintf("💼 %s получает работу на <code>%d %s</code>.",
+		Name(mention), hours, declHours(hours))
 }
 
 func MarketShift(mention string, s game.Shift) string {
 	const clock = "<code>%02d:%02d</code>"
-	const format = "🪪 С " + clock + " по " + clock + " вас обслуживает <b>%s</b>."
+	const format = "🪪 С " + clock + " по " + clock + " вас обслуживает %s."
 	return fmt.Sprintf(format,
 		s.Start.Hour(), s.Start.Minute(),
 		s.End.Hour(), s.End.Minute(),
-		mention)
+		Name(mention))
 }
 
 func Market(mention string, m *game.Market) string {
@@ -479,12 +483,12 @@ func Market(mention string, m *game.Market) string {
 }
 
 func FireJob(mention string) string {
-	return fmt.Sprintf("💼 <b>%s</b> покидает место работы.", mention)
+	return fmt.Sprintf("💼 %s покидает место работы.", Name(mention))
 }
 
 func Farm(mention string, f *farm.Farm) string {
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма</b>", mention))
+	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма</b>", Name(mention)))
 	c.Add(f.String())
 	if free := f.Free(); free > 0 {
 		c.Add(fmt.Sprintf("<i>🌱 Можно посадить ещё %d %s</i>.", free, declPlant(free)))
@@ -507,7 +511,7 @@ func Planted(mention string, p ...*plant.Plant) string {
 	for _, x := range p {
 		c.Add(Plant(x))
 	}
-	return fmt.Sprintf("🌱 %s посадил(а) %s.", mention, c.String())
+	return fmt.Sprintf("🌱 %s посадил(а) %s.", Name(mention), c.String())
 }
 
 func Harvested(mention string, p ...*plant.Plant) string {
@@ -518,7 +522,7 @@ func Harvested(mention string, p ...*plant.Plant) string {
 	for _, x := range p {
 		c.Add(Plant(x))
 	}
-	return fmt.Sprintf("🧺 %s собрал(а) %s.", mention, c.String())
+	return fmt.Sprintf("🧺 %s собрал(а) %s.", Name(mention), c.String())
 }
 
 func PriceList(p *game.PriceList) string {
@@ -544,7 +548,7 @@ func FarmSize(f *farm.Farm, cost int) string {
 
 func FarmUpgraded(mention string, f *farm.Farm, cost int) string {
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("💸 <b>%s</b> приобрел(а) землю за %s.", mention, Money(cost)))
+	c.Add(fmt.Sprintf("💸 %s приобрел(а) землю за %s.", Name(mention), Money(cost)))
 	c.Add(fmt.Sprintf("🏡 Новый размер фермы: <b>%d × %d</b>.", f.Rows, f.Columns))
 	return c.String()
 }
@@ -554,7 +558,7 @@ func CannotSplit(i *item.Item) string {
 }
 
 func Splitted(mention string, i *item.Item) string {
-	return fmt.Sprintf("🗃 %s откладывает %s.", mention, Item(i))
+	return fmt.Sprintf("🗃 %s откладывает %s.", Name(mention), Item(i))
 }
 
 func declHours(n int) string {

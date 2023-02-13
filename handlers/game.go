@@ -240,7 +240,7 @@ type PriceList struct {
 	Universe *game.Universe
 }
 
-var priceListRe = re("^!(прайс-?лист|цены)")
+var priceListRe = re("^!(прайс-?лист|цен)")
 
 func (h *PriceList) Match(s string) bool {
 	return priceListRe.MatchString(s)

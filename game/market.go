@@ -201,10 +201,10 @@ func (u *User) Buy(w *World, key int) (*Product, error) {
 			worker := w.UserByID(id)
 			worker.Funds.Add("магазин", item.New(&money.Cash{Money: earn}))
 		}
-		// The strongest player takes a tax.
-		if top := w.SortedUsers(ByStrength); len(top) > 0 {
-			strongest := top[0]
-			strongest.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+		// The most rated player takes a tax.
+		if top := w.SortedUsers(ByElo); len(top) > 0 {
+			elo := top[0]
+			elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
 		}
 	}
 	return product, nil
@@ -237,10 +237,10 @@ func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
 	// The sale is commited.
 	u.Balance().Add(profit)
 
-	// The strongest player takes a tax.
-	if top, earn := w.SortedUsers(ByStrength), profit/10; len(top) > 0 && earn > 0 {
-		strongest := top[0]
-		strongest.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+	// The most rated player takes a tax.
+	if top, earn := w.SortedUsers(ByElo), profit/10; len(top) > 0 && earn > 0 {
+		elo := top[0]
+		elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
 	}
 	return profit, true
 }

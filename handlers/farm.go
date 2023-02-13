@@ -13,7 +13,7 @@ type Farm struct {
 	Universe *game.Universe
 }
 
-var farmRe = re("^!ферма")
+var farmRe = re("^!(ферма|огород|грядка)")
 
 func (h *Farm) Match(s string) bool {
 	return farmRe.MatchString(s)

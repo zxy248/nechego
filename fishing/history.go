@@ -34,6 +34,11 @@ type History struct {
 	mu      sync.Mutex
 }
 
+// NewHistory returns and initializes a new History.
+func NewHistory() *History {
+	return &History{entries: []*Entry{}}
+}
+
 // MarshalJSON implements the json.Marshaler interface.
 func (h *History) MarshalJSON() ([]byte, error) {
 	h.mu.Lock()
