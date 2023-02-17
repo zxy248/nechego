@@ -35,6 +35,7 @@ type User struct {
 	CombatMode  pvp.Mode     // PvP or PvE?
 	Funds       Funds        // Collectable items.
 	Farm        *farm.Farm   // The source of vegetables.
+	Retired     time.Time    // When the job shift should finish.
 }
 
 func NewUser(tuid int64) *User {

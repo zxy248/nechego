@@ -291,11 +291,12 @@ func (h *GetJob) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	const hours = 2
-	if !world.Market.Shift.Begin(user.TUID, hours*time.Hour) {
+	const shiftHours = 2
+	if time.Since(user.Retired) < 2*time.Hour || !world.Market.Shift.Begin(user.TUID, shiftHours*time.Hour) {
 		return c.Send(format.CannotGetJob)
 	}
-	return c.Send(format.GetJob(tu.Mention(c, user), hours), tele.ModeHTML)
+	user.Retired = time.Now().Add(shiftHours * time.Hour)
+	return c.Send(format.GetJob(tu.Mention(c, user), shiftHours), tele.ModeHTML)
 }
 
 type QuitJob struct {
@@ -724,7 +725,7 @@ type Split struct {
 	Universe *game.Universe
 }
 
-var splitRe = re(`^!отложить (\d*) (\d*)`)
+var splitRe = re(`^!(отложить|разделить) (\d*) (\d*)`)
 
 func (h *Split) Match(s string) bool {
 	return splitRe.MatchString(s)
@@ -735,11 +736,11 @@ func (h *Split) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	args := tu.Args(c, splitRe)
-	key, err := strconv.Atoi(args[1])
+	key, err := strconv.Atoi(args[2])
 	if err != nil {
 		return nil
 	}
-	count, err := strconv.Atoi(args[2])
+	count, err := strconv.Atoi(args[3])
 	if err != nil {
 		return nil
 	}
@@ -1028,14 +1029,13 @@ func (h *TopRating) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	mention := func(u *game.User) string { return tu.Mention(c, u.TUID) }
 	users := world.SortedUsers(game.ByElo)
-	users = users[:min(len(users), 5)]
-	list := []string{"🏆 <b>Боевой рейтинг</b>"}
-	for i, u := range users {
-		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, tu.Mention(c, u.TUID), format.Rating(u.Rating)))
+	const limit = 10
+	if len(users) > limit {
+		users = users[:limit]
 	}
-	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
+	return c.Send(format.TopRating(mention, users...), tele.ModeHTML)
 }
 
 type TopRich struct {

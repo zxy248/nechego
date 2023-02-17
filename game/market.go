@@ -9,6 +9,7 @@ import (
 	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
+	"nechego/game/pvp"
 	"nechego/item"
 	"nechego/money"
 	"nechego/pets"
@@ -203,8 +204,9 @@ func (u *User) Buy(w *World, key int) (*Product, error) {
 		}
 		// The most rated player takes a tax.
 		if top := w.SortedUsers(ByElo); len(top) > 0 {
-			elo := top[0]
-			elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+			if elo := top[0]; elo.CombatMode.Status() == pvp.PvP {
+				elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+			}
 		}
 	}
 	return product, nil
@@ -239,8 +241,9 @@ func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
 
 	// The most rated player takes a tax.
 	if top, earn := w.SortedUsers(ByElo), profit/10; len(top) > 0 && earn > 0 {
-		elo := top[0]
-		elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+		if elo := top[0]; elo.CombatMode.Status() == pvp.PvP {
+			elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
+		}
 	}
 	return profit, true
 }

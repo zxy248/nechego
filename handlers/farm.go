@@ -61,7 +61,7 @@ type Harvest struct {
 	Universe *game.Universe
 }
 
-var gatherRe = re("^!урожай")
+var gatherRe = re("^!(урожай|собрать)")
 
 func (h *Harvest) Match(s string) bool {
 	return gatherRe.MatchString(s)

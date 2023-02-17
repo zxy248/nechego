@@ -561,6 +561,26 @@ func Splitted(mention string, i *item.Item) string {
 	return fmt.Sprintf("🗃 %s откладывает %s.", Name(mention), Item(i))
 }
 
+func TopRating(mention func(*game.User) string, users ...*game.User) string {
+	if len(users) == 0 {
+		return fmt.Sprintf("🏆 Пользователей пока нет.")
+	}
+	c := NewConnector("\n")
+	c.Add("<b>🏆 Боевой рейтинг</b>")
+	for i, u := range users {
+		c.Add(fmt.Sprintf("%s %s %s %s",
+			Index(i),
+			Name(mention(u)),
+			u.CombatMode.Status().Emoji(),
+			Rating(u.Rating)))
+	}
+	return c.String()
+}
+
+func Index(i int) string {
+	return fmt.Sprintf("<b><i>%d.</i></b>", 1+i)
+}
+
 func declHours(n int) string {
 	suffix := "ов"
 	switch n {

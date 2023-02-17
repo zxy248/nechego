@@ -25,6 +25,16 @@ func (s Status) String() string {
 	panic(fmt.Sprintf("unexpected status %d", s))
 }
 
+func (s Status) Emoji() string {
+	switch s {
+	case PvE:
+		return "🛡"
+	case PvP:
+		return "⚔"
+	}
+	panic(fmt.Sprintf("unexpected status %d", s))
+}
+
 // Combat mode.
 // Do not use the fields of this structure directly; they are public
 // for serialization purposes.
