@@ -1,6 +1,7 @@
 package game
 
 import (
+	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/item"
 )
@@ -35,12 +36,33 @@ func (u *User) Harvest() []*plant.Plant {
 	return harvested
 }
 
-func (u *User) FarmUpgradeCost() int {
-	return 1000 * fib(u.Farm.Columns+u.Farm.Rows)
+// Pick pops the Plant at the specified location and adds it to the
+// user's inventory.
+func (u *User) PickPlant(row, column int) (p *plant.Plant, ok bool) {
+	p, ok = u.Farm.Pick(farm.Plot{Row: row, Column: column})
+	if !ok {
+		return nil, false
+	}
+	u.Inventory.Add(item.New(p))
+	return p, true
 }
 
-func (u *User) UpgradeFarm() bool {
-	if !u.Balance().Spend(u.FarmUpgradeCost()) {
+const (
+	MaxFarmRows    = 8
+	MaxFarmColumns = 8
+)
+
+// FarmUpgradeCost returns the cost of the farm expansion.
+// If the farm cannot be upgraded, returns (0, false).
+func (u *User) FarmUpgradeCost() (cost int, ok bool) {
+	if u.Farm.Rows >= MaxFarmRows && u.Farm.Columns >= MaxFarmColumns {
+		return 0, false
+	}
+	return 1000 * fib(u.Farm.Columns+u.Farm.Rows), true
+}
+
+func (u *User) UpgradeFarm(cost int) bool {
+	if !u.Balance().Spend(cost) {
 		return false
 	}
 	u.Farm.Grow()

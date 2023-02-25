@@ -114,6 +114,18 @@ func (f *Farm) Harvest() []*plant.Plant {
 	return r
 }
 
+// Pick pops the Plant from the specified location.
+func (f *Farm) Pick(q Plot) (p *plant.Plant, ok bool) {
+	if crop := f.Grid[q]; crop.Ready() {
+		delete(f.Grid, q)
+		return &plant.Plant{
+			Type:  crop.Type,
+			Count: 1 + rand.Intn(5),
+		}, true
+	}
+	return nil, false
+}
+
 // Plant adds a new crop to the Farm and returns true if there is
 // enough space. If there is not enough space, returns false.
 func (f *Farm) Plant(t plant.Type) bool {

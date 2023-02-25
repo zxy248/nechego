@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"fmt"
+	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/format"
 	"nechego/game"
 	tu "nechego/teleutil"
+	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -23,7 +26,45 @@ func (h *Farm) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	return c.Send(format.Farm(tu.Mention(c, user), user.Farm), tele.ModeHTML)
+	upgradeCost, _ := user.FarmUpgradeCost()
+	return c.Send(format.Farm(tu.Mention(c, user), user.Farm, upgradeCost),
+		farmInlineKeyboard(user.TUID, user.Farm), tele.ModeHTML)
+}
+
+func farmInlineKeyboard(id int64, f *farm.Farm) *tele.ReplyMarkup {
+	grid := &tele.ReplyMarkup{}
+	rows := []tele.Row{}
+	for r := 0; r < f.Rows; r++ {
+		buttons := []tele.Btn{}
+		for c := 0; c < f.Columns; c++ {
+			emoji := f.Grid[farm.Plot{Row: r, Column: c}].String()
+			data := harvestCallbackData{id, r, c}
+			btn := grid.Data(emoji, data.encode())
+			buttons = append(buttons, btn)
+		}
+		rows = append(rows, grid.Row(buttons...))
+		buttons = []tele.Btn{}
+	}
+	grid.Inline(rows...)
+	return grid
+}
+
+type harvestCallbackData struct {
+	tuid   int64
+	row    int
+	column int
+}
+
+const harvestCallbackDataFormat = "/harvest/%d/%d/%d"
+
+func (h *harvestCallbackData) encode() string {
+	return fmt.Sprintf(harvestCallbackDataFormat, h.tuid, h.row, h.column)
+}
+
+func (h *harvestCallbackData) decode(s string) error {
+	s = strings.TrimSpace(s)
+	_, err := fmt.Sscanf(s, harvestCallbackDataFormat, &h.tuid, &h.row, &h.column)
+	return err
 }
 
 type Plant struct {
@@ -75,21 +116,27 @@ func (h *Harvest) Handle(c tele.Context) error {
 	return c.Send(format.Harvested(tu.Mention(c, user), harvested...), tele.ModeHTML)
 }
 
-type FarmSize struct {
+type HarvestInline struct {
 	Universe *game.Universe
 }
 
-var farmSizeRe = re("^!земля")
-
-func (h *FarmSize) Match(s string) bool {
-	return farmSizeRe.MatchString(s)
-}
-
-func (h *FarmSize) Handle(c tele.Context) error {
+func (h *HarvestInline) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	return c.Send(format.FarmSize(user.Farm, user.FarmUpgradeCost()), tele.ModeHTML)
+	data := harvestCallbackData{}
+	if err := data.decode(c.Callback().Data); err != nil || data.tuid != user.TUID {
+		return nil
+	}
+	p, ok := user.PickPlant(data.row, data.column)
+	if !ok {
+		return nil
+	}
+	mention := tu.Mention(c, user)
+	upgradeCost, _ := user.FarmUpgradeCost()
+	farm := format.Farm(mention, user.Farm, upgradeCost)
+	harvest := format.Harvested(mention, p)
+	return c.Edit(farm+"\n\n"+harvest, farmInlineKeyboard(data.tuid, user.Farm), tele.ModeHTML)
 }
 
 type UpgradeFarm struct {
@@ -106,8 +153,11 @@ func (h *UpgradeFarm) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	cost := user.FarmUpgradeCost()
-	if !user.UpgradeFarm() {
+	cost, ok := user.FarmUpgradeCost()
+	if !ok {
+		return c.Send(format.MaxSizeFarm)
+	}
+	if !user.UpgradeFarm(cost) {
 		return c.Send(format.NoMoney)
 	}
 	return c.Send(format.FarmUpgraded(tu.Mention(c, user), user.Farm, cost), tele.ModeHTML)

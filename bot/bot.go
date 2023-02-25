@@ -134,7 +134,6 @@ func main() {
 		&handlers.Plant{Universe: universe},
 		&handlers.Harvest{Universe: universe},
 		&handlers.PriceList{Universe: universe},
-		&handlers.FarmSize{Universe: universe},
 		&handlers.UpgradeFarm{Universe: universe},
 
 		// Market.
@@ -224,6 +223,8 @@ func main() {
 	for _, e := range endpoints {
 		bot.Handle(e, router.HandlerFunc(e))
 	}
+	harvestInline := handlers.HarvestInline{Universe: universe}
+	bot.Handle(tele.OnCallback, harvestInline.Handle)
 	bot.Start()
 
 	<-done

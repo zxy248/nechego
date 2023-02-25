@@ -15,8 +15,8 @@ import (
 // The number of items in the user's inventory for applying various
 // types of restrictions.
 const (
-	InventorySize = 15
-	InventoryCap  = 20
+	InventorySize = 20
+	InventoryCap  = 30
 )
 
 // User represents a player.
@@ -84,7 +84,7 @@ func (u *User) EatQuick() (i *item.Item, ok bool) {
 			if v.Price() < 2000 {
 				return x, u.Eat(x)
 			}
-		case *food.Food, *food.Meat, *plant.Plant:
+		case *food.Food, *food.Meat:
 			return x, u.Eat(x)
 		}
 	}

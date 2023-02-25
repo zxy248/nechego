@@ -50,6 +50,7 @@ const (
 	FightFromPvE         = "🛡 Вы находитесь в <b>PvE-режиме</b>."
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
 	CannotFireJob        = "💼 Вы нигде не работаете."
+	MaxSizeFarm          = "🏡 Вы достигли максимального размера фермы."
 )
 
 func Item(i *item.Item) string {
@@ -61,11 +62,19 @@ func Selector(key int, s string) string {
 }
 
 func Items(i []*item.Item) string {
+	const (
+		limit        = 30
+		amortization = 5
+	)
 	if len(i) == 0 {
 		return Empty
 	}
 	c := NewConnector("\n")
 	for k, x := range i {
+		if k >= limit && len(i) > limit+amortization {
+			c.Add(fmt.Sprintf("<i>...и ещё %d предметов.</i>", len(i)-k))
+			break
+		}
 		c.Add(Selector(k, Item(x)))
 	}
 	return c.String()
@@ -486,15 +495,20 @@ func FireJob(mention string) string {
 	return fmt.Sprintf("💼 %s покидает место работы.", Name(mention))
 }
 
-func Farm(mention string, f *farm.Farm) string {
+func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма</b>", Name(mention)))
-	c.Add(f.String())
+	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма (%d × %d)</b>",
+		Name(mention), f.Rows, f.Columns))
 	if free := f.Free(); free > 0 {
-		c.Add(fmt.Sprintf("<i>🌱 Можно посадить ещё %d %s</i>.", free, declPlant(free)))
+		c.Add(fmt.Sprintf("<i>🌱 Можно посадить ещё %d %s</i>.",
+			free, declPlant(free)))
 	}
 	if pending := f.Pending(); pending > 0 {
 		c.Add(fmt.Sprintf("<i>🧺 Можно собрать урожай.</i>"))
+	}
+	if upgradeCost > 0 {
+		c.Add(fmt.Sprintf("<i>💰 Можно купить землю за %s.</i>",
+			Money(upgradeCost)))
 	}
 	return c.String()
 }
@@ -537,13 +551,6 @@ func PriceList(p *game.PriceList) string {
 		}
 	}
 	return out + table
-}
-
-func FarmSize(f *farm.Farm, cost int) string {
-	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("🏡 Размер вашей фермы: <b>%d × %d</b>.", f.Rows, f.Columns))
-	c.Add(fmt.Sprintf("💰 Купить землю можно за %s: <code>!апгрейд</code>.", Money(cost)))
-	return c.String()
 }
 
 func FarmUpgraded(mention string, f *farm.Farm, cost int) string {

@@ -90,7 +90,7 @@ const (
 	FarmHandler
 	PlantHandler
 	HarvestHandler
-	FarmSizeHandler
+	HarvestInlineHandler
 	UpgradeFarmHandler
 )
 
@@ -179,5 +179,5 @@ func (_ *Spam) Self() HandlerID           { return SpamHandler }
 func (_ *Farm) Self() HandlerID           { return FarmHandler }
 func (_ *Plant) Self() HandlerID          { return PlantHandler }
 func (_ *Harvest) Self() HandlerID        { return HarvestHandler }
-func (_ *FarmSize) Self() HandlerID       { return FarmSizeHandler }
+func (_ *HarvestInline) Self() HandlerID  { return HarvestInlineHandler }
 func (_ *UpgradeFarm) Self() HandlerID    { return UpgradeFarmHandler }
