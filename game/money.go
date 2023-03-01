@@ -1,11 +1,14 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"nechego/item"
 	"nechego/modifier"
 	"nechego/money"
 )
+
+var ErrNoMoney = errors.New("no money")
 
 // Balance represents the user's money.
 type Balance struct {

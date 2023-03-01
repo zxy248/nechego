@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"nechego/avatar"
@@ -10,51 +9,109 @@ import (
 	"nechego/game"
 	"nechego/handlers"
 	"os"
+	"strings"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
 
+var botToken = os.Getenv("NECHEGO_TOKEN")
+
+// init seeds the random number generator and validates the global
+// variables.
+func init() {
+	rand.Seed(time.Now().UnixNano())
+	if botToken == "" {
+		log.Fatal("$NECHEGO_TOKEN not set")
+	}
+}
+
+func main() {
+	bot, err := tele.NewBot(tele.Settings{
+		Token:  botToken,
+		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	as := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
+	u := game.NewUniverse("universe", worldInitializer(bot))
+	go returnAuctionLots(u)
+	go refillMarket(u)
+	go restoreEnergy(u)
+	go fillNet(u)
+
+	router := NewRouter()
+	for _, m := range middlewareWrappers(u, as) {
+		router.AddMidleware(m)
+	}
+	for _, h := range textHandlers(u, as) {
+		router.AddHandler(tele.OnText, h)
+		router.AddHandler(tele.OnPhoto, h)
+	}
+	router.AddHandler(tele.OnDice, &handlers.Roll{Universe: u})
+	router.AddHandler(tele.OnCallback, &handlers.HarvestInline{Universe: u})
+	router.AddHandler(tele.OnCallback, &handlers.AuctionBuy{Universe: u})
+	router.Set(bot)
+
+	done := notifyStop(bot, u)
+	bot.Start()
+	<-done
+	log.Println("Successful shutdown.")
+}
+
 type Router struct {
-	Handlers   []handlers.Handler
-	Special    map[handlers.HandlerID]handlers.Handler
+	// Lists of handlers indexed by their corresponding endpoints.
+	Handlers map[string][]handlers.Handler
+
+	// Request wrappers.
 	Middleware []middleware.Wrapper
 }
 
+// NewRouter returns a new Router that does nothing.
+func NewRouter() *Router {
+	return &Router{
+		Handlers:   map[string][]handlers.Handler{},
+		Middleware: []middleware.Wrapper{},
+	}
+}
+
+// Set sets the handlers for each endpoint.
+func (r *Router) Set(bot *tele.Bot) {
+	for endpoint := range r.Handlers {
+		bot.Handle(endpoint, r.HandlerFunc(endpoint))
+	}
+}
+
+// AddMidleware registers the specified middleware.
+func (r *Router) AddMidleware(m middleware.Wrapper) {
+	r.Middleware = append([]middleware.Wrapper{m}, r.Middleware...)
+}
+
+// AddHandler registers the specified handler for the given endpoint.
+func (r *Router) AddHandler(endpoint string, h handlers.Handler) {
+	r.Handlers[endpoint] = append(r.Handlers[endpoint], h)
+}
+
+// HandlerFunc returns the HandlerFunc that telebot can handle.
 func (r *Router) HandlerFunc(endpoint string) tele.HandlerFunc {
-	var f tele.HandlerFunc
-	switch endpoint {
-	case tele.OnText, tele.OnPhoto:
-		special := []handlers.Handler{}
-		for _, h := range r.Special {
-			special = append(special, h)
+	// This function delegates the given context to the first
+	// matching handler. If there is no match, the function is a
+	// no-op.
+	f := func(c tele.Context) error {
+		s := c.Text()
+		if endpoint == tele.OnCallback {
+			callback := c.Callback()
+			s = strings.TrimSpace(callback.Data)
+			callback.Data = s
 		}
-		all := append(r.Handlers, special...)
-
-		f = func(c tele.Context) error {
-			for _, h := range all {
-				if h.Match(c.Text()) {
-					context.SetHandlerID(c, h.Self())
-					return h.Handle(c)
-				}
+		for _, h := range r.Handlers[endpoint] {
+			if h.Match(s) {
+				context.SetHandlerID(c, h.Self())
+				return h.Handle(c)
 			}
-			return nil
-
 		}
-	case tele.OnDice:
-		f = func(c tele.Context) error {
-			h := handlers.RollHandler
-			context.SetHandlerID(c, h)
-			return r.Special[h].Handle(c)
-		}
-	case tele.OnUserJoined:
-		f = func(c tele.Context) error {
-			h := handlers.HelloHandler
-			context.SetHandlerID(c, h)
-			return r.Special[h].Handle(c)
-		}
-	default:
-		panic(fmt.Sprintf("unexpected endpoint %s", endpoint))
+		return nil
 	}
 	for _, w := range r.Middleware {
 		f = w.Wrap(f)
@@ -62,30 +119,8 @@ func (r *Router) HandlerFunc(endpoint string) tele.HandlerFunc {
 	return f
 }
 
-var token = os.Getenv("NECHEGO_TOKEN")
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-
-	if token == "" {
-		log.Fatal("$NECHEGO_TOKEN not set")
-	}
-}
-
-func main() {
-	pref := tele.Settings{
-		Token:  token,
-		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
-	}
-	bot, err := tele.NewBot(pref)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	universe := game.NewUniverse("universe", worldInitializer(bot))
-	avatars := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
-	router := &Router{}
-	router.Handlers = []handlers.Handler{
+func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
+	return []handlers.Handler{
 		&handlers.Help{},
 
 		// Pictures.
@@ -112,121 +147,100 @@ func main() {
 		&handlers.Lageona{},
 
 		// Daily.
-		&handlers.DailyEblan{Universe: universe},
-		&handlers.DailyAdmin{Universe: universe},
-		&handlers.DailyPair{Universe: universe},
+		&handlers.DailyEblan{Universe: u},
+		&handlers.DailyAdmin{Universe: u},
+		&handlers.DailyPair{Universe: u},
 
 		// Economy.
-		&handlers.Inventory{Universe: universe},
-		&handlers.Sort{Universe: universe},
-		&handlers.Drop{Universe: universe},
-		&handlers.Pick{Universe: universe},
-		&handlers.Floor{Universe: universe},
-		&handlers.Stack{Universe: universe},
-		&handlers.Split{Universe: universe},
-		&handlers.Cashout{Universe: universe},
-		&handlers.Capital{Universe: universe},
-		&handlers.Balance{Universe: universe},
-		&handlers.Funds{Universe: universe},
+		&handlers.Inventory{Universe: u},
+		&handlers.Sort{Universe: u},
+		&handlers.Drop{Universe: u},
+		&handlers.Pick{Universe: u},
+		&handlers.Floor{Universe: u},
+		&handlers.Stack{Universe: u},
+		&handlers.Split{Universe: u},
+		&handlers.Cashout{Universe: u},
+		&handlers.Capital{Universe: u},
+		&handlers.Balance{Universe: u},
+		&handlers.Funds{Universe: u},
 
 		// Farm.
-		&handlers.Farm{Universe: universe},
-		&handlers.Plant{Universe: universe},
-		&handlers.Harvest{Universe: universe},
-		&handlers.PriceList{Universe: universe},
-		&handlers.UpgradeFarm{Universe: universe},
+		&handlers.Farm{Universe: u},
+		&handlers.Plant{Universe: u},
+		&handlers.Harvest{Universe: u},
+		&handlers.PriceList{Universe: u},
+		&handlers.UpgradeFarm{Universe: u},
 
 		// Market.
-		&handlers.Market{Universe: universe},
-		&handlers.Buy{Universe: universe},
-		&handlers.Sell{Universe: universe},
-		&handlers.SellQuick{Universe: universe},
-		&handlers.NameMarket{Universe: universe},
-		&handlers.GetJob{Universe: universe},
-		&handlers.QuitJob{Universe: universe},
+		&handlers.Market{Universe: u},
+		&handlers.Buy{Universe: u},
+		&handlers.Sell{Universe: u},
+		&handlers.SellQuick{Universe: u},
+		&handlers.NameMarket{Universe: u},
+		&handlers.GetJob{Universe: u},
+		&handlers.QuitJob{Universe: u},
+
+		// Auction.
+		&handlers.Auction{Universe: u},
+		&handlers.AuctionSell{Universe: u},
 
 		// Actions.
-		&handlers.Craft{Universe: universe},
-		&handlers.Fish{Universe: universe},
-		&handlers.DrawNet{Universe: universe},
-		&handlers.CastNet{Universe: universe},
-		&handlers.Net{Universe: universe},
-		&handlers.Catch{Universe: universe},
-		&handlers.Dice{Universe: universe},
-		&handlers.Fight{Universe: universe},
-		&handlers.PvP{Universe: universe},
-		&handlers.Eat{Universe: universe},
-		&handlers.EatQuick{Universe: universe},
-		&handlers.FishingRecords{Universe: universe},
-
-		// Admin.
-		// Handlers are commented out due to abuse of admin rights.
-		//     &handlers.Ban{Universe: universe, DurationHr: 1},
-		//     &handlers.Unban{Universe: universe},
+		&handlers.Craft{Universe: u},
+		&handlers.Fish{Universe: u},
+		&handlers.DrawNet{Universe: u},
+		&handlers.CastNet{Universe: u},
+		&handlers.Net{Universe: u},
+		&handlers.Catch{Universe: u},
+		&handlers.Dice{Universe: u},
+		&handlers.Fight{Universe: u},
+		&handlers.PvP{Universe: u},
+		&handlers.Eat{Universe: u},
+		&handlers.EatQuick{Universe: u},
+		&handlers.FishingRecords{Universe: u},
 
 		// Top.
-		&handlers.TopStrong{Universe: universe},
-		&handlers.TopRating{Universe: universe},
-		&handlers.TopRich{Universe: universe},
+		&handlers.TopStrong{Universe: u},
+		&handlers.TopRating{Universe: u},
+		&handlers.TopRich{Universe: u},
 
 		// Profile.
-		&handlers.Status{Universe: universe, MaxLength: 120},
-		&handlers.Profile{Universe: universe, Avatars: avatars},
-		&handlers.Avatar{Universe: universe, Avatars: avatars},
-		&handlers.Energy{Universe: universe},
-		&handlers.NamePet{Universe: universe},
+		&handlers.Status{Universe: u, MaxLength: 120},
+		&handlers.Profile{Universe: u, Avatars: as},
+		&handlers.Avatar{Universe: u, Avatars: as},
+		&handlers.Energy{Universe: u},
+		&handlers.NamePet{Universe: u},
 
 		// Phone.
-		&handlers.SendSMS{Universe: universe},
-		&handlers.ReceiveSMS{Universe: universe},
-		&handlers.Contacts{Universe: universe},
-		&handlers.Spam{Universe: universe},
+		&handlers.SendSMS{Universe: u},
+		&handlers.ReceiveSMS{Universe: u},
+		&handlers.Contacts{Universe: u},
+		&handlers.Spam{Universe: u},
 
 		// Fun.
+		&handlers.Hello{Path: "data/hello.json"},
 		&handlers.Game{},
 		&handlers.Infa{},
 		&handlers.Weather{},
 		&handlers.Calculator{},
 		&handlers.Name{},
-		&handlers.Who{Universe: universe},
-		&handlers.List{Universe: universe},
-		&handlers.TurnOn{Universe: universe},
-		&handlers.TurnOff{Universe: universe},
-		&handlers.Top{Universe: universe},
+		&handlers.Who{Universe: u},
+		&handlers.List{Universe: u},
+		&handlers.TurnOn{Universe: u},
+		&handlers.TurnOff{Universe: u},
+		&handlers.Top{Universe: u},
 	}
-	router.Special = map[handlers.HandlerID]handlers.Handler{
-		handlers.HelloHandler: &handlers.Hello{Path: "data/hello.json"},
-		handlers.RollHandler:  &handlers.Roll{Universe: universe},
-	}
-	router.Middleware = []middleware.Wrapper{
-		&middleware.RandomPhoto{Avatars: avatars},
-		&middleware.IncrementCounters{Universe: universe},
-		&middleware.IgnoreSpam{Universe: universe},
-		&middleware.IgnoreBanned{Universe: universe},
-		&middleware.DeleteMessage{},
-		&middleware.LogMessage{},
-		&middleware.IgnoreForwarded{},
-		&middleware.RequireSupergroup{},
+}
+
+func middlewareWrappers(u *game.Universe, as *avatar.Storage) []middleware.Wrapper {
+	return []middleware.Wrapper{
 		middleware.Recover,
+		&middleware.RequireSupergroup{},
+		&middleware.IgnoreForwarded{},
+		&middleware.LogMessage{},
+		&middleware.DeleteMessage{},
+		&middleware.IgnoreBanned{Universe: u},
+		&middleware.IgnoreSpam{Universe: u},
+		&middleware.IncrementCounters{Universe: u},
+		&middleware.RandomPhoto{Avatars: as},
 	}
-	go refillMarket(universe)
-	go restoreEnergy(universe)
-	go fillNet(universe)
-	done := stopper(bot, universe)
-
-	endpoints := [...]string{
-		tele.OnText,
-		tele.OnDice,
-		tele.OnUserJoined,
-		tele.OnPhoto,
-	}
-	for _, e := range endpoints {
-		bot.Handle(e, router.HandlerFunc(e))
-	}
-	harvestInline := handlers.HarvestInline{Universe: universe}
-	bot.Handle(tele.OnCallback, harvestInline.Handle)
-	bot.Start()
-
-	<-done
-	log.Println("Successful shutdown.")
 }

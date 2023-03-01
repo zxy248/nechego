@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"nechego/auction"
 	"nechego/fishing"
 	"nechego/item"
 	"nechego/phone"
@@ -17,6 +18,7 @@ type World struct {
 	TGID     int64
 	Users    []*User
 	Floor    *item.Items
+	Auction  *auction.Auction
 	Market   *Market
 	Casino   *Casino
 	Messages int
@@ -31,6 +33,7 @@ func NewWorld(id int64) *World {
 		TGID:    id,
 		Users:   []*User{},
 		Floor:   item.NewItems(),
+		Auction: auction.New(),
 		Market:  NewMarket(),
 		Casino:  &Casino{Timeout: time.Second * 25},
 		SMS:     phone.Database{},
@@ -114,5 +117,4 @@ func (w *World) Capital() (total, avg int) {
 
 // migrate makes the world consistent with new features.
 func (w *World) migrate() {
-	return
 }

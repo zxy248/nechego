@@ -7,7 +7,6 @@ import (
 	"nechego/format"
 	"nechego/game"
 	tu "nechego/teleutil"
-	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -38,7 +37,7 @@ func farmInlineKeyboard(id int64, f *farm.Farm) *tele.ReplyMarkup {
 		buttons := []tele.Btn{}
 		for c := 0; c < f.Columns; c++ {
 			emoji := f.Grid[farm.Plot{Row: r, Column: c}].String()
-			data := harvestCallbackData{id, r, c}
+			data := harvestCallback{id, r, c}
 			btn := grid.Data(emoji, data.encode())
 			buttons = append(buttons, btn)
 		}
@@ -49,21 +48,20 @@ func farmInlineKeyboard(id int64, f *farm.Farm) *tele.ReplyMarkup {
 	return grid
 }
 
-type harvestCallbackData struct {
+type harvestCallback struct {
 	tuid   int64
 	row    int
 	column int
 }
 
-const harvestCallbackDataFormat = "/harvest/%d/%d/%d"
+const harvestCallbackFormat = "/harvest/%d/%d/%d"
 
-func (h *harvestCallbackData) encode() string {
-	return fmt.Sprintf(harvestCallbackDataFormat, h.tuid, h.row, h.column)
+func (h *harvestCallback) encode() string {
+	return fmt.Sprintf(harvestCallbackFormat, h.tuid, h.row, h.column)
 }
 
-func (h *harvestCallbackData) decode(s string) error {
-	s = strings.TrimSpace(s)
-	_, err := fmt.Sscanf(s, harvestCallbackDataFormat, &h.tuid, &h.row, &h.column)
+func (h *harvestCallback) decode(s string) error {
+	_, err := fmt.Sscanf(s, harvestCallbackFormat, &h.tuid, &h.row, &h.column)
 	return err
 }
 
@@ -102,10 +100,10 @@ type Harvest struct {
 	Universe *game.Universe
 }
 
-var gatherRe = re("^!(урожай|собрать)")
+var harvestRe = re("^!(урожай|собрать)")
 
 func (h *Harvest) Match(s string) bool {
-	return gatherRe.MatchString(s)
+	return harvestRe.MatchString(s)
 }
 
 func (h *Harvest) Handle(c tele.Context) error {
@@ -120,11 +118,15 @@ type HarvestInline struct {
 	Universe *game.Universe
 }
 
+func (h *HarvestInline) Match(s string) bool {
+	return callbackMatch(&harvestCallback{}, s)
+}
+
 func (h *HarvestInline) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	data := harvestCallbackData{}
+	data := harvestCallback{}
 	if err := data.decode(c.Callback().Data); err != nil || data.tuid != user.TUID {
 		return nil
 	}

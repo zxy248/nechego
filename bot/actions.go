@@ -14,6 +14,21 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+// returnAuctionLots returns the expired Lots at the Auction to the sellers.
+func returnAuctionLots(universe *game.Universe) {
+	for range time.NewTicker(time.Minute).C {
+		universe.ForEachWorld(func(w *game.World) {
+			for _, l := range w.Auction.List() {
+				if time.Now().After(l.Expire()) {
+					w.Auction.Remove(l.Key)
+					seller := w.UserByID(l.SellerID)
+					seller.Funds.Add("возврат", l.Item)
+				}
+			}
+		})
+	}
+}
+
 // refillMarket refills every market in the universe with a new
 // product at a specified time interval.
 func refillMarket(universe *game.Universe) {
@@ -53,9 +68,9 @@ func fillNet(universe *game.Universe) {
 	}
 }
 
-// stopper gracefully stops the bot after receiving an interrupt
+// notifyStop gracefully stops the bot after receiving an interrupt
 // signal and sends an empty structure on the done channel.
-func stopper(bot *tele.Bot, universe *game.Universe) (done chan struct{}) {
+func notifyStop(bot *tele.Bot, universe *game.Universe) (done chan struct{}) {
 	done = make(chan struct{})
 	go func() {
 		interrupt := make(chan os.Signal, 1)

@@ -3,6 +3,7 @@ package format
 import (
 	"fmt"
 	"math/rand"
+	"nechego/auction"
 	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/fishing"
@@ -15,6 +16,8 @@ import (
 	"nechego/phone"
 	"strconv"
 	"time"
+
+	tele "gopkg.in/telebot.v3"
 )
 
 const (
@@ -51,6 +54,9 @@ const (
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
 	CannotFireJob        = "💼 Вы нигде не работаете."
 	MaxSizeFarm          = "🏡 Вы достигли максимального размера фермы."
+	NoLot                = "🏦 Лот уже продан."
+	AuctionSell          = "🏦 Лот выставлен на продажу."
+	AuctionFull          = "🏦 На аукционе нет места."
 )
 
 func Item(i *item.Item) string {
@@ -584,6 +590,27 @@ func TopRating(mention func(*game.User) string, users ...*game.User) string {
 	return c.String()
 }
 
+func Auction(lots []*auction.Lot, encode func(*auction.Lot) string) (string, *tele.ReplyMarkup) {
+	s := "<b>🏦 Аукцион</b>"
+	m := &tele.ReplyMarkup{}
+	rows := []tele.Row{}
+	for _, l := range lots {
+		minutes := time.Until(l.Expire()) / time.Minute
+		s := fmt.Sprintf("%s · %d %s · %d %s",
+			l.Item.Value, l.Price(), money.Currency,
+			minutes, declMinutes(int(minutes)))
+		data := encode(l)
+		rows = append(rows, m.Row(m.Data(s, data)))
+	}
+	m.Inline(rows...)
+	return s, m
+}
+
+func AuctionBought(buyer, seller string, cost int, x *item.Item) string {
+	return fmt.Sprintf("🤝 %s покупает %s у %s за %s.",
+		Name(buyer), Item(x), Name(seller), Money(cost))
+}
+
 func Index(i int) string {
 	return fmt.Sprintf("<b><i>%d.</i></b>", 1+i)
 }
@@ -597,6 +624,17 @@ func declHours(n int) string {
 		suffix = "а"
 	}
 	return "час" + suffix
+}
+
+func declMinutes(n int) string {
+	suffix := ""
+	switch n {
+	case 1:
+		suffix = "а"
+	case 2, 3, 4:
+		suffix = "ы"
+	}
+	return "минут" + suffix
 }
 
 func declFish(n int) string {

@@ -965,7 +965,7 @@ type Roll struct {
 }
 
 func (h *Roll) Match(s string) bool {
-	return false
+	return true
 }
 
 func (h *Roll) Handle(c tele.Context) error {
