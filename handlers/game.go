@@ -735,6 +735,10 @@ func (h *Split) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	if user.InventoryOverflow() {
+		return c.Send(format.InventoryOverflow)
+	}
+
 	args := tu.Args(c, splitRe)
 	key, err := strconv.Atoi(args[2])
 	if err != nil {
