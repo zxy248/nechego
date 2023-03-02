@@ -8,6 +8,7 @@ import (
 	"nechego/fishing"
 	"nechego/item"
 	"nechego/phone"
+	"nechego/token"
 	"os"
 	"path/filepath"
 	"sync"
@@ -117,4 +118,18 @@ func (w *World) Capital() (total, avg int) {
 
 // migrate makes the world consistent with new features.
 func (w *World) migrate() {
+	for _, u := range w.Users {
+		n := 0
+		if dr := u.Farm.Rows - MaxFarmRows; dr > 0 {
+			u.Farm.Rows = MaxFarmRows
+			n += dr
+		}
+		if dc := u.Farm.Columns - MaxFarmColumns; dc > 0 {
+			u.Farm.Columns = MaxFarmColumns
+			n += dc
+		}
+		if n > 0 {
+			u.Inventory.Add(item.New(&token.Legacy{Count: n}))
+		}
+	}
 }

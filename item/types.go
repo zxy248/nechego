@@ -36,6 +36,7 @@ const (
 	TypeThread
 	TypeFishingNet
 	TypePlant
+	TypeLegacy
 )
 
 // TypeOf returns a Type corresponding to the actual type of x.
@@ -75,6 +76,8 @@ func TypeOf(x any) Type {
 		return TypeFishingNet
 	case *plant.Plant:
 		return TypePlant
+	case *token.Legacy:
+		return TypeLegacy
 	default:
 		return TypeUnknown
 	}
@@ -118,6 +121,8 @@ func ValueOf(t Type) any {
 		return &fishing.Net{}
 	case TypePlant:
 		return &plant.Plant{}
+	case TypeLegacy:
+		return &token.Legacy{}
 	default:
 		panic(fmt.Sprintf("unexpected item type %v", t))
 	}

@@ -5,6 +5,7 @@ import (
 	"nechego/details"
 	"nechego/farm/plant"
 	"nechego/money"
+	"nechego/token"
 )
 
 // Items represents a list of items.
@@ -211,6 +212,14 @@ func Merge(a, b *Item) (remove *Item, ok bool) {
 		}
 		x.Count += y.Count
 		return b, true
+
+	case *token.Legacy:
+		y, ok := b.Value.(*token.Legacy)
+		if !ok {
+			return nil, false
+		}
+		x.Count += y.Count
+		return b, true
 	}
 	return nil, false
 }
@@ -250,6 +259,13 @@ func Split(i *Item, n int) (j *Item, ok bool) {
 		}
 		x.Count -= n
 		return New(&details.Details{Count: n}), true
+
+	case *token.Legacy:
+		if x.Count <= n {
+			return nil, false
+		}
+		x.Count -= n
+		return New(&token.Legacy{Count: n}), true
 	}
 	return nil, false
 }

@@ -9,14 +9,8 @@ import (
 	"nechego/food"
 	"nechego/game/pvp"
 	"nechego/item"
+	"nechego/token"
 	"time"
-)
-
-// The number of items in the user's inventory for applying various
-// types of restrictions.
-const (
-	InventorySize = 20
-	InventoryCap  = 30
 )
 
 // User represents a player.
@@ -91,10 +85,26 @@ func (u *User) EatQuick() (i *item.Item, ok bool) {
 	return nil, false
 }
 
+// InventorySize returns the user's inventory size.
+func (u *User) InventorySize() int {
+	n := 20
+	if x, ok := u.Inventory.ByType(item.TypeLegacy); ok {
+		n += 1 + x.Value.(*token.Legacy).Count
+	}
+	return n
+}
+
 // InventoryFull returns true if the item count in the user's
 // inventory exceeds inventory size.
 func (u *User) InventoryFull() bool {
-	return u.Inventory.Count() > InventorySize
+	return u.Inventory.Count() > u.InventorySize()
+}
+
+// InventoryOverflow returns true if the item count in the user's
+// inventory exceeds inventory size by a large margin.
+func (u *User) InventoryOverflow() bool {
+	const margin = 10
+	return u.Inventory.Count() > u.InventorySize()+margin
 }
 
 // HasSMS returns true if the user has unread SMS.

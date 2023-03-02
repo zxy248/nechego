@@ -111,8 +111,8 @@ func Random() *Item {
 	return New(i[rand.Intn(len(i))])
 }
 
-// integral returns true if the item is OK, and returns false if the
-// item should be removed.
+// integral returns true if the item should be kept, and returns false
+// if the item should be removed.
 func integral(i *Item) bool {
 	switch x := i.Value.(type) {
 	case *fishing.Rod:
@@ -136,6 +136,10 @@ func integral(i *Item) bool {
 			return false
 		}
 	case *plant.Plant:
+		if x.Count == 0 {
+			return false
+		}
+	case *token.Legacy:
 		if x.Count == 0 {
 			return false
 		}

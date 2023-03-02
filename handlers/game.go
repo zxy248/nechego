@@ -61,11 +61,11 @@ func (h *Inventory) Handle(c tele.Context) error {
 
 	items := user.Inventory.HkList()
 	warn := ""
-	if user.Inventory.Count() > game.InventorySize {
+	if user.InventoryFull() {
 		warn = " (!)"
 	}
 	head := fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>\n",
-		tu.Mention(c, user), len(items), game.InventorySize, warn)
+		tu.Mention(c, user), len(items), user.InventorySize(), warn)
 	list := format.Items(items)
 	return c.Send(head+list, tele.ModeHTML)
 }
@@ -176,8 +176,8 @@ func (h *Pick) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.Inventory.Count() > game.InventoryCap {
-		return c.Send(format.InventoryFull)
+	if user.InventoryOverflow() {
+		return c.Send(format.InventoryOverflow)
 	}
 
 	picked := []*item.Item{}
@@ -334,8 +334,8 @@ func (h *Buy) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.Inventory.Count() > game.InventoryCap {
-		return c.Send(format.InventoryFull)
+	if user.InventoryOverflow() {
+		return c.Send(format.InventoryOverflow)
 	}
 
 	bought := []*item.Item{}
@@ -433,8 +433,8 @@ func (h *Fish) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.Inventory.Count() > game.InventoryCap {
-		return c.Send(format.InventoryFull)
+	if user.InventoryOverflow() {
+		return c.Send(format.InventoryOverflow)
 	}
 
 	rod, ok := user.FishingRod()
@@ -497,8 +497,8 @@ func (h *DrawNet) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.Inventory.Count() > game.InventoryCap {
-		return c.Send(format.InventoryFull)
+	if user.InventoryOverflow() {
+		return c.Send(format.InventoryOverflow)
 	}
 
 	net, ok := user.DrawNew()
@@ -1125,8 +1125,8 @@ func (h *Funds) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.Inventory.Count() > game.InventoryCap {
-		return c.Send(format.InventoryFull)
+	if user.InventoryOverflow() {
+		return c.Send(format.InventoryOverflow)
 	}
 
 	collected := user.Funds.Collect()
