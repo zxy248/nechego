@@ -5,7 +5,7 @@ import "nechego/item"
 // Craft matches ingredients with one of the recipes. If the
 // appropriate recipe is found, removes ingredients from inventory and
 // adds the result.
-func Craft(inventory *item.Items, ingredients []*item.Item) (result []*item.Item, ok bool) {
+func Craft(inventory *item.Set, ingredients []*item.Item) (result []*item.Item, ok bool) {
 	if hasDuplicates(ingredients) {
 		return nil, false
 	}

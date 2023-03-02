@@ -18,7 +18,7 @@ import (
 type World struct {
 	TGID     int64
 	Users    []*User
-	Floor    *item.Items
+	Floor    *item.Set
 	Auction  *auction.Auction
 	Market   *Market
 	Casino   *Casino
@@ -33,7 +33,7 @@ func NewWorld(id int64) *World {
 	return &World{
 		TGID:    id,
 		Users:   []*User{},
-		Floor:   item.NewItems(),
+		Floor:   item.NewSet(),
 		Auction: auction.New(),
 		Market:  NewMarket(),
 		Casino:  &Casino{Timeout: time.Second * 25},

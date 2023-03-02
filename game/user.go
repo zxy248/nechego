@@ -21,7 +21,7 @@ type User struct {
 	Messages    int          // Number of messages sent.
 	BannedUntil time.Time    // Time after which the user is unbanned.
 	Status      string       // Status displayed in the profile.
-	Inventory   *item.Items  // Personal items.
+	Inventory   *item.Set    // Personal items.
 	Net         *fishing.Net // Net if currently cast, else nil.
 	LastMessage time.Time    // When was the last message sent?
 	Buffs       buff.Set     // Active buffs.
@@ -36,7 +36,7 @@ func NewUser(tuid int64) *User {
 	return &User{
 		TUID:      tuid,
 		Rating:    1500,
-		Inventory: item.NewItems(),
+		Inventory: item.NewSet(),
 		Buffs:     buff.Set{},
 		Funds:     Funds{},
 		Farm:      farm.New(2, 3),
