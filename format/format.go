@@ -57,6 +57,8 @@ const (
 	NoLot                = "🏦 Лот уже продан."
 	AuctionSell          = "🏦 Лот выставлен на продажу."
 	AuctionFull          = "🏦 На аукционе нет места."
+	CannotFriend         = "👤 С этим пользователем нельзя подружиться."
+	NonFriendTransfer    = "📦 Вещи можно передавать только тем, кто с вами дружит."
 )
 
 func Item(i *item.Item) string {
@@ -613,6 +615,56 @@ func AuctionBought(buyer, seller string, cost int, x *item.Item) string {
 
 func Index(i int) string {
 	return fmt.Sprintf("<b><i>%d.</i></b>", 1+i)
+}
+
+func FriendRemoved(mentionA, mentionB string) string {
+	return fmt.Sprintf("😰 %s теперь не дружит с %s.", Name(mentionA), Name(mentionB))
+}
+
+func FriendAdded(mentionA, mentionB string) string {
+	return fmt.Sprintf("😊 %s теперь дружит с %s.", Name(mentionA), Name(mentionB))
+}
+
+func MutualFriends(mentionA, mentionB string) string {
+	return fmt.Sprintf("🤝 %s и %s теперь друзья.", Name(mentionA), Name(mentionB))
+}
+
+type Friend struct {
+	Mention string
+	Mutual  bool
+}
+
+func FriendList(mention string, friends []Friend) string {
+	mutual := 0
+	c := NewConnector("\n")
+	for _, f := range friends {
+		e := "💔"
+		if f.Mutual {
+			mutual++
+			e = "❤️"
+		}
+		c.Add(e + " " + Name(f.Mention))
+	}
+	header := fmt.Sprintf("<b>👥 %s: Друзья <code>[%d/%d]</code></b>",
+		Name(mention), mutual, len(friends))
+	return header + "\n" + c.String()
+}
+
+func CannotTransfer(i *item.Item) string {
+	return fmt.Sprintf("📦 Нельзя передать %s.", Item(i))
+}
+
+func Transfered(sender, receiver string, i ...*item.Item) string {
+	if len(i) == 0 {
+		return "📦 Ничего не передано."
+	}
+	c := NewConnector(", ")
+	for _, x := range i {
+		c.Add(Item(x))
+	}
+	const help = "<i>Используйте команду <code>!получить</code>, чтобы взять предметы.</i>"
+	message := fmt.Sprintf("📦 %s передал %s %s.", Name(sender), Name(receiver), c.String())
+	return message + "\n\n" + help
 }
 
 func declHours(n int) string {

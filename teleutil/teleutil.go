@@ -88,6 +88,8 @@ func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
 	return nums[:limit]
 }
 
+// Reply returns the sender of the replied message.
+// Returns (nil, false) is there is no reply or the reply's sender is a bot.
 func Reply(c tele.Context) (u *tele.User, ok bool) {
 	if !c.Message().IsReply() || c.Message().ReplyTo.Sender.IsBot {
 		return nil, false

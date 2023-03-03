@@ -119,6 +119,7 @@ func (w *World) Capital() (total, avg int) {
 // migrate makes the world consistent with new features.
 func (w *World) migrate() {
 	for _, u := range w.Users {
+		// Shrink the farm to its maximum size.
 		n := 0
 		if dr := u.Farm.Rows - MaxFarmRows; dr > 0 {
 			u.Farm.Rows = MaxFarmRows
@@ -130,6 +131,11 @@ func (w *World) migrate() {
 		}
 		if n > 0 {
 			u.Inventory.Add(item.New(&token.Legacy{Count: n}))
+		}
+
+		// Fill nil values.
+		if u.Friends == nil {
+			u.Friends = Friends{}
 		}
 	}
 }

@@ -30,6 +30,7 @@ type User struct {
 	Funds       Funds        // Collectable items.
 	Farm        *farm.Farm   // The source of vegetables.
 	Retired     time.Time    // When the job shift should finish.
+	Friends     Friends      // The list of friends' TUIDs.
 }
 
 func NewUser(tuid int64) *User {
@@ -40,7 +41,13 @@ func NewUser(tuid int64) *User {
 		Buffs:     buff.Set{},
 		Funds:     Funds{},
 		Farm:      farm.New(2, 3),
+		Friends:   Friends{},
 	}
+}
+
+// ID returns the unique user's ID.
+func (u *User) ID() int64 {
+	return u.TUID
 }
 
 // Eat restores user's energy and removes the specified item from the
@@ -111,4 +118,12 @@ func (u *User) InventoryOverflow() bool {
 func (u *User) HasSMS(w *World) bool {
 	p, ok := u.Phone()
 	return ok && w.SMS.Count(p.Number) > 0
+}
+
+func (u *User) Transfer(to *User, x *item.Item) bool {
+	if !x.Transferable || !u.Inventory.Remove(x) {
+		return false
+	}
+	to.Funds.Add("обмен", x)
+	return true
 }

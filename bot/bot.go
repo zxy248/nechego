@@ -153,6 +153,7 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 
 		// Economy.
 		&handlers.Inventory{Universe: u},
+		&handlers.Funds{Universe: u},
 		&handlers.Sort{Universe: u},
 		&handlers.Drop{Universe: u},
 		&handlers.Pick{Universe: u},
@@ -162,7 +163,6 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.Cashout{Universe: u},
 		&handlers.Capital{Universe: u},
 		&handlers.Balance{Universe: u},
-		&handlers.Funds{Universe: u},
 
 		// Farm.
 		&handlers.Farm{Universe: u},
@@ -197,6 +197,8 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.Eat{Universe: u},
 		&handlers.EatQuick{Universe: u},
 		&handlers.FishingRecords{Universe: u},
+		&handlers.Friends{Universe: u},
+		&handlers.Transfer{Universe: u},
 
 		// Top.
 		&handlers.TopStrong{Universe: u},
