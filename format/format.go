@@ -507,6 +507,9 @@ func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 	c := NewConnector("\n")
 	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма (%d × %d)</b>",
 		Name(mention), f.Rows, f.Columns))
+	if until := f.Until(); until > 0 {
+		c.Add(fmt.Sprintf("<i>🌾 До урожая осталось %s</i>", Duration(until)))
+	}
 	if free := f.Free(); free > 0 {
 		c.Add(fmt.Sprintf("<i>🌱 Можно посадить ещё %d %s</i>.",
 			free, declPlant(free)))
@@ -665,6 +668,23 @@ func Transfered(sender, receiver string, i ...*item.Item) string {
 	const help = "<i>Используйте команду <code>!получить</code>, чтобы взять предметы.</i>"
 	message := fmt.Sprintf("📦 %s передал %s %s.", Name(sender), Name(receiver), c.String())
 	return message + "\n\n" + help
+}
+
+func Duration(d time.Duration) string {
+	c := NewConnector(" ")
+	h := int(d.Hours())
+	m := int(d.Minutes()) % 60
+	s := int(d.Seconds()) % 60
+	if h > 0 {
+		c.Add(fmt.Sprintf("%d ч.", h))
+	}
+	if m > 0 {
+		c.Add(fmt.Sprintf("%d мин.", m))
+	}
+	if s > 0 {
+		c.Add(fmt.Sprintf("%d сек.", s))
+	}
+	return c.String()
 }
 
 func declHours(n int) string {

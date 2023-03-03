@@ -181,3 +181,23 @@ func (f *Farm) Grow() {
 		f.Columns++
 	}
 }
+
+// Until reports how much time is left until some crop can be harvested.
+// If no crops are currently growing at the farm, returns 0.
+// If some crop is ready to harvest, returns a negative value.
+func (f *Farm) Until() time.Duration {
+	var min time.Duration
+	for r := 0; r < f.Rows; r++ {
+		for c := 0; c < f.Columns; c++ {
+			crop := f.Grid[Plot{r, c}]
+			if crop.Empty() {
+				continue
+			}
+			until := time.Until(crop.Grown)
+			if until < min || min == 0 {
+				min = until
+			}
+		}
+	}
+	return min
+}
