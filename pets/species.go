@@ -124,6 +124,9 @@ const (
 	Caterpillar
 	Dodo
 	Otter
+	Skunk
+	Buffalo
+	Ox
 )
 
 func randomSpecies() Species {

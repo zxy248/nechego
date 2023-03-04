@@ -46,7 +46,8 @@ func (m *IgnoreSpam) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 		lastMessage := user.LastMessage
 		world.Unlock()
 
-		if time.Since(lastMessage) < time.Second {
+		// Don't ignore callbacks.
+		if c.Callback() == nil && time.Since(lastMessage) < time.Second {
 			return nil
 		}
 		return next(c)
