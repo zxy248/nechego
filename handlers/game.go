@@ -102,7 +102,7 @@ func (h *Sort) Handle(c tele.Context) error {
 			panic(fmt.Sprintf("sort: cannot remove %v", x))
 		}
 	}
-	user.Inventory.PushFront(items...)
+	user.Inventory.AddFront(items...)
 	return c.Send(format.InventorySorted)
 }
 

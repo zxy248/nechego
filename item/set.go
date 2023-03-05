@@ -20,9 +20,14 @@ func NewSet() *Set {
 	return &Set{I: []*Item{}}
 }
 
-// Add appends the item x to the set.
-func (s *Set) Add(x *Item) {
-	s.I = append(s.I, x)
+// Add adds the specified items to the tail of the set.
+func (s *Set) Add(x ...*Item) {
+	s.I = append(s.I, x...)
+}
+
+// AddFront adds the specified items to the head of the set.
+func (s *Set) AddFront(x ...*Item) {
+	s.I = append(x, s.I...)
 }
 
 // Remove removes the item x from the set.
@@ -139,11 +144,6 @@ func (s *Set) Random() (x *Item, ok bool) {
 // Count returns the number of items in the set.
 func (s *Set) Count() int {
 	return len(s.I)
-}
-
-// PushFront adds the specified items to the head of the set.
-func (s *Set) PushFront(i ...*Item) {
-	s.I = append(i, s.I...)
 }
 
 // Stack aggregates all mergeable items.

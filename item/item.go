@@ -32,11 +32,8 @@ func New(x any) *Item {
 		Value:        x,
 	}
 	switch i.Type {
-	case TypeEblan, TypePair:
-		i.Transferable = false
-	}
-	switch i.Type {
 	case TypeEblan, TypePair, TypeAdmin:
+		i.Transferable = false
 		i.Expire = dates.Tomorrow()
 	}
 	return i
