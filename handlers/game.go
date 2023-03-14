@@ -954,7 +954,7 @@ func (h *Dice) Handle(c tele.Context) error {
 			return msg.Dice.Value, nil
 		},
 		func() {
-			c.Send(fmt.Sprintf("<i>Время вышло: вы потеряли %s</i>",
+			c.Send(fmt.Sprintf("<i>⏰ Время вышло: вы потеряли %s</i>",
 				format.Money(bet)), tele.ModeHTML)
 		},
 	); err != nil {
