@@ -48,12 +48,15 @@ func (u *User) CastNet() error {
 	if u.Net != nil {
 		return ErrNetAlreadyCast
 	}
-	x, ok := u.Inventory.ByType(item.TypeFishingNet)
+	var net *fishing.Net
+	var ok bool
+	u.Inventory.Pop(func(x *item.Item) bool {
+		net, ok = x.Value.(*fishing.Net)
+		return ok
+	})
 	if !ok {
 		return ErrNoNet
 	}
-	net := x.Value.(*fishing.Net)
-	u.Inventory.Remove(x)
 	u.Net = net
 	return nil
 }

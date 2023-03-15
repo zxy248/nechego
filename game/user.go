@@ -1,12 +1,9 @@
 package game
 
 import (
-	"math/rand"
 	"nechego/buff"
 	"nechego/farm"
-	"nechego/farm/plant"
 	"nechego/fishing"
-	"nechego/food"
 	"nechego/game/pvp"
 	"nechego/item"
 	"nechego/token"
@@ -50,53 +47,11 @@ func (u *User) ID() int64 {
 	return u.TUID
 }
 
-// Eat restores user's energy and removes the specified item from the
-// inventory if it can be eaten. If it cannot be eaten, returns false.
-func (u *User) Eat(i *item.Item) bool {
-	n, ok := i.Value.(food.Nutritioner)
-	if !ok {
-		return false
-	}
-	switch x := i.Value.(type) {
-	case *plant.Plant:
-		if x.Count > 1 {
-			x.Count--
-		} else {
-			u.Inventory.Remove(i)
-		}
-	default:
-		u.Inventory.Remove(i)
-	}
-	u.Energy.Add(Energy(n.Nutrition() + 0.04*rand.Float64()))
-	if f, ok := i.Value.(*food.Food); ok {
-		if f.Type == food.Beer {
-			u.Buffs.Apply(buff.Beer, 10*time.Minute)
-		}
-	}
-	return true
-}
-
-// EatQuick finds the first sensibly eatable item and calls Eat.
-// If there is no food in the inventory, returns (nil, false).
-func (u *User) EatQuick() (i *item.Item, ok bool) {
-	for _, x := range u.Inventory.List() {
-		switch v := x.Value.(type) {
-		case *fishing.Fish:
-			if v.Price() < 2000 {
-				return x, u.Eat(x)
-			}
-		case *food.Food, *food.Meat:
-			return x, u.Eat(x)
-		}
-	}
-	return nil, false
-}
-
 // InventorySize returns the user's inventory size.
 func (u *User) InventorySize() int {
 	n := 20
-	if x, ok := u.Inventory.ByType(item.TypeLegacy); ok {
-		n += 1 + x.Value.(*token.Legacy).Count
+	if x, ok := GetItem[*token.Legacy](u); ok {
+		n += 1 + x.Count
 	}
 	return n
 }
@@ -120,6 +75,8 @@ func (u *User) HasSMS(w *World) bool {
 	return ok && w.SMS.Count(p.Number) > 0
 }
 
+// Transfer moves the item x from the sender's inventory to the
+// receiver's funds.
 func (u *User) Transfer(to *User, x *item.Item) bool {
 	if !x.Transferable || !u.Inventory.Remove(x) {
 		return false

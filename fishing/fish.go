@@ -35,10 +35,3 @@ func (f *Fish) String() string {
 	}
 	return fmt.Sprintf("🐟 %s (%s, %s)", f.Species, weight, length)
 }
-
-func (f *Fish) Nutrition() float64 {
-	if f.Heavy() {
-		return 0.24
-	}
-	return 0.18
-}

@@ -5,11 +5,6 @@ import (
 	"math/rand"
 )
 
-// Nutritioner is implemented by any value that can be eaten.
-type Nutritioner interface {
-	Nutrition() float64
-}
-
 type Type int
 
 const (

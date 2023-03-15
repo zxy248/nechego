@@ -127,7 +127,3 @@ func (p *Plant) String() string {
 	}
 	return fmt.Sprintf("%s %s%s", data[p.Type].emoji, name, count)
 }
-
-func (p *Plant) Nutrition() float64 {
-	return 0.08
-}

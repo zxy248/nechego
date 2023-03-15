@@ -30,16 +30,26 @@ func (s *Set) AddFront(x ...*Item) {
 	s.I = append(x, s.I...)
 }
 
-// Remove removes the item x from the set.
+// Remove removes the specified item from the set and returns true.
+// If the item is not in the set, returns false.
 func (s *Set) Remove(x *Item) bool {
+	_, ok := s.Pop(func(y *Item) bool {
+		return x == y
+	})
+	return ok
+}
+
+// Pop removes and returns the first item from the list for which the
+// specified predicate p is true. If there is no such item, returns
+// (nil, false).
+func (s *Set) Pop(p func(*Item) bool) (x *Item, ok bool) {
 	for i, v := range s.I {
-		if v == x {
+		if p(v) {
 			s.I = append(s.I[:i], s.I[i+1:]...)
-			return true
+			return v, true
 		}
 	}
-	// Item not found.
-	return false
+	return nil, false
 }
 
 // Contain returns true if the item x is in the set.
@@ -62,17 +72,6 @@ func (s *Set) ByKey(k int) (x *Item, ok bool) {
 	return x, true
 }
 
-// ByType gets the first item of the type t from the set.
-// If there is no such item, returns (nil, false).
-func (s *Set) ByType(t Type) (x *Item, ok bool) {
-	for _, x := range s.List() {
-		if x.Type == t {
-			return x, true
-		}
-	}
-	return nil, false
-}
-
 // indexItems indexes all items in the set.
 func (s *Set) indexItems() {
 	s.keys = map[int]*Item{}
@@ -81,11 +80,12 @@ func (s *Set) indexItems() {
 	}
 }
 
-// Filter retains only those items in the set for which keep is true.
-func (s *Set) Filter(keep func(i *Item) bool) {
+// Keep retains only those items in the set for which the specified
+// predicate p is true.
+func (s *Set) Keep(p func(i *Item) bool) {
 	n := 0
 	for _, x := range s.I {
-		if keep(x) {
+		if p(x) {
 			s.I[n] = x
 			n++
 		}
@@ -95,14 +95,14 @@ func (s *Set) Filter(keep func(i *Item) bool) {
 
 // List returns the filtered list of all items in the set.
 func (s *Set) List() []*Item {
-	s.Filter(integral)
+	s.Keep(integral)
 	return s.itemsCopy()
 }
 
 // HkList returns the filtered, reindexed list of all items in the set.
 func (s *Set) HkList() []*Item {
 	// Do not use this function internally.
-	s.Filter(integral)
+	s.Keep(integral)
 	s.indexItems()
 	return s.itemsCopy()
 }

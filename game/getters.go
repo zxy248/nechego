@@ -2,7 +2,6 @@ package game
 
 import (
 	"nechego/fishing"
-	"nechego/item"
 	"nechego/pets"
 	"nechego/phone"
 	"nechego/token"
@@ -15,73 +14,21 @@ type Spender interface {
 	Spend(n int) bool
 }
 
-func (u *User) Dice() (d *token.Dice, ok bool) {
+func GetItem[T any](u *User) (x T, ok bool) {
 	for _, x := range u.Inventory.List() {
-		if d, ok = x.Value.(*token.Dice); ok {
-			return d, true
+		if x, ok := x.Value.(T); ok {
+			return x, true
 		}
 	}
-	return nil, false
+	return x, false
 }
 
-func (u *User) Eblan() bool {
-	for _, x := range u.Inventory.List() {
-		if _, ok := x.Value.(*token.Eblan); ok {
-			return true
-		}
-	}
-	return false
-}
+func (u *User) Eblan() bool { _, ok := GetItem[*token.Eblan](u); return ok }
+func (u *User) Admin() bool { _, ok := GetItem[*token.Admin](u); return ok }
+func (u *User) Pair() bool  { _, ok := GetItem[*token.Pair](u); return ok }
 
-func (u *User) Admin() bool {
-	for _, x := range u.Inventory.List() {
-		if _, ok := x.Value.(*token.Admin); ok {
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) Pair() bool {
-	for _, x := range u.Inventory.List() {
-		if _, ok := x.Value.(*token.Pair); ok {
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) Pet() (p *pets.Pet, ok bool) {
-	for _, x := range u.Inventory.List() {
-		if p, ok = x.Value.(*pets.Pet); ok {
-			return p, true
-		}
-	}
-	return nil, false
-}
-
-func (u *User) FishingRod() (r *fishing.Rod, ok bool) {
-	for _, x := range u.Inventory.List() {
-		if r, ok := x.Value.(*fishing.Rod); ok {
-			return r, true
-		}
-	}
-	return nil, false
-}
-
-func (u *User) Phone() (p *phone.Phone, ok bool) {
-	for _, x := range u.Inventory.List() {
-		if p, ok := x.Value.(*phone.Phone); ok {
-			return p, true
-		}
-	}
-	return nil, false
-}
-
-func (u *User) FishingNet() (n *fishing.Net, ok bool) {
-	x, ok := u.Inventory.ByType(item.TypeFishingNet)
-	if !ok {
-		return nil, false
-	}
-	return x.Value.(*fishing.Net), true
-}
+func (u *User) Dice() (d *token.Dice, ok bool)        { return GetItem[*token.Dice](u) }
+func (u *User) Pet() (p *pets.Pet, ok bool)           { return GetItem[*pets.Pet](u) }
+func (u *User) Phone() (p *phone.Phone, ok bool)      { return GetItem[*phone.Phone](u) }
+func (u *User) FishingRod() (r *fishing.Rod, ok bool) { return GetItem[*fishing.Rod](u) }
+func (u *User) FishingNet() (n *fishing.Net, ok bool) { return GetItem[*fishing.Net](u) }
