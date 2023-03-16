@@ -2,71 +2,15 @@ package main
 
 import (
 	"log"
-	"math/rand"
 	"nechego/fishing"
 	"nechego/game"
 	"nechego/handlers"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
-
-// returnAuctionLots returns the expired Lots at the Auction to the sellers.
-func returnAuctionLots(universe *game.Universe) {
-	for range time.NewTicker(time.Minute).C {
-		universe.ForEachWorld(func(w *game.World) {
-			for _, l := range w.Auction.List() {
-				if time.Now().After(l.Expire()) {
-					w.Auction.Remove(l.Key)
-					seller := w.UserByID(l.SellerID)
-					seller.Funds.Add("возврат", l.Item)
-				}
-			}
-		})
-	}
-}
-
-// refillMarket refills every market in the universe with a new
-// product at a specified time interval.
-func refillMarket(universe *game.Universe) {
-	for range time.NewTicker(time.Minute).C {
-		universe.ForEachWorld(func(w *game.World) {
-			w.Market.Refill()
-		})
-	}
-}
-
-// restoreEnergy restores the energy levels of all users in the
-// universe at a specified time interval.
-func restoreEnergy(universe *game.Universe) {
-	for range time.NewTicker(time.Minute).C {
-		universe.ForEachWorld(func(w *game.World) {
-			for _, u := range w.Users {
-				e := game.Energy(0.01)
-				if u.InventoryFull() {
-					e /= 2
-				}
-				u.Energy.Add(e)
-			}
-		})
-	}
-}
-
-// fillNet fills the users' cast fishing nets.
-func fillNet(universe *game.Universe) {
-	for range time.NewTicker(time.Minute).C {
-		universe.ForEachWorld(func(w *game.World) {
-			for _, u := range w.Users {
-				if rand.Float64() < 0.04 {
-					u.FillNet()
-				}
-			}
-		})
-	}
-}
 
 // notifyStop gracefully stops the bot after receiving an interrupt
 // signal and sends an empty structure on the done channel.

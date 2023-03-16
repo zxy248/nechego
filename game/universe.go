@@ -16,18 +16,18 @@ type Universe struct {
 	// dir is a location of the directory where worlds should be saved.
 	dir string
 
-	// initWorld is called on the first world's load.
-	initWorld func(*World)
+	// init is called on the first world's load.
+	init func(*World)
 
 	mu sync.Mutex
 }
 
-// NewUniverse returns a new Universe with no worlds.
-func NewUniverse(dir string, initWorld func(*World)) *Universe {
+// NewUniverse returns a new Universe.
+func NewUniverse(dir string, init func(*World)) *Universe {
 	return &Universe{
-		dir:       dir,
-		worlds:    map[int64]*World{},
-		initWorld: initWorld,
+		dir:    dir,
+		worlds: map[int64]*World{},
+		init:   init,
 	}
 }
 
@@ -35,18 +35,6 @@ func NewUniverse(dir string, initWorld func(*World)) *Universe {
 // specified ID.
 func (u *Universe) worldPath(id int64) string {
 	return filepath.Join(u.dir, fmt.Sprintf("world%d.json", id))
-}
-
-// ForEachWorld applies action to each world in the universe.
-func (u *Universe) ForEachWorld(action func(*World)) {
-	u.mu.Lock()
-	defer u.mu.Unlock()
-
-	for _, w := range u.worlds {
-		w.Lock()
-		action(w)
-		w.Unlock()
-	}
 }
 
 // World returns the world by the given ID from the universe. If the
@@ -67,8 +55,9 @@ func (u *Universe) World(id int64) (*World, error) {
 		} else if err != nil {
 			return nil, err
 		}
-		w.migrate()
-		u.initWorld(w)
+		w.runMigrations()
+		u.init(w)
+		w.startPeriodicTasks()
 		u.worlds[id] = w
 	}
 	return w, nil

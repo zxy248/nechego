@@ -116,8 +116,8 @@ func (w *World) Capital() (total, avg int) {
 	return total, total / len(w.Users)
 }
 
-// migrate makes the world consistent with new features.
-func (w *World) migrate() {
+// runMigrations makes the world consistent with new features.
+func (w *World) runMigrations() {
 	for _, u := range w.Users {
 		// Shrink the farm to its maximum size.
 		n := 0

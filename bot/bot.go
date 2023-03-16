@@ -36,10 +36,6 @@ func main() {
 	}
 	as := &avatar.Storage{Dir: "avatar", MaxWidth: 1500, MaxHeight: 1500, Bot: bot}
 	u := game.NewUniverse("universe", worldInitializer(bot))
-	go returnAuctionLots(u)
-	go refillMarket(u)
-	go restoreEnergy(u)
-	go fillNet(u)
 
 	router := NewRouter()
 	for _, m := range middlewareWrappers(u, as) {
