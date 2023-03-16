@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+// RecordAnnouncer is a function that is called when a new fishing
+// record is set.
+type RecordAnnouncer func(e *Entry, p Parameter)
+
 // Parameter of a fish.
 type Parameter int
 
@@ -28,13 +32,13 @@ type Entry struct {
 
 // History of caught fish.
 type History struct {
-	entries []*Entry
-	top     map[Parameter]*Entry
-	records map[Parameter]chan *Entry
-	mu      sync.Mutex
+	entries  []*Entry
+	top      map[Parameter]*Entry
+	announce RecordAnnouncer
+	mu       sync.Mutex
 }
 
-// NewHistory returns and initializes a new History.
+// NewHistory returns a new History.
 func NewHistory() *History {
 	return &History{entries: []*Entry{}}
 }
@@ -55,12 +59,17 @@ func (h *History) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &h.entries); err != nil {
 		return err
 	}
+	h.rebuildTop()
+	return nil
+}
+
+// rebuildTop rebuilds the history top from the list of entries.
+func (h *History) rebuildTop() {
 	for _, e := range h.entries {
 		for _, p := range parameters {
 			h.contend(e, p)
 		}
 	}
-	return nil
 }
 
 // Add adds a new entry to the history.
@@ -101,42 +110,26 @@ func (h *History) Top(p Parameter, n int) []*Entry {
 	return r[:n]
 }
 
-// Records returns a new channel of the given parameter for record
-// announcements. Panics if the channel is already created.
-func (h *History) Records(p Parameter) chan *Entry {
+// Announce sets the given function to be called on new records.
+func (h *History) Announce(f RecordAnnouncer) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if h.records == nil {
-		h.records = make(map[Parameter]chan *Entry)
-	}
-	if h.records[p] != nil {
-		panic(fmt.Sprintf("record channel %v is already created", p))
-	}
-	h.records[p] = make(chan *Entry)
-	return h.records[p]
+	h.announce = f
 }
 
 // contend compares the history entry e with the top record of the
-// given parameter p. If it is a new record, sends a corresponding
-// value on the record channel of p.
+// parameter p. Announces a new record if the given entry makes it to
+// the top and the record announcer is set.
 func (h *History) contend(e *Entry, p Parameter) {
 	if h.top == nil {
-		h.top = make(map[Parameter]*Entry)
+		h.top = map[Parameter]*Entry{}
 	}
-	t, ok := h.top[p]
-	if !ok || param(e.Fish, p) > param(t.Fish, p) {
+	if t, ok := h.top[p]; !ok || param(e.Fish, p) > param(t.Fish, p) {
 		h.top[p] = e
-		h.announce(e, p)
-	}
-}
-
-// announce sends the entry e on the record channel of the given parameter.
-func (h *History) announce(e *Entry, p Parameter) {
-	select {
-	case h.records[p] <- e:
-	default:
-		// Channel is nil; drop the value.
+		if h.announce != nil {
+			go h.announce(e, p)
+		}
 	}
 }
 

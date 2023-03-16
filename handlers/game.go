@@ -534,21 +534,11 @@ func (h *Net) Handle(c tele.Context) error {
 	return c.Send(format.Net(net), tele.ModeHTML)
 }
 
-// RecordAnnouncer starts goroutines listening on the given record
-// channels. If a new record arrives on the channel, sends a record
-// announcement to the group.
-func RecordAnnouncer(bot *tele.Bot, to tele.Recipient, weight, length, price chan *fishing.Entry) {
-	m := map[fishing.Parameter]chan *fishing.Entry{
-		fishing.Weight: weight,
-		fishing.Length: length,
-		fishing.Price:  price,
-	}
-	for p, c := range m {
-		go func(p fishing.Parameter, c chan *fishing.Entry) {
-			for r := range c {
-				bot.Send(to, format.NewRecord(r, p), tele.ModeHTML)
-			}
-		}(p, c)
+// RecordAnnouncer returns a fishing.RecordAnnouncer that sends a
+// message to the chat specified by tgid.
+func RecordAnnouncer(bot *tele.Bot, tgid tele.Recipient) fishing.RecordAnnouncer {
+	return func(e *fishing.Entry, p fishing.Parameter) {
+		bot.Send(tgid, format.NewRecord(e, p), tele.ModeHTML)
 	}
 }
 
