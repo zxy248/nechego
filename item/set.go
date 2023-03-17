@@ -150,16 +150,16 @@ func (s *Set) Count() int {
 func (s *Set) Stack() {
 	removed := map[*Item]bool{}
 	items := s.List()
-	for i, x := range items {
-		if removed[x] {
+	for i, a := range items {
+		if removed[a] {
 			continue
 		}
-		for _, y := range items[i+1:] {
-			if removed[y] {
+		for _, b := range items[i+1:] {
+			if removed[b] {
 				continue
 			}
-			if r, ok := Merge(x, y); ok && r != nil {
-				removed[r] = true
+			if Merge(a, b) {
+				removed[b] = true
 			}
 		}
 	}
@@ -168,55 +168,62 @@ func (s *Set) Stack() {
 	}
 }
 
-// Merge attemps to stack two items into a single slot.
-// On success, the returned item should be removed if not nil.
-func Merge(a, b *Item) (remove *Item, ok bool) {
+// Merge attemps to merge the item b into the item a.
+// On success, the item b must be removed from the set.
+func Merge(a, b *Item) bool {
 	switch x := a.Value.(type) {
 	case *plant.Plant:
-		y, ok := b.Value.(*plant.Plant)
-		if !ok || x.Type != y.Type {
-			return nil, false
-		}
-		x.Count += y.Count
-		return b, true
-
+		return mergePlant(x, b.Value)
 	case *money.Wallet:
-		switch y := b.Value.(type) {
-		case *money.Cash:
-			x.Money += y.Money
-			return b, true
-		case *money.Wallet:
-			x.Money += y.Money
-			return nil, true
-		}
-
+		return mergeWallet(x, b.Value)
 	case *money.Cash:
-		switch y := b.Value.(type) {
-		case *money.Cash:
-			x.Money += y.Money
-			return b, true
-		case *money.Wallet:
-			y.Money += x.Money
-			return a, true
-		}
-
+		return mergeCash(x, b.Value)
 	case *details.Details:
-		y, ok := b.Value.(*details.Details)
-		if !ok {
-			return nil, false
-		}
-		x.Count += y.Count
-		return b, true
-
+		return mergeDetails(x, b.Value)
 	case *token.Legacy:
-		y, ok := b.Value.(*token.Legacy)
-		if !ok {
-			return nil, false
-		}
-		x.Count += y.Count
-		return b, true
+		return mergeLegacy(x, b.Value)
 	}
-	return nil, false
+	return false
+}
+
+func mergePlant(p *plant.Plant, v any) bool {
+	if x, ok := v.(*plant.Plant); ok && p.Type == x.Type {
+		p.Count += x.Count
+		return true
+	}
+	return false
+}
+
+func mergeWallet(w *money.Wallet, v any) bool {
+	if x, ok := v.(*money.Cash); ok {
+		w.Money += x.Money
+		return true
+	}
+	return false
+}
+
+func mergeCash(c *money.Cash, v any) bool {
+	if x, ok := v.(*money.Cash); ok {
+		c.Money += x.Money
+		return true
+	}
+	return false
+}
+
+func mergeDetails(d *details.Details, v any) bool {
+	if x, ok := v.(*details.Details); ok {
+		d.Count += x.Count
+		return true
+	}
+	return false
+}
+
+func mergeLegacy(l *token.Legacy, v any) bool {
+	if x, ok := v.(*token.Legacy); ok {
+		l.Count += x.Count
+		return true
+	}
+	return false
 }
 
 // Split attemps to separate the given item into two items.
@@ -227,40 +234,57 @@ func Split(a *Item, n int) (b *Item, ok bool) {
 	}
 	switch x := a.Value.(type) {
 	case *plant.Plant:
-		if x.Count <= n {
-			return nil, false
-		}
-		x.Count -= n
-		return New(&plant.Plant{Type: x.Type, Count: n}), true
-
+		return splitPlant(x, n)
 	case *money.Wallet:
-		// Not `<=`: allow empty wallet.
-		if x.Money < n {
-			return nil, false
-		}
-		x.Money -= n
-		return New(&money.Cash{Money: n}), true
-
+		return splitWallet(x, n)
 	case *money.Cash:
-		if x.Money <= n {
-			return nil, false
-		}
-		x.Money -= n
-		return New(&money.Cash{Money: n}), true
-
+		return splitCash(x, n)
 	case *details.Details:
-		if x.Count <= n {
-			return nil, false
-		}
-		x.Count -= n
-		return New(&details.Details{Count: n}), true
-
+		return splitDetails(x, n)
 	case *token.Legacy:
-		if x.Count <= n {
-			return nil, false
-		}
-		x.Count -= n
-		return New(&token.Legacy{Count: n}), true
+		return splitLegacy(x, n)
 	}
 	return nil, false
+}
+
+func splitPlant(p *plant.Plant, n int) (*Item, bool) {
+	if p.Count <= n {
+		return nil, false
+	}
+	p.Count -= n
+	return New(&plant.Plant{Type: p.Type, Count: n}), true
+}
+
+func splitWallet(w *money.Wallet, n int) (*Item, bool) {
+	// Not `<=`: allow empty wallet.
+	if w.Money < n {
+		return nil, false
+	}
+	w.Money -= n
+	return New(&money.Cash{Money: n}), true
+
+}
+
+func splitCash(c *money.Cash, n int) (*Item, bool) {
+	if c.Money <= n {
+		return nil, false
+	}
+	c.Money -= n
+	return New(&money.Cash{Money: n}), true
+}
+
+func splitDetails(d *details.Details, n int) (*Item, bool) {
+	if d.Count <= n {
+		return nil, false
+	}
+	d.Count -= n
+	return New(&details.Details{Count: n}), true
+}
+
+func splitLegacy(l *token.Legacy, n int) (*Item, bool) {
+	if l.Count <= n {
+		return nil, false
+	}
+	l.Count -= n
+	return New(&token.Legacy{Count: n}), true
 }
