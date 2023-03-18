@@ -66,6 +66,9 @@ func (b *Balance) Add(n int) {
 	if n < 0 {
 		panic(fmt.Sprintf("cannot add %d money", n))
 	}
+	if n == 0 {
+		return
+	}
 	b.inventory.Add(item.New(&money.Cash{Money: n}))
 }
 
