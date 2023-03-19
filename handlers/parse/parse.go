@@ -32,6 +32,13 @@ func Str(s string) F {
 	}
 }
 
+// Prefix returns a function that matches a prefix.
+func Prefix(s string) F {
+	return func(t string) bool {
+		return strings.HasPrefix(t, s)
+	}
+}
+
 // Int returns a function that parses an integer.
 func Int(n *int) F {
 	return func(s string) bool {

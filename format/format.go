@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"time"
 
+	"golang.org/x/text/message"
 	tele "gopkg.in/telebot.v3"
 )
 
@@ -66,7 +67,7 @@ func Item(i *item.Item) string {
 }
 
 func Selector(key int, s string) string {
-	return fmt.Sprintf("<code>%d ≡ </code> %s", key, s)
+	return fmt.Sprintf("<code>%2d ≡ </code>%s", key, s)
 }
 
 func Items(i []*item.Item) string {
@@ -112,13 +113,14 @@ func Products(products []*game.Product) string {
 	}
 	c := NewConnector("\n")
 	for k, p := range products {
-		c.Add(fmt.Sprintf("%s, %s", Selector(k, Item(p.Item)), Money(p.Price)))
+		c.Add(fmt.Sprintf("%s <code>⟨%s⟩</code>", Selector(k, Item(p.Item)), Money(p.Price)))
 	}
 	return c.String()
 }
 
 func Money(q int) string {
-	return fmt.Sprintf("<code>%d %s</code>", q, money.Currency)
+	p := message.NewPrinter(message.MatchLanguage("ru"))
+	return p.Sprintf("<code>%d %s</code>", q, money.Currency)
 }
 
 func Name(s string) string {

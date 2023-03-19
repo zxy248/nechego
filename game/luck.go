@@ -1,10 +1,7 @@
 package game
 
 import (
-	"encoding/binary"
-	"hash/fnv"
-	"math"
-	"nechego/dates"
+	"math/rand"
 	"nechego/modifier"
 	"time"
 )
@@ -46,18 +43,13 @@ func (l Luck) Mod() (m *modifier.Mod, ok bool) {
 }
 
 func (u *User) Luck() float64 {
-	return luck(dates.Today(), u.TUID)
+	return luck(time.Now(), u.TUID)
 }
 
 func luck(t time.Time, id int64) float64 {
-	const magic = 497611803913981554
-	return checksum(t.UnixNano(), id, magic)
-}
-
-func checksum(x ...any) float64 {
-	h := fnv.New32()
-	for _, v := range x {
-		binary.Write(h, binary.LittleEndian, v)
-	}
-	return float64(h.Sum32()) / math.MaxUint32
+	const magic = 2042238053
+	yd := int64(t.YearDay())
+	seed := magic + id + yd
+	rng := rand.New(rand.NewSource(seed))
+	return rng.Float64()
 }

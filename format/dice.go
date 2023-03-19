@@ -34,3 +34,15 @@ func DiceTimeout(bet int) string {
 func MinBet(n int) string {
 	return fmt.Sprintf("💵 Минимальная ставка %s", Money(n))
 }
+
+func SlotWin(mention string, prize int) string {
+	return fmt.Sprintf("🎰 %s выигрывает %s 💥", Name(mention), Money(prize))
+}
+
+func SlotRoll(mention string, bet int) string {
+	return fmt.Sprintf("🎰 %s прокручивает слоты на %s", Name(mention), Money(bet))
+}
+
+func BetSet(mention string, n int) string {
+	return fmt.Sprintf("🎰 %s устанавливает ставку %s", Name(mention), Money(n))
+}

@@ -28,6 +28,7 @@ type User struct {
 	Farm        *farm.Farm   // The source of vegetables.
 	Retired     time.Time    // When the job shift should finish.
 	Friends     Friends      // The list of friends' TUIDs.
+	SlotBet     int          // The bet for slots.
 }
 
 func NewUser(tuid int64) *User {

@@ -219,6 +219,7 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.Net{Universe: u},
 		&handlers.Catch{Universe: u},
 		&handlers.Dice{Universe: u},
+		&handlers.Slot{Universe: u},
 		&handlers.Fight{Universe: u},
 		&handlers.PvP{Universe: u},
 		&handlers.Eat{Universe: u},

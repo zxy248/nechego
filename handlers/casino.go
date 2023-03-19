@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"fmt"
 	"nechego/format"
 	"nechego/game"
 	"nechego/handlers/parse"
+	"nechego/slot"
 	tu "nechego/teleutil"
 	"time"
 
@@ -69,6 +69,35 @@ func diceTimeoutFunc(c tele.Context, bet int) func() {
 	return func() { c.Send(format.DiceTimeout(bet), tele.ModeHTML) }
 }
 
+type Slot struct {
+	Universe *game.Universe
+}
+
+func (h *Slot) Match(s string) bool {
+	_, ok := slotCommand(s)
+	return ok
+}
+
+func (h *Slot) Handle(c tele.Context) error {
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	bet, ok := slotCommand(c.Text())
+	if !ok {
+		panic("bad slot command")
+	}
+	if min := 100; bet < min {
+		return c.Send(format.MinBet(min), tele.ModeHTML)
+	}
+	user.SlotBet = bet
+	return c.Send(format.BetSet(tu.Mention(c, user), bet), tele.ModeHTML)
+}
+
+func slotCommand(s string) (bet int, ok bool) {
+	ok = parse.Command(parse.Prefix("!слот"), parse.Int(&bet))(s)
+	return
+}
+
 type Roll struct {
 	Universe *game.Universe
 }
@@ -102,6 +131,22 @@ func (h *Roll) handleDiceRoll(c tele.Context) error {
 }
 
 func (h *Roll) handleSlotRoll(c tele.Context) error {
-	fmt.Println(c.Message().Dice.Value)
-	return nil
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	bet := user.SlotBet
+	if bet == 0 {
+		return nil
+	}
+	if !user.Balance().Spend(bet) {
+		return c.Send(format.NoMoney)
+	}
+
+	mention := tu.Mention(c, user)
+	value := c.Message().Dice.Value
+	if prize, ok := slot.Prize(value, bet); ok {
+		user.Balance().Add(prize)
+		return c.Send(format.SlotWin(mention, prize), tele.ModeHTML)
+	}
+	return c.Send(format.SlotRoll(mention, bet), tele.ModeHTML)
 }
