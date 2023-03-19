@@ -25,17 +25,29 @@ func Command(p ...F) F {
 	}
 }
 
+// Or returns true on the first successful parse of some token from p.
+func Or(p ...F) F {
+	return func(s string) bool {
+		for _, q := range p {
+			if q(s) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 // Str returns a function that matches a string.
 func Str(s string) F {
 	return func(t string) bool {
-		return s == t
+		return strings.EqualFold(s, t)
 	}
 }
 
 // Prefix returns a function that matches a prefix.
 func Prefix(s string) F {
 	return func(t string) bool {
-		return strings.HasPrefix(t, s)
+		return len(t) >= len(s) && strings.EqualFold(s, t[:len(s)])
 	}
 }
 
