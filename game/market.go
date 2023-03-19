@@ -18,39 +18,9 @@ import (
 	"nechego/tools"
 	"nechego/valid"
 	"strings"
-	"time"
 )
 
 var ErrNoKey = errors.New("key not found")
-
-// PriceList is a dynamically updated list of prices.
-type PriceList struct {
-	Updated time.Time
-	Plants  map[plant.Type]int
-}
-
-func NewPriceList() *PriceList {
-	p := &PriceList{Plants: map[plant.Type]int{}}
-	p.Refresh()
-	return p
-}
-
-// Refresh updates the price list idempotently.
-func (p *PriceList) Refresh() {
-	if !p.Updated.IsZero() && time.Now().YearDay() == p.Updated.YearDay() {
-		return
-	}
-	p.Updated = time.Now()
-	for _, t := range plant.Types {
-		p.Plants[t] = int(math.Abs(500 + 2500*rand.NormFloat64()))
-	}
-}
-
-// Price returns the price of the given plant type.
-func (p *PriceList) Price(t plant.Type) int {
-	p.Refresh()
-	return p.Plants[t]
-}
 
 // Product is an item with price to be sold on the market.
 type Product struct {
@@ -218,32 +188,27 @@ func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
 	if !i.Transferable {
 		return 0, false
 	}
-
-	// The item will be either sold or returned back to the inventory.
+	profit, ok = w.Market.PriceList.Price(i)
+	if !ok {
+		return 0, false
+	}
 	if !u.Inventory.Remove(i) {
-		return 0, false
+		panic("selling item is not in the inventory")
 	}
-
-	switch x := i.Value.(type) {
-	case *fishing.Fish:
-		profit = int(x.Price())
-	case *details.Details:
-		profit = 100 * x.Count
-	case *plant.Plant:
-		profit = w.Market.PriceList.Price(x.Type) * x.Count
-	default:
-		// Item of this type cannot be sold; return it back.
-		u.Inventory.Add(i)
-		return 0, false
-	}
-	// The sale is commited.
 	u.Balance().Add(profit)
-
-	// The most rated player takes a tax.
-	if top, earn := w.SortedUsers(ByElo), profit/10; len(top) > 0 && earn > 0 {
-		if elo := top[0]; elo.CombatMode.Status() == pvp.PvP {
-			elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
-		}
-	}
+	payEloTopTax(w, profit/10)
 	return profit, true
+}
+
+func payEloTopTax(w *World, n int) {
+	if n == 0 {
+		return
+	}
+	top := w.SortedUsers(ByElo)
+	if len(top) == 0 {
+		return
+	}
+	if u := top[0]; u.CombatMode.Status() == pvp.PvP {
+		u.Funds.Add("налог", item.New(&money.Cash{Money: n}))
+	}
 }

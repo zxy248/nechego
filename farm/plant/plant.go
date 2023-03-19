@@ -49,7 +49,7 @@ const (
 	Laminaria
 )
 
-// All types except Void
+// All types except Void.
 var Types = func() []Type {
 	r := []Type{}
 	for t := range data {

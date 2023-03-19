@@ -556,7 +556,7 @@ func PriceList(p *game.PriceList) string {
 	out := fmt.Sprintf("<b>📊 Цены на %s</b>\n", p.Updated.Format("2006.01.02"))
 	var table string
 	for i, t := range plant.Types {
-		table += fmt.Sprintf("<code>%s %20s</code>", t, Money(p.Price(t)))
+		table += fmt.Sprintf("<code>%s %-20s</code>", t, Money(p.Plants[t]))
 		if i%2 == 0 {
 			table += "<code>    </code>"
 		} else {
