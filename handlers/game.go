@@ -11,6 +11,7 @@ import (
 	"nechego/game"
 	"nechego/game/pvp"
 	"nechego/game/recipes"
+	"nechego/handlers/parse"
 	"nechego/item"
 	"nechego/money"
 	tu "nechego/teleutil"
@@ -632,19 +633,48 @@ type Sell struct {
 	Universe *game.Universe
 }
 
-var sellRe = re("^!продать (.*)")
-
 func (h *Sell) Match(s string) bool {
-	return sellRe.MatchString(s)
+	_, ok := sellCommand(s)
+	return ok
+}
+
+func sellCommand(s string) (keys []int, ok bool) {
+	return numCommand("!продать", s)
+}
+
+func numCommand(prefix string, s string) (keys []int, ok bool) {
+	ok = parse.Gseq(
+		parse.Ftog(parse.Str(prefix)),
+		parse.All(parse.Or(
+			parse.Int(func(n int) {
+				keys = append(keys, n)
+			}),
+			parse.Interval(func(min, max int) {
+				const lim = 20
+				if max-min > lim {
+					max = min + lim
+				}
+				for i := min; i <= max; i++ {
+					keys = append(keys, i)
+				}
+			}),
+		)),
+	)(s)
+	return
 }
 
 func (h *Sell) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
+	keys, ok := sellCommand(c.Text())
+	if !ok {
+		panic("bad sell command")
+	}
+
 	total := 0
 	sold := []*item.Item{}
-	for _, key := range tu.NumArg(c, sellRe, 1) {
+	for _, key := range keys {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			c.Send(format.BadKey(key), tele.ModeHTML)
