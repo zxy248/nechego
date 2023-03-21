@@ -85,3 +85,31 @@ func (u *User) Transfer(to *User, x *item.Item) bool {
 	to.Funds.Add("обмен", x)
 	return true
 }
+
+// UseCallback contains functions to be called when an item is used.
+type UseCallback struct {
+	Fertilizer func(*farm.Fertilizer)
+}
+
+// Use attempts to use the given item, calling the appropriate
+// callback function on success.
+func (u *User) Use(x *item.Item, k UseCallback) (ok bool) {
+	if !u.Inventory.Contain(x) {
+		panic("used item is not in the inventory")
+	}
+	switch v := x.Value.(type) {
+	case *farm.Fertilizer:
+		useFertilizer(v, u.Farm)
+		k.Fertilizer(v)
+	default:
+		return false
+	}
+	if !u.Inventory.Remove(x) {
+		panic("used item cannot be removed from the inventory")
+	}
+	return true
+}
+
+func useFertilizer(v *farm.Fertilizer, f *farm.Farm) {
+	f.Fertilizer += v.Volume
+}

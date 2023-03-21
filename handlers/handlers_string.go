@@ -99,14 +99,15 @@ func _() {
 	_ = x[AuctionSellHandler-88]
 	_ = x[FriendsHandler-89]
 	_ = x[TransferHandler-90]
-	_ = x[DiceHandler-91]
-	_ = x[SlotHandler-92]
-	_ = x[RollHandler-93]
+	_ = x[UseHandler-91]
+	_ = x[DiceHandler-92]
+	_ = x[SlotHandler-93]
+	_ = x[RollHandler-94]
 }
 
-const _HandlerID_name = "NoHandlerHelpHandlerInfaHandlerWhoHandlerListHandlerTopHandlerMouseHandlerTiktokHandlerGameHandlerWeatherHandlerCatHandlerAnimeHandlerFurryHandlerFlagHandlerPersonHandlerHorseHandlerArtHandlerCarHandlerSoyHandlerDanbooruHandlerFapHandlerMasyunyaHandlerPoppyHandlerSimaHandlerLageonaHandlerHelloHandlerBasiliHandlerCasperHandlerZeusHandlerPicHandlerAvatarHandlerTurnOnHandlerTurnOffHandlerBanHandlerUnbanHandlerCalculatorHandlerDailyEblanHandlerDailyAdminHandlerDailyPairHandlerNameHandlerInventoryHandlerSortHandlerCatchHandlerDropHandlerPickHandlerFloorHandlerMarketHandlerPriceListHandlerNameMarketHandlerGetJobHandlerQuitJobHandlerBuyHandlerEatHandlerEatQuickHandlerFishHandlerCastNetHandlerDrawNetHandlerNetHandlerFishingRecordsHandlerCraftHandlerStatusHandlerSellHandlerSellQuickHandlerStackHandlerSplitHandlerCashoutHandlerFightHandlerPvPHandlerProfileHandlerTopStrongHandlerTopRatingHandlerTopRichHandlerCapitalHandlerBalanceHandlerFundsHandlerEnergyHandlerNamePetHandlerReceiveSMSHandlerSendSMSHandlerContactsHandlerSpamHandlerFarmHandlerPlantHandlerHarvestHandlerHarvestInlineHandlerUpgradeFarmHandlerAuctionHandlerAuctionBuyHandlerAuctionSellHandlerFriendsHandlerTransferHandlerDiceHandlerSlotHandlerRollHandler"
+const _HandlerID_name = "NoHandlerHelpHandlerInfaHandlerWhoHandlerListHandlerTopHandlerMouseHandlerTiktokHandlerGameHandlerWeatherHandlerCatHandlerAnimeHandlerFurryHandlerFlagHandlerPersonHandlerHorseHandlerArtHandlerCarHandlerSoyHandlerDanbooruHandlerFapHandlerMasyunyaHandlerPoppyHandlerSimaHandlerLageonaHandlerHelloHandlerBasiliHandlerCasperHandlerZeusHandlerPicHandlerAvatarHandlerTurnOnHandlerTurnOffHandlerBanHandlerUnbanHandlerCalculatorHandlerDailyEblanHandlerDailyAdminHandlerDailyPairHandlerNameHandlerInventoryHandlerSortHandlerCatchHandlerDropHandlerPickHandlerFloorHandlerMarketHandlerPriceListHandlerNameMarketHandlerGetJobHandlerQuitJobHandlerBuyHandlerEatHandlerEatQuickHandlerFishHandlerCastNetHandlerDrawNetHandlerNetHandlerFishingRecordsHandlerCraftHandlerStatusHandlerSellHandlerSellQuickHandlerStackHandlerSplitHandlerCashoutHandlerFightHandlerPvPHandlerProfileHandlerTopStrongHandlerTopRatingHandlerTopRichHandlerCapitalHandlerBalanceHandlerFundsHandlerEnergyHandlerNamePetHandlerReceiveSMSHandlerSendSMSHandlerContactsHandlerSpamHandlerFarmHandlerPlantHandlerHarvestHandlerHarvestInlineHandlerUpgradeFarmHandlerAuctionHandlerAuctionBuyHandlerAuctionSellHandlerFriendsHandlerTransferHandlerUseHandlerDiceHandlerSlotHandlerRollHandler"
 
-var _HandlerID_index = [...]uint16{0, 9, 20, 31, 41, 52, 62, 74, 87, 98, 112, 122, 134, 146, 157, 170, 182, 192, 202, 212, 227, 237, 252, 264, 275, 289, 301, 314, 327, 338, 348, 361, 374, 388, 398, 410, 427, 444, 461, 477, 488, 504, 515, 527, 538, 549, 561, 574, 590, 607, 620, 634, 644, 654, 669, 680, 694, 708, 718, 739, 751, 764, 775, 791, 803, 815, 829, 841, 851, 865, 881, 897, 911, 925, 939, 951, 964, 978, 995, 1009, 1024, 1035, 1046, 1058, 1072, 1092, 1110, 1124, 1141, 1159, 1173, 1188, 1199, 1210, 1221}
+var _HandlerID_index = [...]uint16{0, 9, 20, 31, 41, 52, 62, 74, 87, 98, 112, 122, 134, 146, 157, 170, 182, 192, 202, 212, 227, 237, 252, 264, 275, 289, 301, 314, 327, 338, 348, 361, 374, 388, 398, 410, 427, 444, 461, 477, 488, 504, 515, 527, 538, 549, 561, 574, 590, 607, 620, 634, 644, 654, 669, 680, 694, 708, 718, 739, 751, 764, 775, 791, 803, 815, 829, 841, 851, 865, 881, 897, 911, 925, 939, 951, 964, 978, 995, 1009, 1024, 1035, 1046, 1058, 1072, 1092, 1110, 1124, 1141, 1159, 1173, 1188, 1198, 1209, 1220, 1231}
 
 func (i HandlerID) String() string {
 	if i < 0 || i >= HandlerID(len(_HandlerID_index)-1) {

@@ -99,3 +99,42 @@ func (h *Transfer) Handle(c tele.Context) error {
 		tu.Mention(c, user), tu.Mention(c, target), transfered...),
 		tele.ModeHTML)
 }
+
+type Use struct {
+	Universe *game.Universe
+}
+
+func (h *Use) Match(s string) bool {
+	_, ok := useCommand(s)
+	return ok
+}
+
+func (h *Use) Handle(c tele.Context) error {
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	keys, ok := useCommand(c.Text())
+	if !ok {
+		panic("bad use command")
+	}
+	use := format.NewUse()
+	for _, k := range keys {
+		x, ok := user.Inventory.ByKey(k)
+		if !ok {
+			c.Send(format.BadKey(k), tele.ModeHTML)
+			break
+		}
+		if !user.Use(x, use.Callback(tu.Mention(c, user))) {
+			c.Send(format.CannotUse(x), tele.ModeHTML)
+			break
+		}
+	}
+	if s := use.String(); s != "" {
+		return c.Send(s, tele.ModeHTML)
+	}
+	return nil
+}
+
+func useCommand(s string) (keys []int, ok bool) {
+	return numCommand("!использ", s)
+}

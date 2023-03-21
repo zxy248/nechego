@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"nechego/details"
+	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
@@ -103,6 +104,8 @@ func randomProduct() *Product {
 		p = price(5000, 2500)
 	case *plant.Plant:
 		p = price(1000, 500)
+	case *farm.Fertilizer:
+		p = x.Volume * price(100, 25)
 	default:
 		// This type of item cannot be sold at the market.
 		// Reroll.

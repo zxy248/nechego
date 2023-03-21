@@ -95,6 +95,7 @@ const (
 	AuctionSellHandler
 	FriendsHandler
 	TransferHandler
+	UseHandler
 	DiceHandler
 	SlotHandler
 	RollHandler
@@ -190,6 +191,7 @@ func (_ *AuctionBuy) Self() HandlerID     { return AuctionBuyHandler }
 func (_ *AuctionSell) Self() HandlerID    { return AuctionSellHandler }
 func (_ *Friends) Self() HandlerID        { return FriendsHandler }
 func (_ *Transfer) Self() HandlerID       { return TransferHandler }
+func (_ *Use) Self() HandlerID            { return UseHandler }
 func (_ *Dice) Self() HandlerID           { return DiceHandler }
 func (_ *Slot) Self() HandlerID           { return SlotHandler }
 func (_ *Roll) Self() HandlerID           { return RollHandler }

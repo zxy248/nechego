@@ -644,7 +644,7 @@ func sellCommand(s string) (keys []int, ok bool) {
 
 func numCommand(prefix string, s string) (keys []int, ok bool) {
 	ok = parse.Gseq(
-		parse.Ftog(parse.Str(prefix)),
+		parse.Ftog(parse.Prefix(prefix)),
 		parse.All(parse.Or(
 			parse.Int(func(n int) {
 				keys = append(keys, n)

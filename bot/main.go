@@ -10,6 +10,7 @@ import (
 	"nechego/handlers"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -17,14 +18,20 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-var botToken = os.Getenv("NECHEGO_TOKEN")
+var (
+	botToken        = os.Getenv("NECHEGO_TOKEN")
+	assetsDirectory = os.Getenv("NECHEGO_ASSETS")
+)
 
-// init seeds the random number generator and validates the global
-// variables.
+// init seeds the global random number generator and validates the
+// environment variables.
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	if botToken == "" {
 		log.Fatal("$NECHEGO_TOKEN not set")
+	}
+	if assetsDirectory == "" {
+		log.Fatal("$NECHEGO_ASSETS not set")
 	}
 }
 
@@ -47,9 +54,10 @@ func main() {
 		router.AddHandler(tele.OnText, h)
 		router.AddHandler(tele.OnPhoto, h)
 	}
+	for _, h := range callbackHandlers(u) {
+		router.AddHandler(tele.OnCallback, h)
+	}
 	router.AddHandler(tele.OnDice, &handlers.Roll{Universe: u})
-	router.AddHandler(tele.OnCallback, &handlers.HarvestInline{Universe: u})
-	router.AddHandler(tele.OnCallback, &handlers.AuctionBuy{Universe: u})
 	router.Set(bot)
 
 	done := notifyStop(bot, u)
@@ -151,12 +159,12 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.Help{},
 
 		// Pictures.
-		&handlers.Pic{Path: "data/pic"},
-		&handlers.Basili{Path: "data/basili"},
-		&handlers.Casper{Path: "data/casper"},
-		&handlers.Zeus{Path: "data/zeus"},
-		&handlers.Mouse{Path: "data/mouse.mp4"},
-		&handlers.Tiktok{Path: "data/tiktok/"},
+		&handlers.Pic{Path: assetPath("pic")},
+		&handlers.Basili{Path: assetPath("basili")},
+		&handlers.Casper{Path: assetPath("casper")},
+		&handlers.Zeus{Path: assetPath("zeus")},
+		&handlers.Mouse{Path: assetPath("mouse.mp4")},
+		&handlers.Tiktok{Path: assetPath("tiktok")},
 		&handlers.Cat{},
 		&handlers.Anime{},
 		&handlers.Furry{},
@@ -227,6 +235,7 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.FishingRecords{Universe: u},
 		&handlers.Friends{Universe: u},
 		&handlers.Transfer{Universe: u},
+		&handlers.Use{Universe: u},
 
 		// Top.
 		&handlers.TopStrong{Universe: u},
@@ -247,7 +256,7 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.Spam{Universe: u},
 
 		// Fun.
-		&handlers.Hello{Path: "data/hello.json"},
+		&handlers.Hello{Path: assetPath("hello.json")},
 		&handlers.Game{},
 		&handlers.Infa{},
 		&handlers.Weather{},
@@ -258,6 +267,13 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.TurnOn{Universe: u},
 		&handlers.TurnOff{Universe: u},
 		&handlers.Top{Universe: u},
+	}
+}
+
+func callbackHandlers(u *game.Universe) []handlers.Handler {
+	return []handlers.Handler{
+		&handlers.HarvestInline{Universe: u},
+		&handlers.AuctionBuy{Universe: u},
 	}
 }
 
@@ -273,4 +289,8 @@ func middlewareWrappers(u *game.Universe, as *avatar.Storage) []middleware.Wrapp
 		&middleware.IncrementCounters{Universe: u},
 		&middleware.RandomPhoto{Avatars: as},
 	}
+}
+
+func assetPath(s string) string {
+	return filepath.Join(assetsDirectory, s)
 }

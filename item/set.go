@@ -3,6 +3,7 @@ package item
 import (
 	"math/rand"
 	"nechego/details"
+	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/money"
 	"nechego/token"
@@ -182,6 +183,8 @@ func Merge(a, b *Item) bool {
 		return mergeDetails(x, b.Value)
 	case *token.Legacy:
 		return mergeLegacy(x, b.Value)
+	case *farm.Fertilizer:
+		return mergeFertilizer(x, b.Value)
 	}
 	return false
 }
@@ -226,6 +229,14 @@ func mergeLegacy(l *token.Legacy, v any) bool {
 	return false
 }
 
+func mergeFertilizer(f *farm.Fertilizer, v any) bool {
+	if x, ok := v.(*farm.Fertilizer); ok {
+		f.Volume += x.Volume
+		return true
+	}
+	return false
+}
+
 // Split attemps to separate the given item into two items.
 // On success, the returned item should be added to the inventory.
 func Split(a *Item, n int) (b *Item, ok bool) {
@@ -243,6 +254,8 @@ func Split(a *Item, n int) (b *Item, ok bool) {
 		return splitDetails(x, n)
 	case *token.Legacy:
 		return splitLegacy(x, n)
+	case *farm.Fertilizer:
+		return splitFertilizer(x, n)
 	}
 	return nil, false
 }
@@ -287,4 +300,12 @@ func splitLegacy(l *token.Legacy, n int) (*Item, bool) {
 	}
 	l.Count -= n
 	return New(&token.Legacy{Count: n}), true
+}
+
+func splitFertilizer(f *farm.Fertilizer, n int) (*Item, bool) {
+	if f.Volume <= n {
+		return nil, false
+	}
+	f.Volume -= n
+	return New(&farm.Fertilizer{Volume: n}), true
 }

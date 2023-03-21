@@ -3,6 +3,7 @@ package item
 import (
 	"fmt"
 	"nechego/details"
+	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
@@ -37,6 +38,7 @@ const (
 	TypeFishingNet
 	TypePlant
 	TypeLegacy
+	TypeFertilizer
 )
 
 // TypeOf returns a Type corresponding to the actual type of x.
@@ -78,6 +80,8 @@ func TypeOf(x any) Type {
 		return TypePlant
 	case *token.Legacy:
 		return TypeLegacy
+	case *farm.Fertilizer:
+		return TypeFertilizer
 	default:
 		return TypeUnknown
 	}
@@ -123,6 +127,8 @@ func ValueOf(t Type) any {
 		return &plant.Plant{}
 	case TypeLegacy:
 		return &token.Legacy{}
+	case TypeFertilizer:
+		return &farm.Fertilizer{}
 	default:
 		panic(fmt.Sprintf("unexpected item type %v", t))
 	}

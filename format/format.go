@@ -509,6 +509,9 @@ func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 	c := NewConnector("\n")
 	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма (%d × %d)</b>",
 		Name(mention), f.Rows, f.Columns))
+	if f.Fertilizer > 0 {
+		c.Add(fmt.Sprintf("<i>🛢 Запас удобрений: %v л.</i>", f.Fertilizer))
+	}
 	if until := f.Until(); until > 0 {
 		c.Add(fmt.Sprintf("<i>🌾 До урожая осталось %s</i>", Duration(until)))
 	}
