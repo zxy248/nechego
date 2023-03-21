@@ -58,7 +58,7 @@ func (u *User) FarmUpgradeCost() (cost int, ok bool) {
 	if u.Farm.Rows >= MaxFarmRows && u.Farm.Columns >= MaxFarmColumns {
 		return 0, false
 	}
-	return 1000 * fib(u.Farm.Columns+u.Farm.Rows), true
+	return 1000 * fibonacci(u.Farm.Columns+u.Farm.Rows), true
 }
 
 func (u *User) UpgradeFarm(cost int) bool {
@@ -69,16 +69,16 @@ func (u *User) UpgradeFarm(cost int) bool {
 	return true
 }
 
-var fibCache = map[int]int{0: 0, 1: 1}
+var fibonacciCache = map[int]int{0: 0, 1: 1}
 
-func fib(n int) int {
+func fibonacci(n int) int {
 	if n < 0 {
-		panic("fib negative argument")
+		panic("fibonacci negative argument")
 	}
-	if k, ok := fibCache[n]; ok {
+	if k, ok := fibonacciCache[n]; ok {
 		return k
 	}
-	k := fib(n-1) + fib(n-2)
-	fibCache[n] = k
+	k := fibonacci(n-1) + fibonacci(n-2)
+	fibonacciCache[n] = k
 	return k
 }
