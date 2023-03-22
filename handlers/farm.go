@@ -6,7 +6,10 @@ import (
 	"nechego/farm/plant"
 	"nechego/format"
 	"nechego/game"
+	"nechego/handlers/parse"
 	tu "nechego/teleutil"
+	"nechego/valid"
+	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -163,4 +166,39 @@ func (h *UpgradeFarm) Handle(c tele.Context) error {
 		return c.Send(format.NoMoney)
 	}
 	return c.Send(format.FarmUpgraded(tu.Mention(c, user), user.Farm, cost), tele.ModeHTML)
+}
+
+type NameFarm struct {
+	Universe *game.Universe
+}
+
+func (h *NameFarm) Match(s string) bool {
+	_, ok := nameFarmCommand(s)
+	return ok
+}
+
+func (h *NameFarm) Handle(c tele.Context) error {
+	world, user := tu.Lock(c, h.Universe)
+	defer world.Unlock()
+
+	name, ok := nameFarmCommand(c.Text())
+	if !ok {
+		panic("bad name farm command")
+	}
+	if !valid.Name(name) {
+		return c.Send(format.BadFarmName)
+	}
+	user.Farm.Name = strings.Title(name)
+	return c.Send(format.FarmNamed(tu.Mention(c, user), user.Farm), tele.ModeHTML)
+}
+
+func nameFarmCommand(s string) (name string, ok bool) {
+	ok = parse.Seq(
+		parse.Match("!назвать"),
+		parse.Match("ферму"),
+		parse.Str(func(s string) {
+			name = s
+		}),
+	)(s)
+	return
 }

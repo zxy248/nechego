@@ -8,14 +8,16 @@ import (
 	"nechego/item"
 )
 
-const MaxSizeFarm = "🏡 Вы достигли максимального размера фермы."
+const (
+	MaxSizeFarm = "🏡 Вы достигли максимального размера фермы."
+	BadFarmName = "🏡 Такое название не подходит для фермы."
+)
 
 func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>🏡 %s: Ферма (%d × %d)</b>",
-		Name(mention), f.Rows, f.Columns))
+	c.Add(farmHeader(mention, f))
 	if f.Fertilizer > 0 {
-		c.Add(fmt.Sprintf("<i>🛢 Запас удобрений: %v л.</i>", f.Fertilizer))
+		c.Add(fmt.Sprintf("<i>🛢 Запас удобрений %v л.</i>", f.Fertilizer))
 	}
 	if until := f.Until(); until > 0 {
 		c.Add(fmt.Sprintf("<i>🌾 До урожая осталось %s</i>", Duration(until)))
@@ -32,6 +34,15 @@ func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 			Money(upgradeCost)))
 	}
 	return c.String()
+}
+
+func farmHeader(mention string, f *farm.Farm) string {
+	name := ""
+	if f.Name != "" {
+		name = " " + Title(f.Name)
+	}
+	return fmt.Sprintf("<b>🏡 %s: Ферма%s (%d × %d)</b>",
+		Name(mention), name, f.Rows, f.Columns)
 }
 
 func declPlant(n int) string {
@@ -82,6 +93,10 @@ func FarmUpgraded(mention string, f *farm.Farm, cost int) string {
 	return c.String()
 }
 
+func FarmNamed(mention string, f *farm.Farm) string {
+	return fmt.Sprintf("🏡 %s называет ферму %s.", Name(mention), Title(f.Name))
+}
+
 func PriceList(p *game.PriceList) string {
 	out := fmt.Sprintf("<b>📊 Цены на %s</b>\n", p.Updated.Format("2006.01.02"))
 	var table string
@@ -117,9 +132,13 @@ func (u *Use) Callback(mention string) game.UseCallback {
 }
 
 func Fertilize(mention string, f *farm.Fertilizer) string {
-	return fmt.Sprintf("🛢 %s выливает <code>%v л.</code> удобрений на ферму.", mention, f.Volume)
+	return fmt.Sprintf("🛢 %s выливает %s удобрений на ферму.", Name(mention), Volume(f.Volume))
 }
 
 func CannotUse(x *item.Item) string {
 	return fmt.Sprintf("💡 Нельзя использовать %s.", Item(x))
+}
+
+func Volume(n int) string {
+	return fmt.Sprintf("<code>%v л.</code>", n)
 }

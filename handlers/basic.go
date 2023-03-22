@@ -433,7 +433,7 @@ func (h *Danbooru) Handle(c tele.Context) error {
 
 type Fap struct{}
 
-var fapRe = re("^!(др[ао]ч|фап)")
+var fapRe = re("^!(др[ао]ч|фап|эро|порн)")
 
 func (h *Fap) Match(s string) bool {
 	return fapRe.MatchString(s)

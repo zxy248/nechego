@@ -97,9 +97,6 @@ func Random() *Item {
 			phone.NewPhone(),
 			&token.Dice{},
 		},
-		0.02: {
-			&token.Admin{},
-		},
 	}
 	i := []any{}
 	for threshold, list := range pool {

@@ -2,9 +2,11 @@ package plant
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
+
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
-	"math/rand"
 )
 
 type Type int
@@ -113,9 +115,10 @@ type Plant struct {
 }
 
 func Random() *Plant {
+	c := math.Abs(rand.NormFloat64() * 3)
 	return &Plant{
 		Type:  Types[rand.Intn(len(Types))],
-		Count: 1,
+		Count: 1 + int(c),
 	}
 }
 

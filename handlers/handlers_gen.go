@@ -90,6 +90,7 @@ const (
 	HarvestHandler
 	HarvestInlineHandler
 	UpgradeFarmHandler
+	NameFarmHandler
 	AuctionHandler
 	AuctionBuyHandler
 	AuctionSellHandler
@@ -186,6 +187,7 @@ func (_ *Plant) Self() HandlerID          { return PlantHandler }
 func (_ *Harvest) Self() HandlerID        { return HarvestHandler }
 func (_ *HarvestInline) Self() HandlerID  { return HarvestInlineHandler }
 func (_ *UpgradeFarm) Self() HandlerID    { return UpgradeFarmHandler }
+func (_ *NameFarm) Self() HandlerID       { return NameFarmHandler }
 func (_ *Auction) Self() HandlerID        { return AuctionHandler }
 func (_ *AuctionBuy) Self() HandlerID     { return AuctionBuyHandler }
 func (_ *AuctionSell) Self() HandlerID    { return AuctionSellHandler }

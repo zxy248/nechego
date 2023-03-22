@@ -205,6 +205,7 @@ func textHandlers(u *game.Universe, as *avatar.Storage) []handlers.Handler {
 		&handlers.Harvest{Universe: u},
 		&handlers.PriceList{Universe: u},
 		&handlers.UpgradeFarm{Universe: u},
+		&handlers.NameFarm{Universe: u},
 
 		// Market.
 		&handlers.Market{Universe: u},

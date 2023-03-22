@@ -92,8 +92,6 @@ func randomProduct() *Product {
 		p = price(25000, 10000)
 	case *food.Food:
 		p = price(1000, 500)
-	case *token.Admin:
-		p = price(2_500_000, 1_000_000)
 	case *tools.Knife:
 		p = price(5000, 2000)
 	case *phone.Phone:
@@ -103,7 +101,7 @@ func randomProduct() *Product {
 	case *details.Thread:
 		p = price(5000, 2500)
 	case *plant.Plant:
-		p = price(1000, 500)
+		p = x.Count * price(1000, 500)
 	case *farm.Fertilizer:
 		p = x.Volume * price(100, 25)
 	default:

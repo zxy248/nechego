@@ -51,7 +51,7 @@ func (h *Dice) Handle(c tele.Context) error {
 }
 
 func diceCommand(s string) (bet int, ok bool) {
-	ok = parse.Fseq(parse.Str("!кости"), parse.Int(parse.Assign(&bet)))(s)
+	ok = parse.Seq(parse.Match("!кости"), parse.Int(parse.Assign(&bet)))(s)
 	return
 }
 
@@ -94,8 +94,8 @@ func (h *Slot) Handle(c tele.Context) error {
 }
 
 func slotCommand(s string) (bet int, ok bool) {
-	ok = parse.Fseq(
-		parse.Or(parse.Prefix("!слот"), parse.Prefix("!ставка")),
+	ok = parse.Seq(
+		parse.Or(parse.Prefix("!слот"), parse.Prefix("!ставка"), parse.Prefix("!казино")),
 		parse.Int(parse.Assign(&bet)),
 	)(s)
 	return

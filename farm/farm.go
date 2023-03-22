@@ -65,6 +65,7 @@ type Farm struct {
 	Rows       int
 	Columns    int
 	Fertilizer int
+	Name       string
 }
 
 // New returns an empty farm of the given size.

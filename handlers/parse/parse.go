@@ -12,125 +12,115 @@ type F func(s string) (ok bool)
 // part of the sequence and a status.
 type G func(seq []string) (rest []string, ok bool)
 
-// Fseq returns a function that parses each token of a string with a
-// corresponding parser.
-func Fseq(p ...F) F {
+// Seq returns a function that sequentially parses the sequence of
+// tokens in a string with the provided parsers.
+func Seq(p ...G) F {
 	return func(s string) bool {
-		tokens := strings.Fields(s)
-		if len(tokens) != len(p) {
-			return false
-		}
-		for i, q := range p {
-			if !q(tokens[i]) {
+		seq := strings.Fields(s)
+		for _, q := range p {
+			if len(seq) == 0 {
 				return false
 			}
+			rest, ok := q(seq)
+			if !ok {
+				return false
+			}
+			seq = rest
 		}
 		return true
 	}
 }
 
-// Or returns a function that sequentially parses its argument with
-// the provided parsers, returning true on the first match.
-func Or(p ...F) F {
-	return func(s string) bool {
+// Or returns a function that parses its argument with the provided
+// parsers, returning true on the first match.
+func Or(p ...G) G {
+	return func(seq []string) ([]string, bool) {
 		for _, q := range p {
-			if q(s) {
-				return true
+			if rest, ok := q(seq); ok {
+				return rest, true
 			}
 		}
-		return false
+		return seq, false
 	}
 }
 
-// Str returns a function that matches a string.
-func Str(s string) F {
-	return func(t string) bool {
-		return strings.EqualFold(s, t)
+// Match returns a function that matches a string.
+func Match(s string) G {
+	return func(seq []string) ([]string, bool) {
+		if strings.EqualFold(s, car(seq)) {
+			return cdr(seq), true
+		}
+		return seq, false
 	}
 }
 
-// Prefix returns a function that matches a prefix.
-func Prefix(s string) F {
-	return func(t string) bool {
-		return len(t) >= len(s) && strings.EqualFold(s, t[:len(s)])
+// Prefix returns a function that matches the prefix p.
+func Prefix(p string) G {
+	return func(seq []string) ([]string, bool) {
+		a := car(seq)
+		if len(a) >= len(p) && strings.EqualFold(p, a[:len(p)]) {
+			return cdr(seq), true
+		}
+		return seq, false
 	}
 }
 
 // Int returns a function that parses an integer and calls f with the
 // result.
-func Int(f func(int)) F {
-	return func(s string) bool {
-		n, err := strconv.Atoi(s)
+func Int(f func(int)) G {
+	return func(seq []string) ([]string, bool) {
+		n, err := strconv.Atoi(car(seq))
 		if err != nil {
-			return false
+			return seq, false
 		}
 		f(n)
-		return true
+		return cdr(seq), true
 	}
 }
 
-// Interval returns a function that parses an interval (in the form
-// `n-m`, where n and m are integers) and calls f with the result.
-func Interval(f func(min, max int)) F {
-	return func(s string) bool {
-		before, after, found := strings.Cut(s, "-")
+// Str returns a function that joins all tokens of the sequence with a
+// single whitespace and calls f with the result.
+func Str(f func(string)) G {
+	return func(seq []string) ([]string, bool) {
+		f(strings.Join(seq, " "))
+		return []string{}, true
+	}
+}
+
+// Interval returns a function that parses an interval in the form
+// `n-m` where n and m are integers and calls f with the result.
+func Interval(f func(min, max int)) G {
+	return func(seq []string) ([]string, bool) {
+		before, after, found := strings.Cut(car(seq), "-")
 		if !found {
-			return false
+			return seq, false
 		}
 		min, err := strconv.Atoi(before)
 		if err != nil {
-			return false
+			return seq, false
 		}
 		max, err := strconv.Atoi(after)
 		if err != nil {
-			return false
+			return seq, false
 		}
 		if min > max {
 			min, max = max, min
 		}
 		f(min, max)
-		return true
+		return cdr(seq), true
 	}
 }
 
-// Gseq returns a function that sequentially parses the sequence of
-// tokens in a string with the provided parsers.
-func Gseq(p ...G) F {
-	return func(s string) bool {
-		tokens := strings.Fields(s)
-		for _, q := range p {
-			if len(tokens) == 0 {
-				return false
-			}
-			rest, ok := q(tokens)
-			if !ok {
-				return false
-			}
-			tokens = rest
-		}
-		return true
-	}
-}
-
-// Ftog wraps F in G that consumes the first token of seq.
-func Ftog(f F) G {
-	return func(seq []string) ([]string, bool) {
-		if !f(seq[0]) {
-			return seq, false
-		}
-		return seq[1:], true
-	}
-}
-
-// All returns a function that parses each token of seq with p until
-// it is empty.
-func All(p F) G {
+// All returns a function that parses all tokens in the sequence with
+// p until it is empty.
+func All(p G) G {
 	return func(seq []string) ([]string, bool) {
 		for len(seq) > 0 {
-			if !p(seq[0]) {
+			rest, ok := p(seq)
+			if !ok {
 				return seq, false
 			}
-			seq = seq[1:]
+			seq = rest
 		}
 		return []string{}, true
 	}
@@ -141,4 +131,14 @@ func Assign[T any](x *T) func(T) {
 	return func(y T) {
 		*x = y
 	}
+}
+
+// car returns the head of the list.
+func car[T any](list []T) T {
+	return list[0]
+}
+
+// cdr returns the tail of the list.
+func cdr[T any](list []T) []T {
+	return list[1:]
 }

@@ -614,6 +614,10 @@ func Duration(d time.Duration) string {
 	return c.String()
 }
 
+func Title(s string) string {
+	return fmt.Sprintf("<b>«%s»</b>", s)
+}
+
 func declHours(n int) string {
 	suffix := "ов"
 	switch n {

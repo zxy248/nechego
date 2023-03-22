@@ -13,7 +13,7 @@ type RandomPhoto struct {
 
 func (m *RandomPhoto) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		if rand.Float64() < 0.02 {
+		if rand.Float64() < 1./200 {
 			var r []*tele.Photo
 			p, err := c.Bot().ProfilePhotosOf(c.Sender())
 			if err != nil {

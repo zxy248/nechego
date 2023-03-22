@@ -136,5 +136,5 @@ func (h *Use) Handle(c tele.Context) error {
 }
 
 func useCommand(s string) (keys []int, ok bool) {
-	return numCommand("!использ", s)
+	return numCommand("!исп", s)
 }
