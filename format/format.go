@@ -593,7 +593,7 @@ func Transfered(sender, receiver string, i ...*item.Item) string {
 		c.Add(Item(x))
 	}
 	const help = "<i>Используйте команду <code>!получить</code>, чтобы взять предметы.</i>"
-	message := fmt.Sprintf("📦 %s передал %s %s.", Name(sender), Name(receiver), c.String())
+	message := fmt.Sprintf("📦 %s передаёт %s %s.", Name(sender), Name(receiver), c.String())
 	return message + "\n\n" + help
 }
 
