@@ -44,22 +44,26 @@ func Or(p ...G) G {
 	}
 }
 
-// Match returns a function that matches a string.
-func Match(s string) G {
+// Match returns a function that matches one of the given strings.
+func Match(s ...string) G {
 	return func(seq []string) ([]string, bool) {
-		if strings.EqualFold(s, car(seq)) {
-			return cdr(seq), true
+		for _, t := range s {
+			if strings.EqualFold(t, car(seq)) {
+				return cdr(seq), true
+			}
 		}
 		return seq, false
 	}
 }
 
-// Prefix returns a function that matches the prefix p.
-func Prefix(p string) G {
+// Prefix returns a function that matches one of the given prefixes.
+func Prefix(p ...string) G {
 	return func(seq []string) ([]string, bool) {
 		a := car(seq)
-		if len(a) >= len(p) && strings.EqualFold(p, a[:len(p)]) {
-			return cdr(seq), true
+		for _, q := range p {
+			if len(a) >= len(q) && strings.EqualFold(q, a[:len(q)]) {
+				return cdr(seq), true
+			}
 		}
 		return seq, false
 	}

@@ -6,6 +6,7 @@ import (
 	"nechego/auction"
 	"nechego/format"
 	"nechego/game"
+	"nechego/handlers/parse"
 	tu "nechego/teleutil"
 
 	tele "gopkg.in/telebot.v3"
@@ -90,10 +91,9 @@ type AuctionSell struct {
 	Universe *game.Universe
 }
 
-var auctionSell = re("^!торг (.*)")
-
 func (h *AuctionSell) Match(s string) bool {
-	return auctionSell.MatchString(s)
+	_, _, ok := auctionSellCommand(s)
+	return ok
 }
 
 func (h *AuctionSell) Handle(c tele.Context) error {
@@ -106,12 +106,7 @@ func (h *AuctionSell) Handle(c tele.Context) error {
 
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
-
-	args := tu.NumArg(c, auctionSell, 1)
-	if len(args) != 2 {
-		return error()
-	}
-	key, price := args[0], args[1]
+	key, price, _ := auctionSellCommand(c.Text())
 
 	item, ok := user.Inventory.ByKey(key)
 	if !ok {
@@ -124,4 +119,13 @@ func (h *AuctionSell) Handle(c tele.Context) error {
 		return error()
 	}
 	return c.Send(format.AuctionSell)
+}
+
+func auctionSellCommand(s string) (key, price int, ok bool) {
+	ok = parse.Seq(
+		parse.Prefix("!торг"),
+		parse.Int(parse.Assign(&key)),
+		parse.Int(parse.Assign(&price)),
+	)(s)
+	return
 }

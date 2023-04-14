@@ -639,38 +639,13 @@ func (h *Sell) Match(s string) bool {
 }
 
 func sellCommand(s string) (keys []int, ok bool) {
-	return numCommand("!продать", s)
-}
-
-func numCommand(prefix string, s string) (keys []int, ok bool) {
-	ok = parse.Seq(
-		parse.Prefix(prefix),
-		parse.All(parse.Or(
-			parse.Int(func(n int) {
-				keys = append(keys, n)
-			}),
-			parse.Interval(func(min, max int) {
-				const lim = 20
-				if max-min > lim {
-					max = min + lim
-				}
-				for i := min; i <= max; i++ {
-					keys = append(keys, i)
-				}
-			}),
-		)),
-	)(s)
-	return
+	return numCommand(parse.Match("!продать"), s)
 }
 
 func (h *Sell) Handle(c tele.Context) error {
+	keys, _ := sellCommand(c.Text())
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
-
-	keys, ok := sellCommand(c.Text())
-	if !ok {
-		panic("bad sell command")
-	}
 
 	total := 0
 	sold := []*item.Item{}

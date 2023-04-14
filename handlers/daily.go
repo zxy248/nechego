@@ -72,8 +72,8 @@ func (h *DailyPair) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("💔")
 	}
-	m0 := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(pair[0].TUID)))
-	m1 := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(pair[1].TUID)))
+	m0 := teleutil.Mention(c, tele.ChatID(pair[0].TUID))
+	m1 := teleutil.Mention(c, tele.ChatID(pair[1].TUID))
 	out := fmt.Sprintf("<b>✨ Пара дня</b> — %s 💘 %s", m0, m1)
 	return c.Send(out, tele.ModeHTML)
 }

@@ -3,6 +3,7 @@ package handlers
 import (
 	"nechego/format"
 	"nechego/game"
+	"nechego/handlers/parse"
 	"nechego/item"
 	tu "nechego/teleutil"
 
@@ -62,15 +63,15 @@ type Transfer struct {
 	Universe *game.Universe
 }
 
-var transferRe = re("^!(передать|отправить) (.*)")
-
 func (h *Transfer) Match(s string) bool {
-	return transferRe.MatchString(s)
+	_, ok := transferCommand(s)
+	return ok
 }
 
 func (h *Transfer) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
+	keys, _ := transferCommand(c.Text())
 
 	reply, ok := tu.Reply(c)
 	if !ok {
@@ -83,7 +84,7 @@ func (h *Transfer) Handle(c tele.Context) error {
 	}
 
 	transfered := []*item.Item{}
-	for _, key := range tu.NumArg(c, transferRe, 2) {
+	for _, key := range keys {
 		item, ok := user.Inventory.ByKey(key)
 		if !ok {
 			c.Send(format.BadKey(key), tele.ModeHTML)
@@ -98,6 +99,10 @@ func (h *Transfer) Handle(c tele.Context) error {
 	return c.Send(format.Transfered(
 		tu.Mention(c, user), tu.Mention(c, target), transfered...),
 		tele.ModeHTML)
+}
+
+func transferCommand(s string) (keys []int, ok bool) {
+	return numCommand(parse.Match("!передать", "!отправить"), s)
 }
 
 type Use struct {
@@ -136,5 +141,5 @@ func (h *Use) Handle(c tele.Context) error {
 }
 
 func useCommand(s string) (keys []int, ok bool) {
-	return numCommand("!исп", s)
+	return numCommand(parse.Prefix("!исп"), s)
 }

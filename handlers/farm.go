@@ -194,11 +194,8 @@ func (h *NameFarm) Handle(c tele.Context) error {
 
 func nameFarmCommand(s string) (name string, ok bool) {
 	ok = parse.Seq(
-		parse.Match("!назвать"),
-		parse.Match("ферму"),
-		parse.Str(func(s string) {
-			name = s
-		}),
+		parse.Match("!назвать"), parse.Match("ферму"),
+		parse.Str(parse.Assign(&name)),
 	)(s)
 	return
 }

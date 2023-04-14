@@ -13,6 +13,7 @@ import (
 	"nechego/danbooru"
 	"nechego/format"
 	"nechego/game"
+	"nechego/handlers/parse"
 	tu "nechego/teleutil"
 	"net/http"
 	"net/url"
@@ -39,14 +40,23 @@ func (h *Help) Handle(c tele.Context) error {
 
 type Infa struct{}
 
-var infaRe = re("^!инфа ?(.*)")
-
 func (h *Infa) Match(s string) bool {
-	return infaRe.MatchString(s)
+	_, ok := infaCommand(s)
+	return ok
 }
 
 func (h *Infa) Handle(c tele.Context) error {
-	templates := [...]string{
+	s, _ := infaCommand(c.Text())
+	return c.Send(infa(s))
+}
+
+func infaCommand(s string) (text string, ok bool) {
+	ok = parse.Seq(parse.Prefix("!инфа"), parse.Str(parse.Assign(&text)))(s)
+	return
+}
+
+func infa(s string) string {
+	ts := []string{
 		"Здравый смысл говорит мне о том, что %s с вероятностью %d%%",
 		"Благодаря чувственному опыту я определил, что %s с вероятностью %d%%",
 		"Я думаю, что %s с вероятностью %d%%",
@@ -59,32 +69,32 @@ func (h *Infa) Handle(c tele.Context) error {
 		"Прикинув раз на раз, я определился с тем, что %s с вероятностью %d%%",
 		"Уверяю вас в том, что %s с вероятностью %d%%",
 	}
-	return c.Send(fmt.Sprintf(templates[rand.Intn(len(templates))],
-		tu.Args(c, infaRe)[1],
-		rand.Intn(101)))
+	t := ts[rand.Intn(len(ts))]
+	p := rand.Intn(101)
+	return fmt.Sprintf(t, s, p)
 }
 
 type Who struct {
 	Universe *game.Universe
 }
 
-var whoRe = re("^!кто ?(.*)")
-
 func (h *Who) Match(s string) bool {
-	return whoRe.MatchString(s)
+	_, ok := whoCommand(s)
+	return ok
 }
 
 func (h *Who) Handle(c tele.Context) error {
-	w, err := h.Universe.World(c.Chat().ID)
-	if err != nil {
-		return err
-	}
-	w.Lock()
-	defer w.Unlock()
+	text, _ := whoCommand(c.Text())
+	world, _ := tu.Lock(c, h.Universe)
+	defer world.Unlock()
 
-	user := w.RandomUser()
-	return c.Send(tu.Mention(c, user.TUID)+" "+
-		html.EscapeString(tu.Args(c, whoRe)[1]), tele.ModeHTML)
+	m := tu.Mention(c, world.RandomUser())
+	s := html.EscapeString(text)
+	return c.Send(m+" "+s, tele.ModeHTML)
+}
+
+func whoCommand(s string) (text string, ok bool) {
+	return textCommand(parse.Prefix("!инфа"), s)
 }
 
 type List struct {
@@ -115,24 +125,26 @@ type Top struct {
 	Universe *game.Universe
 }
 
-var topRe = re("^!топ ?(.*)")
-
 func (h *Top) Match(s string) bool {
-	return topRe.MatchString(s)
+	_, ok := topCommand(s)
+	return ok
 }
 
 func (h *Top) Handle(c tele.Context) error {
+	text, _ := topCommand(c.Text())
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	users := world.RandomUsers(3 + rand.Intn(3))
-	arg := tu.Args(c, topRe)[1]
-	s := []string{fmt.Sprintf("<b>🏆 Топ %s</b>", arg)}
+	s := []string{fmt.Sprintf("<b>🏆 Топ %s</b>", text)}
 	for i, u := range users {
-		mention := tu.Mention(c, tu.Member(c, tele.ChatID(u.TUID)))
-		s = append(s, fmt.Sprintf("<i>%d.</i> %s", i+1, mention))
+		s = append(s, fmt.Sprintf("<i>%d.</i> %s", 1+i, tu.Mention(c, u)))
 	}
 	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
+}
+
+func topCommand(s string) (text string, ok bool) {
+	return textCommand(parse.Match("!топ"), s)
 }
 
 type Mouse struct {
@@ -186,10 +198,9 @@ func (h *Game) Handle(c tele.Context) error {
 
 type Weather struct{}
 
-var weatherRe = re("^!погода (.*)")
-
 func (h *Weather) Match(s string) bool {
-	return weatherRe.MatchString(s)
+	_, ok := weatherCommand(s)
+	return ok
 }
 
 func (h *Weather) Handle(c tele.Context) error {
@@ -201,7 +212,8 @@ func (h *Weather) Handle(c tele.Context) error {
 		`Давление+—+%P\n` +
 		`Фаза+луны+—+%m\n` +
 		`УФ-индекс+—+%u\n`
-	city := url.PathEscape(tu.Args(c, weatherRe)[1])
+	city, _ := weatherCommand(c.Text())
+	city = url.PathEscape(city)
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest(http.MethodGet, addr+city+format, nil)
@@ -227,6 +239,10 @@ func (h *Weather) Handle(c tele.Context) error {
 		return err
 	}
 	return c.Send(string(data))
+}
+
+func weatherCommand(s string) (city string, ok bool) {
+	return textCommand(parse.Prefix("!погода"), s)
 }
 
 type Cat struct{}

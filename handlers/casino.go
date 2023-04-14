@@ -95,7 +95,7 @@ func (h *Slot) Handle(c tele.Context) error {
 
 func slotCommand(s string) (bet int, ok bool) {
 	ok = parse.Seq(
-		parse.Or(parse.Prefix("!слот"), parse.Prefix("!ставка"), parse.Prefix("!казино")),
+		parse.Prefix("!слот", "!ставка", "!казино"),
 		parse.Int(parse.Assign(&bet)),
 	)(s)
 	return
