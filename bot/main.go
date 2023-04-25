@@ -47,9 +47,7 @@ func main() {
 
 	// Register handlers.
 	handlers := []ContextService{}
-	for _, h := range RemainingHandlers(u, as) {
-		handlers = append(handlers, &TextHandler{h})
-	}
+	handlers = append(handlers, RemainingHandlers(u, as)...)
 	handlers = append(handlers, PictureHandlers()...)
 	handlers = append(handlers, CasinoHandlers(u)...)
 	handlers = append(handlers, CallbackHandlers(u)...)

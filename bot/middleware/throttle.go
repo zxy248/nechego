@@ -7,6 +7,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+// TODO: try to replace mutex with channel
 type Throttle struct {
 	Duration    time.Duration
 	lastMessage map[int64]time.Time

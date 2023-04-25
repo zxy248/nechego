@@ -11,7 +11,7 @@ type Basili struct {
 }
 
 func (h *Basili) Match(s string) bool {
-	return handlers.MatchRegexp("!(муся|марс|(кот|кошка) василия)", s)
+	return handlers.MatchRegexp("^!(муся|марс|(кот|кошка) василия)", s)
 }
 
 func (h *Basili) Handle(c tele.Context) error {

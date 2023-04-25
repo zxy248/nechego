@@ -68,7 +68,7 @@ func PictureHandlers() []ContextService {
 		&pictures.Car{},
 		&pictures.Soy{},
 		&pictures.Danbooru{API: d}, // TODO: add Settings, singular design
-		&pictures.Fap{API: d},
+		&pictures.Fap{API: d},      // TODO: same
 		&pictures.Masyunya{},
 		&pictures.Poppy{},
 		&pictures.Sima{},
@@ -91,8 +91,10 @@ func CasinoHandlers(u *game.Universe) []ContextService {
 	return r
 }
 
-func RemainingHandlers(u *game.Universe, as *avatar.Storage) []StringService {
-	return []StringService{
+func RemainingHandlers(u *game.Universe, as *avatar.Storage) []ContextService {
+	// TODO: group handlers
+	r := []ContextService{}
+	for _, s := range []StringService{
 		&handlers.Help{},
 
 		// Daily.
@@ -179,7 +181,10 @@ func RemainingHandlers(u *game.Universe, as *avatar.Storage) []StringService {
 		&handlers.TurnOn{Universe: u},
 		&handlers.TurnOff{Universe: u},
 		&handlers.Top{Universe: u},
+	} {
+		r = append(r, &TextHandler{s})
 	}
+	return r
 }
 
 func CallbackHandlers(u *game.Universe) []ContextService {

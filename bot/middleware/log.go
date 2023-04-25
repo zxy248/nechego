@@ -12,6 +12,7 @@ type LogMessage struct{}
 
 func (m *LogMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
+		// TODO: force log if too long
 		start := time.Now()
 		err := next(c)
 		log.Printf("%s %s: %s: %s\n",
