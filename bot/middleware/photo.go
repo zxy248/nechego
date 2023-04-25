@@ -9,11 +9,12 @@ import (
 
 type RandomPhoto struct {
 	Avatars *avatar.Storage
+	Prob    float64
 }
 
 func (m *RandomPhoto) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		if rand.Float64() < 1./200 {
+		if rand.Float64() < m.Prob {
 			var r []*tele.Photo
 			p, err := c.Bot().ProfilePhotosOf(c.Sender())
 			if err != nil {

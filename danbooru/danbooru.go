@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const URL = "https://danbooru.donmai.us/posts/random.json"
+
 // MaxSize is a maximum size of a photo allowed by Telegram.
 const MaxSize = 5 << 20 // 5 MB
 
@@ -46,14 +48,14 @@ type Danbooru struct {
 
 // New starts workers filling buffer channels and returns Danbooru.
 // Get function will return error after the specified timeout.
-func New(url string, timeout time.Duration) *Danbooru {
+func New(url string, timeout time.Duration, cache int) *Danbooru {
 	d := &Danbooru{
 		URL:     url,
 		Timeout: timeout,
 	}
 	errs := make(chan error, 1)
 	for i := 0; i < typN; i++ {
-		ch := make(chan *Pic, 32)
+		ch := make(chan *Pic, cache)
 		d.pipeline(ch, errs, filters[i])
 		d.channels[i] = ch
 	}

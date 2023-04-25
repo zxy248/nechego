@@ -20,7 +20,7 @@ type Handler interface {
 	Self() HandlerID
 }
 
-//go:generate handlerplate basic.go calc.go daily.go game.go phone.go farm.go auction.go actions.go casino.go
+//go:generate handlerplate basic.go calc.go daily.go game.go phone.go farm.go auction.go actions.go
 //go:generate stringer -type=HandlerID -output=handlers_string.go
 
 // re compiles s as a case-insensitive regular expression.

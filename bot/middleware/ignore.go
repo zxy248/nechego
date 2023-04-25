@@ -35,21 +35,3 @@ func (m *IgnoreForwarded) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 		return next(c)
 	}
 }
-
-type IgnoreSpam struct {
-	Universe *game.Universe
-}
-
-func (m *IgnoreSpam) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
-	return func(c tele.Context) error {
-		world, user := teleutil.Lock(c, m.Universe)
-		lastMessage := user.LastMessage
-		world.Unlock()
-
-		// Don't ignore callbacks.
-		if c.Callback() == nil && time.Since(lastMessage) < time.Second {
-			return nil
-		}
-		return next(c)
-	}
-}
