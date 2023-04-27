@@ -31,6 +31,21 @@ func Seq(p ...G) F {
 	}
 }
 
+// Parse returns a function that parses a sequence of tokens.
+func Parse(p ...G) F {
+	return func(s string) bool {
+		seq := strings.Fields(s)
+		for _, q := range p {
+			rest, ok := q(seq)
+			if !ok {
+				return false
+			}
+			seq = rest
+		}
+		return true
+	}
+}
+
 // Or returns a function that parses its argument with the provided
 // parsers, returning true on the first match.
 func Or(p ...G) G {
@@ -47,6 +62,9 @@ func Or(p ...G) G {
 // Match returns a function that matches one of the given strings.
 func Match(s ...string) G {
 	return func(seq []string) ([]string, bool) {
+		if len(seq) == 0 {
+			return nil, false
+		}
 		for _, t := range s {
 			if strings.EqualFold(t, car(seq)) {
 				return cdr(seq), true
@@ -59,6 +77,9 @@ func Match(s ...string) G {
 // Prefix returns a function that matches one of the given prefixes.
 func Prefix(p ...string) G {
 	return func(seq []string) ([]string, bool) {
+		if len(seq) == 0 {
+			return nil, false
+		}
 		a := car(seq)
 		for _, q := range p {
 			if len(a) >= len(q) && strings.EqualFold(q, a[:len(q)]) {
@@ -73,6 +94,9 @@ func Prefix(p ...string) G {
 // result.
 func Int(f func(int)) G {
 	return func(seq []string) ([]string, bool) {
+		if len(seq) == 0 {
+			return nil, false
+		}
 		n, err := strconv.Atoi(car(seq))
 		if err != nil {
 			return seq, false
@@ -86,8 +110,11 @@ func Int(f func(int)) G {
 // single whitespace and calls f with the result.
 func Str(f func(string)) G {
 	return func(seq []string) ([]string, bool) {
+		if len(seq) == 0 {
+			return nil, false
+		}
 		f(strings.Join(seq, " "))
-		return []string{}, true
+		return nil, true
 	}
 }
 
@@ -95,6 +122,9 @@ func Str(f func(string)) G {
 // `n-m` where n and m are integers and calls f with the result.
 func Interval(f func(min, max int)) G {
 	return func(seq []string) ([]string, bool) {
+		if len(seq) == 0 {
+			return nil, false
+		}
 		before, after, found := strings.Cut(car(seq), "-")
 		if !found {
 			return seq, false
@@ -126,7 +156,7 @@ func All(p G) G {
 			}
 			seq = rest
 		}
-		return []string{}, true
+		return nil, true
 	}
 }
 
@@ -135,6 +165,18 @@ func Assign[T any](x *T) func(T) {
 	return func(y T) {
 		*x = y
 	}
+}
+
+// Any returns a function that matches anything.
+func Any() G {
+	return func(seq []string) ([]string, bool) {
+		return seq, true
+	}
+}
+
+// Maybe returns a function that optionally matches with p.
+func Maybe(p G) G {
+	return Or(p, Any())
 }
 
 // car returns the head of the list.
