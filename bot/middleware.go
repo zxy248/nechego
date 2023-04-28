@@ -32,7 +32,7 @@ func globalMiddleware(u *game.Universe, as *avatar.Storage) []Wrapper {
 		&middleware.IgnoreForwarded{},
 		&middleware.IgnoreBanned{Universe: u},
 		&middleware.LogMessage{},
-		// TODO: delete after timeout
+		&middleware.AutoDelete{After: 5 * time.Minute},
 		&middleware.Throttle{Duration: 800 * time.Millisecond},
 		&middleware.IncrementCounters{Universe: u},
 		&middleware.RandomPhoto{Avatars: as, Prob: 1. / 200},
