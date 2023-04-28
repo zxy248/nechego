@@ -31,7 +31,7 @@ func globalMiddleware(u *game.Universe, as *avatar.Storage) []Wrapper {
 		&middleware.RequireSupergroup{},
 		&middleware.IgnoreForwarded{},
 		&middleware.IgnoreBanned{Universe: u},
-		&middleware.LogMessage{},
+		&middleware.LogMessage{Wait: 5 * time.Second},
 		&middleware.AutoDelete{After: 5 * time.Minute},
 		&middleware.Throttle{Duration: 800 * time.Millisecond},
 		&middleware.IncrementCounters{Universe: u},
