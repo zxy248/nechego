@@ -41,8 +41,12 @@ func textCommand(prefix parse.G, s string) (text string, ok bool) {
 	return
 }
 
+func Regexp(pattern string) *regexp.Regexp {
+	return regexp.MustCompile("(?i)" + pattern)
+}
+
 func MatchRegexp(pattern, s string) bool {
-	return regexp.MustCompile("(?i)" + pattern).MatchString(s)
+	return Regexp(pattern).MatchString(s)
 }
 
 func MatchPrefix(prefix, s string) bool {

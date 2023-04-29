@@ -44,8 +44,12 @@ func (h *Infa) Handle(c tele.Context) error {
 }
 
 func infaCommand(s string) (text string, ok bool) {
-	ok = parse.Parse(parse.Prefix("!инф"), parse.Maybe(parse.Str(parse.Assign(&text))))(s)
-	return
+	re := Regexp("^!инфа ?(.*)")
+	m := re.FindStringSubmatch(s)
+	if m == nil {
+		return "", false
+	}
+	return m[1], true
 }
 
 func infa(s string, p int) string {
