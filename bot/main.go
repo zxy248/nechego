@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"nechego/avatar"
+	"nechego/danbooru"
 	"nechego/game"
 	"nechego/handlers"
 	"os"
@@ -29,47 +30,35 @@ var (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	pref := tele.Settings{
-		Token:  botToken,
-		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
-	}
-	bot, err := tele.NewBot(pref)
-	if err != nil {
-		log.Fatal(err)
-	}
-	as := &avatar.Storage{
-		Dir:       avatarDirectory,
-		MaxWidth:  1500,
-		MaxHeight: 1500,
-		Bot:       bot,
-	}
-	u := game.NewUniverse(universeDirectory, worldInitializer(bot))
-
-	// Register handlers.
-	handlers := []ContextService{}
-	handlers = append(handlers, RemainingHandlers(u, as)...)
-	handlers = append(handlers, PictureHandlers()...)
-	handlers = append(handlers, CasinoHandlers(u)...)
-	handlers = append(handlers, CallbackHandlers(u)...)
-
-	// Apply middleware.
-	mw := globalMiddleware(u, as)
-	for i, h := range handlers {
-		handlers[i] = Wrap(h, mw...)
-	}
-
-	// Start the bot.
-	rt := &Router{handlers}
-	endpoints := []string{
+	d := dependencies()
+	dispatch(d.teleBot, d.router().dispatch,
 		tele.OnText,
 		tele.OnPhoto,
 		tele.OnCallback,
-		tele.OnDice,
+		tele.OnDice)
+	serve(d.teleBot, d.gameUniverse)
+}
+
+func dependencies() *deps {
+	bot, err := tele.NewBot(tele.Settings{
+		Token:  botToken,
+		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
-	for _, e := range endpoints {
-		bot.Handle(e, rt.Dispatch)
+
+	return &deps{
+		teleBot:      bot,
+		gameUniverse: game.NewUniverse(universeDirectory, worldInitializer(bot)),
+		avatarStorage: &avatar.Storage{
+			Dir:       avatarDirectory,
+			MaxWidth:  1500,
+			MaxHeight: 1500,
+			Bot:       bot,
+		},
+		danbooru: danbooru.New(danbooru.URL, 5*time.Second, 3),
 	}
-	serve(bot, u)
 }
 
 func serve(bot *tele.Bot, u *game.Universe) {
@@ -89,7 +78,7 @@ func worldInitializer(bot *tele.Bot) func(*game.World) {
 
 // notifyStop gracefully stops the bot after receiving an interrupt
 // signal and sends an empty structure on the done channel.
-func notifyStop(bot *tele.Bot, universe *game.Universe) (done chan struct{}) {
+func notifyStop(bot *tele.Bot, u *game.Universe) (done chan struct{}) {
 	done = make(chan struct{})
 	go func() {
 		interrupt := make(chan os.Signal, 1)
@@ -100,7 +89,7 @@ func notifyStop(bot *tele.Bot, universe *game.Universe) (done chan struct{}) {
 		bot.Stop()
 
 		log.Println("Saving the universe...")
-		if err := universe.SaveAll(); err != nil {
+		if err := u.SaveAll(); err != nil {
 			log.Fatal(err)
 		}
 		done <- struct{}{}
