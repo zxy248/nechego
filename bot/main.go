@@ -11,6 +11,7 @@ import (
 	"nechego/game"
 	"nechego/handlers"
 	"nechego/handlers/casino"
+	"nechego/handlers/fun"
 	"nechego/handlers/pictures"
 	"os"
 	"path/filepath"
@@ -288,9 +289,10 @@ func (a *app) funServices() []server.Service {
 		&handlers.Name{},
 		&handlers.Who{Universe: a.universe},
 		&handlers.List{Universe: a.universe},
+		&handlers.Top{Universe: a.universe},
+		&fun.Time{},
 		&handlers.TurnOn{Universe: a.universe},
 		&handlers.TurnOff{Universe: a.universe},
-		&handlers.Top{Universe: a.universe},
 	} {
 		r = append(r, &adapter.Text{s})
 	}

@@ -8,8 +8,8 @@ import (
 )
 
 type TextService interface {
-	Handle(tele.Context) error
 	Match(string) bool
+	Handle(tele.Context) error
 }
 
 type Text struct {
