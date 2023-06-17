@@ -19,32 +19,16 @@ func (c Clock) String() string {
 	return fmt.Sprintf("%d мин", c.Minutes)
 }
 
-func Now() Clock {
-	return FromTime(time.Now())
-}
-
 func FromTime(t time.Time) Clock {
 	return Clock{t.Hour(), t.Minute()}
 }
 
-var clockRegexp = regexp.MustCompile(`(\d?\d):(\d\d)`)
-
 func FromString(s string) (Clock, error) {
-	match := clockRegexp.FindStringSubmatch(s)
-	if match == nil {
-		return Clock{}, fmt.Errorf("clock: cannot parse: %s", s)
-	}
-	h, m := match[1], match[2]
-	hours, err := strconv.Atoi(h)
+	c, err := parseClock(s)
 	if err != nil {
-		return Clock{}, fmt.Errorf("clock: cannot parse hours: %s", h)
+		return c, err
 	}
-	minutes, err := strconv.Atoi(m)
-	if err != nil {
-		return Clock{}, fmt.Errorf("clock: cannot parse minutes: %s", m)
-	}
-	c := Clock{hours, minutes}
-	return c, c.Valid()
+	return c, c.validate()
 }
 
 func (c1 Clock) Sub(c2 Clock) Clock {
@@ -58,12 +42,47 @@ func (c1 Clock) Sub(c2 Clock) Clock {
 	return Clock{c1.Hours - c2.Hours, c1.Minutes - c2.Minutes}
 }
 
-func (c Clock) Valid() error {
-	if c.Hours > 23 {
+func (c Clock) validate() error {
+	if c.Hours < 0 || c.Hours > 23 {
 		return fmt.Errorf("clock: invalid hours: %d", c.Hours)
 	}
-	if c.Minutes > 59 {
+	if c.Minutes < 0 || c.Minutes > 59 {
 		return fmt.Errorf("clock: invalid minutes: %d", c.Minutes)
 	}
 	return nil
+}
+
+type matchedClock struct {
+	hours   string
+	minutes string
+}
+
+var clockRe = regexp.MustCompile(`(\d?\d):(\d\d)`)
+
+func matchClock(s string) (matchedClock, error) {
+	match := clockRe.FindStringSubmatch(s)
+	if match == nil {
+		return matchedClock{}, fmt.Errorf("clock: cannot match: %s", s)
+	}
+	return matchedClock{hours: match[1], minutes: match[2]}, nil
+}
+
+func buildClock(c matchedClock) (Clock, error) {
+	h, err := strconv.Atoi(c.hours)
+	if err != nil {
+		return Clock{}, fmt.Errorf("clock: non-number hours: %s", c.hours)
+	}
+	m, err := strconv.Atoi(c.minutes)
+	if err != nil {
+		return Clock{}, fmt.Errorf("clock: non-number minutes: %s", c.minutes)
+	}
+	return Clock{h, m}, nil
+}
+
+func parseClock(s string) (Clock, error) {
+	c, err := matchClock(s)
+	if err != nil {
+		return Clock{}, err
+	}
+	return buildClock(c)
 }

@@ -12,17 +12,13 @@ type TextService interface {
 	Handle(tele.Context) error
 }
 
-type Text struct {
-	TextService
-}
+type Text struct{ TextService }
 
 func (s *Text) Match(c tele.Context) bool {
 	return s.TextService.Match(c.Text())
 }
 
-type Callback struct {
-	TextService
-}
+type Callback struct{ TextService }
 
 func (s *Callback) Match(c tele.Context) bool {
 	cb := c.Callback()
@@ -33,12 +29,12 @@ func (s *Callback) Match(c tele.Context) bool {
 	return s.TextService.Match(cb.Data)
 }
 
-type Closure struct {
+type Wrapped struct {
 	server.Service
 	handle func(tele.Context) error
 }
 
-func (s *Closure) Handle(c tele.Context) error {
+func (s *Wrapped) Handle(c tele.Context) error {
 	return s.handle(c)
 }
 
@@ -46,10 +42,6 @@ type Wrapper interface {
 	Wrap(tele.HandlerFunc) tele.HandlerFunc
 }
 
-func Wrap(s server.Service, w ...Wrapper) *Closure {
-	h := &Closure{s, s.Handle}
-	for i := len(w) - 1; i >= 0; i-- {
-		h.handle = w[i].Wrap(h.handle)
-	}
-	return h
+func Wrap(s server.Service, w Wrapper) *Wrapped {
+	return &Wrapped{s, w.Wrap(s.Handle)}
 }

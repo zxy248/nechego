@@ -37,7 +37,7 @@ func main() {
 	}
 	srv := &server.Server{
 		Bot:      app.bot,
-		Handlers: app.services(),
+		Handlers: app.services(), // TODO: handlers or services?
 	}
 	srv.Run()
 	if err := app.shutdown(); err != nil {
@@ -78,7 +78,12 @@ func setup() (*app, error) {
 		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
 			w.History.Announce(handlers.RecordAnnouncer(bot, tele.ChatID(w.TGID)))
 		}),
-		avatars:  &avatar.Storage{bot, avatarDirectory, 1500, 1500},
+		avatars: &avatar.Storage{
+			Bot:       bot,
+			Dir:       avatarDirectory,
+			MaxWidth:  1500,
+			MaxHeight: 1500,
+		},
 		danbooru: danbooru.New(danbooru.URL, 5*time.Second, 3),
 	}, nil
 }
@@ -88,8 +93,9 @@ func (a *app) shutdown() error {
 }
 
 func (a *app) services() []server.Service {
-	spam := []adapter.Wrapper{&middleware.AutoDelete{After: 5 * time.Minute}}
 	global := a.globalMiddleware()
+	spam := []adapter.Wrapper{&middleware.AutoDelete{After: 5 * time.Minute}}
+
 	groups := []struct {
 		services   []server.Service
 		middleware []adapter.Wrapper
@@ -109,12 +115,12 @@ func (a *app) services() []server.Service {
 		{a.casinoServices(), spam},
 		{a.callbackServices(), nil},
 	}
-	handlers := []server.Service{}
+
+	var handlers []server.Service
 	for _, g := range groups {
 		for _, s := range g.services {
-			s = adapter.Wrap(s, g.middleware...)
-			s = adapter.Wrap(s, global...)
-			handlers = append(handlers, s)
+			h := wrap(s, concat(global, g.middleware)...)
+			handlers = append(handlers, h)
 		}
 	}
 	return handlers
@@ -134,217 +140,183 @@ func (a *app) globalMiddleware() []adapter.Wrapper {
 }
 
 func (a *app) informationServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Help{},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Help{}),
 	}
-	return r
 }
 
 func (a *app) dailyServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.DailyEblan{Universe: a.universe},
-		&handlers.DailyAdmin{Universe: a.universe},
-		&handlers.DailyPair{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.DailyEblan{Universe: a.universe}),
+		text(&handlers.DailyAdmin{Universe: a.universe}),
+		text(&handlers.DailyPair{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) economyServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Inventory{Universe: a.universe},
-		&handlers.Funds{Universe: a.universe},
-		&handlers.Sort{Universe: a.universe},
-		&handlers.Drop{Universe: a.universe},
-		&handlers.Pick{Universe: a.universe},
-		&handlers.Floor{Universe: a.universe},
-		&handlers.Stack{Universe: a.universe},
-		&handlers.Split{Universe: a.universe},
-		&handlers.Cashout{Universe: a.universe},
-		&handlers.Capital{Universe: a.universe},
-		&handlers.Balance{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Inventory{Universe: a.universe}),
+		text(&handlers.Funds{Universe: a.universe}),
+		text(&handlers.Sort{Universe: a.universe}),
+		text(&handlers.Drop{Universe: a.universe}),
+		text(&handlers.Pick{Universe: a.universe}),
+		text(&handlers.Floor{Universe: a.universe}),
+		text(&handlers.Stack{Universe: a.universe}),
+		text(&handlers.Split{Universe: a.universe}),
+		text(&handlers.Cashout{Universe: a.universe}),
+		text(&handlers.Capital{Universe: a.universe}),
+		text(&handlers.Balance{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) farmServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Farm{Universe: a.universe},
-		&handlers.Plant{Universe: a.universe},
-		&handlers.Harvest{Universe: a.universe},
-		&handlers.PriceList{Universe: a.universe},
-		&handlers.UpgradeFarm{Universe: a.universe},
-		&handlers.NameFarm{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Farm{Universe: a.universe}),
+		text(&handlers.Plant{Universe: a.universe}),
+		text(&handlers.Harvest{Universe: a.universe}),
+		text(&handlers.PriceList{Universe: a.universe}),
+		text(&handlers.UpgradeFarm{Universe: a.universe}),
+		text(&handlers.NameFarm{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) marketServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Market{Universe: a.universe},
-		&handlers.Buy{Universe: a.universe},
-		&handlers.Sell{Universe: a.universe},
-		&handlers.SellQuick{Universe: a.universe},
-		&handlers.NameMarket{Universe: a.universe},
-		&handlers.GetJob{Universe: a.universe},
-		&handlers.QuitJob{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Market{Universe: a.universe}),
+		text(&handlers.Buy{Universe: a.universe}),
+		text(&handlers.Sell{Universe: a.universe}),
+		text(&handlers.SellQuick{Universe: a.universe}),
+		text(&handlers.NameMarket{Universe: a.universe}),
+		text(&handlers.GetJob{Universe: a.universe}),
+		text(&handlers.QuitJob{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) auctionServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Auction{Universe: a.universe},
-		&handlers.AuctionSell{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Auction{Universe: a.universe}),
+		text(&handlers.AuctionSell{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) actionsServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Craft{Universe: a.universe},
-		&handlers.Fish{Universe: a.universe},
-		&handlers.DrawNet{Universe: a.universe},
-		&handlers.CastNet{Universe: a.universe},
-		&handlers.Net{Universe: a.universe},
-		&handlers.Catch{Universe: a.universe},
-		&handlers.Fight{Universe: a.universe},
-		&handlers.PvP{Universe: a.universe},
-		&handlers.Eat{Universe: a.universe},
-		&handlers.EatQuick{Universe: a.universe},
-		&handlers.FishingRecords{Universe: a.universe},
-		&handlers.Friends{Universe: a.universe},
-		&handlers.Transfer{Universe: a.universe},
-		&handlers.Use{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Craft{Universe: a.universe}),
+		text(&handlers.Fish{Universe: a.universe}),
+		text(&handlers.DrawNet{Universe: a.universe}),
+		text(&handlers.CastNet{Universe: a.universe}),
+		text(&handlers.Net{Universe: a.universe}),
+		text(&handlers.Catch{Universe: a.universe}),
+		text(&handlers.Fight{Universe: a.universe}),
+		text(&handlers.PvP{Universe: a.universe}),
+		text(&handlers.Eat{Universe: a.universe}),
+		text(&handlers.EatQuick{Universe: a.universe}),
+		text(&handlers.FishingRecords{Universe: a.universe}),
+		text(&handlers.Friends{Universe: a.universe}),
+		text(&handlers.Transfer{Universe: a.universe}),
+		text(&handlers.Use{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) topServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.TopStrong{Universe: a.universe},
-		&handlers.TopRating{Universe: a.universe},
-		&handlers.TopRich{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.TopStrong{Universe: a.universe}),
+		text(&handlers.TopRating{Universe: a.universe}),
+		text(&handlers.TopRich{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) profileServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Status{Universe: a.universe, MaxLength: 120},
-		&handlers.Profile{Universe: a.universe, Avatars: a.avatars},
-		&handlers.Avatar{Universe: a.universe, Avatars: a.avatars},
-		&handlers.Energy{Universe: a.universe},
-		&handlers.NamePet{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Status{Universe: a.universe, MaxLength: 120}),
+		text(&handlers.Profile{Universe: a.universe, Avatars: a.avatars}),
+		text(&handlers.Avatar{Universe: a.universe, Avatars: a.avatars}),
+		text(&handlers.Energy{Universe: a.universe}),
+		text(&handlers.NamePet{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) phoneServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.SendSMS{Universe: a.universe},
-		&handlers.ReceiveSMS{Universe: a.universe},
-		&handlers.Contacts{Universe: a.universe},
-		&handlers.Spam{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.SendSMS{Universe: a.universe}),
+		text(&handlers.ReceiveSMS{Universe: a.universe}),
+		text(&handlers.Contacts{Universe: a.universe}),
+		text(&handlers.Spam{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) funServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.Game{},
-		&handlers.Infa{},
-		&handlers.Weather{},
-		&handlers.Calculator{},
-		&handlers.Name{},
-		&handlers.Who{Universe: a.universe},
-		&handlers.List{Universe: a.universe},
-		&handlers.Top{Universe: a.universe},
-		&fun.Time{},
-		&handlers.TurnOn{Universe: a.universe},
-		&handlers.TurnOff{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&handlers.Game{}),
+		text(&handlers.Infa{}),
+		text(&handlers.Weather{}),
+		text(&handlers.Calculator{}),
+		text(&handlers.Name{}),
+		text(&handlers.Who{Universe: a.universe}),
+		text(&handlers.List{Universe: a.universe}),
+		text(&handlers.Top{Universe: a.universe}),
+		text(&fun.Clock{}),
+		text(&handlers.TurnOn{Universe: a.universe}),
+		text(&handlers.TurnOff{Universe: a.universe}),
 	}
-	return r
 }
 
 func (a *app) pictureServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&pictures.Pic{Path: assetPath("pic")},
-		&pictures.Basili{Path: assetPath("basili")},
-		&pictures.Casper{Path: assetPath("casper")},
-		&pictures.Zeus{Path: assetPath("zeus")},
-		&pictures.Mouse{Path: assetPath("mouse.mp4")},
-		&pictures.Tiktok{Path: assetPath("tiktok")},
-		&pictures.Hello{Path: assetPath("hello.json")}, // TODO: is cache initialized once?
-		&pictures.Anime{},
-		&pictures.Furry{},
-		&pictures.Flag{},
-		&pictures.Car{},
-		&pictures.Soy{},
-		&pictures.Danbooru{API: a.danbooru}, // TODO: add Settings, singular design
-		&pictures.Fap{API: a.danbooru},      // TODO: same
-		&pictures.Masyunya{},
-		&pictures.Poppy{},
-		&pictures.Sima{},
-	} {
-		r = append(r, &adapter.Text{s})
+	return []server.Service{
+		text(&pictures.Pic{Path: assetPath("pic")}),
+		text(&pictures.Basili{Path: assetPath("basili")}),
+		text(&pictures.Casper{Path: assetPath("casper")}),
+		text(&pictures.Zeus{Path: assetPath("zeus")}),
+		text(&pictures.Mouse{Path: assetPath("mouse.mp4")}),
+		text(&pictures.Tiktok{Path: assetPath("tiktok")}),
+		text(&pictures.Hello{Path: assetPath("hello.json")}), // TODO: is cache initialized once?
+		text(&pictures.Anime{}),
+		text(&pictures.Furry{}),
+		text(&pictures.Flag{}),
+		text(&pictures.Car{}),
+		text(&pictures.Soy{}),
+		text(&pictures.Danbooru{API: a.danbooru}), // TODO: add Settings, singular design
+		text(&pictures.Fap{API: a.danbooru}),      // TODO: same
+		text(&pictures.Masyunya{}),
+		text(&pictures.Poppy{}),
+		text(&pictures.Sima{}),
 	}
-	return r
 }
 
 func (a *app) casinoServices() []server.Service {
-	r := []server.Service{
+	return []server.Service{
 		&casino.Roll{Universe: a.universe},
+		text(&casino.Dice{Universe: a.universe}),
+		text(&casino.Slot{Universe: a.universe, MinBet: 100}),
 	}
-	for _, s := range []adapter.TextService{
-		&casino.Dice{Universe: a.universe},
-		&casino.Slot{Universe: a.universe, MinBet: 100},
-	} {
-		r = append(r, &adapter.Text{s})
-	}
-	return r
 }
 
 func (a *app) callbackServices() []server.Service {
-	r := []server.Service{}
-	for _, s := range []adapter.TextService{
-		&handlers.HarvestInline{Universe: a.universe},
-		&handlers.AuctionBuy{Universe: a.universe},
-	} {
-		r = append(r, &adapter.Callback{s})
+	return []server.Service{
+		callback(&handlers.HarvestInline{Universe: a.universe}),
+		callback(&handlers.AuctionBuy{Universe: a.universe}),
+	}
+}
+
+func text(s adapter.TextService) server.Service {
+	return &adapter.Text{TextService: s}
+}
+
+func callback(s adapter.TextService) server.Service {
+	return &adapter.Callback{TextService: s}
+}
+
+func wrap(s server.Service, w ...adapter.Wrapper) server.Service {
+	for i := len(w) - 1; i >= 0; i-- {
+		s = adapter.Wrap(s, w[i])
+	}
+	return s
+}
+
+func concat[T any](slices ...[]T) []T {
+	var r []T
+	for _, s := range slices {
+		r = append(r, s...)
 	}
 	return r
 }

@@ -3,25 +3,25 @@ package fun
 import (
 	"nechego/handlers/fun/clock"
 	"nechego/handlers/parse"
+	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-type Time struct{}
+type Clock struct{}
 
-func (*Time) Match(s string) bool {
-	_, ok := timeCommand(s)
+func (*Clock) Match(s string) bool {
+	_, ok := parseClockCommand(s)
 	return ok
 }
 
-func (*Time) Handle(c tele.Context) error {
-	c1, _ := timeCommand(c.Message().Text)
-	c2 := clock.Now()
-	d := c1.Sub(c2)
-	return c.Send(d.String())
+func (*Clock) Handle(c tele.Context) error {
+	given, _ := parseClockCommand(c.Message().Text)
+	now := clock.FromTime(time.Now())
+	return c.Send(given.Sub(now).String())
 }
 
-func timeCommand(s string) (c clock.Clock, ok bool) {
+func parseClockCommand(s string) (c clock.Clock, ok bool) {
 	var x string
 	if !parse.Seq(
 		parse.Match("!время"),
