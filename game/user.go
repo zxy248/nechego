@@ -5,6 +5,7 @@ import (
 	"nechego/farm"
 	"nechego/fishing"
 	"nechego/game/pvp"
+	"nechego/game/reputation"
 	"nechego/item"
 	"nechego/token"
 	"time"
@@ -29,6 +30,7 @@ type User struct {
 	Retired     time.Time    // When the job shift should finish.
 	Friends     Friends      // The list of friends' TUIDs.
 	SlotBet     int          // The bet for slots.
+	Reputation  reputation.Reputation
 }
 
 func NewUser(tuid int64) *User {

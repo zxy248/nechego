@@ -8,8 +8,8 @@ import (
 )
 
 type TextService interface {
-	Match(string) bool
-	Handle(tele.Context) error
+	Match(s string) bool
+	Handle(c tele.Context) error
 }
 
 type Text struct{ TextService }
@@ -39,7 +39,7 @@ func (s *Wrapped) Handle(c tele.Context) error {
 }
 
 type Wrapper interface {
-	Wrap(tele.HandlerFunc) tele.HandlerFunc
+	Wrap(next tele.HandlerFunc) tele.HandlerFunc
 }
 
 func Wrap(s server.Service, w Wrapper) *Wrapped {

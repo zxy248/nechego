@@ -11,17 +11,17 @@ import (
 type Clock struct{}
 
 func (*Clock) Match(s string) bool {
-	_, ok := parseClockCommand(s)
+	_, ok := parseClock(s)
 	return ok
 }
 
 func (*Clock) Handle(c tele.Context) error {
-	given, _ := parseClockCommand(c.Message().Text)
+	given, _ := parseClock(c.Message().Text)
 	now := clock.FromTime(time.Now())
 	return c.Send(given.Sub(now).String())
 }
 
-func parseClockCommand(s string) (c clock.Clock, ok bool) {
+func parseClock(s string) (c clock.Clock, ok bool) {
 	var x string
 	if !parse.Seq(
 		parse.Match("!время"),

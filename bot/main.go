@@ -258,6 +258,8 @@ func (a *app) funServices() []server.Service {
 		text(&fun.Clock{}),
 		text(&handlers.TurnOn{Universe: a.universe}),
 		text(&handlers.TurnOff{Universe: a.universe}),
+		text(&fun.Reputation{Universe: a.universe}),
+		text(&fun.UpdateReputation{Universe: a.universe}),
 	}
 }
 

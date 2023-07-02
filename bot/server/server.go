@@ -9,8 +9,8 @@ import (
 )
 
 type Service interface {
-	Match(tele.Context) bool
-	Handle(tele.Context) error
+	Match(c tele.Context) bool
+	Handle(c tele.Context) error
 }
 
 type Server struct {
