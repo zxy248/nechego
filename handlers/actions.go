@@ -14,7 +14,7 @@ type Friends struct {
 	Universe *game.Universe
 }
 
-var friendsRe = re("^!(друзья|друж)")
+var friendsRe = Regexp("^!(друзья|друж)")
 
 func (h *Friends) Match(s string) bool {
 	return friendsRe.MatchString(s)

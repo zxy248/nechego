@@ -25,6 +25,7 @@ type World struct {
 	Messages int
 	SMS      phone.Database
 	History  *fishing.History
+	Inactive   bool
 
 	sync.Mutex `json:"-"`
 }

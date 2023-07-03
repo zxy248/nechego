@@ -11,7 +11,7 @@ import (
 
 type Calculator struct{}
 
-var calculatorRe = re("^!(калькул|вычисл)[а-я]* (.*)")
+var calculatorRe = Regexp("^!(калькул|вычисл)[а-я]* (.*)")
 
 func (h *Calculator) Match(s string) bool {
 	return calculatorRe.MatchString(s)

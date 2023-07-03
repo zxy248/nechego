@@ -18,7 +18,7 @@ type Farm struct {
 	Universe *game.Universe
 }
 
-var farmRe = re("^!(ферма|огород|грядка)")
+var farmRe = Regexp("^!(ферма|огород|грядка)")
 
 func (h *Farm) Match(s string) bool {
 	return farmRe.MatchString(s)
@@ -72,7 +72,7 @@ type Plant struct {
 	Universe *game.Universe
 }
 
-var plantRe = re(`^!посадить (.*)`)
+var plantRe = Regexp(`^!посадить (.*)`)
 
 func (h *Plant) Match(s string) bool {
 	return plantRe.MatchString(s)
@@ -103,7 +103,7 @@ type Harvest struct {
 	Universe *game.Universe
 }
 
-var harvestRe = re("^!(урожай|собрать)")
+var harvestRe = Regexp("^!(урожай|собрать)")
 
 func (h *Harvest) Match(s string) bool {
 	return harvestRe.MatchString(s)
@@ -148,7 +148,7 @@ type UpgradeFarm struct {
 	Universe *game.Universe
 }
 
-var upgradeFarmRe = re("^!апгрейд")
+var upgradeFarmRe = Regexp("^!апгрейд")
 
 func (h *UpgradeFarm) Match(s string) bool {
 	return upgradeFarmRe.MatchString(s)

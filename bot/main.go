@@ -130,10 +130,16 @@ func (a *app) globalMiddleware() []adapter.Wrapper {
 	return []adapter.Wrapper{
 		&middleware.Recover{},
 		&middleware.RequireSupergroup{},
-		&middleware.IgnoreForwarded{},
-		&middleware.IgnoreBanned{Universe: a.universe},
+		&middleware.IgnoreMessageForwarded{},
+		&middleware.IgnoreUserBanned{Universe: a.universe},
 		&middleware.LogMessage{Wait: 5 * time.Second},
 		&middleware.Throttle{Duration: 800 * time.Millisecond},
+		&middleware.IgnoreWorldInactive{
+			Universe: a.universe,
+			Immune: func(c tele.Context) bool {
+				return fun.MatchTurnOn(c.Message().Text)
+			},
+		},
 		&middleware.IncrementCounters{Universe: a.universe},
 		&middleware.RandomPhoto{Avatars: a.avatars, Prob: 1. / 200},
 	}
@@ -256,8 +262,8 @@ func (a *app) funServices() []server.Service {
 		text(&handlers.List{Universe: a.universe}),
 		text(&handlers.Top{Universe: a.universe}),
 		text(&fun.Clock{}),
-		text(&handlers.TurnOn{Universe: a.universe}),
-		text(&handlers.TurnOff{Universe: a.universe}),
+		text(&fun.TurnOn{Universe: a.universe}),
+		text(&fun.TurnOff{Universe: a.universe}),
 		text(&fun.Reputation{Universe: a.universe}),
 		text(&fun.UpdateReputation{Universe: a.universe}),
 	}

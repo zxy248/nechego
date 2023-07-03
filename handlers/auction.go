@@ -16,7 +16,7 @@ type Auction struct {
 	Universe *game.Universe
 }
 
-var auctionRe = re("^!аук")
+var auctionRe = Regexp("^!аук")
 
 func (h *Auction) Match(s string) bool {
 	return auctionRe.MatchString(s)

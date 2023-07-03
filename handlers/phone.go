@@ -16,7 +16,7 @@ type ReceiveSMS struct {
 	Universe *game.Universe
 }
 
-var receiveSMSRe = re("^!смс")
+var receiveSMSRe = Regexp("^!смс")
 
 func (h *ReceiveSMS) Match(s string) bool {
 	return receiveSMSRe.MatchString(s)
@@ -39,7 +39,7 @@ type SendSMS struct {
 	Universe *game.Universe
 }
 
-var sendSMSRe = re("^!смс *(" + phone.NumberExpr + ") *(.+)")
+var sendSMSRe = Regexp("^!смс *(" + phone.NumberExpr + ") *(.+)")
 
 func (h *SendSMS) Match(s string) bool {
 	return sendSMSRe.MatchString(s)
@@ -71,7 +71,7 @@ type Contacts struct {
 	Universe *game.Universe
 }
 
-var contactsRe = re("^!контакты")
+var contactsRe = Regexp("^!контакты")
 
 func (h *Contacts) Match(s string) bool {
 	return contactsRe.MatchString(s)
@@ -98,7 +98,7 @@ type Spam struct {
 	Universe *game.Universe
 }
 
-var spamRe = re("^!(спам|рассылка) (.*)")
+var spamRe = Regexp("^!(спам|рассылка) (.*)")
 
 func (h *Spam) Match(s string) bool {
 	return spamRe.MatchString(s)

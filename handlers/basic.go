@@ -21,7 +21,7 @@ import (
 
 type Help struct{}
 
-var helpRe = re("^!(помощь|команды|документ)")
+var helpRe = Regexp("^!(помощь|команды|документ)")
 
 func (h *Help) Match(s string) bool {
 	return helpRe.MatchString(s)
@@ -99,7 +99,7 @@ type List struct {
 	Universe *game.Universe
 }
 
-var listRe = re("^!список ?(.*)")
+var listRe = Regexp("^!список ?(.*)")
 
 func (h *List) Match(s string) bool {
 	return listRe.MatchString(s)
@@ -147,7 +147,7 @@ func topCommand(s string) (text string, ok bool) {
 
 type Game struct{}
 
-var gameRe = re("^!игр")
+var gameRe = Regexp("^!игр")
 
 func (h *Game) Match(s string) bool {
 	return gameRe.MatchString(s)
@@ -212,7 +212,7 @@ type Avatar struct {
 	Avatars  *avatar.Storage
 }
 
-var avatarRe = re("^!ава")
+var avatarRe = Regexp("^!ава")
 
 func (h *Avatar) Match(s string) bool {
 	return avatarRe.MatchString(s)
@@ -248,42 +248,12 @@ func (h *Avatar) Handle(c tele.Context) error {
 	return c.Send("📸 Аватар установлен.")
 }
 
-type TurnOn struct {
-	Universe *game.Universe
-}
-
-var turnOnRe = re("^!(вкл|подкл|подруб)")
-
-func (h *TurnOn) Match(s string) bool {
-	return turnOnRe.MatchString(s)
-}
-
-func (h *TurnOn) Handle(c tele.Context) error {
-	emoji := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
-	return c.Send(emoji[rand.Intn(len(emoji))])
-}
-
-type TurnOff struct {
-	Universe *game.Universe
-}
-
-var turnOffRe = re("^!(выкл|откл)")
-
-func (h *TurnOff) Match(s string) bool {
-	return turnOffRe.MatchString(s)
-}
-
-func (h *TurnOff) Handle(c tele.Context) error {
-	emoji := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
-	return c.Send(emoji[rand.Intn(len(emoji))])
-}
-
 type Ban struct {
 	Universe   *game.Universe
 	DurationHr int // Ban duration in hours.
 }
 
-var banRe = re("^!бан")
+var banRe = Regexp("^!бан")
 
 func (h *Ban) Match(s string) bool {
 	return banRe.MatchString(s)
@@ -313,7 +283,7 @@ type Unban struct {
 	Universe *game.Universe
 }
 
-var unbanRe = re("^!разбан")
+var unbanRe = Regexp("^!разбан")
 
 func (h *Unban) Match(s string) bool {
 	return unbanRe.MatchString(s)
