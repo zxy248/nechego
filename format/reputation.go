@@ -5,7 +5,7 @@ import (
 	"nechego/game/reputation"
 )
 
-func Reputation(mention string, score int) string {
+func ReputationTotal(mention string, score int) string {
 	return fmt.Sprintf("Репутация %s: %d", mention, score)
 }
 
@@ -22,4 +22,24 @@ func reputationDirectory(d reputation.Dir) string {
 		return "понижена"
 	}
 	panic(fmt.Sprintf("unknown reputation directory: %v", d))
+}
+
+func interpolatedReputationEmoji(score, lowest, highest int) string {
+	diff := highest - lowest
+	if diff == 0 {
+		return "😐"
+	}
+	v := score - lowest
+	x := float64(v) / float64(diff)
+
+	emojis := [...]string{"👹", "👺", "👿", "😈", "🙂", "😌", "😊", "😇"}
+	return emojis[int(x*float64(len(emojis)-1))]
+}
+
+func Reputation(r reputation.Reputation) string {
+	return ReputationEmoji(r, "⭐️")
+}
+
+func ReputationEmoji(r reputation.Reputation, emoji string) string {
+	return fmt.Sprintf("<code>%s %d</code>", emoji, r.Total())
 }

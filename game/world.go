@@ -8,7 +8,6 @@ import (
 	"nechego/fishing"
 	"nechego/item"
 	"nechego/phone"
-	"nechego/token"
 	"os"
 	"path/filepath"
 	"sync"
@@ -25,7 +24,7 @@ type World struct {
 	Messages int
 	SMS      phone.Database
 	History  *fishing.History
-	Inactive   bool
+	Inactive bool
 
 	sync.Mutex `json:"-"`
 }
@@ -111,32 +110,28 @@ func (w *World) UserByID(tuid int64) *User {
 }
 
 func (w *World) Capital() (total, avg int) {
-	for _, w := range w.Users {
-		total += w.Balance().Total()
+	for _, u := range w.Users {
+		total += u.Balance().Total()
 	}
 	return total, total / len(w.Users)
 }
 
-// runMigrations makes the world consistent with new features.
-func (w *World) runMigrations() {
+func (w *World) MaxReputation() int {
+	x := 0
 	for _, u := range w.Users {
-		// Shrink the farm to its maximum size.
-		n := 0
-		if dr := u.Farm.Rows - MaxFarmRows; dr > 0 {
-			u.Farm.Rows = MaxFarmRows
-			n += dr
-		}
-		if dc := u.Farm.Columns - MaxFarmColumns; dc > 0 {
-			u.Farm.Columns = MaxFarmColumns
-			n += dc
-		}
-		if n > 0 {
-			u.Inventory.Add(item.New(&token.Legacy{Count: n}))
-		}
-
-		// Fill nil values.
-		if u.Friends == nil {
-			u.Friends = Friends{}
+		if t := u.Reputation.Total(); t > x {
+			x = t
 		}
 	}
+	return x
+}
+
+func (w *World) MinReputation() int {
+	x := 0
+	for _, u := range w.Users {
+		if t := u.Reputation.Total(); t < x {
+			x = t
+		}
+	}
+	return x
 }

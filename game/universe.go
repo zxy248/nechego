@@ -55,7 +55,6 @@ func (u *Universe) World(id int64) (*World, error) {
 		} else if err != nil {
 			return nil, err
 		}
-		w.runMigrations()
 		u.init(w)
 		w.startPeriodicTasks()
 		u.worlds[id] = w

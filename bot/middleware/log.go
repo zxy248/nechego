@@ -15,20 +15,28 @@ type LogMessage struct {
 
 func (m *LogMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
+		var prefix string
+		var err error
+
 		start := time.Now()
-		errc := make(chan error, 1)
-		go func() {
-			errc <- next(c)
-		}()
 		select {
-		case err := <-errc:
-			log.Printf("[%s] %s", time.Since(start), contextSummary(c))
-			return err
+		case err = <-runHandler(c, next):
+			prefix = time.Since(start).String()
 		case <-time.After(m.Wait):
-			log.Printf("[TOO LONG] %s", contextSummary(c))
-			return nil
+			prefix = "TOO LONG"
 		}
+
+		log.Printf("[%s] %s", prefix, contextSummary(c))
+		return err
 	}
+}
+
+func runHandler(c tele.Context, f tele.HandlerFunc) <-chan error {
+	errc := make(chan error, 1)
+	go func() {
+		errc <- f(c)
+	}()
+	return errc
 }
 
 func contextSummary(c tele.Context) string {

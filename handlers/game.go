@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"html"
 	"math/rand"
 	"nechego/avatar"
 	"nechego/fishing"
@@ -22,29 +21,6 @@ import (
 
 	tele "gopkg.in/telebot.v3"
 )
-
-type Name struct{}
-
-var nameRe = Regexp("^!имя (.*)")
-
-func (h *Name) Match(s string) bool {
-	return nameRe.MatchString(s)
-}
-
-func (h *Name) Handle(c tele.Context) error {
-	name := html.EscapeString(tu.Args(c, nameRe)[1])
-	const maxlen = 16
-	if utf8.RuneCountInString(name) > maxlen {
-		return c.Send(fmt.Sprintf("⚠️ Максимальная длина имени %d символов.", maxlen))
-	}
-	if err := tu.Promote(c, tu.Member(c, c.Sender())); err != nil {
-		return err
-	}
-	if err := c.Bot().SetAdminTitle(c.Chat(), c.Sender(), name); err != nil {
-		return c.Send("🚪 Пожалуйста, перезайдите в беседу.")
-	}
-	return c.Send(fmt.Sprintf("Имя <b>%s</b> установлено ✅", name), tele.ModeHTML)
-}
 
 type Inventory struct {
 	Universe *game.Universe

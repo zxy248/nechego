@@ -106,3 +106,34 @@ func Lock(c tele.Context, u *game.Universe) (*game.World, *game.User) {
 	user := world.UserByID(c.Sender().ID)
 	return world, user
 }
+
+func MessageForwarded(m *tele.Message) bool {
+	return m.OriginalUnixtime != 0
+}
+
+func ContextWorld(c tele.Context, u *game.Universe, f func(*game.World)) {
+	w, err := u.World(c.Chat().ID)
+	if err != nil {
+		panic(fmt.Sprintf("cannot access world: %v", err))
+	}
+
+	w.Lock()
+	f(w)
+	w.Unlock()
+}
+
+func CurrentUser(c tele.Context, w *game.World) *game.User {
+	return w.UserByID(c.Sender().ID)
+}
+
+func RepliedUser(c tele.Context, w *game.World) (u *game.User, ok bool) {
+	r, ok := Reply(c)
+	if !ok {
+		return nil, false
+	}
+	return w.UserByID(r.ID), true
+}
+
+func SuperGroup(c tele.Context) bool {
+	return c.Chat().Type == tele.ChatSuperGroup
+}

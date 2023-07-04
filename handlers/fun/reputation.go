@@ -24,10 +24,10 @@ func (h *Reputation) Handle(c tele.Context) error {
 }
 
 func (_ *Reputation) HandleWorld(c tele.Context, w *game.World) error {
-	u := hh.CurrentUser(c, w)
+	u := tu.CurrentUser(c, w)
 	mention := tu.Mention(c, u)
 	total := u.Reputation.Total()
-	return c.Send(format.Reputation(mention, total), tele.ModeHTML)
+	return c.Send(format.ReputationTotal(mention, total), tele.ModeHTML)
 }
 
 type UpdateReputation struct {
@@ -44,8 +44,8 @@ func (h *UpdateReputation) Handle(c tele.Context) error {
 }
 
 func (_ *UpdateReputation) HandleWorld(c tele.Context, w *game.World) error {
-	u := hh.CurrentUser(c, w)
-	v, ok := hh.RepliedUser(c, w)
+	u := tu.CurrentUser(c, w)
+	v, ok := tu.RepliedUser(c, w)
 	if !ok || !canUpdateReputation(u, v) {
 		return nil
 	}

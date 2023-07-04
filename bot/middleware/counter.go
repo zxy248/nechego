@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"nechego/game"
-	"nechego/teleutil"
+	tu "nechego/teleutil"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -14,11 +14,12 @@ type IncrementCounters struct {
 
 func (m *IncrementCounters) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		world, user := teleutil.Lock(c, m.Universe)
-		world.Messages++
-		user.Messages++
-		user.LastMessage = time.Now()
-		world.Unlock()
+		tu.ContextWorld(c, m.Universe, func(w *game.World) {
+			u := tu.CurrentUser(c, w)
+			u.Messages++
+			u.LastMessage = time.Now()
+			w.Messages++
+		})
 		return next(c)
 	}
 }

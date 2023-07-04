@@ -18,17 +18,17 @@ func (m *AutoDelete) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 
 type autoDeleteContext struct {
 	tele.Context
-	after time.Duration
+	deleteAfter time.Duration
 }
 
 func (c autoDeleteContext) Send(what interface{}, opts ...interface{}) error {
-	userMsg := c.Message()
-	botMsg, err := c.Bot().Send(c.Recipient(), what, opts...)
+	userMessage := c.Message()
+	botMessage, err := c.Bot().Send(c.Recipient(), what, opts...)
 	if err != nil {
 		return err
 	}
-	c.deleteMessageAfter(userMsg, c.after)
-	c.deleteMessageAfter(botMsg, c.after)
+	c.deleteMessageAfter(userMessage, c.deleteAfter)
+	c.deleteMessageAfter(botMessage, c.deleteAfter)
 	return nil
 }
 

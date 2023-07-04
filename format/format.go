@@ -13,6 +13,7 @@ import (
 	"nechego/money"
 	"nechego/phone"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/text/message"
@@ -429,29 +430,49 @@ func Win(mention string, elo float64) string {
 }
 
 func CombatStatus(s pvp.Status) string {
-	return fmt.Sprintf("<code>[%v]</code>", s)
+	return fmt.Sprintf("<code>%s %s</code>", s.Emoji(), s)
 }
 
 func Profile(mention string, u *game.User, w *game.World) string {
-	const profile = `<b>📇 %s %s: Профиль</b>
-<code>%-22s %s</code>
-<code>%-22s %s</code>
-<code>%-22s %s</code>
+	head := fmt.Sprintf("<b>📇 %s: Профиль</b>", Name(mention))
+	entries := []string{
+		Energy(u.Energy),
+		Balance(u.Balance().Total()),
+		CombatStatus(u.CombatMode.Status()),
+		Rating(u.Rating),
+		Luck(u.Luck()),
+		Strength(u.Strength(w)),
+		ReputationEmoji(
+			u.Reputation,
+			interpolatedReputationEmoji(
+				u.Reputation.Total(),
+				w.MinReputation(),
+				w.MaxReputation(),
+			),
+		),
+		Messages(u.Messages),
+	}
+	table := profileTable(entries)
+	modset := Modset(u.Modset(w))
+	status := Status(u.Status)
+	return fmt.Sprintf("%s\n%s\n\n%s\n\n%s", head, table, modset, status)
+}
 
-%s
-
-%s`
-	return fmt.Sprintf(
-		profile,
-		Name(mention), CombatStatus(u.CombatMode.Status()),
-
-		Energy(u.Energy), Balance(u.Balance().Total()),
-		Strength(u.Strength(w)), Rating(u.Rating),
-		Luck(u.Luck()), Messages(u.Messages),
-
-		Modset(u.Modset(w)),
-		Status(u.Status),
-	)
+func profileTable(entries []string) string {
+	lines := []string{}
+	for i, e := range entries {
+		if i%2 == 0 {
+			x := fmt.Sprintf("%-22s", e)
+			lines = append(lines, x)
+		} else {
+			x := fmt.Sprintf(" %s", e)
+			lines[len(lines)-1] += x
+		}
+	}
+	for i, line := range lines {
+		lines[i] = "<code>" + line + "</code>"
+	}
+	return strings.Join(lines, "\n")
 }
 
 func FundsCollected(mention string, f ...*game.Fund) string {
