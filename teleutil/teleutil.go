@@ -111,7 +111,11 @@ func MessageForwarded(m *tele.Message) bool {
 	return m.OriginalUnixtime != 0
 }
 
-func ContextWorld(c tele.Context, u *game.Universe, f func(*game.World)) {
+type WorldGetter interface {
+	World(id int64) (*game.World, error)
+}
+
+func ContextWorld(c tele.Context, u WorldGetter, f func(*game.World)) {
 	w, err := u.World(c.Chat().ID)
 	if err != nil {
 		panic(fmt.Sprintf("cannot access world: %v", err))
