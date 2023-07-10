@@ -442,13 +442,10 @@ func Profile(mention string, u *game.User, w *game.World) string {
 		Rating(u.Rating),
 		Luck(u.Luck()),
 		Strength(u.Strength(w)),
-		ReputationEmoji(
-			u.Reputation,
-			interpolatedReputationEmoji(
-				u.Reputation.Total(),
-				w.MinReputation(),
-				w.MaxReputation(),
-			),
+		ReputationPrefix(
+			u.Reputation.Score(),
+			w.MinReputation(),
+			w.MaxReputation(),
 		),
 		Messages(u.Messages),
 	}

@@ -5,16 +5,30 @@ import (
 	"nechego/game/reputation"
 )
 
-func ReputationTotal(mention string, score int) string {
-	return fmt.Sprintf("Репутация %s: %d", mention, score)
+func ReputationScore(mention string, x string) string {
+	return fmt.Sprintf("Репутация %s: %s", Name(mention), x)
 }
 
-func ReputationUpdated(mention string, score int, d reputation.Dir) string {
-	const format = "Репутация %s %s на 1\nТеперь репутация: %d"
-	return fmt.Sprintf(format, mention, reputationDirectory(d), score)
+func ReputationUpdated(mention string, score string, d reputation.Direction) string {
+	emoji := "⭐️"
+	return Lines(
+		Bold(Words(emoji, "Репутация", Name(mention),
+			reputationDirection(d), "на", Code("1"))),
+		Words("Теперь репутация:", score),
+	)
 }
 
-func reputationDirectory(d reputation.Dir) string {
+func ReputationPrefix(score, low, high int) string {
+	emoji := reputationEmoji(score, low, high)
+	return Code(Words(emoji, Value(score)))
+}
+
+func ReputationSuffix(score, low, high int) string {
+	emoji := reputationEmoji(score, low, high)
+	return Code(Words(Value(score), emoji))
+}
+
+func reputationDirection(d reputation.Direction) string {
 	switch d {
 	case reputation.Up:
 		return "увеличена"
@@ -24,22 +38,14 @@ func reputationDirectory(d reputation.Dir) string {
 	panic(fmt.Sprintf("unknown reputation directory: %v", d))
 }
 
-func interpolatedReputationEmoji(score, lowest, highest int) string {
-	diff := highest - lowest
+func reputationEmoji(score, low, high int) string {
+	diff := high - low
 	if diff == 0 {
 		return "😐"
 	}
-	v := score - lowest
+	v := score - low
 	x := float64(v) / float64(diff)
 
 	emojis := [...]string{"👹", "👺", "👿", "😈", "🙂", "😌", "😊", "😇"}
 	return emojis[int(x*float64(len(emojis)-1))]
-}
-
-func Reputation(r reputation.Reputation) string {
-	return ReputationEmoji(r, "⭐️")
-}
-
-func ReputationEmoji(r reputation.Reputation, emoji string) string {
-	return fmt.Sprintf("<code>%s %d</code>", emoji, r.Total())
 }

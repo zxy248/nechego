@@ -7,28 +7,28 @@ import (
 )
 
 type Vote struct {
-	ID   int64
-	Dir  Dir
-	Time time.Time
+	ID        int64
+	Direction Direction
+	Time      time.Time
 }
 
 type Reputation []Vote
 
-type Dir int
+type Direction int
 
 const (
-	Up Dir = iota
+	Up Direction = iota
 	Down
 )
 
-func (r Reputation) Update(id int64, d Dir) Reputation {
+func (r Reputation) Update(id int64, d Direction) Reputation {
 	return append(slices.Clone(r), Vote{id, d, time.Now()})
 }
 
-func (r Reputation) Total() int {
+func (r Reputation) Score() int {
 	t := 0
 	for _, v := range r {
-		switch v.Dir {
+		switch v.Direction {
 		case Up:
 			t++
 		case Down:

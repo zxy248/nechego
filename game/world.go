@@ -119,8 +119,8 @@ func (w *World) Capital() (total, avg int) {
 func (w *World) MaxReputation() int {
 	x := 0
 	for _, u := range w.Users {
-		if t := u.Reputation.Total(); t > x {
-			x = t
+		if s := u.Reputation.Score(); s > x {
+			x = s
 		}
 	}
 	return x
@@ -129,8 +129,8 @@ func (w *World) MaxReputation() int {
 func (w *World) MinReputation() int {
 	x := 0
 	for _, u := range w.Users {
-		if t := u.Reputation.Total(); t < x {
-			x = t
+		if s := u.Reputation.Score(); s < x {
+			x = s
 		}
 	}
 	return x
