@@ -289,6 +289,7 @@ func (a *app) pictureServices() []server.Service {
 		text(&pictures.Masyunya{}),
 		text(&pictures.Poppy{}),
 		text(&pictures.Sima{}),
+		text(&pictures.Cat{}),
 	}
 }
 
