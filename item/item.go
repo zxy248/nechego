@@ -81,20 +81,22 @@ func Random() *Item {
 			food.Random(),
 			money.NewCash(),
 			plant.Random(),
-			farm.NewFertilizer(),
 		},
 		0.5: {
 			money.NewWallet(),
 			fishing.NewRod(),
+		},
+		0.37: {
 			details.Random(),
-			&details.Thread{},
+			pets.Random(),
 		},
 		0.25: {
-			pets.Random(),
-			tools.NewKnife(),
+			farm.NewFertilizer(),
+			&details.Thread{},
+			phone.NewPhone(),
 		},
 		0.12: {
-			phone.NewPhone(),
+			tools.NewKnife(),
 			&token.Dice{},
 		},
 	}
