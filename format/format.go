@@ -7,7 +7,6 @@ import (
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/game"
-	"nechego/game/pvp"
 	"nechego/item"
 	"nechego/modifier"
 	"nechego/money"
@@ -48,9 +47,6 @@ const (
 	NoFishingRecords     = "🏆 Рекордов пока нет."
 	NotOnline            = "🚫 Этот пользователь не в сети."
 	CannotBan            = "😖 Этого пользователя нельзя забанить."
-	CannotFight          = "🛡 С этим пользователем нельзя подраться."
-	FightVersusPvE       = "🛡 Оппонент находится в <b>PvE-режиме</b>."
-	FightFromPvE         = "🛡 Вы находитесь в <b>PvE-режиме</b>."
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
 	CannotFireJob        = "💼 Вы нигде не работаете."
 	NoLot                = "🏦 Лот уже продан."
@@ -401,15 +397,6 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 	return c.String()
 }
 
-func PvPMode() string {
-	return "⚔ <b>PvP-режим</b> активирован."
-}
-
-func PvEMode() string {
-	minutes := pvp.WaitForPvE / time.Minute
-	return fmt.Sprintf("🛡 <b>PvE-режим</b> активируется через <code>%d минут</code>.", minutes)
-}
-
 func Fight(mentionA, mentionB string, strengthA, strengthB float64) string {
 	const fighter = "%s <code>[%.2f]</code>"
 	const versus = "<b><i>vs.</i></b>"
@@ -429,25 +416,20 @@ func Win(mention string, elo float64) string {
 	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", Name(mention), elo)
 }
 
-func CombatStatus(s pvp.Status) string {
-	return fmt.Sprintf("<code>%s %s</code>", s.Emoji(), s)
-}
-
 func Profile(mention string, u *game.User, w *game.World) string {
 	head := fmt.Sprintf("<b>📇 %s: Профиль</b>", Name(mention))
 	entries := []string{
 		Energy(u.Energy),
-		Balance(u.Balance().Total()),
-		CombatStatus(u.CombatMode.Status()),
-		Rating(u.Rating),
-		Luck(u.Luck()),
-		Strength(u.Strength(w)),
 		ReputationPrefix(
 			u.Reputation.Score(),
 			w.MinReputation(),
 			w.MaxReputation(),
 		),
+		Luck(u.Luck()),
+		Strength(u.Strength(w)),
+		Rating(u.Rating),
 		Messages(u.Messages),
+		Balance(u.Balance().Total()),
 	}
 	table := profileTable(entries)
 	modset := Modset(u.Modset(w))
@@ -459,7 +441,7 @@ func profileTable(entries []string) string {
 	lines := []string{}
 	for i, e := range entries {
 		if i%2 == 0 {
-			x := fmt.Sprintf("%-22s", e)
+			x := fmt.Sprintf("%-21s", e)
 			lines = append(lines, x)
 		} else {
 			x := fmt.Sprintf(" %s", e)
@@ -531,10 +513,9 @@ func TopRating(mention func(*game.User) string, users ...*game.User) string {
 	c := NewConnector("\n")
 	c.Add("<b>🏆 Боевой рейтинг</b>")
 	for i, u := range users {
-		c.Add(fmt.Sprintf("%s %s %s %s",
+		c.Add(fmt.Sprintf("%s %s %s",
 			Index(i),
 			Name(mention(u)),
-			u.CombatMode.Status().Emoji(),
 			Rating(u.Rating)))
 	}
 	return c.String()

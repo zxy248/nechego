@@ -10,7 +10,6 @@ import (
 	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
-	"nechego/game/pvp"
 	"nechego/item"
 	"nechego/money"
 	"nechego/pets"
@@ -167,19 +166,9 @@ func (u *User) Buy(w *World, key int) (*Product, error) {
 	}
 	u.Inventory.Add(product.Item)
 
-	if earn := product.Price / 3; earn > 0 {
-		// The market worker earns a wage.
-		if id, ok := market.Shift.Worker(); ok {
-			worker := w.UserByID(id)
-			worker.Funds.Add("магазин", item.New(&money.Cash{Money: earn}))
-		}
-		// The most rated player takes a tax.
-		if top := w.SortedUsers(ByElo); len(top) > 0 {
-			if elo := top[0]; elo.CombatMode.Status() == pvp.PvP {
-				elo.Funds.Add("налог", item.New(&money.Cash{Money: earn}))
-			}
-		}
-	}
+	earn := product.Price / 3
+	payEloTopTax(w, earn)
+	payMarketWorkerWage(w, earn)
 	return product, nil
 }
 
@@ -205,11 +194,18 @@ func payEloTopTax(w *World, n int) {
 	if n == 0 {
 		return
 	}
-	top := w.SortedUsers(ByElo)
-	if len(top) == 0 {
+	if top := w.SortedUsers(ByElo); len(top) > 0 {
+		x := item.New(&money.Cash{Money: n})
+		top[0].Funds.Add("налог", x)
+	}
+}
+
+func payMarketWorkerWage(w *World, n int) {
+	if n == 0 {
 		return
 	}
-	if u := top[0]; u.CombatMode.Status() == pvp.PvP {
-		u.Funds.Add("налог", item.New(&money.Cash{Money: n}))
+	if id, ok := w.Market.Shift.Worker(); ok {
+		x := item.New(&money.Cash{Money: n})
+		w.UserByID(id).Funds.Add("магазин", x)
 	}
 }

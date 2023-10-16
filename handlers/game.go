@@ -8,7 +8,6 @@ import (
 	"nechego/fishing"
 	"nechego/format"
 	"nechego/game"
-	"nechego/game/pvp"
 	"nechego/game/recipes"
 	"nechego/handlers/parse"
 	"nechego/item"
@@ -784,75 +783,47 @@ func (h *Fight) Handle(c tele.Context) error {
 	defer world.Unlock()
 	opnt := world.UserByID(reply.ID)
 
-	// Are both fighters in PvP mode?
-	if user.CombatMode.Status() == pvp.PvE {
-		return c.Send(format.FightFromPvE, tele.ModeHTML)
-	}
-	if opnt.CombatMode.Status() == pvp.PvE {
-		return c.Send(format.FightVersusPvE, tele.ModeHTML)
-	}
-
 	// Can opponent fight back?
 	if time.Since(opnt.LastMessage) > 10*time.Minute {
 		return c.Send(format.NotOnline)
 	}
 
-	if !user.Energy.Spend(0.25) {
+	if !user.Energy.Spend(0.33) {
 		return c.Send(format.NoEnergy)
 	}
 
 	// Fight begins.
-	errs := []error{}
 	win, lose, elo := world.Fight(user, opnt)
-	errs = append(errs,
-		c.Send(format.Fight(
-			tu.Mention(c, user.TUID),
-			tu.Mention(c, opnt.TUID),
-			user.Strength(world),
-			opnt.Strength(world),
-		), tele.ModeHTML))
-	// The winner takes a random item.
-	if i, ok := lose.Inventory.Random(); ok &&
-		rand.Float64() < 1.0/8 &&
-		lose.Inventory.Move(win.Inventory, i) {
 
-		m := tu.Mention(c, win)
-		errs = append(errs, c.Send(format.WinnerTook(m, i), tele.ModeHTML))
+	msg := format.NewConnector("\n\n")
+	msg.Add(format.Fight(
+		tu.Mention(c, user.TUID),
+		tu.Mention(c, opnt.TUID),
+		user.Strength(world),
+		opnt.Strength(world)))
+
+	// The winner takes a random item.
+	if rand.Float64() < 0.02 {
+		if x, ok := moveRandomItem(win.Inventory, lose.Inventory); ok {
+			msg.Add(format.WinnerTook(tu.Mention(c, win), x))
+		}
 	}
 	// The attacker drops a random item.
-	if i, ok := user.Inventory.Random(); ok &&
-		rand.Float64() < 1.0/16 &&
-		user.Inventory.Move(world.Floor, i) {
-
-		m := tu.Mention(c, user)
-		errs = append(errs, c.Send(format.AttackerDrop(m, i), tele.ModeHTML))
+	if rand.Float64() < 0.04 {
+		if x, ok := moveRandomItem(world.Floor, user.Inventory); ok {
+			msg.Add(format.AttackerDrop(tu.Mention(c, user), x))
+		}
 	}
-	errs = append(errs, c.Send(format.Win(tu.Mention(c, win), elo), tele.ModeHTML))
-	return errors.Join(errs...)
+	msg.Add(format.Win(tu.Mention(c, win), elo))
+	return c.Send(msg.String(), tele.ModeHTML)
 }
 
-type PvP struct {
-	Universe *game.Universe
-}
-
-var pvpRe = Regexp("^!пвп")
-
-func (h *PvP) Match(s string) bool {
-	return pvpRe.MatchString(s)
-}
-
-func (h *PvP) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	status := user.CombatMode.Toggle()
-	switch status {
-	case pvp.PvE:
-		return c.Send(format.PvEMode(), tele.ModeHTML)
-	case pvp.PvP:
-		return c.Send(format.PvPMode(), tele.ModeHTML)
+func moveRandomItem(dst, src *item.Set) (i *item.Item, ok bool) {
+	i, ok = src.Random()
+	if !ok {
+		return nil, false
 	}
-	return fmt.Errorf("unknown combat mode %v", status)
+	return i, src.Move(dst, i)
 }
 
 type Profile struct {

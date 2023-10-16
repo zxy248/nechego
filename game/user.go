@@ -4,7 +4,6 @@ import (
 	"nechego/buff"
 	"nechego/farm"
 	"nechego/fishing"
-	"nechego/game/pvp"
 	"nechego/game/reputation"
 	"nechego/item"
 	"nechego/token"
@@ -24,7 +23,6 @@ type User struct {
 	LastMessage time.Time    // When was the last message sent?
 	Buffs       buff.Set     // Active buffs.
 	Developer   bool         // Flag of a game developer.
-	CombatMode  pvp.Mode     // PvP or PvE?
 	Funds       Funds        // Collectable items.
 	Farm        *farm.Farm   // The source of vegetables.
 	Retired     time.Time    // When the job shift should finish.

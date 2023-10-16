@@ -214,7 +214,6 @@ func (a *app) actionsServices() []server.Service {
 		text(&handlers.Net{Universe: a.universe}),
 		text(&handlers.Catch{Universe: a.universe}),
 		text(&handlers.Fight{Universe: a.universe}),
-		text(&handlers.PvP{Universe: a.universe}),
 		text(&handlers.Eat{Universe: a.universe}),
 		text(&handlers.EatQuick{Universe: a.universe}),
 		text(&handlers.FishingRecords{Universe: a.universe}),

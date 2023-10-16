@@ -10,9 +10,8 @@ func ReputationScore(mention string, x string) string {
 }
 
 func ReputationUpdated(mention string, score string, d reputation.Direction) string {
-	emoji := "⭐️"
 	return Lines(
-		Bold(Words(emoji, "Репутация", Name(mention),
+		Bold(Words("⭐️", "Репутация", Name(mention),
 			reputationDirection(d), "на", Code("1"))),
 		Words("Теперь репутация:", score),
 	)
