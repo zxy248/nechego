@@ -19,14 +19,18 @@ func (h *Name) Match(s string) bool {
 }
 
 func (h *Name) Handle(c tele.Context) error {
-	name, _ := parseName(c.Message().Text)
-	if nameTooLong(name) {
-		return c.Send(format.NameTooLong(maxNameLength), tele.ModeHTML)
+	u, ok := tu.Reply(c)
+	if !ok {
+		u = c.Sender()
 	}
-	if err := giveNameRights(c); err != nil {
+	name, _ := parseName(c.Message().Text)
+	if longName(name) {
+		return c.Send(format.LongName(maxNameLength), tele.ModeHTML)
+	}
+	if err := authorizeName(c, u); err != nil {
 		return err
 	}
-	if err := setName(c, name); err != nil {
+	if err := setName(c, u, name); err != nil {
 		return c.Send(format.CannotSetName, tele.ModeHTML)
 	}
 	return c.Send(format.NameSet(name), tele.ModeHTML)
@@ -44,16 +48,16 @@ func parseName(s string) (name string, ok bool) {
 
 const maxNameLength = 16
 
-func nameTooLong(n string) bool {
+func longName(n string) bool {
 	return utf8.RuneCountInString(n) > maxNameLength
 }
 
-func giveNameRights(c tele.Context) error {
-	return tu.Promote(c, tu.Member(c, c.Sender()))
+func authorizeName(c tele.Context, u *tele.User) error {
+	return tu.Promote(c, tu.Member(c, u))
 }
 
-func setName(c tele.Context, n string) error {
-	return c.Bot().SetAdminTitle(c.Chat(), c.Sender(), n)
+func setName(c tele.Context, u *tele.User, n string) error {
+	return c.Bot().SetAdminTitle(c.Chat(), u, n)
 }
 
 type CheckName struct{}

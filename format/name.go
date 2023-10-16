@@ -4,7 +4,7 @@ import "fmt"
 
 const CannotSetName = "⚠️ Не удалось установить имя."
 
-func NameTooLong(maxLen int) string {
+func LongName(maxLen int) string {
 	return fmt.Sprintf("⚠️ Максимальная длина имени %d символов.", maxLen)
 }
 
