@@ -11,6 +11,7 @@ import (
 	"nechego/game"
 	"nechego/handlers"
 	"nechego/handlers/casino"
+	"nechego/handlers/command"
 	"nechego/handlers/fun"
 	"nechego/handlers/pictures"
 	"os"
@@ -113,6 +114,7 @@ func (a *app) services() []server.Service {
 		{a.funServices(), nil},
 		{a.pictureServices(), nil},
 		{a.casinoServices(), spam},
+		{a.commandServices(), nil},
 		{a.callbackServices(), nil},
 	}
 
@@ -304,6 +306,14 @@ func (a *app) callbackServices() []server.Service {
 	return []server.Service{
 		callback(&handlers.HarvestInline{Universe: a.universe}),
 		callback(&handlers.AuctionBuy{Universe: a.universe}),
+	}
+}
+
+func (a *app) commandServices() []server.Service {
+	return []server.Service{
+		text(&command.Add{Universe: a.universe}),
+		text(&command.Remove{Universe: a.universe}),
+		&command.Use{Universe: a.universe},
 	}
 }
 

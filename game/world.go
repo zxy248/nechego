@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/auction"
+	"nechego/commands"
 	"nechego/fishing"
 	"nechego/item"
 	"nechego/phone"
@@ -24,6 +25,7 @@ type World struct {
 	Messages int
 	SMS      phone.Database
 	History  *fishing.History
+	Commands commands.Commands
 	Inactive bool
 
 	sync.Mutex `json:"-"`
