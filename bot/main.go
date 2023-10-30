@@ -38,7 +38,7 @@ func main() {
 	}
 	srv := &server.Server{
 		Bot:      app.bot,
-		Handlers: app.services(), // TODO: handlers or services?
+		Handlers: app.services(),
 	}
 	srv.Run()
 	if err := app.shutdown(); err != nil {
@@ -279,14 +279,14 @@ func (a *app) pictureServices() []server.Service {
 		text(&pictures.Zeus{Path: assetPath("zeus")}),
 		text(&pictures.Mouse{Path: assetPath("mouse.mp4")}),
 		text(&pictures.Tiktok{Path: assetPath("tiktok")}),
-		text(&pictures.Hello{Path: assetPath("hello.json")}), // TODO: is cache initialized once?
+		text(&pictures.Hello{Path: assetPath("hello.json")}),
 		text(&pictures.Anime{}),
 		text(&pictures.Furry{}),
 		text(&pictures.Flag{}),
 		text(&pictures.Car{}),
 		text(&pictures.Soy{}),
-		text(&pictures.Danbooru{API: a.danbooru}), // TODO: add Settings, singular design
-		text(&pictures.Fap{API: a.danbooru}),      // TODO: same
+		text(&pictures.Danbooru{API: a.danbooru}),
+		text(&pictures.Fap{API: a.danbooru}),
 		text(&pictures.Masyunya{}),
 		text(&pictures.Poppy{}),
 		text(&pictures.Sima{}),
