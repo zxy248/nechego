@@ -106,7 +106,6 @@ func (a *app) services() []server.Service {
 		{a.economyServices(), spam},
 		{a.farmServices(), spam},
 		{a.marketServices(), spam},
-		{a.auctionServices(), spam},
 		{a.actionsServices(), spam},
 		{a.topServices(), spam},
 		{a.profileServices(), spam},
@@ -197,13 +196,6 @@ func (a *app) marketServices() []server.Service {
 		text(&handlers.NameMarket{Universe: a.universe}),
 		text(&handlers.GetJob{Universe: a.universe}),
 		text(&handlers.QuitJob{Universe: a.universe}),
-	}
-}
-
-func (a *app) auctionServices() []server.Service {
-	return []server.Service{
-		text(&handlers.Auction{Universe: a.universe}),
-		text(&handlers.AuctionSell{Universe: a.universe}),
 	}
 }
 
@@ -305,7 +297,6 @@ func (a *app) casinoServices() []server.Service {
 func (a *app) callbackServices() []server.Service {
 	return []server.Service{
 		callback(&handlers.HarvestInline{Universe: a.universe}),
-		callback(&handlers.AuctionBuy{Universe: a.universe}),
 	}
 }
 

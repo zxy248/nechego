@@ -3,7 +3,6 @@ package format
 import (
 	"fmt"
 	"math/rand"
-	"nechego/auction"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/game"
@@ -16,7 +15,6 @@ import (
 	"time"
 
 	"golang.org/x/text/message"
-	tele "gopkg.in/telebot.v3"
 )
 
 const (
@@ -49,9 +47,6 @@ const (
 	CannotBan            = "😖 Этого пользователя нельзя забанить."
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
 	CannotFireJob        = "💼 Вы нигде не работаете."
-	NoLot                = "🏦 Лот уже продан."
-	AuctionSell          = "🏦 Лот выставлен на продажу."
-	AuctionFull          = "🏦 На аукционе нет места."
 	CannotFriend         = "👤 С этим пользователем нельзя подружиться."
 	NonFriendTransfer    = "📦 Вещи можно передавать только тем, кто с вами дружит."
 )
@@ -519,27 +514,6 @@ func TopRating(mention func(*game.User) string, users ...*game.User) string {
 			Rating(u.Rating)))
 	}
 	return c.String()
-}
-
-func Auction(lots []*auction.Lot, encode func(*auction.Lot) string) (string, *tele.ReplyMarkup) {
-	s := "<b>🏦 Аукцион</b>"
-	m := &tele.ReplyMarkup{}
-	rows := []tele.Row{}
-	for _, l := range lots {
-		minutes := time.Until(l.Expire()) / time.Minute
-		s := fmt.Sprintf("%s · %d %s · %d %s",
-			l.Item.Value, l.Price(), money.Currency,
-			minutes, declMinutes(int(minutes)))
-		data := encode(l)
-		rows = append(rows, m.Row(m.Data(s, data)))
-	}
-	m.Inline(rows...)
-	return s, m
-}
-
-func AuctionBought(buyer, seller string, cost int, x *item.Item) string {
-	return fmt.Sprintf("🤝 %s покупает %s у %s за %s.",
-		Name(buyer), Item(x), Name(seller), Money(cost))
 }
 
 func Index(i int) string {

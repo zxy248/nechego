@@ -12,7 +12,6 @@ func (w *World) startPeriodicTasks() {
 		period time.Duration
 		action func(*World)
 	}{
-		{time.Minute, expireLots},
 		{time.Minute, refillMarket},
 		{time.Minute, restoreEnergy},
 		{time.Minute, fillNets},
@@ -28,17 +27,6 @@ func periodically(w *World, p time.Duration, f func(*World)) {
 		w.Lock()
 		f(w)
 		w.Unlock()
-	}
-}
-
-// expireLots returns the expired auction lots.
-func expireLots(w *World) {
-	for _, lot := range w.Auction.List() {
-		if time.Now().After(lot.Expire()) {
-			w.Auction.Remove(lot.Key)
-			seller := w.UserByID(lot.SellerID)
-			seller.Funds.Add("возврат", lot.Item)
-		}
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"nechego/auction"
 	"nechego/commands"
 	"nechego/fishing"
 	"nechego/item"
@@ -19,7 +18,6 @@ type World struct {
 	TGID     int64
 	Users    []*User
 	Floor    *item.Set
-	Auction  *auction.Auction
 	Market   *Market
 	Casino   *Casino
 	Messages int
@@ -36,7 +34,6 @@ func NewWorld(id int64) *World {
 		TGID:    id,
 		Users:   []*User{},
 		Floor:   item.NewSet(),
-		Auction: auction.New(),
 		Market:  NewMarket(),
 		Casino:  &Casino{Timeout: time.Second * 25},
 		SMS:     phone.Database{},
