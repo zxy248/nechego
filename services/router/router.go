@@ -20,9 +20,9 @@ func (h *Service) Match(tele.Context) bool {
 func (h *Service) Handle(c tele.Context) error {
 	m := chat.Convert(c)
 	handlers := []services.Handler{
-		&command.AddCommandHandler{Universe: h.Universe},
-		&command.RemoveCommandHandler{Universe: h.Universe},
-		&command.UseCommandHandler{Universe: h.Universe},
+		&command.Add{Universe: h.Universe},
+		&command.Remove{Universe: h.Universe},
+		&command.Use{Universe: h.Universe},
 	}
 	for _, h := range handlers {
 		r := h.Match(m)

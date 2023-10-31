@@ -4,34 +4,33 @@ import (
 	"nechego/chat"
 	"nechego/game"
 	"nechego/services"
-	"regexp"
-	"strings"
 )
 
-type RemoveCommandHandler struct {
+type Remove struct {
 	Universe *game.Universe
 }
 
-var removeCommandRe = regexp.MustCompile("^!(удалить|убрать) ([^\\|]+)")
+var removeRe = services.Regexp(removePattern)
 
-func (h *RemoveCommandHandler) Match(m *chat.Message) services.Request {
-	match := removeCommandRe.FindStringSubmatch(m.Text)
+func (h *Remove) Match(m *chat.Message) services.Request {
+	match := removeRe.FindStringSubmatch(m.Text)
 	if match == nil {
 		return nil
 	}
-	def := strings.ToLower(strings.TrimSpace(match[2]))
-	return &RemoveCommand{m, def, services.GetWorld(h.Universe, m.Group.ID)}
+	def := sanitizeDefinition(match[2])
+	s := services.GroupState(h.Universe, m)
+	return &remove{s, m, def}
 }
 
-type RemoveCommand struct {
-	Message    *chat.Message
-	Definition string
-	World      *game.World
+type remove struct {
+	state      *services.State
+	message    *chat.Message
+	definition string
 }
 
-func (r *RemoveCommand) Process() error {
-	services.Do(r.World, func(w *game.World) {
-		w.Commands.Remove(r.Definition)
+func (r *remove) Process() error {
+	r.state.Do(func(w *game.World) {
+		w.Commands.Remove(r.definition)
 	})
-	return r.Message.Reply("❌ Команда удалена.")
+	return r.message.Reply("❌ Команда удалена.")
 }

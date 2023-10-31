@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"nechego/chat"
 	"nechego/game"
+	"regexp"
 )
 
 type Handler interface {
@@ -22,8 +23,22 @@ func GetWorld(u *game.Universe, id int64) *game.World {
 	return w
 }
 
-func Do(w *game.World, f func(*game.World)) {
+type State struct {
+	universe *game.Universe
+	groupID  int64
+}
+
+func GroupState(u *game.Universe, m *chat.Message) *State {
+	return &State{u, m.Group.ID}
+}
+
+func (s *State) Do(f func(*game.World)) {
+	w := GetWorld(s.universe, s.groupID)
 	w.Lock()
 	defer w.Unlock()
 	f(w)
+}
+
+func Regexp(pattern string) *regexp.Regexp {
+	return regexp.MustCompile("(?i)" + pattern)
 }

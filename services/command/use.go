@@ -5,36 +5,35 @@ import (
 	"nechego/commands"
 	"nechego/game"
 	"nechego/services"
-	"strings"
 )
 
-type UseCommandHandler struct {
+type Use struct {
 	Universe *game.Universe
 }
 
-func (h *UseCommandHandler) Match(m *chat.Message) services.Request {
-	w := services.GetWorld(h.Universe, m.Group.ID)
+func (h *Use) Match(m *chat.Message) services.Request {
+	s := services.GroupState(h.Universe, m)
 	var cmd commands.Command
 	var ok bool
-	services.Do(w, func(w *game.World) {
-		cmd, ok = w.Commands.Match(strings.ToLower(m.Text))
+	s.Do(func(w *game.World) {
+		cmd, ok = w.Commands.Match(sanitizeDefinition(m.Text))
 	})
 	if !ok {
 		return nil
 	}
-	return &UseCommand{m, w, cmd}
+	return &use{s, m, cmd}
 }
 
-type UseCommand struct {
-	Message *chat.Message
-	World   *game.World
-	Command commands.Command
+type use struct {
+	state   *services.State
+	message *chat.Message
+	command commands.Command
 }
 
-func (r *UseCommand) Process() error {
-	if r.Command.HasPhoto() {
-		p := chat.Photo{File: r.Command.Photo}
-		return r.Message.ReplyPhoto(r.Command.Message, p)
+func (r *use) Process() error {
+	if r.command.HasPhoto() {
+		p := chat.Photo{File: r.command.Photo}
+		return r.message.ReplyPhoto(r.command.Message, p)
 	}
-	return r.Message.Reply(r.Command.Message)
+	return r.message.Reply(r.command.Message)
 }
