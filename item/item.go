@@ -11,7 +11,6 @@ import (
 	"nechego/food"
 	"nechego/money"
 	"nechego/pets"
-	"nechego/phone"
 	"nechego/token"
 	"nechego/tools"
 	"time"
@@ -93,7 +92,6 @@ func Random() *Item {
 		0.25: {
 			farm.NewFertilizer(),
 			&details.Thread{},
-			phone.NewPhone(),
 		},
 		0.12: {
 			tools.NewKnife(),

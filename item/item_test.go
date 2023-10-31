@@ -42,7 +42,6 @@ func TestRandom(t *testing.T) {
 		TypeThread,
 		TypePet,
 		TypeKnife,
-		TypePhone,
 		TypeDice,
 		TypeAdmin,
 		TypePlant,

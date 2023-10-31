@@ -109,7 +109,6 @@ func (a *app) services() []server.Service {
 		{a.actionsServices(), spam},
 		{a.topServices(), spam},
 		{a.profileServices(), spam},
-		{a.phoneServices(), spam},
 		{a.funServices(), nil},
 		{a.pictureServices(), nil},
 		{a.casinoServices(), spam},
@@ -232,15 +231,6 @@ func (a *app) profileServices() []server.Service {
 		text(&handlers.Avatar{Universe: a.universe, Avatars: a.avatars}),
 		text(&handlers.Energy{Universe: a.universe}),
 		text(&handlers.NamePet{Universe: a.universe}),
-	}
-}
-
-func (a *app) phoneServices() []server.Service {
-	return []server.Service{
-		text(&handlers.SendSMS{Universe: a.universe}),
-		text(&handlers.ReceiveSMS{Universe: a.universe}),
-		text(&handlers.Contacts{Universe: a.universe}),
-		text(&handlers.Spam{Universe: a.universe}),
 	}
 }
 

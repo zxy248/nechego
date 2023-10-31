@@ -20,7 +20,6 @@ func (u *User) Modset(w *World) modifier.Set {
 		modifier  *modifier.Mod
 	}{
 		{u.InventoryFull, modifier.Heavy},
-		{func() bool { return u.HasSMS(w) }, modifier.SMS},
 	}
 	for _, x := range table {
 		if x.predicate() {

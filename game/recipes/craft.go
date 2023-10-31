@@ -13,7 +13,6 @@ func Craft(inventory *item.Set, ingredients []*item.Item) (result []*item.Item, 
 		UpgradeFishingRod,
 		RepairFishingRod,
 		DustFishingRod,
-		DustPhone,
 		MakeMeat,
 		MakeFishingNet,
 	}

@@ -9,7 +9,6 @@ import (
 	"nechego/food"
 	"nechego/money"
 	"nechego/pets"
-	"nechego/phone"
 	"nechego/token"
 	"nechego/tools"
 )
@@ -32,7 +31,6 @@ const (
 	TypeFood
 	TypeKnife
 	TypeMeat
-	TypePhone
 	TypeDetails
 	TypeThread
 	TypeFishingNet
@@ -68,8 +66,6 @@ func TypeOf(x any) Type {
 		return TypeKnife
 	case *food.Meat:
 		return TypeMeat
-	case *phone.Phone:
-		return TypePhone
 	case *details.Details:
 		return TypeDetails
 	case *details.Thread:
@@ -115,8 +111,6 @@ func ValueOf(t Type) any {
 		return &tools.Knife{}
 	case TypeMeat:
 		return &food.Meat{}
-	case TypePhone:
-		return &phone.Phone{}
 	case TypeDetails:
 		return &details.Details{}
 	case TypeThread:

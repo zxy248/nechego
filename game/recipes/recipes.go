@@ -54,14 +54,6 @@ func DustFishingRod(recipe []*item.Item) (result []*item.Item, ok bool) {
 	return []*item.Item{item.New(d)}, true
 }
 
-func DustPhone(recipe []*item.Item) (result []*item.Item, ok bool) {
-	if !(template{item.TypePhone}.match(recipe)) {
-		return nil, false
-	}
-	d := &details.Details{Count: 50}
-	return []*item.Item{item.New(d)}, true
-}
-
 func MakeMeat(recipe []*item.Item) (result []*item.Item, ok bool) {
 	if !(template{item.TypeKnife, item.TypePet}.match(recipe)) {
 		return nil, false

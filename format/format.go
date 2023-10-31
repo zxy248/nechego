@@ -9,7 +9,6 @@ import (
 	"nechego/item"
 	"nechego/modifier"
 	"nechego/money"
-	"nechego/phone"
 	"strconv"
 	"strings"
 	"time"
@@ -34,8 +33,6 @@ const (
 	BadMoney             = "💵 Некорректное количество средств."
 	CannotCraft          = "🛠 Эти предметы нельзя объединить."
 	InventorySorted      = "🗃 Инвентарь отсортирован."
-	NoPhone              = "📱 У вас нет телефона."
-	BadPhone             = "☎ Некорректный формат номера."
 	BuyFishingRod        = "🎣 Приобретите удочку в магазине, прежде чем рыбачить."
 	FishingRodBroke      = "🎣 Удочка сломалась."
 	NoNet                = "🕸 У вас нет рыболовной сети."
@@ -197,61 +194,6 @@ func Modset(s modifier.Set) string {
 
 func Percentage(p float64) string {
 	return fmt.Sprintf("%.1f%%", p*100)
-}
-
-func SMSes(mention string, smses []*phone.SMS) string {
-	if len(smses) == 0 {
-		return fmt.Sprintf("<b>✉ %s: Новых сообщений нет.</b>", Name(mention))
-	}
-	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>✉ %s: Сообщения</b>", Name(mention)))
-	for _, sms := range smses {
-		c.Add(SMS(sms))
-	}
-	return c.String()
-}
-
-func SMS(sms *phone.SMS) string {
-	format := "2006/02/01"
-	if sms.Time.YearDay() == time.Now().YearDay() {
-		format = "15:04"
-	}
-	return fmt.Sprintf("<code>|%s|</code> <code>%s</code><b>:</b> %s",
-		sms.Time.Format(format), sms.Sender, sms.Text)
-}
-
-func SMSMaxLen(l int) string {
-	return fmt.Sprintf("✉ Максимальная длина сообщения %d символов.", l)
-}
-
-type Contact struct {
-	Name   string
-	Number phone.Number
-}
-
-func (c Contact) String() string {
-	return fmt.Sprintf("<b>→ <code>%s</code>:</b> %s", c.Number, c.Name)
-}
-
-func Contacts(cc []Contact) string {
-	if len(cc) == 0 {
-		return "👥 Контактов нет."
-	}
-	c := NewConnector("\n")
-	c.Add("<b>👥 Контакты</b>")
-	for _, contact := range cc {
-		c.Add(contact.String())
-	}
-	return c.String()
-}
-
-func MessageSent(sender, receiver phone.Number) string {
-	return fmt.Sprintf("📱 Сообщение отправлено.\n\n"+
-		"✉ <code>%v</code> → <code>%v</code>", sender, receiver)
-}
-
-func SpamSent(mention string, price int) string {
-	return fmt.Sprintf("✉ %s совершает рассылку за %s.", Name(mention), Money(price))
 }
 
 func UserBanned(hours int) string {

@@ -70,12 +70,6 @@ func (u *User) InventoryOverflow() bool {
 	return u.Inventory.Count() > u.InventorySize()+margin
 }
 
-// HasSMS returns true if the user has unread SMS.
-func (u *User) HasSMS(w *World) bool {
-	p, ok := u.Phone()
-	return ok && w.SMS.Count(p.Number) > 0
-}
-
 // Transfer moves the item x from the sender's inventory to the
 // receiver's funds.
 func (u *User) Transfer(to *User, x *item.Item) bool {

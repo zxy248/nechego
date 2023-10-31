@@ -13,7 +13,6 @@ import (
 	"nechego/item"
 	"nechego/money"
 	"nechego/pets"
-	"nechego/phone"
 	"nechego/token"
 	"nechego/tools"
 	"nechego/valid"
@@ -93,8 +92,6 @@ func randomProduct() *Product {
 		p = price(1000, 500)
 	case *tools.Knife:
 		p = price(5000, 2000)
-	case *phone.Phone:
-		p = price(20000, 10000)
 	case *details.Details:
 		p = price(5000, 2500)
 	case *details.Thread:
