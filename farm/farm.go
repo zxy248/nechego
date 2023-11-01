@@ -61,11 +61,10 @@ func (c Crop) Ready() bool {
 
 // Farm represents a place where a player can grow vegetables.
 type Farm struct {
-	Grid       map[Plot]Crop
-	Rows       int
-	Columns    int
-	Fertilizer int
-	Name       string
+	Grid    map[Plot]Crop
+	Rows    int
+	Columns int
+	Name    string
 }
 
 // New returns an empty farm of the given size.
@@ -123,21 +122,10 @@ func listPlants(p map[plant.Type]int) []*plant.Plant {
 func (f *Farm) Pick(q Plot) (p *plant.Plant, ok bool) {
 	if crop := f.Grid[q]; crop.Ready() {
 		delete(f.Grid, q)
-		n := 1 + rand.Intn(5) + f.fertilize()
+		n := 1 + rand.Intn(3)
 		return &plant.Plant{Type: crop.Type, Count: n}, true
 	}
 	return nil, false
-}
-
-// fertilize takes some amount of the Fertilizer from the Farm and
-// returns the subtracted value.
-func (f *Farm) fertilize() int {
-	n := 1 + rand.Intn(5)
-	if n > f.Fertilizer {
-		n = f.Fertilizer
-	}
-	f.Fertilizer -= n
-	return n
 }
 
 // Plant adds a new crop to the Farm and returns true if there is

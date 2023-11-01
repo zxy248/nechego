@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"nechego/dates"
 	"nechego/details"
-	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
@@ -90,7 +89,6 @@ func Random() *Item {
 			pets.Random(),
 		},
 		0.25: {
-			farm.NewFertilizer(),
 			&details.Thread{},
 		},
 		0.12: {

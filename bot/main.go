@@ -215,7 +215,6 @@ func (a *app) actionsServices() []server.Service {
 		text(&handlers.FishingRecords{Universe: a.universe}),
 		text(&handlers.Friends{Universe: a.universe}),
 		text(&handlers.Transfer{Universe: a.universe}),
-		text(&handlers.Use{Universe: a.universe}),
 	}
 }
 

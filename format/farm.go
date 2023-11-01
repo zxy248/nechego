@@ -16,9 +16,6 @@ const (
 func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 	c := NewConnector("\n")
 	c.Add(farmHeader(mention, f))
-	if f.Fertilizer > 0 {
-		c.Add(fmt.Sprintf("<i>🛢 Запас удобрений %v л.</i>", f.Fertilizer))
-	}
 	if until := f.Until(); until > 0 {
 		c.Add(fmt.Sprintf("<i>🌾 До урожая осталось %s</i>", Duration(until)))
 	}
@@ -109,36 +106,4 @@ func PriceList(p *game.PriceList) string {
 		}
 	}
 	return out + table
-}
-
-type Use struct {
-	c *Connector
-}
-
-func NewUse() *Use {
-	return &Use{NewConnector(" ")}
-}
-
-func (u *Use) String() string {
-	return u.c.String()
-}
-
-func (u *Use) Callback(mention string) game.UseCallback {
-	return game.UseCallback{
-		Fertilizer: func(f *farm.Fertilizer) {
-			u.c.Add(Fertilize(mention, f))
-		},
-	}
-}
-
-func Fertilize(mention string, f *farm.Fertilizer) string {
-	return fmt.Sprintf("🛢 %s выливает %s удобрений на ферму.", Name(mention), Volume(f.Volume))
-}
-
-func CannotUse(x *item.Item) string {
-	return fmt.Sprintf("💡 Нельзя использовать %s.", Item(x))
-}
-
-func Volume(n int) string {
-	return fmt.Sprintf("<code>%v л.</code>", n)
 }
