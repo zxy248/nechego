@@ -3,6 +3,7 @@ package handlers
 import (
 	"nechego/handlers/parse"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -51,4 +52,16 @@ func MatchPrefixes(ps []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func Numbers(s string) []int {
+	var ns []int
+	for _, x := range strings.Fields(s) {
+		n, err := strconv.Atoi(x)
+		if err != nil {
+			break
+		}
+		ns = append(ns, n)
+	}
+	return ns
 }

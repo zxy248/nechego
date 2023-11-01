@@ -42,11 +42,11 @@ const (
 
 // FarmUpgradeCost returns the cost of the farm expansion.
 // If the farm cannot be upgraded, returns (0, false).
-func (u *User) FarmUpgradeCost() (cost int, ok bool) {
+func (u *User) FarmUpgradeCost() int {
 	if u.Farm.Rows >= MaxFarmRows && u.Farm.Columns >= MaxFarmColumns {
-		return 0, false
+		return 0
 	}
-	return 1000 * fibonacci(u.Farm.Columns+u.Farm.Rows), true
+	return 1000 * fibonacci(u.Farm.Columns+u.Farm.Rows)
 }
 
 func (u *User) UpgradeFarm(cost int) bool {

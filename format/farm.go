@@ -16,6 +16,7 @@ const (
 func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 	c := NewConnector("\n")
 	c.Add(farmHeader(mention, f))
+	c.Add(f.String())
 	if until := f.Until(); until > 0 {
 		c.Add(fmt.Sprintf("<i>🌾 До урожая осталось %s</i>", Duration(until)))
 	}

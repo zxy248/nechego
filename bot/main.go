@@ -11,6 +11,7 @@ import (
 	"nechego/game"
 	"nechego/handlers"
 	"nechego/handlers/casino"
+	"nechego/handlers/farm"
 	"nechego/handlers/fun"
 	"nechego/handlers/pictures"
 	"nechego/services/router"
@@ -27,8 +28,8 @@ const (
 )
 
 var (
-	botToken        = getEnv("NECHEGO_TOKEN")
-	assetsDirectory = getEnv("NECHEGO_ASSETS")
+	botToken        = getenv("NECHEGO_TOKEN")
+	assetsDirectory = getenv("NECHEGO_ASSETS")
 )
 
 func main() {
@@ -51,7 +52,7 @@ func assetPath(s string) string {
 	return filepath.Join(assetsDirectory, s)
 }
 
-func getEnv(s string) string {
+func getenv(s string) string {
 	e := os.Getenv(s)
 	if e == "" {
 		panic(fmt.Sprintf("%s not set", s))
@@ -180,18 +181,18 @@ func (a *app) economyServices() []server.Service {
 
 func (a *app) farmServices() []server.Service {
 	return []server.Service{
-		text(&handlers.Farm{Universe: a.universe}),
-		text(&handlers.Plant{Universe: a.universe}),
-		text(&handlers.Harvest{Universe: a.universe}),
-		text(&handlers.PriceList{Universe: a.universe}),
-		text(&handlers.UpgradeFarm{Universe: a.universe}),
-		text(&handlers.NameFarm{Universe: a.universe}),
+		&farm.Farm{Universe: a.universe},
+		&farm.Plant{Universe: a.universe},
+		&farm.Harvest{Universe: a.universe},
+		&farm.Upgrade{Universe: a.universe},
+		&farm.Name{Universe: a.universe},
 	}
 }
 
 func (a *app) marketServices() []server.Service {
 	return []server.Service{
 		text(&handlers.Market{Universe: a.universe}),
+		text(&handlers.PriceList{Universe: a.universe}),
 		text(&handlers.Buy{Universe: a.universe}),
 		text(&handlers.Sell{Universe: a.universe}),
 		text(&handlers.SellQuick{Universe: a.universe}),
