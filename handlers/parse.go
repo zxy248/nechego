@@ -6,15 +6,6 @@ import (
 	"strings"
 )
 
-type callback interface {
-	encode() string
-	decode(s string) error
-}
-
-func callbackMatch(c callback, s string) bool {
-	return c.decode(s) == nil
-}
-
 func numCommand(prefix parse.G, s string) (keys []int, ok bool) {
 	ok = parse.Seq(
 		prefix,

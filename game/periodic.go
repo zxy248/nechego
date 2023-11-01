@@ -33,6 +33,7 @@ func periodically(w *World, p time.Duration, f func(*World)) {
 // refillMarket adds a new random product to the market.
 func refillMarket(w *World) {
 	w.Market.Refill()
+	w.Market.Trim(10)
 }
 
 // restoreEnergy adds some energy to all users.

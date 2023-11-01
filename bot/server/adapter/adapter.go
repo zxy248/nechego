@@ -2,7 +2,6 @@ package adapter
 
 import (
 	"nechego/bot/server"
-	"strings"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -16,17 +15,6 @@ type Text struct{ TextService }
 
 func (s *Text) Match(c tele.Context) bool {
 	return s.TextService.Match(c.Text())
-}
-
-type Callback struct{ TextService }
-
-func (s *Callback) Match(c tele.Context) bool {
-	cb := c.Callback()
-	if cb == nil {
-		return false
-	}
-	cb.Data = strings.TrimSpace(cb.Data)
-	return s.TextService.Match(cb.Data)
 }
 
 type Wrapped struct {

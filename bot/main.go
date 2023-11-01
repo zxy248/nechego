@@ -77,6 +77,10 @@ func setup() (*app, error) {
 	return &app{
 		bot: bot,
 		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
+			const want = 10
+			for i := len(w.Market.Products()); i < want; i++ {
+				w.Market.Refill()
+			}
 			w.History.Announce(handlers.RecordAnnouncer(bot, tele.ChatID(w.TGID)))
 		}),
 		avatars: &avatar.Storage{
@@ -112,7 +116,6 @@ func (a *app) services() []server.Service {
 		{a.funServices(), nil},
 		{a.pictureServices(), nil},
 		{a.casinoServices(), spam},
-		{a.callbackServices(), nil},
 		{a.nextServices(), nil},
 	}
 
@@ -284,22 +287,12 @@ func (a *app) casinoServices() []server.Service {
 	}
 }
 
-func (a *app) callbackServices() []server.Service {
-	return []server.Service{
-		callback(&handlers.HarvestInline{Universe: a.universe}),
-	}
-}
-
 func (a *app) nextServices() []server.Service {
 	return []server.Service{&router.Service{Universe: a.universe}}
 }
 
 func text(s adapter.TextService) server.Service {
 	return &adapter.Text{TextService: s}
-}
-
-func callback(s adapter.TextService) server.Service {
-	return &adapter.Callback{TextService: s}
 }
 
 func wrap(s server.Service, w ...adapter.Wrapper) server.Service {

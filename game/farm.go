@@ -1,7 +1,6 @@
 package game
 
 import (
-	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/item"
 )
@@ -34,17 +33,6 @@ func (u *User) Harvest() []*plant.Plant {
 		u.Inventory.Add(item.New(p))
 	}
 	return harvested
-}
-
-// Pick pops the Plant at the specified location and adds it to the
-// user's inventory.
-func (u *User) PickPlant(row, column int) (p *plant.Plant, ok bool) {
-	p, ok = u.Farm.Pick(farm.Plot{Row: row, Column: column})
-	if !ok {
-		return nil, false
-	}
-	u.Inventory.Add(item.New(p))
-	return p, true
 }
 
 const (

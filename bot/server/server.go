@@ -22,7 +22,6 @@ func (s *Server) Run() {
 	endpoints := []string{
 		tele.OnText,
 		tele.OnPhoto,
-		tele.OnCallback,
 		tele.OnDice,
 	}
 	h := dispatcher(s.Handlers)

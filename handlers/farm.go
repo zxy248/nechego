@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"nechego/farm"
 	"nechego/farm/plant"
 	"nechego/format"
@@ -40,8 +39,7 @@ func farmInlineKeyboard(id int64, f *farm.Farm) *tele.ReplyMarkup {
 		buttons := []tele.Btn{}
 		for c := 0; c < f.Columns; c++ {
 			emoji := f.Grid[farm.Plot{Row: r, Column: c}].String()
-			data := harvestCallback{id, r, c}
-			btn := grid.Data(emoji, data.encode())
+			btn := grid.Data(emoji, "0")
 			buttons = append(buttons, btn)
 		}
 		rows = append(rows, grid.Row(buttons...))
@@ -49,23 +47,6 @@ func farmInlineKeyboard(id int64, f *farm.Farm) *tele.ReplyMarkup {
 	}
 	grid.Inline(rows...)
 	return grid
-}
-
-type harvestCallback struct {
-	tuid   int64
-	row    int
-	column int
-}
-
-const harvestCallbackFormat = "/harvest/%d/%d/%d"
-
-func (h *harvestCallback) encode() string {
-	return fmt.Sprintf(harvestCallbackFormat, h.tuid, h.row, h.column)
-}
-
-func (h *harvestCallback) decode(s string) error {
-	_, err := fmt.Sscanf(s, harvestCallbackFormat, &h.tuid, &h.row, &h.column)
-	return err
 }
 
 type Plant struct {
@@ -115,33 +96,6 @@ func (h *Harvest) Handle(c tele.Context) error {
 
 	harvested := user.Harvest()
 	return c.Send(format.Harvested(tu.Mention(c, user), harvested...), tele.ModeHTML)
-}
-
-type HarvestInline struct {
-	Universe *game.Universe
-}
-
-func (h *HarvestInline) Match(s string) bool {
-	return callbackMatch(&harvestCallback{}, s)
-}
-
-func (h *HarvestInline) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	data := harvestCallback{}
-	if err := data.decode(c.Callback().Data); err != nil || data.tuid != user.TUID {
-		return nil
-	}
-	p, ok := user.PickPlant(data.row, data.column)
-	if !ok {
-		return nil
-	}
-	mention := tu.Mention(c, user)
-	upgradeCost, _ := user.FarmUpgradeCost()
-	farm := format.Farm(mention, user.Farm, upgradeCost)
-	harvest := format.Harvested(mention, p)
-	return c.Edit(farm+"\n\n"+harvest, farmInlineKeyboard(data.tuid, user.Farm), tele.ModeHTML)
 }
 
 type UpgradeFarm struct {

@@ -48,11 +48,14 @@ func NewMarket() *Market {
 // If the number of products at the market would exceed a threshold,
 // older products will be removed.
 func (m *Market) Refill() {
-	const trim = 15
-	product := randomProduct()
-	m.Add(product)
-	if len(m.P) > trim {
-		m.P = m.P[len(m.P)-trim:]
+	m.Add(randomProduct())
+}
+
+// Trim retains the last n market products, removing the preceding
+// ones if necessary.
+func (m *Market) Trim(n int) {
+	if len(m.P) > n {
+		m.P = m.P[len(m.P)-n:]
 	}
 }
 
