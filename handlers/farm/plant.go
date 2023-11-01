@@ -14,7 +14,7 @@ type Plant struct {
 	Universe *game.Universe
 }
 
-var plantRe = handlers.Regexp("^!посадить (.*)")
+var plantRe = handlers.Regexp("^!посадить ([0-9 ]+)")
 
 func (h *Plant) Match(c tele.Context) bool {
 	return plantRe.MatchString(c.Text())
