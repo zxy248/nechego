@@ -56,7 +56,6 @@ func (u *Universe) World(id int64) (*World, error) {
 			return nil, err
 		}
 		u.init(w)
-		w.startPeriodicTasks()
 		u.worlds[id] = w
 	}
 	return w, nil

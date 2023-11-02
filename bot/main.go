@@ -78,10 +78,7 @@ func setup() (*app, error) {
 	return &app{
 		bot: bot,
 		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
-			const want = 10
-			for i := len(w.Market.Products()); i < want; i++ {
-				w.Market.Refill()
-			}
+			runServices(w)
 			w.History.Announce(handlers.RecordAnnouncer(bot, tele.ChatID(w.TGID)))
 		}),
 		avatars: &avatar.Storage{
