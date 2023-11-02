@@ -73,17 +73,17 @@ type Casino struct {
 	diceGame *DiceGame
 }
 
-// DiceThrowFunc represents a function provided by caller that is used
+// RollDiceFunc represents a function provided by caller that is used
 // to get the casino score.
-type DiceThrowFunc func() (score int, err error)
+type RollDiceFunc func() (score int, err error)
 
 // PlayDice starts a dice game. If a game is already going, returns an
 // error.
-func (c *Casino) PlayDice(playerID int64, bet int, throw DiceThrowFunc, timeout func()) error {
+func (c *Casino) PlayDice(playerID int64, bet int, roll RollDiceFunc, timeout func()) error {
 	if c.diceGame.Going() {
 		return errors.New("casino: game already going")
 	}
-	score, err := throw()
+	score, err := roll()
 	if err != nil {
 		return err
 	}

@@ -3,60 +3,62 @@ package casino
 import (
 	"nechego/format"
 	"nechego/game"
-	"nechego/handlers/parse"
+	"nechego/handlers"
 	tu "nechego/teleutil"
-	"time"
+	"strconv"
 
 	tele "gopkg.in/telebot.v3"
 )
 
 type Dice struct {
 	Universe *game.Universe
+	MinBet   int
 }
 
-func (h *Dice) Match(s string) bool {
-	_, ok := diceCommand(s)
-	return ok
+var diceRe = handlers.Regexp("^!кости ([0-9]+)")
+
+func (h *Dice) Match(c tele.Context) bool {
+	return diceRe.MatchString(c.Text())
 }
 
 func (h *Dice) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	bet, ok := diceCommand(c.Text())
-	if !ok {
-		panic("bad dice command")
+	casino := world.Casino
+	bet := diceBet(c.Text())
+	if bet < h.MinBet {
+		s := format.MinBet(h.MinBet)
+		return c.Send(s, tele.ModeHTML)
 	}
-	if min := 100; bet < min {
-		return c.Send(format.MinBet(min), tele.ModeHTML)
-	}
-	if !user.Dice() {
-		return c.Send(format.NoDice)
-	}
-	if world.Casino.Game().Going() {
+	if casino.Game().Going() {
 		return c.Send(format.GameGoing)
 	}
 	if !user.Balance().Spend(bet) {
 		return c.Send(format.NoMoney)
 	}
-	throw := diceThrowFunc(c)
-	timeout := diceTimeoutFunc(c, bet)
-	if err := world.Casino.PlayDice(user.TUID, bet, throw, timeout); err != nil {
+
+	roll := rollDiceFunc(c)
+	timeout := timeoutFunc(c, bet)
+	if err := casino.PlayDice(user.TUID, bet, roll, timeout); err != nil {
 		return err
 	}
-	mention := tu.Mention(c, c.Sender())
-	seconds := int(world.Casino.Timeout / time.Second)
-	return c.Send(format.DiceGame(mention, bet, seconds), tele.ModeHTML)
+
+	m := tu.Mention(c, user)
+	s := format.DiceGame(m, bet, casino.Timeout)
+	return c.Send(s, tele.ModeHTML)
 }
 
-func diceCommand(s string) (bet int, ok bool) {
-	ok = parse.Seq(parse.Match("!кости"), parse.Int(parse.Assign(&bet)))(s)
-	return
+func diceBet(s string) int {
+	m := diceRe.FindStringSubmatch(s)[1]
+	n, _ := strconv.Atoi(m)
+	return n
 }
 
-func diceThrowFunc(c tele.Context) game.DiceThrowFunc {
+func rollDiceFunc(c tele.Context) game.RollDiceFunc {
 	return func() (score int, err error) {
-		m, err := tele.Cube.Send(c.Bot(), c.Chat(), nil)
+		opt := &tele.SendOptions{ReplyTo: c.Message()}
+		m, err := tele.Cube.Send(c.Bot(), c.Chat(), opt)
 		if err != nil {
 			return 0, err
 		}
@@ -64,6 +66,9 @@ func diceThrowFunc(c tele.Context) game.DiceThrowFunc {
 	}
 }
 
-func diceTimeoutFunc(c tele.Context, bet int) func() {
-	return func() { c.Send(format.DiceTimeout(bet), tele.ModeHTML) }
+func timeoutFunc(c tele.Context, bet int) func() {
+	return func() {
+		s := format.DiceTimeout(bet)
+		c.Send(s, tele.ModeHTML)
+	}
 }

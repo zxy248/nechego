@@ -278,9 +278,10 @@ func (a *app) pictureServices() []server.Service {
 
 func (a *app) casinoServices() []server.Service {
 	return []server.Service{
-		&casino.Roll{Universe: a.universe},
-		text(&casino.Dice{Universe: a.universe}),
-		text(&casino.Slot{Universe: a.universe, MinBet: 100}),
+		&casino.DiceRoll{Universe: a.universe},
+		&casino.SlotRoll{Universe: a.universe},
+		&casino.Dice{Universe: a.universe, MinBet: 100},
+		&casino.Slot{Universe: a.universe, MinBet: 100},
 	}
 }
 

@@ -19,11 +19,7 @@ type Server struct {
 }
 
 func (s *Server) Run() {
-	endpoints := []string{
-		tele.OnText,
-		tele.OnPhoto,
-		tele.OnDice,
-	}
+	endpoints := []string{tele.OnText, tele.OnPhoto, tele.OnDice}
 	h := dispatcher(s.Handlers)
 	for _, e := range endpoints {
 		s.Bot.Handle(e, h)

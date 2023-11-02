@@ -26,7 +26,6 @@ const (
 	TypeFishingRod
 	TypeFish
 	TypePet
-	TypeDice
 	TypeFood
 	TypeKnife
 	TypeMeat
@@ -56,8 +55,6 @@ func TypeOf(x any) Type {
 		return TypeFish
 	case *pets.Pet:
 		return TypePet
-	case *token.Dice:
-		return TypeDice
 	case *food.Food:
 		return TypeFood
 	case *tools.Knife:
@@ -99,8 +96,6 @@ func ValueOf(t Type) any {
 		return &fishing.Fish{}
 	case TypePet:
 		return &pets.Pet{}
-	case TypeDice:
-		return &token.Dice{}
 	case TypeFood:
 		return &food.Food{}
 	case TypeKnife:

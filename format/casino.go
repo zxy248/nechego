@@ -3,17 +3,16 @@ package format
 import (
 	"fmt"
 	"nechego/game"
+	"time"
 )
 
-const (
-	NoDice    = "🎲 У вас нет костей."
-	GameGoing = "🎲 Игра уже идет."
-)
+const GameGoing = "🎲 Игра уже идет."
 
-func DiceGame(mention string, bet int, seconds int) string {
+func DiceGame(mention string, bet int, timeout time.Duration) string {
+	sec := int(timeout / time.Second)
 	c := NewConnector("\n")
 	c.Add(fmt.Sprintf("🎲 %s играет на %s", Name(mention), Money(bet)))
-	c.Add(fmt.Sprintf("У вас <code>%d секунд</code> на то, чтобы бросить кости!", seconds))
+	c.Add(fmt.Sprintf("У вас <code>%d секунд</code> на то, чтобы бросить кости!", sec))
 	return c.String()
 }
 

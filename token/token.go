@@ -47,12 +47,6 @@ func (p Pair) Mod() (m *modifier.Mod, ok bool) {
 	}, true
 }
 
-type Dice struct{}
-
-func (d Dice) String() string {
-	return "🎲 Игральные кости"
-}
-
 type Legacy struct {
 	Count int
 }

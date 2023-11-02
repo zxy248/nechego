@@ -12,7 +12,6 @@ import (
 	"nechego/item"
 	"nechego/money"
 	"nechego/pets"
-	"nechego/token"
 	"nechego/tools"
 	"nechego/valid"
 	"strings"
@@ -88,8 +87,6 @@ func randomProduct() *Product {
 		default:
 			panic(fmt.Sprintf("unexpected pet type %d", q))
 		}
-	case *token.Dice:
-		p = price(25000, 10000)
 	case *food.Food:
 		p = price(1000, 500)
 	case *tools.Knife:

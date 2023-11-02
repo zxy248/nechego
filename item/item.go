@@ -93,7 +93,6 @@ func Random() *Item {
 		},
 		0.12: {
 			tools.NewKnife(),
-			&token.Dice{},
 		},
 	}
 	i := []any{}
