@@ -29,12 +29,13 @@ type World struct {
 
 func NewWorld(id int64) *World {
 	return &World{
-		TGID:    id,
-		Users:   []*User{},
-		Floor:   item.NewSet(),
-		Market:  NewMarket(),
-		Casino:  &Casino{Timeout: time.Second * 25},
-		History: fishing.NewHistory(),
+		TGID:     id,
+		Users:    []*User{},
+		Floor:    item.NewSet(),
+		Market:   NewMarket(),
+		Casino:   &Casino{Timeout: time.Second * 25},
+		History:  fishing.NewHistory(),
+		Commands: commands.Commands{},
 	}
 }
 

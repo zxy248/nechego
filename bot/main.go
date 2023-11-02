@@ -11,10 +11,10 @@ import (
 	"nechego/game"
 	"nechego/handlers"
 	"nechego/handlers/casino"
+	"nechego/handlers/command"
 	"nechego/handlers/farm"
 	"nechego/handlers/fun"
 	"nechego/handlers/pictures"
-	"nechego/services/router"
 	"os"
 	"path/filepath"
 	"time"
@@ -114,7 +114,7 @@ func (a *app) services() []server.Service {
 		{a.funServices(), nil},
 		{a.pictureServices(), nil},
 		{a.casinoServices(), spam},
-		{a.nextServices(), nil},
+		{a.commandServices(), nil},
 	}
 
 	var handlers []server.Service
@@ -284,8 +284,12 @@ func (a *app) casinoServices() []server.Service {
 	}
 }
 
-func (a *app) nextServices() []server.Service {
-	return []server.Service{&router.Service{Universe: a.universe}}
+func (a *app) commandServices() []server.Service {
+	return []server.Service{
+		&command.Add{Universe: a.universe},
+		&command.Remove{Universe: a.universe},
+		&command.Use{Universe: a.universe},
+	}
 }
 
 func text(s adapter.TextService) server.Service {
