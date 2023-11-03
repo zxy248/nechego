@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+const (
+	GrowDuration = 4 * time.Hour
+	MinYield     = 2
+	MaxYield     = 4
+)
+
 // Plot represents the Crop's position at the Farm.
 type Plot struct {
 	Row    int
@@ -42,7 +48,7 @@ func (c Crop) String() string {
 	switch {
 	case c.Ready(), c.Empty():
 		return c.Type.String()
-	case time.Until(c.Grown) < 2*time.Hour:
+	case time.Until(c.Grown) < GrowDuration/2:
 		return "🌿"
 	default:
 		return "🌱"
@@ -122,7 +128,7 @@ func listPlants(p map[plant.Type]int) []*plant.Plant {
 func (f *Farm) Pick(q Plot) (p *plant.Plant, ok bool) {
 	if crop := f.Grid[q]; crop.Ready() {
 		delete(f.Grid, q)
-		n := 1 + rand.Intn(3)
+		n := MinYield + rand.Intn(MaxYield-MinYield+1)
 		return &plant.Plant{Type: crop.Type, Count: n}, true
 	}
 	return nil, false
@@ -135,7 +141,7 @@ func (f *Farm) Plant(t plant.Type) bool {
 		for c := 0; c < f.Columns; c++ {
 			p := Plot{r, c}
 			if crop := f.Grid[p]; crop.Empty() {
-				f.Grid[p] = Crop{t, time.Now().Add(4 * time.Hour)}
+				f.Grid[p] = Crop{t, time.Now().Add(GrowDuration)}
 				return true
 			}
 		}

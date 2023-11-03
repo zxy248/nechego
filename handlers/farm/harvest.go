@@ -1,9 +1,11 @@
 package farm
 
 import (
+	"nechego/farm/plant"
 	"nechego/format"
 	"nechego/game"
 	"nechego/handlers"
+	"nechego/item"
 	tu "nechego/teleutil"
 
 	tele "gopkg.in/telebot.v3"
@@ -23,7 +25,15 @@ func (h *Harvest) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	p := user.Harvest()
-	s := format.Harvested(tu.Mention(c, user), p...)
+	ps := harvest(user)
+	s := format.Harvested(tu.MentionSender(c), ps...)
 	return c.Send(s, tele.ModeHTML)
+}
+
+func harvest(u *game.User) []*plant.Plant {
+	ps := u.Farm.Harvest()
+	for _, p := range ps {
+		u.Inventory.Add(item.New(p))
+	}
+	return ps
 }

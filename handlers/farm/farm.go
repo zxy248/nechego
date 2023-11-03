@@ -23,7 +23,7 @@ func (h *Farm) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	n := user.FarmUpgradeCost()
-	s := format.Farm(tu.Mention(c, user), user.Farm, n)
+	n := upgradeCost(user.Farm)
+	s := format.Farm(tu.MentionSender(c), user.Farm, n)
 	return c.Send(s, tele.ModeHTML)
 }

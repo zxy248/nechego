@@ -19,6 +19,10 @@ func Name(m *tele.ChatMember) string {
 	return name
 }
 
+func MentionSender(c tele.Context) string {
+	return Mention(c, c.Sender())
+}
+
 func Mention(c tele.Context, user any) string {
 	var member *tele.ChatMember
 	switch x := user.(type) {

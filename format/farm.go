@@ -73,13 +73,13 @@ func Planted(mention string, p ...*plant.Plant) string {
 	return fmt.Sprintf("🌱 %s посадил(а) %s.", Name(mention), c.String())
 }
 
-func Harvested(mention string, p ...*plant.Plant) string {
-	if len(p) == 0 {
+func Harvested(mention string, ps ...*plant.Plant) string {
+	if len(ps) == 0 {
 		return "🧺 Ничего не собрано."
 	}
 	c := NewConnector(", ")
-	for _, x := range p {
-		c.Add(Plant(x))
+	for _, p := range ps {
+		c.Add(Plant(p))
 	}
 	return fmt.Sprintf("🧺 %s собрал(а) %s.", Name(mention), c.String())
 }
@@ -91,8 +91,8 @@ func FarmUpgraded(mention string, f *farm.Farm, cost int) string {
 	return c.String()
 }
 
-func FarmNamed(mention string, f *farm.Farm) string {
-	return fmt.Sprintf("🏡 %s называет ферму %s.", Name(mention), Title(f.Name))
+func FarmNamed(mention string, name string) string {
+	return fmt.Sprintf("🏡 %s называет ферму %s.", Name(mention), Title(name))
 }
 
 func PriceList(p *game.PriceList) string {
