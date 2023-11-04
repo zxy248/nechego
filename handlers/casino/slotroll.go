@@ -30,7 +30,7 @@ func (h *SlotRoll) Handle(c tele.Context) error {
 		return c.Send(format.NoMoney)
 	}
 
-	m := tu.Mention(c, user)
+	m := tu.Link(c, user)
 	v := c.Message().Dice.Value
 	if p := slot.Prize(v, bet); p > 0 {
 		user.Balance().Add(p)

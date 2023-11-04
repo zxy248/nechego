@@ -5,13 +5,13 @@ import (
 	"nechego/game/reputation"
 )
 
-func ReputationScore(mention string, x string) string {
-	return fmt.Sprintf("Репутация %s: %s", Name(mention), x)
+func ReputationScore(who string, x string) string {
+	return fmt.Sprintf("Репутация %s: %s", Name(who), x)
 }
 
-func ReputationUpdated(mention string, score string, d reputation.Direction) string {
+func ReputationUpdated(who string, score string, d reputation.Direction) string {
 	return Lines(
-		Bold(Words("⭐️", "Репутация", Name(mention),
+		Bold(Words("⭐️", "Репутация", Name(who),
 			reputationDirection(d), "на", Code("1"))),
 		Words("Теперь репутация:", score),
 	)

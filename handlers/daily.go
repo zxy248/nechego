@@ -26,8 +26,8 @@ func (h *DailyEblan) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("😸")
 	}
-	mention := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(eblan.TUID)))
-	out := fmt.Sprintf("<b>Еблан дня</b> — %s 😸", mention)
+	who := teleutil.Link(c, teleutil.Member(c, tele.ChatID(eblan.TUID)))
+	out := fmt.Sprintf("<b>Еблан дня</b> — %s 😸", who)
 	return c.Send(out, tele.ModeHTML)
 }
 
@@ -49,7 +49,7 @@ func (h *DailyAdmin) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("👑")
 	}
-	m := teleutil.Mention(c, teleutil.Member(c, tele.ChatID(admin.TUID)))
+	m := teleutil.Link(c, teleutil.Member(c, tele.ChatID(admin.TUID)))
 	out := fmt.Sprintf("<b>Админ дня</b> — %s 👑", m)
 	return c.Send(out, tele.ModeHTML)
 }
@@ -72,8 +72,8 @@ func (h *DailyPair) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send("💔")
 	}
-	m0 := teleutil.Mention(c, tele.ChatID(pair[0].TUID))
-	m1 := teleutil.Mention(c, tele.ChatID(pair[1].TUID))
+	m0 := teleutil.Link(c, tele.ChatID(pair[0].TUID))
+	m1 := teleutil.Link(c, tele.ChatID(pair[1].TUID))
 	out := fmt.Sprintf("<b>✨ Пара дня</b> — %s 💘 %s", m0, m1)
 	return c.Send(out, tele.ModeHTML)
 }

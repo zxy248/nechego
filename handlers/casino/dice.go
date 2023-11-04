@@ -44,7 +44,7 @@ func (h *Dice) Handle(c tele.Context) error {
 		return err
 	}
 
-	m := tu.Mention(c, user)
+	m := tu.Link(c, user)
 	s := format.DiceGame(m, bet, casino.Timeout)
 	return c.Send(s, tele.ModeHTML)
 }

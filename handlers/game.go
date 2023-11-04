@@ -43,7 +43,7 @@ func (h *Inventory) Handle(c tele.Context) error {
 		warn = " (!)"
 	}
 	head := fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>\n",
-		tu.Mention(c, user), len(items), inventoryCapacity, warn)
+		tu.Link(c, user), len(items), inventoryCapacity, warn)
 	list := format.Items(items)
 	return c.Send(head+list, tele.ModeHTML)
 }
@@ -108,7 +108,7 @@ func (h *Catch) Handle(c tele.Context) error {
 			world.History.Add(user.TUID, f)
 		}
 	}
-	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", tu.Mention(c, user))
+	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", tu.Link(c, user))
 	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
 }
@@ -141,7 +141,7 @@ func (h *Drop) Handle(c tele.Context) error {
 		dropped = append(dropped, item)
 	}
 	world.Floor.Trim(10)
-	return c.Send(format.Dropped(tu.Mention(c, user), dropped...), tele.ModeHTML)
+	return c.Send(format.Dropped(tu.Link(c, user), dropped...), tele.ModeHTML)
 }
 
 type Pick struct {
@@ -175,7 +175,7 @@ func (h *Pick) Handle(c tele.Context) error {
 		}
 		picked = append(picked, item)
 	}
-	return c.Send(format.Picked(tu.Mention(c, user), picked...), tele.ModeHTML)
+	return c.Send(format.Picked(tu.Link(c, user), picked...), tele.ModeHTML)
 }
 
 type Floor struct {
@@ -211,11 +211,11 @@ func (h *Market) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	var mention string
+	var who string
 	if id, ok := world.Market.Shift.Worker(); ok {
-		mention = tu.Mention(c, id)
+		who = tu.Link(c, id)
 	}
-	return c.Send(format.Market(mention, world.Market), tele.ModeHTML)
+	return c.Send(format.Market(who, world.Market), tele.ModeHTML)
 }
 
 type PriceList struct {
@@ -278,7 +278,7 @@ func (h *GetJob) Handle(c tele.Context) error {
 		return c.Send(format.CannotGetJob)
 	}
 	user.Retired = time.Now().Add(shiftHours * time.Hour)
-	return c.Send(format.GetJob(tu.Mention(c, user), shiftHours), tele.ModeHTML)
+	return c.Send(format.GetJob(tu.Link(c, user), shiftHours), tele.ModeHTML)
 }
 
 type QuitJob struct {
@@ -297,7 +297,7 @@ func (h *QuitJob) Handle(c tele.Context) error {
 
 	if id, ok := world.Market.Shift.Worker(); ok && id == user.TUID {
 		world.Market.Shift.Cancel()
-		return c.Send(format.FireJob(tu.Mention(c, id)), tele.ModeHTML)
+		return c.Send(format.FireJob(tu.Link(c, id)), tele.ModeHTML)
 	}
 	return c.Send(format.CannotFireJob)
 }
@@ -334,7 +334,7 @@ func (h *Buy) Handle(c tele.Context) error {
 		bought = append(bought, p.Item)
 		cost += p.Price
 	}
-	return c.Send(format.Bought(tu.Mention(c, user), cost, bought...), tele.ModeHTML)
+	return c.Send(format.Bought(tu.Link(c, user), cost, bought...), tele.ModeHTML)
 }
 
 type Eat struct {
@@ -367,7 +367,7 @@ func (h *Eat) Handle(c tele.Context) error {
 		}
 		eaten = append(eaten, item)
 	}
-	return c.Send(format.Eaten(tu.Mention(c, user), eaten...)+"\n\n"+
+	return c.Send(format.Eaten(tu.Link(c, user), eaten...)+"\n\n"+
 		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 
 }
@@ -397,7 +397,7 @@ func (h *EatQuick) Handle(c tele.Context) error {
 		}
 		eaten = append(eaten, x)
 	}
-	return c.Send(format.Eaten(tu.Mention(c, user), eaten...)+"\n\n"+
+	return c.Send(format.Eaten(tu.Link(c, user), eaten...)+"\n\n"+
 		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
@@ -437,7 +437,7 @@ func (h *Fish) Handle(c tele.Context) error {
 		world.History.Add(user.TUID, f)
 	}
 	user.Inventory.Add(item)
-	return c.Send(format.FishCatch(tu.Mention(c, user), item), tele.ModeHTML)
+	return c.Send(format.FishCatch(tu.Link(c, user), item), tele.ModeHTML)
 }
 
 type CastNet struct {
@@ -575,7 +575,7 @@ func (h *Craft) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.CannotCraft)
 	}
-	return c.Send(format.Crafted(tu.Mention(c, user), crafted...), tele.ModeHTML)
+	return c.Send(format.Crafted(tu.Link(c, user), crafted...), tele.ModeHTML)
 }
 
 type Status struct {
@@ -644,7 +644,7 @@ func (h *Sell) Handle(c tele.Context) error {
 		total += profit
 		sold = append(sold, item)
 	}
-	return c.Send(format.Sold(tu.Mention(c, user), total, sold...), tele.ModeHTML)
+	return c.Send(format.Sold(tu.Link(c, user), total, sold...), tele.ModeHTML)
 }
 
 type SellQuick struct {
@@ -676,7 +676,7 @@ func (h *SellQuick) Handle(c tele.Context) error {
 		total += profit
 		sold = append(sold, item)
 	}
-	return c.Send(format.Sold(tu.Mention(c, user), total, sold...), tele.ModeHTML)
+	return c.Send(format.Sold(tu.Link(c, user), total, sold...), tele.ModeHTML)
 }
 
 type Stack struct {
@@ -733,7 +733,7 @@ func (h *Split) Handle(c tele.Context) error {
 		return c.Send(format.CannotSplit(whole), tele.ModeHTML)
 	}
 	user.Inventory.Add(part)
-	return c.Send(format.Splitted(tu.Mention(c, user), part), tele.ModeHTML)
+	return c.Send(format.Splitted(tu.Link(c, user), part), tele.ModeHTML)
 }
 
 type Cashout struct {
@@ -803,24 +803,24 @@ func (h *Fight) Handle(c tele.Context) error {
 
 	msg := format.NewConnector("\n\n")
 	msg.Add(format.Fight(
-		tu.Mention(c, user.TUID),
-		tu.Mention(c, opnt.TUID),
+		tu.Link(c, user.TUID),
+		tu.Link(c, opnt.TUID),
 		user.Strength(world),
 		opnt.Strength(world)))
 
 	// The winner takes a random item.
 	if rand.Float64() < 0.02 {
 		if x, ok := moveRandomItem(win.Inventory, lose.Inventory); ok {
-			msg.Add(format.WinnerTook(tu.Mention(c, win), x))
+			msg.Add(format.WinnerTook(tu.Link(c, win), x))
 		}
 	}
 	// The attacker drops a random item.
 	if rand.Float64() < 0.04 {
 		if x, ok := moveRandomItem(world.Floor, user.Inventory); ok {
-			msg.Add(format.AttackerDrop(tu.Mention(c, user), x))
+			msg.Add(format.AttackerDrop(tu.Link(c, user), x))
 		}
 	}
-	msg.Add(format.Win(tu.Mention(c, win), elo))
+	msg.Add(format.Win(tu.Link(c, win), elo))
 	return c.Send(msg.String(), tele.ModeHTML)
 }
 
@@ -851,7 +851,7 @@ func (h *Profile) Handle(c tele.Context) error {
 		user = world.UserByID(u.ID)
 	}
 
-	out := format.Profile(tu.Mention(c, user), user, world)
+	out := format.Profile(tu.Link(c, user), user, world)
 	if a, ok := h.Avatars.Get(user.TUID); ok {
 		a.Caption = out
 		return c.Send(a, tele.ModeHTML)
@@ -878,7 +878,7 @@ func (h *TopStrong) Handle(c tele.Context) error {
 	list := []string{"🏋️‍♀️ <b>Самые сильные пользователи</b>"}
 	for i, u := range users {
 		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, tu.Mention(c, u.TUID), format.Strength(u.Strength(world))))
+			i+1, tu.Link(c, u.TUID), format.Strength(u.Strength(world))))
 	}
 	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
 }
@@ -897,13 +897,13 @@ func (h *TopRating) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	mention := func(u *game.User) string { return tu.Mention(c, u.TUID) }
+	who := func(u *game.User) string { return tu.Link(c, u.TUID) }
 	users := world.SortedUsers(game.ByElo)
 	const limit = 10
 	if len(users) > limit {
 		users = users[:limit]
 	}
-	return c.Send(format.TopRating(mention, users...), tele.ModeHTML)
+	return c.Send(format.TopRating(who, users...), tele.ModeHTML)
 }
 
 type TopRich struct {
@@ -925,7 +925,7 @@ func (h *TopRich) Handle(c tele.Context) error {
 	list := []string{"💵 <b>Самые богатые пользователи</b>"}
 	for i, u := range users {
 		list = append(list, fmt.Sprintf("<b><i>%d.</i></b> %s %s",
-			i+1, tu.Mention(c, u.TUID), format.Money(u.Balance().Total())))
+			i+1, tu.Link(c, u.TUID), format.Money(u.Balance().Total())))
 	}
 	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
 }
@@ -955,7 +955,7 @@ func (h *Capital) Handle(c tele.Context) error {
 		fmt.Sprintf("<i>В среднем на счету: %s</i>\n",
 			format.Money(avg)),
 		fmt.Sprintf("<i>В руках магната %s %s,</i>",
-			tu.Mention(c, users[0].TUID), format.Money(balance)),
+			tu.Link(c, users[0].TUID), format.Money(balance)),
 		fmt.Sprintf("<i>или %s от общего количества средств.</i>\n",
 			format.Percentage(float64(balance)/float64(total))),
 	}
@@ -1002,7 +1002,7 @@ func (h *Funds) Handle(c tele.Context) error {
 		user.Inventory.Add(f.Item)
 	}
 	user.Inventory.Stack()
-	return c.Send(format.FundsCollected(tu.Mention(c, user), collected...), tele.ModeHTML)
+	return c.Send(format.FundsCollected(tu.Link(c, user), collected...), tele.ModeHTML)
 }
 
 type Energy struct {

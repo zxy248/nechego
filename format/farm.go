@@ -13,9 +13,9 @@ const (
 	BadFarmName = "🏡 Такое название не подходит для фермы."
 )
 
-func Farm(mention string, f *farm.Farm, upgradeCost int) string {
+func Farm(who string, f *farm.Farm, upgradeCost int) string {
 	c := NewConnector("\n")
-	c.Add(farmHeader(mention, f))
+	c.Add(farmHeader(who, f))
 	c.Add(f.String())
 	if until := f.Until(); until > 0 {
 		c.Add(fmt.Sprintf("<i>🌾 До урожая осталось %s</i>", Duration(until)))
@@ -34,13 +34,13 @@ func Farm(mention string, f *farm.Farm, upgradeCost int) string {
 	return c.String()
 }
 
-func farmHeader(mention string, f *farm.Farm) string {
+func farmHeader(who string, f *farm.Farm) string {
 	name := ""
 	if f.Name != "" {
 		name = " " + Title(f.Name)
 	}
 	return fmt.Sprintf("<b>🏡 %s: Ферма%s (%d × %d)</b>",
-		Name(mention), name, f.Rows, f.Columns)
+		Name(who), name, f.Rows, f.Columns)
 }
 
 func declPlant(n int) string {
@@ -62,7 +62,7 @@ func CannotPlant(i *item.Item) string {
 	return fmt.Sprintf("🌱 Нельзя посадить %s.", Item(i))
 }
 
-func Planted(mention string, p ...*plant.Plant) string {
+func Planted(who string, p ...*plant.Plant) string {
 	if len(p) == 0 {
 		return "🌱 Ничего не посажено."
 	}
@@ -70,10 +70,10 @@ func Planted(mention string, p ...*plant.Plant) string {
 	for _, x := range p {
 		c.Add(Plant(x))
 	}
-	return fmt.Sprintf("🌱 %s посадил(а) %s.", Name(mention), c.String())
+	return fmt.Sprintf("🌱 %s посадил(а) %s.", Name(who), c.String())
 }
 
-func Harvested(mention string, ps ...*plant.Plant) string {
+func Harvested(who string, ps ...*plant.Plant) string {
 	if len(ps) == 0 {
 		return "🧺 Ничего не собрано."
 	}
@@ -81,18 +81,18 @@ func Harvested(mention string, ps ...*plant.Plant) string {
 	for _, p := range ps {
 		c.Add(Plant(p))
 	}
-	return fmt.Sprintf("🧺 %s собрал(а) %s.", Name(mention), c.String())
+	return fmt.Sprintf("🧺 %s собрал(а) %s.", Name(who), c.String())
 }
 
-func FarmUpgraded(mention string, f *farm.Farm, cost int) string {
+func FarmUpgraded(who string, f *farm.Farm, cost int) string {
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("💸 %s приобрел(а) землю за %s.", Name(mention), Money(cost)))
+	c.Add(fmt.Sprintf("💸 %s приобрел(а) землю за %s.", Name(who), Money(cost)))
 	c.Add(fmt.Sprintf("🏡 Новый размер фермы: <b>%d × %d</b>.", f.Rows, f.Columns))
 	return c.String()
 }
 
-func FarmNamed(mention string, name string) string {
-	return fmt.Sprintf("🏡 %s называет ферму %s.", Name(mention), Title(name))
+func FarmNamed(who string, name string) string {
+	return fmt.Sprintf("🏡 %s называет ферму %s.", Name(who), Title(name))
 }
 
 func PriceList(p *game.PriceList) string {

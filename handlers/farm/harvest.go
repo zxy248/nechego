@@ -26,7 +26,7 @@ func (h *Harvest) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	ps := harvest(user)
-	s := format.Harvested(tu.MentionSender(c), ps...)
+	s := format.Harvested(tu.LinkSender(c), ps...)
 	return c.Send(s, tele.ModeHTML)
 }
 

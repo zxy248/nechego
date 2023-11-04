@@ -32,7 +32,7 @@ func (h *Slot) Handle(c tele.Context) error {
 	}
 	user.SlotBet = bet
 
-	m := tu.Mention(c, user)
+	m := tu.Link(c, user)
 	s := format.BetSet(m, bet)
 	return c.Send(s, tele.ModeHTML)
 }

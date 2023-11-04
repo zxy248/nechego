@@ -30,7 +30,7 @@ func (h *Name) Handle(c tele.Context) error {
 	if !setFarmName(user.Farm, n) {
 		return c.Send(format.BadFarmName)
 	}
-	s := format.FarmNamed(tu.MentionSender(c), n)
+	s := format.FarmNamed(tu.LinkSender(c), n)
 	return c.Send(s, tele.ModeHTML)
 }
 

@@ -19,34 +19,34 @@ func Name(m *tele.ChatMember) string {
 	return name
 }
 
-func MentionSender(c tele.Context) string {
-	return Mention(c, c.Sender())
-}
-
-func Mention(c tele.Context, user any) string {
-	var member *tele.ChatMember
-	switch x := user.(type) {
+func Link(c tele.Context, who any) string {
+	var m *tele.ChatMember
+	switch x := who.(type) {
 	case *tele.ChatMember:
-		member = x
+		m = x
 	case tele.Recipient:
-		member = Member(c, x)
+		m = Member(c, x)
 	case int64:
-		member = Member(c, tele.ChatID(x))
+		m = Member(c, tele.ChatID(x))
 	case *game.User:
-		member = Member(c, tele.ChatID(x.TUID))
+		m = Member(c, tele.ChatID(x.TUID))
 	default:
 		panic(fmt.Sprintf("unexpected type %T", x))
 	}
 	const format = `<a href="tg://user?id=%d">%s</a>`
-	return fmt.Sprintf(format, member.User.ID, html.EscapeString(Name(member)))
+	return fmt.Sprintf(format, m.User.ID, html.EscapeString(Name(m)))
+}
+
+func LinkSender(c tele.Context) string {
+	return Link(c, c.Sender())
 }
 
 func Args(c tele.Context, re *regexp.Regexp) []string {
 	return re.FindStringSubmatch(c.Text())
 }
 
-func Member(c tele.Context, user tele.Recipient) *tele.ChatMember {
-	m, err := c.Bot().ChatMemberOf(c.Chat(), user)
+func Member(c tele.Context, r tele.Recipient) *tele.ChatMember {
+	m, err := c.Bot().ChatMemberOf(c.Chat(), r)
 	if err != nil {
 		panic("cannot get chat member")
 	}

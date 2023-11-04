@@ -37,7 +37,7 @@ func (h *Upgrade) Handle(c tele.Context) error {
 	if !upgradeFarm(user, n) {
 		return c.Send(format.NoMoney)
 	}
-	s := format.FarmUpgraded(tu.MentionSender(c), user.Farm, n)
+	s := format.FarmUpgraded(tu.LinkSender(c), user.Farm, n)
 	return c.Send(s, tele.ModeHTML)
 }
 

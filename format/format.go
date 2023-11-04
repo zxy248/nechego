@@ -48,6 +48,10 @@ const (
 	NonFriendTransfer    = "📦 Вещи можно передавать только тем, кто с вами дружит."
 )
 
+func Link(id int64, text string) string {
+	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, text)
+}
+
 func Item(i *item.Item) string {
 	return fmt.Sprintf("<code>%s</code>", i.Value)
 }
@@ -129,7 +133,7 @@ func EnergyRemaining(e game.Energy) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
-func Eaten(mention string, i ...*item.Item) string {
+func Eaten(who string, i ...*item.Item) string {
 	if len(i) == 0 {
 		return NoFood
 	}
@@ -141,7 +145,7 @@ func Eaten(mention string, i ...*item.Item) string {
 		}
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("%s %s %s %s.", emoji, Name(mention), verb, c.String())
+	return fmt.Sprintf("%s %s %s %s.", emoji, Name(who), verb, c.String())
 }
 
 func CannotEat(i ...*item.Item) string {
@@ -204,7 +208,7 @@ func CannotDrop(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя выложить %s.", Item(i))
 }
 
-func Dropped(mention string, i ...*item.Item) string {
+func Dropped(who string, i ...*item.Item) string {
 	if len(i) == 0 {
 		return "♻ Ничего не выложено."
 	}
@@ -212,14 +216,14 @@ func Dropped(mention string, i ...*item.Item) string {
 	for _, x := range i {
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("♻ %s выкладывает %s.", Name(mention), c.String())
+	return fmt.Sprintf("♻ %s выкладывает %s.", Name(who), c.String())
 }
 
 func CannotPick(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя взять %s.", Item(i))
 }
 
-func Picked(mention string, i ...*item.Item) string {
+func Picked(who string, i ...*item.Item) string {
 	if len(i) == 0 {
 		return "🫳 Ничего не взято."
 	}
@@ -227,14 +231,14 @@ func Picked(mention string, i ...*item.Item) string {
 	for _, x := range i {
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("🫳 %s берёт %s.", Name(mention), c.String())
+	return fmt.Sprintf("🫳 %s берёт %s.", Name(who), c.String())
 }
 
 func CannotSell(i *item.Item) string {
 	return fmt.Sprintf("🏪 Нельзя продать %s.", Item(i))
 }
 
-func Sold(mention string, profit int, i ...*item.Item) string {
+func Sold(who string, profit int, i ...*item.Item) string {
 	if len(i) == 0 {
 		return "💵 Ничего не продано."
 	}
@@ -243,10 +247,10 @@ func Sold(mention string, profit int, i ...*item.Item) string {
 		c.Add(Item(x))
 	}
 	return fmt.Sprintf("💵 %s продаёт %s и зарабатывает %s.",
-		Name(mention), c.String(), Money(profit))
+		Name(who), c.String(), Money(profit))
 }
 
-func Bought(mention string, cost int, i ...*item.Item) string {
+func Bought(who string, cost int, i ...*item.Item) string {
 	if len(i) == 0 {
 		return "💵 Ничего не куплено."
 	}
@@ -255,10 +259,10 @@ func Bought(mention string, cost int, i ...*item.Item) string {
 		c.Add(Item(x))
 	}
 	return fmt.Sprintf("🛒 %s покупает %s за %s.",
-		Name(mention), c.String(), Money(cost))
+		Name(who), c.String(), Money(cost))
 }
 
-func Crafted(mention string, i ...*item.Item) string {
+func Crafted(who string, i ...*item.Item) string {
 	if len(i) == 0 {
 		return "🛠 Ничего не сделано."
 	}
@@ -266,7 +270,7 @@ func Crafted(mention string, i ...*item.Item) string {
 	for _, x := range i {
 		c.Add(Item(x))
 	}
-	return fmt.Sprintf("🛠 %s получает %s.", Name(mention), c.String())
+	return fmt.Sprintf("🛠 %s получает %s.", Name(who), c.String())
 }
 
 func BadFishOutcome() string {
@@ -281,8 +285,8 @@ func BadFishOutcome() string {
 	return "🎣 " + outcomes[rand.Intn(len(outcomes))]
 }
 
-func FishCatch(mention string, i *item.Item) string {
-	return fmt.Sprintf("🎣 %s получает %s.", Name(mention), Item(i))
+func FishCatch(who string, i *item.Item) string {
+	return fmt.Sprintf("🎣 %s получает %s.", Name(who), Item(i))
 }
 
 func DrawNet(n *fishing.Net) string {
@@ -322,39 +326,39 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 	c.Add("")
 	c.Add("<b>💰 Самые дорогие рыбы:</b>")
 	for i, e := range price {
-		n := fmt.Sprintf("<b><i>%s</i></b>. ", mention(e.TUID, strconv.Itoa(1+i)))
+		n := fmt.Sprintf("<b><i>%s</i></b>. ", Link(e.TUID, strconv.Itoa(1+i)))
 		c.Add(n + Fish(e.Fish) + ", " + Money(int(e.Fish.Price())))
 	}
 	c.Add("")
 	c.Add("<b>⚖ Самая тяжёлая рыба:</b>")
-	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", mention(weight.TUID, "→"), Fish(weight.Fish)))
+	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(weight.TUID, "→"), Fish(weight.Fish)))
 	c.Add("")
 	c.Add("<b>📐 Самая большая рыба:</b>")
-	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", mention(length.TUID, "→"), Fish(length.Fish)))
+	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(length.TUID, "→"), Fish(length.Fish)))
 	return c.String()
 }
 
-func Fight(mentionA, mentionB string, strengthA, strengthB float64) string {
+func Fight(who1, who2 string, str1, str2 float64) string {
 	const fighter = "%s <code>[%.2f]</code>"
 	const versus = "<b><i>vs.</i></b>"
 	const fight = "⚔️ " + fighter + " " + versus + " " + fighter
-	return fmt.Sprintf(fight, Name(mentionA), strengthA, Name(mentionB), strengthB)
+	return fmt.Sprintf(fight, Name(who1), str1, Name(who2), str2)
 }
 
-func WinnerTook(mention string, i *item.Item) string {
-	return fmt.Sprintf("🥊 %s забирает %s у проигравшего.", Name(mention), Item(i))
+func WinnerTook(who string, i *item.Item) string {
+	return fmt.Sprintf("🥊 %s забирает %s у проигравшего.", Name(who), Item(i))
 }
 
-func AttackerDrop(mention string, i *item.Item) string {
-	return fmt.Sprintf("🌀 %s уронил %s во время драки.", Name(mention), Item(i))
+func AttackerDrop(who string, i *item.Item) string {
+	return fmt.Sprintf("🌀 %s уронил %s во время драки.", Name(who), Item(i))
 }
 
-func Win(mention string, elo float64) string {
-	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", Name(mention), elo)
+func Win(who string, elo float64) string {
+	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", Name(who), elo)
 }
 
-func Profile(mention string, u *game.User, w *game.World) string {
-	head := fmt.Sprintf("<b>📇 %s: Профиль</b>", Name(mention))
+func Profile(who string, u *game.User, w *game.World) string {
+	head := fmt.Sprintf("<b>📇 %s: Профиль</b>", Name(who))
 	entries := []string{
 		Energy(u.Energy),
 		ReputationPrefix(
@@ -391,12 +395,12 @@ func profileTable(entries []string) string {
 	return strings.Join(lines, "\n")
 }
 
-func FundsCollected(mention string, f ...*game.Fund) string {
+func FundsCollected(who string, f ...*game.Fund) string {
 	if len(f) == 0 {
 		return "🧾 Средств пока нет."
 	}
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", Name(mention)))
+	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", Name(who)))
 	for i, x := range f {
 		if rest := len(f) - i; i >= 15 && rest >= 5 {
 			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> пунктов.</i>", rest))
@@ -407,52 +411,52 @@ func FundsCollected(mention string, f ...*game.Fund) string {
 	return c.String()
 }
 
-func GetJob(mention string, hours int) string {
+func GetJob(who string, hours int) string {
 	return fmt.Sprintf("💼 %s получает работу на <code>%d %s</code>.",
-		Name(mention), hours, declHours(hours))
+		Name(who), hours, declHours(hours))
 }
 
-func MarketShift(mention string, s game.Shift) string {
+func MarketShift(who string, s game.Shift) string {
 	const clock = "<code>%02d:%02d</code>"
 	const format = "🪪 С " + clock + " по " + clock + " вас обслуживает %s."
 	return fmt.Sprintf(format,
 		s.Start.Hour(), s.Start.Minute(),
 		s.End.Hour(), s.End.Minute(),
-		Name(mention))
+		Name(who))
 }
 
-func Market(mention string, m *game.Market) string {
+func Market(who string, m *game.Market) string {
 	c := NewConnector("\n")
 	c.Add(fmt.Sprintf("<b>%v</b>", m))
-	if mention != "" {
-		c.Add(MarketShift(mention, m.Shift))
+	if who != "" {
+		c.Add(MarketShift(who, m.Shift))
 	}
 	c.Add(Products(m.Products()))
 	return c.String()
 }
 
-func FireJob(mention string) string {
-	return fmt.Sprintf("💼 %s покидает место работы.", Name(mention))
+func FireJob(who string) string {
+	return fmt.Sprintf("💼 %s покидает место работы.", Name(who))
 }
 
 func CannotSplit(i *item.Item) string {
 	return fmt.Sprintf("🗃 Нельзя разделить %s.", Item(i))
 }
 
-func Splitted(mention string, i *item.Item) string {
-	return fmt.Sprintf("🗃 %s откладывает %s.", Name(mention), Item(i))
+func Splitted(who string, i *item.Item) string {
+	return fmt.Sprintf("🗃 %s откладывает %s.", Name(who), Item(i))
 }
 
-func TopRating(mention func(*game.User) string, users ...*game.User) string {
-	if len(users) == 0 {
+func TopRating(who func(*game.User) string, us ...*game.User) string {
+	if len(us) == 0 {
 		return fmt.Sprintf("🏆 Пользователей пока нет.")
 	}
 	c := NewConnector("\n")
 	c.Add("<b>🏆 Боевой рейтинг</b>")
-	for i, u := range users {
+	for i, u := range us {
 		c.Add(fmt.Sprintf("%s %s %s",
 			Index(i),
-			Name(mention(u)),
+			Name(who(u)),
 			Rating(u.Rating)))
 	}
 	return c.String()
@@ -462,24 +466,24 @@ func Index(i int) string {
 	return fmt.Sprintf("<b><i>%d.</i></b>", 1+i)
 }
 
-func FriendRemoved(mentionA, mentionB string) string {
-	return fmt.Sprintf("😰 %s теперь не дружит с %s.", Name(mentionA), Name(mentionB))
+func FriendRemoved(who1, who2 string) string {
+	return fmt.Sprintf("😰 %s теперь не дружит с %s.", Name(who1), Name(who2))
 }
 
-func FriendAdded(mentionA, mentionB string) string {
-	return fmt.Sprintf("😊 %s теперь дружит с %s.", Name(mentionA), Name(mentionB))
+func FriendAdded(who1, who2 string) string {
+	return fmt.Sprintf("😊 %s теперь дружит с %s.", Name(who1), Name(who2))
 }
 
-func MutualFriends(mentionA, mentionB string) string {
-	return fmt.Sprintf("🤝 %s и %s теперь друзья.", Name(mentionA), Name(mentionB))
+func MutualFriends(who1, who2 string) string {
+	return fmt.Sprintf("🤝 %s и %s теперь друзья.", Name(who1), Name(who2))
 }
 
 type Friend struct {
-	Mention string
-	Mutual  bool
+	Who    string
+	Mutual bool
 }
 
-func FriendList(mention string, friends []Friend) string {
+func FriendList(who string, friends []Friend) string {
 	mutual := 0
 	c := NewConnector("\n")
 	for _, f := range friends {
@@ -488,10 +492,10 @@ func FriendList(mention string, friends []Friend) string {
 			mutual++
 			e = "❤️"
 		}
-		c.Add(e + " " + Name(f.Mention))
+		c.Add(e + " " + Name(f.Who))
 	}
 	header := fmt.Sprintf("<b>👥 %s: Друзья <code>[%d/%d]</code></b>",
-		Name(mention), mutual, len(friends))
+		Name(who), mutual, len(friends))
 	return header + "\n" + c.String()
 }
 
@@ -571,8 +575,4 @@ func declCaught(n int) string {
 		return "Поймана"
 	}
 	return "Поймано"
-}
-
-func mention(id int64, text string) string {
-	return fmt.Sprintf(`<a href="tg://user?id=%d">%s</a>`, id, text)
 }

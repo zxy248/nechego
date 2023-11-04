@@ -86,7 +86,7 @@ func (h *Who) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	m := tu.Mention(c, world.RandomUser())
+	m := tu.Link(c, world.RandomUser())
 	s := html.EscapeString(text)
 	return c.Send(m+" "+s, tele.ModeHTML)
 }
@@ -113,8 +113,8 @@ func (h *List) Handle(c tele.Context) error {
 	arg := tu.Args(c, listRe)[1]
 	s := []string{fmt.Sprintf("<b>📝 Список %s</b>", arg)}
 	for _, u := range users {
-		mention := tu.Mention(c, tu.Member(c, tele.ChatID(u.TUID)))
-		s = append(s, fmt.Sprintf("<b>•</b> %s", mention))
+		who := tu.Link(c, tu.Member(c, tele.ChatID(u.TUID)))
+		s = append(s, fmt.Sprintf("<b>•</b> %s", who))
 	}
 	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
 }
@@ -136,7 +136,7 @@ func (h *Top) Handle(c tele.Context) error {
 	users := world.RandomUsers(3 + rand.Intn(3))
 	s := []string{fmt.Sprintf("<b>🏆 Топ %s</b>", text)}
 	for i, u := range users {
-		s = append(s, fmt.Sprintf("<i>%d.</i> %s", 1+i, tu.Mention(c, u)))
+		s = append(s, fmt.Sprintf("<i>%d.</i> %s", 1+i, tu.Link(c, u)))
 	}
 	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
 }

@@ -55,8 +55,12 @@ func MatchPrefixes(ps []string, s string) bool {
 }
 
 func Numbers(s string) []int {
+	const lim = 10
 	var ns []int
-	for _, x := range strings.Fields(s) {
+	for i, x := range strings.Fields(s) {
+		if i == lim {
+			break
+		}
 		n, err := strconv.Atoi(x)
 		if err != nil {
 			break

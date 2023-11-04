@@ -40,7 +40,7 @@ func (h *Plant) Handle(c tele.Context) error {
 		}
 		planted = append(planted, p)
 	}
-	s := format.Planted(tu.MentionSender(c), planted...)
+	s := format.Planted(tu.LinkSender(c), planted...)
 	return c.Send(s, tele.ModeHTML)
 }
 

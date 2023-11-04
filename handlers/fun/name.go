@@ -67,6 +67,6 @@ func (h *CheckName) Match(s string) bool {
 }
 
 func (h *CheckName) Handle(c tele.Context) error {
-	name := tu.Mention(c, c.Sender())
+	name := tu.Link(c, c.Sender())
 	return c.Send(format.YourName(name), tele.ModeHTML)
 }

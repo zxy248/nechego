@@ -25,12 +25,12 @@ func (h *Reputation) Handle(c tele.Context) error {
 
 func (_ *Reputation) HandleWorld(c tele.Context, w *game.World) error {
 	u := tu.CurrentUser(c, w)
-	mention := tu.Mention(c, u)
+	who := tu.Link(c, u)
 	score := u.Reputation.Score()
 	low := w.MinReputation()
 	high := w.MaxReputation()
 	r := format.ReputationSuffix(score, low, high)
-	return c.Send(format.ReputationScore(mention, r), tele.ModeHTML)
+	return c.Send(format.ReputationScore(who, r), tele.ModeHTML)
 }
 
 type UpdateReputation struct {
@@ -56,12 +56,12 @@ func (_ *UpdateReputation) HandleWorld(c tele.Context, w *game.World) error {
 	d, _ := reputationDirection(c.Message().Text)
 	v.Reputation = v.Reputation.Update(u.TUID, d)
 
-	mention := tu.Mention(c, v)
+	who := tu.Link(c, v)
 	score := v.Reputation.Score()
 	low := w.MinReputation()
 	high := w.MaxReputation()
 	r := format.ReputationSuffix(score, low, high)
-	return c.Send(format.ReputationUpdated(mention, r, d), tele.ModeHTML)
+	return c.Send(format.ReputationUpdated(who, r, d), tele.ModeHTML)
 }
 
 func reputationDirection(s string) (d reputation.Direction, ok bool) {

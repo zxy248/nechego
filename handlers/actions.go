@@ -32,17 +32,17 @@ func (h *Friends) Handle(c tele.Context) error {
 		if user.Friends.With(target) {
 			user.Friends.Remove(target)
 			return c.Send(format.FriendRemoved(
-				tu.Mention(c, user), tu.Mention(c, target)),
+				tu.Link(c, user), tu.Link(c, target)),
 				tele.ModeHTML)
 		} else {
 			user.Friends.Add(target)
 			if game.MutualFriends(user, target) {
 				return c.Send(format.MutualFriends(
-					tu.Mention(c, user), tu.Mention(c, target)),
+					tu.Link(c, user), tu.Link(c, target)),
 					tele.ModeHTML)
 			} else {
 				return c.Send(format.FriendAdded(
-					tu.Mention(c, user), tu.Mention(c, target)),
+					tu.Link(c, user), tu.Link(c, target)),
 					tele.ModeHTML)
 			}
 		}
@@ -52,11 +52,11 @@ func (h *Friends) Handle(c tele.Context) error {
 	for _, id := range list {
 		target := world.UserByID(id)
 		friends = append(friends, format.Friend{
-			Mention: tu.Mention(c, target),
-			Mutual:  game.MutualFriends(user, target),
+			Who:    tu.Link(c, target),
+			Mutual: game.MutualFriends(user, target),
 		})
 	}
-	return c.Send(format.FriendList(tu.Mention(c, user), friends), tele.ModeHTML)
+	return c.Send(format.FriendList(tu.Link(c, user), friends), tele.ModeHTML)
 }
 
 type Transfer struct {
@@ -97,7 +97,7 @@ func (h *Transfer) Handle(c tele.Context) error {
 		transfered = append(transfered, item)
 	}
 	return c.Send(format.Transfered(
-		tu.Mention(c, user), tu.Mention(c, target), transfered...),
+		tu.Link(c, user), tu.Link(c, target), transfered...),
 		tele.ModeHTML)
 }
 
