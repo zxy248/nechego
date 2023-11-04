@@ -5,7 +5,6 @@ import (
 	"nechego/details"
 	"nechego/farm/plant"
 	"nechego/money"
-	"nechego/token"
 )
 
 // Set represents a bunch of items.
@@ -180,8 +179,6 @@ func Merge(a, b *Item) bool {
 		return mergeCash(x, b.Value)
 	case *details.Details:
 		return mergeDetails(x, b.Value)
-	case *token.Legacy:
-		return mergeLegacy(x, b.Value)
 	}
 	return false
 }
@@ -218,14 +215,6 @@ func mergeDetails(d *details.Details, v any) bool {
 	return false
 }
 
-func mergeLegacy(l *token.Legacy, v any) bool {
-	if x, ok := v.(*token.Legacy); ok {
-		l.Count += x.Count
-		return true
-	}
-	return false
-}
-
 // Split attemps to separate the given item into two items.
 // On success, the returned item should be added to the inventory.
 func Split(a *Item, n int) (b *Item, ok bool) {
@@ -241,8 +230,6 @@ func Split(a *Item, n int) (b *Item, ok bool) {
 		return splitCash(x, n)
 	case *details.Details:
 		return splitDetails(x, n)
-	case *token.Legacy:
-		return splitLegacy(x, n)
 	}
 	return nil, false
 }
@@ -279,12 +266,4 @@ func splitDetails(d *details.Details, n int) (*Item, bool) {
 	}
 	d.Count -= n
 	return New(&details.Details{Count: n}), true
-}
-
-func splitLegacy(l *token.Legacy, n int) (*Item, bool) {
-	if l.Count <= n {
-		return nil, false
-	}
-	l.Count -= n
-	return New(&token.Legacy{Count: n}), true
 }

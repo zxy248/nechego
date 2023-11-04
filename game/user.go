@@ -6,7 +6,6 @@ import (
 	"nechego/fishing"
 	"nechego/game/reputation"
 	"nechego/item"
-	"nechego/token"
 	"time"
 )
 
@@ -46,28 +45,6 @@ func NewUser(tuid int64) *User {
 // ID returns the unique user's ID.
 func (u *User) ID() int64 {
 	return u.TUID
-}
-
-// InventorySize returns the user's inventory size.
-func (u *User) InventorySize() int {
-	n := 20
-	if x, ok := GetItem[*token.Legacy](u); ok {
-		n += 1 + x.Count
-	}
-	return n
-}
-
-// InventoryFull returns true if the item count in the user's
-// inventory exceeds inventory size.
-func (u *User) InventoryFull() bool {
-	return u.Inventory.Count() > u.InventorySize()
-}
-
-// InventoryOverflow returns true if the item count in the user's
-// inventory exceeds inventory size by a large margin.
-func (u *User) InventoryOverflow() bool {
-	const margin = 10
-	return u.Inventory.Count() > u.InventorySize()+margin
 }
 
 // Transfer moves the item x from the sender's inventory to the

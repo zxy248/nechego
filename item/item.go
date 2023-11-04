@@ -10,7 +10,6 @@ import (
 	"nechego/food"
 	"nechego/money"
 	"nechego/pets"
-	"nechego/token"
 	"nechego/tools"
 	"time"
 )
@@ -129,10 +128,6 @@ func integral(i *Item) bool {
 			return false
 		}
 	case *plant.Plant:
-		if x.Count == 0 {
-			return false
-		}
-	case *token.Legacy:
 		if x.Count == 0 {
 			return false
 		}

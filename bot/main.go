@@ -78,6 +78,7 @@ func setup() (*app, error) {
 	return &app{
 		bot: bot,
 		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
+			refreshMarket(w)
 			runServices(w)
 			w.History.Announce(handlers.RecordAnnouncer(bot, tele.ChatID(w.TGID)))
 		}),

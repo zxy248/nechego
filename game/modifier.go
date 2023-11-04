@@ -13,20 +13,6 @@ func (u *User) Modset(w *World) modifier.Set {
 		u.Balance(),
 	}
 
-	// If the predicate is true, the corresponding modifier will
-	// be added to the set.
-	table := []struct {
-		predicate func() bool
-		modifier  *modifier.Mod
-	}{
-		{u.InventoryFull, modifier.Heavy},
-	}
-	for _, x := range table {
-		if x.predicate() {
-			moders = append(moders, x.modifier)
-		}
-	}
-
 	// Buff modifiers.
 	for _, b := range u.Buffs.List() {
 		moders = append(moders, b)

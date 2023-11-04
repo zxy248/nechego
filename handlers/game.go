@@ -21,6 +21,8 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
+const inventoryCapacity = 20
+
 type Inventory struct {
 	Universe *game.Universe
 }
@@ -37,13 +39,17 @@ func (h *Inventory) Handle(c tele.Context) error {
 
 	items := user.Inventory.HkList()
 	warn := ""
-	if user.InventoryFull() {
+	if fullInventory(user.Inventory) {
 		warn = " (!)"
 	}
 	head := fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>\n",
-		tu.Mention(c, user), len(items), user.InventorySize(), warn)
+		tu.Mention(c, user), len(items), inventoryCapacity, warn)
 	list := format.Items(items)
 	return c.Send(head+list, tele.ModeHTML)
+}
+
+func fullInventory(i *item.Set) bool {
+	return i.Count() >= inventoryCapacity
 }
 
 type Sort struct {
@@ -152,7 +158,7 @@ func (h *Pick) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.InventoryOverflow() {
+	if fullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 
@@ -310,7 +316,7 @@ func (h *Buy) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.InventoryOverflow() {
+	if fullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 
@@ -409,7 +415,7 @@ func (h *Fish) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.InventoryOverflow() {
+	if fullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 
@@ -473,7 +479,7 @@ func (h *DrawNet) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.InventoryOverflow() {
+	if fullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 
@@ -705,7 +711,7 @@ func (h *Split) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.InventoryOverflow() {
+	if fullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 
@@ -987,7 +993,7 @@ func (h *Funds) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if user.InventoryOverflow() {
+	if fullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 

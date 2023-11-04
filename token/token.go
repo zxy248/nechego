@@ -1,7 +1,6 @@
 package token
 
 import (
-	"fmt"
 	"nechego/modifier"
 )
 
@@ -45,12 +44,4 @@ func (p Pair) Mod() (m *modifier.Mod, ok bool) {
 		Multiplier:  0.1,
 		Description: "У вас есть пара.",
 	}, true
-}
-
-type Legacy struct {
-	Count int
-}
-
-func (l Legacy) String() string {
-	return fmt.Sprintf("🔰 Легаси-токен (%d шт.)", l.Count)
 }
