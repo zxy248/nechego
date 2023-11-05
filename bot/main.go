@@ -139,7 +139,8 @@ func (a *app) globalMiddleware() []adapter.Wrapper {
 		&middleware.IgnoreWorldInactive{
 			Universe: a.universe,
 			Immune: func(c tele.Context) bool {
-				return fun.MatchTurnOn(c.Message().Text)
+				var h fun.TurnOn
+				return h.Match(c)
 			},
 		},
 		&middleware.IncrementCounters{Universe: a.universe},
@@ -247,30 +248,30 @@ func (a *app) funServices() []server.Service {
 		text(&handlers.List{Universe: a.universe}),
 		text(&handlers.Top{Universe: a.universe}),
 		text(&fun.Clock{}),
-		text(&fun.TurnOn{Universe: a.universe}),
-		text(&fun.TurnOff{Universe: a.universe}),
-		text(&fun.Reputation{Universe: a.universe}),
-		text(&fun.UpdateReputation{Universe: a.universe}),
+		&fun.TurnOn{Universe: a.universe},
+		&fun.TurnOff{Universe: a.universe},
+		&fun.Reputation{Universe: a.universe},
+		&fun.UpdateReputation{Universe: a.universe},
 	}
 }
 
 func (a *app) pictureServices() []server.Service {
 	return []server.Service{
 		text(&pictures.Pic{Path: assetPath("pic")}),
-		text(&pictures.Basili{Path: assetPath("basili")}),
-		text(&pictures.Casper{Path: assetPath("casper")}),
+		&pictures.Basili{Path: assetPath("basili")},
+		&pictures.Casper{Path: assetPath("casper")},
 		text(&pictures.Zeus{Path: assetPath("zeus")}),
 		text(&pictures.Mouse{Path: assetPath("mouse.mp4")}),
 		text(&pictures.Tiktok{Path: assetPath("tiktok")}),
-		text(&pictures.Hello{Path: assetPath("hello.json")}),
+		&pictures.Hello{Path: assetPath("hello.json")},
 		text(&pictures.Anime{}),
 		text(&pictures.Furry{}),
 		text(&pictures.Flag{}),
 		text(&pictures.Car{}),
 		text(&pictures.Soy{}),
 		text(&pictures.Danbooru{API: a.danbooru}),
-		text(&pictures.Fap{API: a.danbooru}),
-		text(&pictures.Masyunya{}),
+		&pictures.Fap{API: a.danbooru},
+		&pictures.Masyunya{},
 		text(&pictures.Poppy{}),
 		text(&pictures.Sima{}),
 		text(&pictures.Cat{}),

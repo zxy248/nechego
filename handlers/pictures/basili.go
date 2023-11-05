@@ -10,8 +10,10 @@ type Basili struct {
 	Path string
 }
 
-func (h *Basili) Match(s string) bool {
-	return handlers.MatchRegexp("^!(муся|марс|(кот|кошка) василия)", s)
+var basiliRe = handlers.Regexp("^!(муся|марс|(кот|кошка) василия)")
+
+func (h *Basili) Match(c tele.Context) bool {
+	return basiliRe.MatchString(c.Text())
 }
 
 func (h *Basili) Handle(c tele.Context) error {

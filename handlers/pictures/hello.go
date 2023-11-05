@@ -14,8 +14,10 @@ type Hello struct {
 	cache []tele.Sticker
 }
 
-func (h *Hello) Match(s string) bool {
-	return handlers.MatchRegexp("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)", s)
+var helloRe = handlers.Regexp("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
+
+func (h *Hello) Match(c tele.Context) bool {
+	return helloRe.MatchString(c.Text())
 }
 
 func (h *Hello) Handle(c tele.Context) error {

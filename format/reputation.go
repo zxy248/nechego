@@ -2,49 +2,38 @@ package format
 
 import (
 	"fmt"
+	"nechego/game"
 	"nechego/game/reputation"
 )
 
-func ReputationScore(who string, x string) string {
-	return fmt.Sprintf("Репутация %s: %s", Name(who), x)
+type Reputation struct{ game.Reputation }
+
+func (r Reputation) String(who string) string {
+	return fmt.Sprintf("Репутация %s: %s", Name(who), r.rhsEmoji())
 }
 
-func ReputationUpdated(who string, score string, d reputation.Direction) string {
-	return Lines(
-		Bold(Words("⭐️", "Репутация", Name(who),
-			reputationDirection(d), "на", Code("1"))),
-		Words("Теперь репутация:", score),
-	)
-}
-
-func ReputationPrefix(score, low, high int) string {
-	emoji := reputationEmoji(score, low, high)
-	return Code(Words(emoji, Value(score)))
-}
-
-func ReputationSuffix(score, low, high int) string {
-	emoji := reputationEmoji(score, low, high)
-	return Code(Words(Value(score), emoji))
-}
-
-func reputationDirection(d reputation.Direction) string {
-	switch d {
-	case reputation.Up:
-		return "увеличена"
-	case reputation.Down:
-		return "понижена"
+func (r Reputation) Updated(who string, d reputation.Direction) string {
+	const format = "<b>⭐️ Репутация %s %s на <code>1</code></b>\n" +
+		"Теперь репутация: %v"
+	dd := "увеличена"
+	if d == reputation.Down {
+		dd = "понижена"
 	}
-	panic(fmt.Sprintf("unknown reputation directory: %v", d))
+	return fmt.Sprintf(format, Name(who), dd, r.rhsEmoji())
 }
 
-func reputationEmoji(score, low, high int) string {
-	diff := high - low
-	if diff == 0 {
-		return "😐"
-	}
-	v := score - low
-	x := float64(v) / float64(diff)
+func (r Reputation) lhsEmoji() string {
+	const format = "<code>%s %v</code>"
+	return fmt.Sprintf(format, r.emoji(), r.N)
+}
 
-	emojis := [...]string{"👹", "👺", "👿", "😈", "🙂", "😌", "😊", "😇"}
-	return emojis[int(x*float64(len(emojis)-1))]
+func (r Reputation) rhsEmoji() string {
+	const format = "<code>%v %s</code>"
+	return fmt.Sprintf(format, r.N, r.emoji())
+}
+
+func (r Reputation) emoji() string {
+	e := [...]string{"👹", "👺", "👿", "😈", "😐", "🙂", "😌", "😊", "😇"}
+	x := r.Relative()
+	return e[int(x*float64(len(e)-1))]
 }

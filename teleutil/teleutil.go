@@ -107,27 +107,11 @@ func Lock(c tele.Context, u *game.Universe) (*game.World, *game.User) {
 		panic(fmt.Sprintf("cannot get world: %s", err))
 	}
 	world.Lock()
-	user := world.UserByID(c.Sender().ID)
-	return world, user
+	return world, CurrentUser(c, world)
 }
 
 func MessageForwarded(m *tele.Message) bool {
 	return m.OriginalUnixtime != 0
-}
-
-type WorldGetter interface {
-	World(id int64) (*game.World, error)
-}
-
-func ContextWorld(c tele.Context, u WorldGetter, f func(*game.World)) {
-	w, err := u.World(c.Chat().ID)
-	if err != nil {
-		panic(fmt.Sprintf("cannot access world: %v", err))
-	}
-
-	w.Lock()
-	f(w)
-	w.Unlock()
 }
 
 func CurrentUser(c tele.Context, w *game.World) *game.User {

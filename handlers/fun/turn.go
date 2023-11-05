@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"nechego/game"
 	"nechego/handlers"
+	tu "nechego/teleutil"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -12,38 +13,36 @@ type TurnOn struct {
 	Universe *game.Universe
 }
 
-func MatchTurnOn(s string) bool {
-	return handlers.MatchRegexp("^!(вкл|подкл|подруб)", s)
-}
+var turnOnRe = handlers.Regexp("^!(вкл|подкл|подруб)")
 
-func (h *TurnOn) Match(s string) bool {
-	return MatchTurnOn(s)
+func (h *TurnOn) Match(c tele.Context) bool {
+	return turnOnRe.MatchString(c.Text())
 }
 
 func (h *TurnOn) Handle(c tele.Context) error {
-	return handlers.HandleWorld(c, h.Universe, h)
-}
+	world, _ := tu.Lock(c, h.Universe)
+	defer world.Unlock()
 
-func (h *TurnOn) HandleWorld(c tele.Context, w *game.World) error {
-	w.Inactive = false
-	emoji := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
-	return c.Send(emoji[rand.Intn(len(emoji))])
+	world.Inactive = false
+	es := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
+	return c.Send(es[rand.Intn(len(es))])
 }
 
 type TurnOff struct {
 	Universe *game.Universe
 }
 
-func (h *TurnOff) Match(s string) bool {
-	return handlers.MatchRegexp("^!(выкл|откл)", s)
+var turnOffRe = handlers.Regexp("^!(выкл|откл)")
+
+func (h *TurnOff) Match(c tele.Context) bool {
+	return turnOffRe.MatchString(c.Text())
 }
 
 func (h *TurnOff) Handle(c tele.Context) error {
-	return handlers.HandleWorld(c, h.Universe, h)
-}
+	world, _ := tu.Lock(c, h.Universe)
+	defer world.Unlock()
 
-func (h *TurnOff) HandleWorld(c tele.Context, w *game.World) error {
-	w.Inactive = true
-	emoji := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
-	return c.Send(emoji[rand.Intn(len(emoji))])
+	world.Inactive = true
+	e := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
+	return c.Send(e[rand.Intn(len(e))])
 }

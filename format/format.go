@@ -361,11 +361,7 @@ func Profile(who string, u *game.User, w *game.World) string {
 	head := fmt.Sprintf("<b>📇 %s: Профиль</b>", Name(who))
 	entries := []string{
 		Energy(u.Energy),
-		ReputationPrefix(
-			u.Reputation.Score(),
-			w.MinReputation(),
-			w.MaxReputation(),
-		),
+		Reputation{w.Reputation(u)}.lhsEmoji(),
 		Luck(u.Luck()),
 		Strength(u.Strength(w)),
 		Rating(u.Rating),

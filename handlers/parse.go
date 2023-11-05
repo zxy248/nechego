@@ -37,10 +37,6 @@ func Regexp(pattern string) *regexp.Regexp {
 	return regexp.MustCompile("(?i)" + pattern)
 }
 
-func MatchRegexp(pattern, s string) bool {
-	return Regexp(pattern).MatchString(s)
-}
-
 func HasPrefix(s string, ps ...string) bool {
 	for _, p := range ps {
 		if strings.HasPrefix(strings.ToLower(s), p) {

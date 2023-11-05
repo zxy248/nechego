@@ -10,8 +10,10 @@ type Casper struct {
 	Path string
 }
 
-func (h *Casper) Match(s string) bool {
-	return handlers.MatchRegexp("^!касп[ие]р", s)
+var casperRe = handlers.Regexp("^!касп[ие]р")
+
+func (h *Casper) Match(c tele.Context) bool {
+	return casperRe.MatchString(c.Text())
 }
 
 func (h *Casper) Handle(c tele.Context) error {

@@ -8,8 +8,10 @@ import (
 
 type Masyunya struct{}
 
-func (h *Masyunya) Match(s string) bool {
-	return handlers.MatchRegexp("^!ма[нс]ю[нс][а-я]*[пая]", s)
+var masyunyaRe = handlers.Regexp("^!ма[нс]ю[нс][а-я]*[пая]")
+
+func (h *Masyunya) Match(c tele.Context) bool {
+	return masyunyaRe.MatchString(c.Text())
 }
 
 func (h *Masyunya) Handle(c tele.Context) error {

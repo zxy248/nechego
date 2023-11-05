@@ -113,22 +113,25 @@ func (w *World) Capital() (total, avg int) {
 	return total, total / len(w.Users)
 }
 
-func (w *World) MaxReputation() int {
-	x := 0
-	for _, u := range w.Users {
-		if s := u.Reputation.Score(); s > x {
-			x = s
-		}
+type Reputation struct{ Low, N, High int }
+
+func (r Reputation) Relative() float64 {
+	d := r.High - r.Low
+	if d == 0 {
+		return 0.5
 	}
-	return x
+	return float64(r.N-r.Low) / float64(d)
 }
 
-func (w *World) MinReputation() int {
-	x := 0
+func (w *World) Reputation(u *User) Reputation {
+	low, high := w.ReputationBounds()
+	return Reputation{low, u.Reputation.Score(), high}
+}
+
+func (w *World) ReputationBounds() (low, high int) {
 	for _, u := range w.Users {
-		if s := u.Reputation.Score(); s < x {
-			x = s
-		}
+		s := u.Reputation.Score()
+		low, high = min(low, s), max(high, s)
 	}
-	return x
+	return
 }

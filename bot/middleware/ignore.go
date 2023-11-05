@@ -14,12 +14,11 @@ type IgnoreUserBanned struct {
 
 func (m *IgnoreUserBanned) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		var banExpires time.Time
-		tu.ContextWorld(c, m.Universe, func(w *game.World) {
-			banExpires = w.UserByID(c.Sender().ID).BannedUntil
-		})
+		w, u := tu.Lock(c, m.Universe)
+		e := u.BannedUntil
+		w.Unlock()
 
-		if time.Now().Before(banExpires) {
+		if time.Now().Before(e) {
 			return nil
 		}
 		return next(c)
@@ -44,12 +43,11 @@ type IgnoreWorldInactive struct {
 
 func (m *IgnoreWorldInactive) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		var inactive bool
-		tu.ContextWorld(c, m.Universe, func(w *game.World) {
-			inactive = w.Inactive
-		})
+		w, _ := tu.Lock(c, m.Universe)
+		off := w.Inactive
+		w.Unlock()
 
-		if inactive && !m.Immune(c) {
+		if off && !m.Immune(c) {
 			return nil
 		}
 		return next(c)

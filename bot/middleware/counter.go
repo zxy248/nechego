@@ -14,12 +14,12 @@ type IncrementCounters struct {
 
 func (m *IncrementCounters) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		tu.ContextWorld(c, m.Universe, func(w *game.World) {
-			u := tu.CurrentUser(c, w)
-			u.Messages++
-			u.LastMessage = time.Now()
-			w.Messages++
-		})
+		w, u := tu.Lock(c, m.Universe)
+		u.Messages++
+		u.LastMessage = time.Now()
+		w.Messages++
+		w.Unlock()
+
 		return next(c)
 	}
 }
