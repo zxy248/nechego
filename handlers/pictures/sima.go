@@ -9,7 +9,7 @@ import (
 type Sima struct{}
 
 func (h *Sima) Match(s string) bool {
-	return handlers.MatchPrefix("!сима", s)
+	return handlers.HasPrefix(s, "!сима")
 }
 
 func (h *Sima) Handle(c tele.Context) error {

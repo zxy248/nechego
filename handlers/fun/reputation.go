@@ -4,7 +4,7 @@ import (
 	"nechego/format"
 	"nechego/game"
 	"nechego/game/reputation"
-	hh "nechego/handlers"
+	"nechego/handlers"
 	tu "nechego/teleutil"
 	"time"
 
@@ -16,11 +16,11 @@ type Reputation struct {
 }
 
 func (h *Reputation) Match(s string) bool {
-	return hh.MatchPrefix("!репутация", s)
+	return handlers.HasPrefix(s, "!реп")
 }
 
 func (h *Reputation) Handle(c tele.Context) error {
-	return hh.HandleWorld(c, h.Universe, h)
+	return handlers.HandleWorld(c, h.Universe, h)
 }
 
 func (_ *Reputation) HandleWorld(c tele.Context, w *game.World) error {
@@ -43,7 +43,7 @@ func (h *UpdateReputation) Match(s string) bool {
 }
 
 func (h *UpdateReputation) Handle(c tele.Context) error {
-	return hh.HandleWorld(c, h.Universe, h)
+	return handlers.HandleWorld(c, h.Universe, h)
 }
 
 func (_ *UpdateReputation) HandleWorld(c tele.Context, w *game.World) error {

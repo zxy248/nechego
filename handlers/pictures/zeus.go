@@ -11,7 +11,7 @@ type Zeus struct {
 }
 
 func (h *Zeus) Match(s string) bool {
-	return handlers.MatchPrefix("!зевс", s)
+	return handlers.HasPrefix(s, "!зевс")
 }
 
 func (h *Zeus) Handle(c tele.Context) error {

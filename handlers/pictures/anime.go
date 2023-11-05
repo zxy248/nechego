@@ -11,7 +11,7 @@ import (
 type Anime struct{}
 
 func (h *Anime) Match(s string) bool {
-	return handlers.MatchPrefixes([]string{"!аним", "!мульт"}, s)
+	return handlers.HasPrefix(s, "!аним", "!мульт")
 }
 
 func (h *Anime) Handle(c tele.Context) error {

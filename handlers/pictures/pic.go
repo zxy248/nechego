@@ -11,7 +11,7 @@ type Pic struct {
 }
 
 func (h *Pic) Match(s string) bool {
-	return handlers.MatchPrefix("!пик", s)
+	return handlers.HasPrefix(s, "!пик")
 }
 
 func (h *Pic) Handle(c tele.Context) error {

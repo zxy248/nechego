@@ -10,7 +10,7 @@ import (
 type Soy struct{}
 
 func (h *Soy) Match(s string) bool {
-	return handlers.MatchPrefix("!сой", s)
+	return handlers.HasPrefix(s, "!сой")
 }
 
 func (h *Soy) Handle(c tele.Context) error {

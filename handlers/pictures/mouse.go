@@ -11,7 +11,7 @@ type Mouse struct {
 }
 
 func (h *Mouse) Match(s string) bool {
-	return handlers.MatchPrefix("!мыш", s)
+	return handlers.HasPrefix(s, "!мыш")
 }
 
 func (h *Mouse) Handle(c tele.Context) error {

@@ -41,13 +41,9 @@ func MatchRegexp(pattern, s string) bool {
 	return Regexp(pattern).MatchString(s)
 }
 
-func MatchPrefix(prefix, s string) bool {
-	return strings.HasPrefix(strings.ToLower(s), prefix)
-}
-
-func MatchPrefixes(ps []string, s string) bool {
+func HasPrefix(s string, ps ...string) bool {
 	for _, p := range ps {
-		if MatchPrefix(p, s) {
+		if strings.HasPrefix(strings.ToLower(s), p) {
 			return true
 		}
 	}

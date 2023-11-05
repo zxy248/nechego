@@ -11,7 +11,7 @@ import (
 type Flag struct{}
 
 func (h *Flag) Match(s string) bool {
-	return handlers.MatchPrefix("!флаг", s)
+	return handlers.HasPrefix(s, "!флаг")
 }
 
 func (h *Flag) Handle(c tele.Context) error {

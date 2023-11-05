@@ -14,7 +14,7 @@ import (
 type Cat struct{}
 
 func (h *Cat) Match(s string) bool {
-	return handlers.MatchPrefixes([]string{"!кот", "!кош"}, s)
+	return handlers.HasPrefix(s, "!кот", "!кош")
 }
 
 func (h *Cat) Handle(c tele.Context) error {

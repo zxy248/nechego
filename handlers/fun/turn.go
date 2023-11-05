@@ -3,7 +3,7 @@ package fun
 import (
 	"math/rand"
 	"nechego/game"
-	hh "nechego/handlers"
+	"nechego/handlers"
 
 	tele "gopkg.in/telebot.v3"
 )
@@ -13,7 +13,7 @@ type TurnOn struct {
 }
 
 func MatchTurnOn(s string) bool {
-	return hh.MatchRegexp("^!(вкл|подкл|подруб)", s)
+	return handlers.MatchRegexp("^!(вкл|подкл|подруб)", s)
 }
 
 func (h *TurnOn) Match(s string) bool {
@@ -21,7 +21,7 @@ func (h *TurnOn) Match(s string) bool {
 }
 
 func (h *TurnOn) Handle(c tele.Context) error {
-	return hh.HandleWorld(c, h.Universe, h)
+	return handlers.HandleWorld(c, h.Universe, h)
 }
 
 func (h *TurnOn) HandleWorld(c tele.Context, w *game.World) error {
@@ -35,11 +35,11 @@ type TurnOff struct {
 }
 
 func (h *TurnOff) Match(s string) bool {
-	return hh.MatchRegexp("^!(выкл|откл)", s)
+	return handlers.MatchRegexp("^!(выкл|откл)", s)
 }
 
 func (h *TurnOff) Handle(c tele.Context) error {
-	return hh.HandleWorld(c, h.Universe, h)
+	return handlers.HandleWorld(c, h.Universe, h)
 }
 
 func (h *TurnOff) HandleWorld(c tele.Context, w *game.World) error {

@@ -10,7 +10,7 @@ import (
 type Poppy struct{}
 
 func (h *Poppy) Match(s string) bool {
-	return handlers.MatchPrefix("!паппи", s)
+	return handlers.HasPrefix(s, "!паппи")
 }
 
 func (h *Poppy) Handle(c tele.Context) error {

@@ -63,7 +63,7 @@ func setName(c tele.Context, u *tele.User, n string) error {
 type CheckName struct{}
 
 func (h *CheckName) Match(s string) bool {
-	return handlers.MatchPrefix("!имя", s)
+	return handlers.HasPrefix(s, "!имя")
 }
 
 func (h *CheckName) Handle(c tele.Context) error {

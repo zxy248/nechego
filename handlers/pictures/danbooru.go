@@ -14,7 +14,7 @@ type Danbooru struct {
 }
 
 func (h *Danbooru) Match(s string) bool {
-	return handlers.MatchPrefix("!данбору", s)
+	return handlers.HasPrefix(s, "!данбору")
 }
 
 func (h *Danbooru) Handle(c tele.Context) error {

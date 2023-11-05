@@ -13,7 +13,7 @@ import (
 type Car struct{}
 
 func (h *Car) Match(s string) bool {
-	return handlers.MatchPrefixes([]string{"!авто", "!машин", "!тачка"}, s)
+	return handlers.HasPrefix(s, "!авто", "!машин", "!тачка")
 }
 
 func (h *Car) Handle(c tele.Context) error {

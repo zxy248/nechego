@@ -11,7 +11,7 @@ type Tiktok struct {
 }
 
 func (h *Tiktok) Match(s string) bool {
-	return handlers.MatchPrefix("!тикток", s)
+	return handlers.HasPrefix(s, "!тикток")
 }
 
 func (h *Tiktok) Handle(c tele.Context) error {

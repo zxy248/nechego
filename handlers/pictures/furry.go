@@ -11,7 +11,7 @@ import (
 type Furry struct{}
 
 func (h *Furry) Match(s string) bool {
-	return handlers.MatchPrefix("!фур", s)
+	return handlers.HasPrefix(s, "!фур")
 }
 
 func (h *Furry) Handle(c tele.Context) error {
