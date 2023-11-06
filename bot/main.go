@@ -16,6 +16,7 @@ import (
 	"nechego/handlers/farm"
 	"nechego/handlers/fun"
 	"nechego/handlers/pictures"
+	"nechego/handlers/top"
 	"os"
 	"path/filepath"
 	"time"
@@ -221,9 +222,9 @@ func (a *app) actionsServices() []server.Service {
 
 func (a *app) topServices() []server.Service {
 	return []server.Service{
-		text(&handlers.TopStrong{Universe: a.universe}),
-		text(&handlers.TopRating{Universe: a.universe}),
-		text(&handlers.TopRich{Universe: a.universe}),
+		&top.Rating{Universe: a.universe},
+		&top.Rich{Universe: a.universe},
+		&top.Strength{Universe: a.universe},
 	}
 }
 
