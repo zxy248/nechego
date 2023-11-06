@@ -45,8 +45,9 @@ func restoreEnergy(w *game.World) {
 }
 
 func fillNets(w *game.World) {
+	const p = 0.04
 	for _, u := range w.Users {
-		if rand.Float64() < 0.04 {
+		if rand.Float64() < p {
 			u.FillNet()
 		}
 	}

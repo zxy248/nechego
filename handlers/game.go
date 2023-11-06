@@ -13,6 +13,7 @@ import (
 	"nechego/item"
 	"nechego/money"
 	tu "nechego/teleutil"
+	"nechego/valid"
 	"strconv"
 	"strings"
 	"time"
@@ -240,23 +241,30 @@ type NameMarket struct {
 	Universe *game.Universe
 }
 
-var nameMarketRe = Regexp("^!назвать магазин (.*)")
+var nameMarketRe = Regexp("^!назвать магазин (.+)")
 
 func (h *NameMarket) Match(s string) bool {
 	return nameMarketRe.MatchString(s)
 }
 
 func (h *NameMarket) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
+	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
-	if !user.Admin() {
-		return c.Send(format.AdminsOnly)
-	}
-	name := tu.Args(c, nameMarketRe)[1]
-	if !world.Market.SetName(name) {
+
+	n := marketName(c.Text())
+	if n == "" {
 		return c.Send(format.BadMarketName)
 	}
+	world.Market.Name = n
 	return c.Send(format.MarketRenamed)
+}
+
+func marketName(s string) string {
+	n := nameMarketRe.FindStringSubmatch(s)[1]
+	if !valid.Name(n) {
+		return ""
+	}
+	return strings.Title(n)
 }
 
 type GetJob struct {
@@ -1031,7 +1039,7 @@ type NamePet struct {
 	Universe *game.Universe
 }
 
-var namePetRe = Regexp("^!назвать (.*)")
+var namePetRe = Regexp("^!назвать (.+)")
 
 func (h *NamePet) Match(s string) bool {
 	return namePetRe.MatchString(s)
@@ -1041,19 +1049,25 @@ func (h *NamePet) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	name := tu.Args(c, namePetRe)[1]
 	pet, ok := user.Pet()
 	if !ok {
 		return c.Send("🐱 У вас нет питомца.")
 	}
 
-	emoji := pet.Species.Emoji()
-	if pet.Name != "" {
-		return c.Send(fmt.Sprintf("%s У вашего питомца уже есть имя.", emoji))
+	e := pet.Species.Emoji()
+	n := petName(c.Text())
+	if n == "" {
+		return c.Send(fmt.Sprintf("%s Такое имя не подходит для питомца.", e))
 	}
-	if !pet.SetName(name) {
-		return c.Send(fmt.Sprintf("%s Такое имя не подходит для питомца.", emoji))
+	pet.Name = n
+	s := fmt.Sprintf("%s Вы назвали питомца <code>%s</code>.", e, n)
+	return c.Send(s, tele.ModeHTML)
+}
+
+func petName(s string) string {
+	n := namePetRe.FindStringSubmatch(s)[1]
+	if !valid.Name(n) {
+		return ""
 	}
-	return c.Send(fmt.Sprintf("%s Вы назвали питомца <code>%s</code>.",
-		emoji, name), tele.ModeHTML)
+	return strings.Title(n)
 }

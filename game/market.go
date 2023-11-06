@@ -13,8 +13,6 @@ import (
 	"nechego/money"
 	"nechego/pets"
 	"nechego/tools"
-	"nechego/valid"
-	"strings"
 )
 
 var ErrNoKey = errors.New("key not found")
@@ -117,15 +115,6 @@ func (m *Market) Products() []*Product {
 		m.keys[i] = p
 	}
 	return m.P
-}
-
-// SetName sets the market's name.
-func (m *Market) SetName(s string) bool {
-	if !valid.Name(s) {
-		return false
-	}
-	m.Name = strings.Title(s)
-	return true
 }
 
 // String returns the textual representation of the Market.

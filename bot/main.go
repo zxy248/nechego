@@ -12,6 +12,7 @@ import (
 	"nechego/handlers"
 	"nechego/handlers/casino"
 	"nechego/handlers/command"
+	"nechego/handlers/daily"
 	"nechego/handlers/farm"
 	"nechego/handlers/fun"
 	"nechego/handlers/pictures"
@@ -156,9 +157,9 @@ func (a *app) informationServices() []server.Service {
 
 func (a *app) dailyServices() []server.Service {
 	return []server.Service{
-		text(&handlers.DailyEblan{Universe: a.universe}),
-		text(&handlers.DailyAdmin{Universe: a.universe}),
-		text(&handlers.DailyPair{Universe: a.universe}),
+		&daily.Eblan{Universe: a.universe},
+		&daily.Admin{Universe: a.universe},
+		&daily.Pair{Universe: a.universe},
 	}
 }
 

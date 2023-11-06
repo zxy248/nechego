@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"nechego/modifier"
-	"nechego/valid"
 	"strings"
 	"time"
 )
@@ -45,14 +44,6 @@ func (p *Pet) String() string {
 	}
 	return fmt.Sprintf("%s %s %s(%s)", p.Species.Emoji(),
 		strings.Title(p.Species.String()), name, p.Gender.Emoji())
-}
-
-func (p *Pet) SetName(s string) bool {
-	if !valid.Name(s) {
-		return false
-	}
-	p.Name = strings.Title(s)
-	return true
 }
 
 func (p *Pet) Mod() (m *modifier.Mod, ok bool) {

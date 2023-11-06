@@ -1,7 +1,6 @@
 package farm
 
 import (
-	"nechego/farm"
 	"nechego/format"
 	"nechego/game"
 	"nechego/handlers"
@@ -27,22 +26,18 @@ func (h *Name) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	n := farmName(c.Text())
-	if !setFarmName(user.Farm, n) {
+	if n == "" {
 		return c.Send(format.BadFarmName)
 	}
+	user.Farm.Name = n
 	s := format.FarmNamed(tu.LinkSender(c), n)
 	return c.Send(s, tele.ModeHTML)
 }
 
 func farmName(s string) string {
 	n := nameRe.FindStringSubmatch(s)[1]
-	return strings.Title(n)
-}
-
-func setFarmName(f *farm.Farm, n string) bool {
 	if !valid.Name(n) {
-		return false
+		return ""
 	}
-	f.Name = n
-	return true
+	return strings.Title(n)
 }

@@ -56,20 +56,6 @@ func (i *Item) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(raw, i.Value)
 }
 
-// SetNamer is implemented by any value that can change its name.
-type SetNamer interface {
-	SetName(s string) bool
-}
-
-// SetName sets the name of the underlying object if it implements the
-// SetNamer interface.
-func (i *Item) SetName(s string) bool {
-	if x, ok := i.Value.(SetNamer); ok {
-		return x.SetName(s)
-	}
-	return false
-}
-
 // Random returns a random item.
 func Random() *Item {
 	pool := map[float64][]any{
