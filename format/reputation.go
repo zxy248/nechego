@@ -2,11 +2,13 @@ package format
 
 import (
 	"fmt"
-	"nechego/game"
 	"nechego/game/reputation"
 )
 
-type Reputation struct{ game.Reputation }
+type Reputation struct {
+	Score  int
+	Factor float64
+}
 
 func (r Reputation) String(who string) string {
 	return fmt.Sprintf("Репутация %s: %s", Name(who), r.rhsEmoji())
@@ -24,16 +26,15 @@ func (r Reputation) Updated(who string, d reputation.Direction) string {
 
 func (r Reputation) lhsEmoji() string {
 	const format = "<code>%s %v</code>"
-	return fmt.Sprintf(format, r.emoji(), r.N)
+	return fmt.Sprintf(format, r.emoji(), r.Score)
 }
 
 func (r Reputation) rhsEmoji() string {
 	const format = "<code>%v %s</code>"
-	return fmt.Sprintf(format, r.N, r.emoji())
+	return fmt.Sprintf(format, r.Score, r.emoji())
 }
 
 func (r Reputation) emoji() string {
 	e := [...]string{"👹", "👺", "👿", "😈", "😐", "🙂", "😌", "😊", "😇"}
-	x := r.Relative()
-	return e[int(x*float64(len(e)-1))]
+	return e[int(r.Factor*float64(len(e)-1))]
 }

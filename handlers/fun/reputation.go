@@ -24,8 +24,11 @@ func (h *Reputation) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	who := tu.Link(c, user)
-	r := world.Reputation(user)
-	s := format.Reputation{r}.String(who)
+	r := format.Reputation{
+		Score:  user.Reputation.Score(),
+		Factor: user.ReputationFactor,
+	}
+	s := r.String(who)
 	return c.Send(s, tele.ModeHTML)
 }
 
@@ -48,11 +51,14 @@ func (h *UpdateReputation) Handle(c tele.Context) error {
 	}
 
 	d, _ := reputationDirection(c.Text())
-	target.Reputation = target.Reputation.Update(user.TUID, d)
+	target.Reputation = target.Reputation.Update(user.ID, d)
 
 	who := tu.Link(c, target)
-	r := world.Reputation(target)
-	s := format.Reputation{r}.Updated(who, d)
+	r := format.Reputation{
+		Score:  target.Reputation.Score(),
+		Factor: target.ReputationFactor,
+	}
+	s := r.Updated(who, d)
 	return c.Send(s, tele.ModeHTML)
 }
 
@@ -67,5 +73,5 @@ func reputationDirection(s string) (d reputation.Direction, ok bool) {
 }
 
 func canUpdateReputation(u1, u2 *game.User) bool {
-	return time.Since(u2.Reputation.Last(u1.TUID).Time) > 4*time.Hour
+	return time.Since(u2.Reputation.Last(u1.ID).Time) > 4*time.Hour
 }

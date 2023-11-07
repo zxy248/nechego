@@ -41,7 +41,6 @@ const (
 	NetNotCasted         = "🕸 Рыболовная сеть ещё не закинута."
 	NoFishingRecords     = "🏆 Рекордов пока нет."
 	NotOnline            = "🚫 Этот пользователь не в сети."
-	CannotBan            = "😖 Этого пользователя нельзя забанить."
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
 	CannotFireJob        = "💼 Вы нигде не работаете."
 	CannotFriend         = "👤 С этим пользователем нельзя подружиться."
@@ -188,7 +187,7 @@ func BadKey(k int) string {
 	return fmt.Sprintf("🔖 Предмет %s не найден.", Key(k))
 }
 
-func Modset(s modifier.Set) string {
+func Modifiers(s modifier.Set) string {
 	c := NewConnector("\n")
 	for _, x := range s.List() {
 		c.Add(fmt.Sprintf("<i>%s %s</i>", x.Emoji, x.Description))
@@ -338,11 +337,15 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 	return c.String()
 }
 
-func Fight(who1, who2 string, str1, str2 float64) string {
+func Fight(u1, u2 *game.User) string {
 	const fighter = "%s <code>[%.2f]</code>"
 	const versus = "<b><i>vs.</i></b>"
 	const fight = "⚔️ " + fighter + " " + versus + " " + fighter
-	return fmt.Sprintf(fight, Name(who1), str1, Name(who2), str2)
+	return fmt.Sprintf(fight,
+		Name(Link(u1.ID, u1.Name)),
+		u1.Strength(),
+		Name(Link(u2.ID, u2.Name)),
+		u2.Strength())
 }
 
 func WinnerTook(who string, i *item.Item) string {
@@ -357,19 +360,19 @@ func Win(who string, elo float64) string {
 	return fmt.Sprintf("🏆 %s <code>(+%.1f)</code> выигрывает в поединке.", Name(who), elo)
 }
 
-func Profile(who string, u *game.User, w *game.World) string {
-	head := fmt.Sprintf("<b>📇 %s: Профиль</b>", Name(who))
+func Profile(u *game.User) string {
+	head := fmt.Sprintf("<b>📇 %s: Профиль</b>", Name(Link(u.ID, u.Name)))
 	entries := []string{
 		Energy(u.Energy),
-		Reputation{w.Reputation(u)}.lhsEmoji(),
+		Reputation{u.Reputation.Score(), u.ReputationFactor}.lhsEmoji(),
 		Luck(u.Luck()),
-		Strength(u.Strength(w)),
+		Strength(u.Strength()),
 		Rating(u.Rating),
 		Messages(u.Messages),
 		Balance(u.Balance().Total()),
 	}
 	table := profileTable(entries)
-	modset := Modset(u.Modset(w))
+	modset := Modifiers(u.Modifiers())
 	status := Status(u.Status)
 	return fmt.Sprintf("%s\n%s\n\n%s\n\n%s", head, table, modset, status)
 }
@@ -470,7 +473,7 @@ func TopStrength(who func(*game.User) string, w *game.World, us []*game.User) st
 	c.Add("🏋️‍♀️ <b>Самые сильные пользователи</b>")
 	for i, u := range us {
 		s := fmt.Sprintf("%s %s %s",
-			Index(i), Name(who(u)), Strength(u.Strength(w)))
+			Index(i), Name(who(u)), Strength(u.Strength()))
 		c.Add(s)
 	}
 	return c.String()

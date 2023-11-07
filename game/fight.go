@@ -5,25 +5,23 @@ import (
 	"nechego/elo"
 )
 
-func (u *User) Strength(w *World) float64 {
-	const (
-		base = 1
-		mult = 2
-	)
-	messageWeight := float64(u.Messages) / float64(w.Messages)
-	return mult * (base + u.Modset(w).Sum() + u.Luck() + messageWeight)
+func (u *User) Strength() float64 {
+	const base, mult = 1, 2
+	c := base + u.Activity + u.Luck() + u.Modifiers().Sum()
+	return mult * c
 }
 
-func (w *World) Fight(a, b *User) (winner, loser *User, rating float64) {
-	if a == b {
+func Fight(u1, u2 *User) (winner, loser *User, rating float64) {
+	if u1 == u2 {
 		panic("user cannot be an opponent to themself")
 	}
 
-	f := func(u *User) float64 { return u.Strength(w) * rand.Float64() }
-	if f(a) > f(b) {
-		winner, loser = a, b
+	s1 := u1.Strength() * rand.Float64()
+	s2 := u2.Strength() * rand.Float64()
+	if s1 > s2 {
+		winner, loser = u1, u2
 	} else {
-		winner, loser = b, a
+		winner, loser = u2, u1
 	}
 
 	rating = elo.EloDelta(winner.Rating, loser.Rating, elo.KDefault, elo.ScoreWin)

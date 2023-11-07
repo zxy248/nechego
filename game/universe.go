@@ -10,14 +10,9 @@ import (
 
 // Universe holds worlds.
 type Universe struct {
-	// worlds is a map of active (loaded) worlds accessed by TGID.
-	worlds map[int64]*World
-
-	// dir is a location of the directory where worlds should be saved.
-	dir string
-
-	// init is called on the first world's load.
-	init func(*World)
+	worlds map[int64]*World // Loaded worlds indexed by group IDs.
+	dir    string           // Persistent storage directory.
+	init   func(*World)     // World initialization function.
 
 	mu sync.Mutex
 }
@@ -67,7 +62,7 @@ func (u *Universe) SaveAll() error {
 	defer u.mu.Unlock()
 
 	for _, w := range u.worlds {
-		if err := w.Save(u.worldPath(w.TGID)); err != nil {
+		if err := w.Save(u.worldPath(w.ID)); err != nil {
 			return err
 		}
 	}

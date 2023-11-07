@@ -29,7 +29,7 @@ func Link(c tele.Context, who any) string {
 	case int64:
 		m = Member(c, tele.ChatID(x))
 	case *game.User:
-		m = Member(c, tele.ChatID(x.TUID))
+		m = Member(c, tele.ChatID(x.ID))
 	default:
 		panic(fmt.Sprintf("unexpected type %T", x))
 	}
@@ -115,7 +115,7 @@ func MessageForwarded(m *tele.Message) bool {
 }
 
 func CurrentUser(c tele.Context, w *game.World) *game.User {
-	return w.UserByID(c.Sender().ID)
+	return w.User(c.Sender().ID)
 }
 
 func RepliedUser(c tele.Context, w *game.World) (u *game.User, ok bool) {
@@ -123,7 +123,7 @@ func RepliedUser(c tele.Context, w *game.World) (u *game.User, ok bool) {
 	if !ok {
 		return nil, false
 	}
-	return w.UserByID(r.ID), true
+	return w.User(r.ID), true
 }
 
 func SuperGroup(c tele.Context) bool {

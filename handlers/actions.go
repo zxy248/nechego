@@ -25,18 +25,18 @@ func (h *Friends) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	if reply, ok := tu.Reply(c); ok {
-		if user.TUID == reply.ID {
+		if user.ID == reply.ID {
 			return c.Send(format.CannotFriend)
 		}
-		target := world.UserByID(reply.ID)
-		if user.Friends.With(target) {
-			user.Friends.Remove(target)
+		target := world.User(reply.ID)
+		if user.Friends.With(target.ID) {
+			user.Friends.Remove(target.ID)
 			return c.Send(format.FriendRemoved(
 				tu.Link(c, user), tu.Link(c, target)),
 				tele.ModeHTML)
 		} else {
-			user.Friends.Add(target)
-			if game.MutualFriends(user, target) {
+			user.Friends.Add(target.ID)
+			if user.MutualFriends(target) {
 				return c.Send(format.MutualFriends(
 					tu.Link(c, user), tu.Link(c, target)),
 					tele.ModeHTML)
@@ -50,10 +50,10 @@ func (h *Friends) Handle(c tele.Context) error {
 	list := user.Friends.List()
 	friends := make([]format.Friend, 0, len(list))
 	for _, id := range list {
-		target := world.UserByID(id)
+		target := world.User(id)
 		friends = append(friends, format.Friend{
 			Who:    tu.Link(c, target),
-			Mutual: game.MutualFriends(user, target),
+			Mutual: user.MutualFriends(target),
 		})
 	}
 	return c.Send(format.FriendList(tu.Link(c, user), friends), tele.ModeHTML)
@@ -78,8 +78,8 @@ func (h *Transfer) Handle(c tele.Context) error {
 		return c.Send(format.RepostMessage)
 	}
 
-	target := world.UserByID(reply.ID)
-	if !target.Friends.With(user) {
+	target := world.User(reply.ID)
+	if !target.Friends.With(user.ID) {
 		return c.Send(format.NonFriendTransfer)
 	}
 

@@ -15,7 +15,7 @@ func (w *World) DailyEblan() (u *User, ok bool) {
 }
 
 func (w *World) rollDailyEblan() *User {
-	u := w.RandomUser()
+	u := w.User(w.RandomUserID())
 	u.Inventory.Add(item.New(&token.Eblan{}))
 	return u
 }
@@ -30,7 +30,7 @@ func (w *World) DailyAdmin() (u *User, ok bool) {
 }
 
 func (w *World) rollDailyAdmin() *User {
-	u := w.RandomUser()
+	u := w.User(w.RandomUserID())
 	u.Inventory.Add(item.New(&token.Admin{}))
 	return u
 }
@@ -54,11 +54,13 @@ func (w *World) DailyPair() (pair []*User, ok bool) {
 }
 
 func (w *World) rollDailyPair() (pair []*User, ok bool) {
-	pair = w.RandomUsers(2)
-	if len(pair) != 2 {
+	p := w.RandomUserIDs(2)
+	if len(p) != 2 {
 		return nil, false
 	}
-	pair[0].Inventory.Add(item.New(&token.Pair{}))
-	pair[1].Inventory.Add(item.New(&token.Pair{}))
-	return pair, true
+	u1 := w.User(p[0])
+	u2 := w.User(p[1])
+	u1.Inventory.Add(item.New(&token.Pair{}))
+	u2.Inventory.Add(item.New(&token.Pair{}))
+	return []*User{u1, u2}, true
 }

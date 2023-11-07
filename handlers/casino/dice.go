@@ -40,7 +40,7 @@ func (h *Dice) Handle(c tele.Context) error {
 
 	roll := rollDiceFunc(c)
 	timeout := timeoutFunc(c, bet)
-	if err := casino.PlayDice(user.TUID, bet, roll, timeout); err != nil {
+	if err := casino.PlayDice(user.ID, bet, roll, timeout); err != nil {
 		return err
 	}
 

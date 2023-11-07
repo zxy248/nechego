@@ -106,7 +106,7 @@ func (h *Catch) Handle(c tele.Context) error {
 	if net, ok := user.FishingNet(); ok {
 		caught := user.UnloadNet(net)
 		for _, f := range caught {
-			world.History.Add(user.TUID, f)
+			world.History.Add(user.ID, f)
 		}
 	}
 	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", tu.Link(c, user))
@@ -282,7 +282,7 @@ func (h *GetJob) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	const shiftHours = 2
-	if time.Since(user.Retired) < 2*time.Hour || !world.Market.Shift.Begin(user.TUID, shiftHours*time.Hour) {
+	if time.Since(user.Retired) < 2*time.Hour || !world.Market.Shift.Begin(user.ID, shiftHours*time.Hour) {
 		return c.Send(format.CannotGetJob)
 	}
 	user.Retired = time.Now().Add(shiftHours * time.Hour)
@@ -303,7 +303,7 @@ func (h *QuitJob) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if id, ok := world.Market.Shift.Worker(); ok && id == user.TUID {
+	if id, ok := world.Market.Shift.Worker(); ok && id == user.ID {
 		world.Market.Shift.Cancel()
 		return c.Send(format.FireJob(tu.Link(c, id)), tele.ModeHTML)
 	}
@@ -442,7 +442,7 @@ func (h *Fish) Handle(c tele.Context) error {
 		return c.Send(format.BadFishOutcome())
 	}
 	if f, ok := item.Value.(*fishing.Fish); ok {
-		world.History.Add(user.TUID, f)
+		world.History.Add(user.ID, f)
 	}
 	user.Inventory.Add(item)
 	return c.Send(format.FishCatch(tu.Link(c, user), item), tele.ModeHTML)
@@ -498,7 +498,7 @@ func (h *DrawNet) Handle(c tele.Context) error {
 	err := c.Send(format.DrawNet(net), tele.ModeHTML)
 	caught := user.UnloadNet(net)
 	for _, f := range caught {
-		world.History.Add(user.TUID, f)
+		world.History.Add(user.ID, f)
 	}
 	return err
 }
@@ -607,7 +607,7 @@ func (h *Status) Handle(c tele.Context) error {
 		if !user.Admin() {
 			return c.Send("💬 Нельзя установить статус другому пользователю.")
 		}
-		user = world.UserByID(reply.ID)
+		user = world.User(reply.ID)
 	}
 
 	status := tu.Args(c, statusRe)[1]
@@ -795,7 +795,7 @@ func (h *Fight) Handle(c tele.Context) error {
 
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
-	opnt := world.UserByID(reply.ID)
+	opnt := world.User(reply.ID)
 
 	// Can opponent fight back?
 	if time.Since(opnt.LastMessage) > 10*time.Minute {
@@ -807,14 +807,10 @@ func (h *Fight) Handle(c tele.Context) error {
 	}
 
 	// Fight begins.
-	win, lose, elo := world.Fight(user, opnt)
+	win, lose, elo := game.Fight(user, opnt)
 
 	msg := format.NewConnector("\n\n")
-	msg.Add(format.Fight(
-		tu.Link(c, user.TUID),
-		tu.Link(c, opnt.TUID),
-		user.Strength(world),
-		opnt.Strength(world)))
+	msg.Add(format.Fight(user, opnt))
 
 	// The winner takes a random item.
 	if rand.Float64() < 0.02 {
@@ -856,11 +852,11 @@ func (h *Profile) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	if u, ok := tu.Reply(c); ok {
-		user = world.UserByID(u.ID)
+		user = world.User(u.ID)
 	}
 
-	out := format.Profile(tu.Link(c, user), user, world)
-	if a, ok := h.Avatars.Get(user.TUID); ok {
+	out := format.Profile(user)
+	if a, ok := h.Avatars.Get(user.ID); ok {
 		a.Caption = out
 		return c.Send(a, tele.ModeHTML)
 	}
@@ -892,7 +888,7 @@ func (h *Capital) Handle(c tele.Context) error {
 		fmt.Sprintf("<i>В среднем на счету: %s</i>\n",
 			format.Money(avg)),
 		fmt.Sprintf("<i>В руках магната %s %s,</i>",
-			tu.Link(c, users[0].TUID), format.Money(balance)),
+			tu.Link(c, users[0].ID), format.Money(balance)),
 		fmt.Sprintf("<i>или %s от общего количества средств.</i>\n",
 			format.Percentage(float64(balance)/float64(total))),
 	}

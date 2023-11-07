@@ -13,7 +13,7 @@ func TestLuck(t *testing.T) {
 	min := 1.0
 	max := 0.0
 	for i := 0; i < sample; i++ {
-		u := &User{TUID: int64(i)}
+		u := &User{ID: int64(i)}
 		l := u.Luck()
 		if l < 0 || l >= 1 {
 			t.Errorf("l = %v, want [0, 1)", l)

@@ -5,53 +5,41 @@ import (
 	"nechego/modifier"
 )
 
-func (u *User) Modset(w *World) modifier.Set {
+func (u *User) Modifiers() modifier.Set {
 	set := modifier.Set{}
-	moders := []modifier.Moder{
-		Luck(u.Luck()),
-		&u.Energy,
-		u.Balance(),
-	}
-
-	// Buff modifiers.
+	ms := []modifier.Moder{Luck(u.Luck()), &u.Energy, u.Balance()}
 	for _, b := range u.Buffs.List() {
-		moders = append(moders, b)
+		ms = append(ms, b)
 	}
-
-	// Rating modifiers.
-	if top := w.SortedUsers(ByElo); len(top) >= 3 {
-		switch u {
-		case top[0]:
-			moders = append(moders, modifier.RatingFirst)
-		case top[1]:
-			moders = append(moders, modifier.RatingSecond)
-		case top[2]:
-			moders = append(moders, modifier.RatingThird)
-		}
+	switch u.RatingPosition {
+	case 0:
+		ms = append(ms, modifier.RatingFirst)
+	case 1:
+		ms = append(ms, modifier.RatingSecond)
+	case 2:
+		ms = append(ms, modifier.RatingThird)
 	}
 
 	// Item modifiers.
 	// If the same item type is encountered more than once, the
 	// modifier will not be applied.
-	seen := map[item.Type]int{item.TypeFishingRod: 0}
+	seen := map[item.Type]bool{item.TypeFishingRod: false}
 	for _, x := range u.Inventory.List() {
-		if n, ok := seen[x.Type]; ok {
-			if n > 0 {
-				continue
-			}
-			seen[x.Type]++
+		if seen[x.Type] {
+			continue
 		}
-		moder, ok := x.Value.(modifier.Moder)
+		seen[x.Type] = true
+		mer, ok := x.Value.(modifier.Moder)
 		if !ok {
 			continue
 		}
-		if m, ok := moder.Mod(); ok {
+		if m, ok := mer.Mod(); ok {
 			set.Add(m)
 		}
 	}
 
 	// Apply modifiers.
-	for _, moder := range moders {
+	for _, moder := range ms {
 		if m, ok := moder.Mod(); ok {
 			set.Add(m)
 		}

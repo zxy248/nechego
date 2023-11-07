@@ -189,6 +189,6 @@ func payMarketWorkerWage(w *World, n int) {
 	}
 	if id, ok := w.Market.Shift.Worker(); ok {
 		x := item.New(&money.Cash{Money: n})
-		w.UserByID(id).Funds.Add("магазин", x)
+		w.User(id).Funds.Add("магазин", x)
 	}
 }

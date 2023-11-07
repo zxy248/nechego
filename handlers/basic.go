@@ -86,7 +86,7 @@ func (h *Who) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	m := tu.Link(c, world.RandomUser())
+	m := tu.Link(c, world.RandomUserID())
 	s := html.EscapeString(text)
 	return c.Send(m+" "+s, tele.ModeHTML)
 }
@@ -109,11 +109,11 @@ func (h *List) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	users := world.RandomUsers(3 + rand.Intn(3))
+	us := world.RandomUserIDs(3 + rand.Intn(3))
 	arg := tu.Args(c, listRe)[1]
 	s := []string{fmt.Sprintf("<b>📝 Список %s</b>", arg)}
-	for _, u := range users {
-		who := tu.Link(c, tu.Member(c, tele.ChatID(u.TUID)))
+	for _, u := range us {
+		who := tu.Link(c, u)
 		s = append(s, fmt.Sprintf("<b>•</b> %s", who))
 	}
 	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
@@ -133,9 +133,9 @@ func (h *Top) Handle(c tele.Context) error {
 	world, _ := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	users := world.RandomUsers(3 + rand.Intn(3))
+	us := world.RandomUserIDs(3 + rand.Intn(3))
 	s := []string{fmt.Sprintf("<b>🏆 Топ %s</b>", text)}
-	for i, u := range users {
+	for i, u := range us {
 		s = append(s, fmt.Sprintf("<i>%d.</i> %s", 1+i, tu.Link(c, u)))
 	}
 	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
@@ -270,10 +270,7 @@ func (h *Ban) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}
-	target := world.UserByID(reply.ID)
-	if target.Developer {
-		return c.Send(format.CannotBan)
-	}
+	target := world.User(reply.ID)
 	duration := time.Hour * time.Duration(h.DurationHr)
 	target.BannedUntil = time.Now().Add(duration)
 	return c.Send(format.UserBanned(h.DurationHr))
@@ -300,6 +297,6 @@ func (h *Unban) Handle(c tele.Context) error {
 	if !ok {
 		return c.Send(format.RepostMessage)
 	}
-	world.UserByID(reply.ID).BannedUntil = time.Time{}
+	world.User(reply.ID).BannedUntil = time.Time{}
 	return c.Send(format.UserUnbanned)
 }

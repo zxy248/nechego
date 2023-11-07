@@ -22,7 +22,7 @@ func (h *DiceRoll) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	game := world.Casino.Game()
-	if !game.Going() || !game.Verify(user.TUID) {
+	if !game.Going() || !game.Verify(user.ID) {
 		return nil
 	}
 

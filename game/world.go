@@ -14,8 +14,8 @@ import (
 )
 
 type World struct {
-	TGID     int64
-	Users    []*User
+	ID       int64
+	Users    map[int64]*User
 	Floor    *item.Set
 	Market   *Market
 	Casino   *Casino
@@ -29,8 +29,8 @@ type World struct {
 
 func NewWorld(id int64) *World {
 	return &World{
-		TGID:     id,
-		Users:    []*User{},
+		ID:       id,
+		Users:    map[int64]*User{},
 		Floor:    item.NewSet(),
 		Market:   NewMarket(),
 		Casino:   &Casino{Timeout: time.Second * 25},
@@ -74,35 +74,43 @@ func (w *World) Save(name string) error {
 	return enc.Encode(w)
 }
 
-func (w *World) AddUser(u *User) {
-	u.Balance().Add(5000)
-	w.Users = append(w.Users, u)
+func (w *World) RandomUserID() int64 {
+	ids := w.uids()
+	return ids[rand.Intn(len(ids))]
 }
 
-func (w *World) RandomUser() *User {
-	return w.Users[rand.Intn(len(w.Users))]
-}
-
-func (w *World) RandomUsers(n int) []*User {
-	users := make([]*User, len(w.Users))
-	copy(users, w.Users)
-	rand.Shuffle(len(users), func(i, j int) {
-		users[i], users[j] = users[j], users[i]
+func (w *World) RandomUserIDs(n int) []int64 {
+	ids := w.uids()
+	rand.Shuffle(len(ids), func(i, j int) {
+		ids[i], ids[j] = ids[j], ids[i]
 	})
-	if len(users) < n {
-		return users
-	}
-	return users[:n]
+	return ids[:min(len(ids), n)]
 }
 
-func (w *World) UserByID(tuid int64) *User {
+func (w *World) uids() []int64 {
+	ids := make([]int64, 0, len(w.Users))
+	for id := range w.Users {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func (w *World) User(id int64) *User {
+	u := w.userByID(id)
+	u.ReputationFactor = w.reputationFactor(u.Reputation.Score())
+	u.RatingPosition = w.Position(u, ByElo)
+	u.Activity = float64(u.Messages) / float64(w.Messages)
+	return u
+}
+
+func (w *World) userByID(id int64) *User {
 	for _, u := range w.Users {
-		if u.TUID == tuid {
+		if u.ID == id {
 			return u
 		}
 	}
-	u := NewUser(tuid)
-	w.AddUser(u)
+	u := NewUser(id)
+	w.Users[u.ID] = u
 	return u
 }
 
@@ -113,22 +121,16 @@ func (w *World) Capital() (total, avg int) {
 	return total, total / len(w.Users)
 }
 
-type Reputation struct{ Low, N, High int }
-
-func (r Reputation) Relative() float64 {
-	d := r.High - r.Low
+func (w *World) reputationFactor(n int) float64 {
+	low, high := w.reputationBounds()
+	d := high - low
 	if d == 0 {
 		return 0.5
 	}
-	return float64(r.N-r.Low) / float64(d)
+	return float64(n-low) / float64(d)
 }
 
-func (w *World) Reputation(u *User) Reputation {
-	low, high := w.ReputationBounds()
-	return Reputation{low, u.Reputation.Score(), high}
-}
-
-func (w *World) ReputationBounds() (low, high int) {
+func (w *World) reputationBounds() (low, high int) {
 	for _, u := range w.Users {
 		s := u.Reputation.Score()
 		low, high = min(low, s), max(high, s)

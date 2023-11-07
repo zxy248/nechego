@@ -82,7 +82,7 @@ func setup() (*app, error) {
 		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
 			refreshMarket(w)
 			runServices(w)
-			w.History.Announce(handlers.RecordAnnouncer(bot, tele.ChatID(w.TGID)))
+			w.History.Announce(handlers.RecordAnnouncer(bot, tele.ChatID(w.ID)))
 		}),
 		avatars: &avatar.Storage{
 			Bot:       bot,
@@ -145,6 +145,7 @@ func (a *app) globalMiddleware() []adapter.Wrapper {
 				return h.Match(c)
 			},
 		},
+		&middleware.CacheName{Universe: a.universe},
 		&middleware.IncrementCounters{Universe: a.universe},
 		&middleware.RandomPhoto{Avatars: a.avatars, Prob: 1. / 200},
 	}

@@ -43,7 +43,7 @@ func (l Luck) Mod() (m *modifier.Mod, ok bool) {
 }
 
 func (u *User) Luck() float64 {
-	return luck(time.Now(), u.TUID)
+	return luck(time.Now(), u.ID)
 }
 
 func luck(t time.Time, id int64) float64 {
