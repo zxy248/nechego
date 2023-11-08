@@ -6,26 +6,14 @@ import (
 	"time"
 )
 
-func runServices(w *game.World) {
-	table := []struct {
-		period time.Duration
-		action func(*game.World)
-	}{
-		{time.Minute, refreshMarket},
-		{time.Minute, restoreEnergy},
-		{time.Minute, fillNets},
-	}
-	for _, v := range table {
-		d := v.period
-		f := v.action
-		go func() {
-			for range time.NewTicker(d).C {
-				w.Lock()
-				f(w)
-				w.Unlock()
-			}
-		}()
-	}
+func addService(w *game.World, f func(*game.World), p time.Duration) {
+	go func() {
+		for range time.NewTicker(p).C {
+			w.Lock()
+			f(w)
+			w.Unlock()
+		}
+	}()
 }
 
 func refreshMarket(w *game.World) {

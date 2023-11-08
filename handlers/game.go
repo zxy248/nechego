@@ -409,45 +409,6 @@ func (h *EatQuick) Handle(c tele.Context) error {
 		format.EnergyRemaining(user.Energy), tele.ModeHTML)
 }
 
-type Fish struct {
-	Universe *game.Universe
-}
-
-var fishRe = Regexp("^!(р[ыі]балка|ловля рыб)")
-
-func (h *Fish) Match(s string) bool {
-	return fishRe.MatchString(s)
-}
-
-func (h *Fish) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if fullInventory(user.Inventory) {
-		return c.Send(format.InventoryOverflow)
-	}
-
-	rod, ok := user.FishingRod()
-	if !ok {
-		return c.Send(format.BuyFishingRod)
-	}
-	if !user.Energy.Spend(0.2) {
-		return c.Send(format.NoEnergy)
-	}
-	item, caught := user.Fish(rod)
-	if rod.Broken() {
-		c.Send(format.FishingRodBroke)
-	}
-	if !caught {
-		return c.Send(format.BadFishOutcome())
-	}
-	if f, ok := item.Value.(*fishing.Fish); ok {
-		world.History.Add(user.ID, f)
-	}
-	user.Inventory.Add(item)
-	return c.Send(format.FishCatch(tu.Link(c, user), item), tele.ModeHTML)
-}
-
 type CastNet struct {
 	Universe *game.Universe
 }
@@ -522,14 +483,6 @@ func (h *Net) Handle(c tele.Context) error {
 		return c.Send(format.NoNet)
 	}
 	return c.Send(format.Net(net), tele.ModeHTML)
-}
-
-// RecordAnnouncer returns a fishing.RecordAnnouncer that sends a
-// message to the chat specified by tgid.
-func RecordAnnouncer(bot *tele.Bot, tgid tele.Recipient) fishing.RecordAnnouncer {
-	return func(e *fishing.Entry, p fishing.Parameter) {
-		bot.Send(tgid, format.NewRecord(e, p), tele.ModeHTML)
-	}
 }
 
 type FishingRecords struct {

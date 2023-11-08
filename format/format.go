@@ -307,7 +307,7 @@ func Net(n *fishing.Net) string {
 	return fmt.Sprintf(c.String(), n.Capacity)
 }
 
-func NewRecord(e *fishing.Entry, p fishing.Parameter) string {
+func RecordCatch(p fishing.Parameter, e *fishing.Entry) string {
 	var p1, p2 string
 	switch p {
 	case fishing.Weight:
@@ -329,15 +329,15 @@ func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) strin
 	c.Add("")
 	c.Add("<b>💰 Самые дорогие рыбы:</b>")
 	for i, e := range price {
-		n := fmt.Sprintf("<b><i>%s</i></b>. ", Link(e.TUID, strconv.Itoa(1+i)))
+		n := fmt.Sprintf("<b><i>%s</i></b>. ", Link(e.ID, strconv.Itoa(1+i)))
 		c.Add(n + Fish(e.Fish) + ", " + Money(int(e.Fish.Price())))
 	}
 	c.Add("")
 	c.Add("<b>⚖ Самая тяжёлая рыба:</b>")
-	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(weight.TUID, "→"), Fish(weight.Fish)))
+	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(weight.ID, "→"), Fish(weight.Fish)))
 	c.Add("")
 	c.Add("<b>📐 Самая большая рыба:</b>")
-	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(length.TUID, "→"), Fish(length.Fish)))
+	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(length.ID, "→"), Fish(length.Fish)))
 	return c.String()
 }
 

@@ -10,6 +10,7 @@ import (
 	"nechego/danbooru"
 	"nechego/game"
 	"nechego/handlers"
+	"nechego/handlers/actions"
 	"nechego/handlers/casino"
 	"nechego/handlers/command"
 	"nechego/handlers/daily"
@@ -81,8 +82,9 @@ func setup() (*app, error) {
 		bot: bot,
 		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
 			refreshMarket(w)
-			runServices(w)
-			w.History.Announce(handlers.RecordAnnouncer(bot, tele.ChatID(w.ID)))
+			addService(w, refreshMarket, time.Minute)
+			addService(w, restoreEnergy, time.Minute)
+			addService(w, fillNets, time.Minute)
 		}),
 		avatars: &avatar.Storage{
 			Bot:       bot,
@@ -206,8 +208,8 @@ func (a *app) marketServices() []server.Service {
 
 func (a *app) actionsServices() []server.Service {
 	return []server.Service{
+		&actions.Fish{Universe: a.universe},
 		text(&handlers.Craft{Universe: a.universe}),
-		text(&handlers.Fish{Universe: a.universe}),
 		text(&handlers.DrawNet{Universe: a.universe}),
 		text(&handlers.CastNet{Universe: a.universe}),
 		text(&handlers.Net{Universe: a.universe}),
