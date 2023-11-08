@@ -223,9 +223,9 @@ func (a *app) actionsServices() []server.Service {
 
 func (a *app) topServices() []server.Service {
 	return []server.Service{
-		&top.Rating{Universe: a.universe},
-		&top.Rich{Universe: a.universe},
-		&top.Strength{Universe: a.universe},
+		top.Rating(a.universe),
+		top.Rich(a.universe),
+		top.Strength(a.universe),
 	}
 }
 

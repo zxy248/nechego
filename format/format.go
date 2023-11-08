@@ -116,6 +116,10 @@ func Name(s string) string {
 	return fmt.Sprintf("<b>%s</b>", s)
 }
 
+func User(u *game.User) string {
+	return Name(Link(u.ID, u.Name))
+}
+
 func Balance(q int) string {
 	return "💵 " + Money(q)
 }
@@ -444,39 +448,6 @@ func CannotSplit(i *item.Item) string {
 
 func Splitted(who string, i *item.Item) string {
 	return fmt.Sprintf("🗃 %s откладывает %s.", Name(who), Item(i))
-}
-
-func TopRating(who func(*game.User) string, us []*game.User) string {
-	c := NewConnector("\n")
-	c.Add("<b>🏆 Боевой рейтинг</b>")
-	for i, u := range us {
-		s := fmt.Sprintf("%s %s %s",
-			Index(i), Name(who(u)), Rating(u.Rating))
-		c.Add(s)
-	}
-	return c.String()
-}
-
-func TopRich(who func(*game.User) string, w *game.World, us []*game.User) string {
-	c := NewConnector("\n")
-	c.Add("💵 <b>Самые богатые пользователи</b>")
-	for i, u := range us {
-		s := fmt.Sprintf("%s %s %s",
-			Index(i), Name(who(u)), Money(u.Balance().Total()))
-		c.Add(s)
-	}
-	return c.String()
-}
-
-func TopStrength(who func(*game.User) string, w *game.World, us []*game.User) string {
-	c := NewConnector("\n")
-	c.Add("🏋️‍♀️ <b>Самые сильные пользователи</b>")
-	for i, u := range us {
-		s := fmt.Sprintf("%s %s %s",
-			Index(i), Name(who(u)), Strength(u.Strength()))
-		c.Add(s)
-	}
-	return c.String()
 }
 
 func Index(i int) string {
