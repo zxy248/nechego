@@ -120,6 +120,7 @@ func (a *app) services() []server.Service {
 		{a.pictureServices(), nil},
 		{a.casinoServices(), spam},
 		{a.commandServices(), nil},
+		{a.otherServices(), nil},
 	}
 
 	var handlers []server.Service
@@ -297,6 +298,12 @@ func (a *app) commandServices() []server.Service {
 		&command.Add{Universe: a.universe},
 		&command.Remove{Universe: a.universe},
 		&command.Use{Universe: a.universe},
+	}
+}
+
+func (a *app) otherServices() []server.Service {
+	return []server.Service{
+		&handlers.Pass{},
 	}
 }
 
