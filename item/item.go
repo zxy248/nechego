@@ -29,8 +29,7 @@ func New(x any) *Item {
 		Transferable: true,
 		Value:        x,
 	}
-	switch i.Type {
-	case TypeEblan, TypePair, TypeAdmin:
+	if IsToken(i.Type) {
 		i.Transferable = false
 		i.Expire = dates.Tomorrow()
 	}

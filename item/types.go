@@ -111,3 +111,11 @@ func ValueOf(t Type) any {
 		panic(fmt.Sprintf("unexpected item type %v", t))
 	}
 }
+
+func IsToken(t Type) bool {
+	switch t {
+	case TypeEblan, TypeAdmin, TypePair:
+		return true
+	}
+	return false
+}
