@@ -99,7 +99,7 @@ func (w *World) User(id int64) *User {
 	u := w.userByID(id)
 	u.ReputationFactor = w.reputationFactor(u.Reputation.Score())
 	u.RatingPosition = w.Position(u, ByElo)
-	u.Activity = float64(u.Messages) / float64(w.Messages)
+	u.Activity = float64(u.Messages) / float64(1+w.Messages)
 	return u
 }
 
