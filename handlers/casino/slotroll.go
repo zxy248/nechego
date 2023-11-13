@@ -3,7 +3,6 @@ package casino
 import (
 	"nechego/format"
 	"nechego/game"
-	"nechego/slot"
 	tu "nechego/teleutil"
 
 	tele "gopkg.in/telebot.v3"
@@ -32,11 +31,21 @@ func (h *SlotRoll) Handle(c tele.Context) error {
 
 	m := tu.Link(c, user)
 	v := c.Message().Dice.Value
-	if p := slot.Prize(v, bet); p > 0 {
+	if p := prize(v, bet); p > 0 {
 		user.Balance().Add(p)
 		s := format.SlotWin(m, p)
 		return c.Send(s, tele.ModeHTML)
 	}
 	s := format.SlotRoll(m, bet)
 	return c.Send(s, tele.ModeHTML)
+}
+
+func prize(value, bet int) int {
+	var mult = map[int]int{
+		1:  4,  // bar
+		22: 8,  // grape
+		43: 16, // lemon
+		64: 32, // seven
+	}
+	return bet * mult[value]
 }
