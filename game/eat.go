@@ -35,11 +35,11 @@ func quickEatable(x *item.Item) bool {
 // Eat restores user's energy and removes the specified item from the
 // inventory if it can be eaten. If it cannot be eaten, returns false.
 func (u *User) Eat(x *item.Item) bool {
-	var keep bool
+	rm := true
 	switch x := x.Value.(type) {
 	case *plant.Plant:
 		x.Count--
-		keep = x.Count > 0
+		rm = x.Count == 0
 		eatPlant(u, x)
 	case *fishing.Fish:
 		eatFish(u, x)
@@ -52,7 +52,7 @@ func (u *User) Eat(x *item.Item) bool {
 	default:
 		return false
 	}
-	if !keep {
+	if rm {
 		u.Inventory.Remove(x)
 	}
 	return true

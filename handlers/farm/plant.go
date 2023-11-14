@@ -59,8 +59,8 @@ func plantItem(u *game.User, i *item.Item) *plant.Plant {
 		planted++
 		p.Count--
 	}
-	if p.Count == 0 && !u.Inventory.Remove(i) {
-		panic("cannot remove zero Plant from inventory")
+	if p.Count == 0 {
+		u.Inventory.Remove(i)
 	}
 	return &plant.Plant{Type: p.Type, Count: planted}
 }

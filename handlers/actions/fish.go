@@ -24,7 +24,7 @@ func (h *Fish) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if fullInventory(user.Inventory) {
+	if handlers.FullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 	rod, ok := user.FishingRod()

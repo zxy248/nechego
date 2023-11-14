@@ -45,6 +45,7 @@ const (
 	CannotFireJob        = "💼 Вы нигде не работаете."
 	CannotFriend         = "👤 С этим пользователем нельзя подружиться."
 	NonFriendTransfer    = "📦 Вещи можно передавать только тем, кто с вами дружит."
+	ItemNotFound         = "🔖 Предмет не найден."
 )
 
 func Link(id int64, text string) string {
@@ -59,36 +60,36 @@ func Selector(key int, s string) string {
 	return fmt.Sprintf("<code>%2d ≡ </code>%s", key, s)
 }
 
-func Items(i []*item.Item) string {
+func Items(is []*item.Item) string {
 	const (
 		limit        = 30
 		amortization = 5
 	)
-	if len(i) == 0 {
+	if len(is) == 0 {
 		return Empty
 	}
 	c := NewConnector("\n")
-	for k, x := range i {
-		if k >= limit && len(i) > limit+amortization {
-			c.Add(fmt.Sprintf("<i>...и ещё %d предметов.</i>", len(i)-k))
+	for k, i := range is {
+		if k >= limit && len(is) > limit+amortization {
+			c.Add(fmt.Sprintf("<i>...и ещё %d предметов.</i>", len(is)-k))
 			break
 		}
-		c.Add(Selector(k, Item(x)))
+		c.Add(Selector(k, Item(i)))
 	}
 	return c.String()
 }
 
-func Catch(items []*item.Item) string {
-	if len(items) == 0 {
+func Catch(is []*item.Item) string {
+	if len(is) == 0 {
 		return Empty
 	}
 	c := NewConnector("\n")
 	price, weight := 0.0, 0.0
-	for k, x := range items {
-		if f, ok := x.Value.(*fishing.Fish); ok {
+	for k, i := range is {
+		if f, ok := i.Value.(*fishing.Fish); ok {
 			price += f.Price()
 			weight += f.Weight
-			c.Add(Selector(k, Item(x)))
+			c.Add(Selector(k, Item(i)))
 		}
 	}
 	c.Add(fmt.Sprintf("Стоимость: %s", Money(int(price))))
@@ -136,25 +137,25 @@ func EnergyRemaining(e game.Energy) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
-func Eaten(who string, i ...*item.Item) string {
-	if len(i) == 0 {
+func Eaten(who string, is []*item.Item) string {
+	if len(is) == 0 {
 		return NoFood
 	}
 	emoji, verb := "🥤", "выпил(а)"
 	c := NewConnector(", ")
-	for _, x := range i {
-		if f, ok := x.Value.(*food.Food); !ok || !f.Beverage() {
+	for _, i := range is {
+		if f, ok := i.Value.(*food.Food); !ok || !f.Beverage() {
 			emoji, verb = "🍊", "съел(а)"
 		}
-		c.Add(Item(x))
+		c.Add(Item(i))
 	}
 	return fmt.Sprintf("%s %s %s %s.", emoji, Name(who), verb, c.String())
 }
 
-func CannotEat(i ...*item.Item) string {
+func CannotEat(is ...*item.Item) string {
 	c := NewConnector(", ")
-	for _, x := range i {
-		c.Add(Item(x))
+	for _, i := range is {
+		c.Add(Item(i))
 	}
 	return fmt.Sprintf("🤮 Нельзя съесть %s.", c.String())
 }
@@ -193,8 +194,8 @@ func BadKey(k int) string {
 
 func Modifiers(s modifier.Set) string {
 	c := NewConnector("\n")
-	for _, x := range s.List() {
-		c.Add(fmt.Sprintf("<i>%s %s</i>", x.Emoji, x.Description))
+	for _, m := range s.List() {
+		c.Add(fmt.Sprintf("<i>%s %s</i>", m.Emoji, m.Description))
 	}
 	return c.String()
 }
@@ -211,13 +212,13 @@ func CannotDrop(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя выложить %s.", Item(i))
 }
 
-func Dropped(who string, i ...*item.Item) string {
-	if len(i) == 0 {
+func Dropped(who string, is []*item.Item) string {
+	if len(is) == 0 {
 		return "♻ Ничего не выложено."
 	}
 	c := NewConnector(", ")
-	for _, x := range i {
-		c.Add(Item(x))
+	for _, i := range is {
+		c.Add(Item(i))
 	}
 	return fmt.Sprintf("♻ %s выкладывает %s.", Name(who), c.String())
 }
@@ -226,52 +227,56 @@ func CannotPick(i *item.Item) string {
 	return fmt.Sprintf("♻ Нельзя взять %s.", Item(i))
 }
 
-func Picked(who string, i ...*item.Item) string {
-	if len(i) == 0 {
+func Picked(who string, is []*item.Item) string {
+	if len(is) == 0 {
 		return "🫳 Ничего не взято."
 	}
 	c := NewConnector(", ")
-	for _, x := range i {
-		c.Add(Item(x))
+	for _, i := range is {
+		c.Add(Item(i))
 	}
 	return fmt.Sprintf("🫳 %s берёт %s.", Name(who), c.String())
+}
+
+func Cashout(who string, n int) string {
+	return fmt.Sprintf("💵 %s откладывает %s.", Name(who), Money(n))
 }
 
 func CannotSell(i *item.Item) string {
 	return fmt.Sprintf("🏪 Нельзя продать %s.", Item(i))
 }
 
-func Sold(who string, profit int, i ...*item.Item) string {
-	if len(i) == 0 {
+func Sold(who string, profit int, is ...*item.Item) string {
+	if len(is) == 0 {
 		return "💵 Ничего не продано."
 	}
 	c := NewConnector(", ")
-	for _, x := range i {
-		c.Add(Item(x))
+	for _, i := range is {
+		c.Add(Item(i))
 	}
 	return fmt.Sprintf("💵 %s продаёт %s и зарабатывает %s.",
 		Name(who), c.String(), Money(profit))
 }
 
-func Bought(who string, cost int, i ...*item.Item) string {
-	if len(i) == 0 {
+func Bought(who string, cost int, is []*item.Item) string {
+	if len(is) == 0 {
 		return "💵 Ничего не куплено."
 	}
 	c := NewConnector(", ")
-	for _, x := range i {
-		c.Add(Item(x))
+	for _, i := range is {
+		c.Add(Item(i))
 	}
 	return fmt.Sprintf("🛒 %s покупает %s за %s.",
 		Name(who), c.String(), Money(cost))
 }
 
-func Crafted(who string, i ...*item.Item) string {
-	if len(i) == 0 {
+func Crafted(who string, is ...*item.Item) string {
+	if len(is) == 0 {
 		return "🛠 Ничего не сделано."
 	}
 	c := NewConnector(", ")
-	for _, x := range i {
-		c.Add(Item(x))
+	for _, i := range is {
+		c.Add(Item(i))
 	}
 	return fmt.Sprintf("🛠 %s получает %s.", Name(who), c.String())
 }
@@ -398,18 +403,18 @@ func profileTable(entries []string) string {
 	return strings.Join(lines, "\n")
 }
 
-func FundsCollected(who string, f ...*game.Fund) string {
-	if len(f) == 0 {
+func FundsCollected(who string, fs ...*game.Fund) string {
+	if len(fs) == 0 {
 		return "🧾 Средств пока нет."
 	}
 	c := NewConnector("\n")
 	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", Name(who)))
-	for i, x := range f {
-		if rest := len(f) - i; i >= 15 && rest >= 5 {
+	for i, f := range fs {
+		if rest := len(fs) - i; i >= 15 && rest >= 5 {
 			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> пунктов.</i>", rest))
 			break
 		}
-		c.Add(fmt.Sprintf("<b>·</b> %s <i>(%s)</i>", Item(x.Item), x.Source))
+		c.Add(fmt.Sprintf("<b>·</b> %s <i>(%s)</i>", Item(f.Item), f.Source))
 	}
 	return c.String()
 }
@@ -491,13 +496,13 @@ func CannotTransfer(i *item.Item) string {
 	return fmt.Sprintf("📦 Нельзя передать %s.", Item(i))
 }
 
-func Transfered(sender, receiver string, i ...*item.Item) string {
-	if len(i) == 0 {
+func Transfered(sender, receiver string, is ...*item.Item) string {
+	if len(is) == 0 {
 		return "📦 Ничего не передано."
 	}
 	c := NewConnector(", ")
-	for _, x := range i {
-		c.Add(Item(x))
+	for _, i := range is {
+		c.Add(Item(i))
 	}
 	const help = "<i>Используйте команду <code>!получить</code>, чтобы взять предметы.</i>"
 	message := fmt.Sprintf("📦 %s передаёт %s %s.", Name(sender), Name(receiver), c.String())

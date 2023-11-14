@@ -5,7 +5,6 @@ import (
 	"html"
 	"nechego/game"
 	"regexp"
-	"strconv"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
@@ -68,28 +67,6 @@ func Admin(m *tele.ChatMember) bool {
 
 func Left(m *tele.ChatMember) bool {
 	return m.Role == tele.Kicked || m.Role == tele.Left
-}
-
-func NumArgAll(c tele.Context, re *regexp.Regexp, n int) []int {
-	s := Args(c, re)[n]
-	nums := []int{}
-	for _, x := range strings.Fields(s) {
-		n, err := strconv.Atoi(x)
-		if err != nil {
-			continue
-		}
-		nums = append(nums, n)
-	}
-	return nums
-}
-
-func NumArg(c tele.Context, re *regexp.Regexp, n int) []int {
-	const limit = 10
-	nums := NumArgAll(c, re, n)
-	if len(nums) < limit {
-		return nums
-	}
-	return nums[:limit]
 }
 
 // Reply returns the sender of the replied message.

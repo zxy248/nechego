@@ -50,9 +50,10 @@ func NewUser(id int64) *User {
 // Transfer moves the item x from the sender's inventory to the
 // receiver's funds.
 func (u *User) Transfer(to *User, x *item.Item) bool {
-	if !x.Transferable || !u.Inventory.Remove(x) {
+	if !x.Transferable {
 		return false
 	}
+	u.Inventory.Remove(x)
 	to.Funds.Add("обмен", x)
 	return true
 }

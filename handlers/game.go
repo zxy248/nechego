@@ -8,10 +8,8 @@ import (
 	"nechego/fishing"
 	"nechego/format"
 	"nechego/game"
-	"nechego/game/recipes"
 	"nechego/handlers/parse"
 	"nechego/item"
-	"nechego/money"
 	tu "nechego/teleutil"
 	"nechego/valid"
 	"strconv"
@@ -22,7 +20,35 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const inventoryCapacity = 20
+const InventoryCapacity = 20
+
+func FullInventory(i *item.Set) bool {
+	return i.Count() >= InventoryCapacity
+}
+
+func GetItems(s *item.Set, ks []int) []*item.Item {
+	var items []*item.Item
+	seen := map[*item.Item]bool{}
+	for _, k := range ks {
+		x, ok := s.ByKey(k)
+		if !ok || seen[x] {
+			break
+		}
+		seen[x] = true
+		items = append(items, x)
+	}
+	return items
+}
+
+func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad *item.Item) {
+	for _, x := range items {
+		if !src.Move(dst, x) {
+			return moved, x
+		}
+		moved = append(moved, x)
+	}
+	return
+}
 
 type Inventory struct {
 	Universe *game.Universe
@@ -40,53 +66,13 @@ func (h *Inventory) Handle(c tele.Context) error {
 
 	items := user.Inventory.HkList()
 	warn := ""
-	if fullInventory(user.Inventory) {
+	if FullInventory(user.Inventory) {
 		warn = " (!)"
 	}
 	head := fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>\n",
-		tu.Link(c, user), len(items), inventoryCapacity, warn)
+		tu.Link(c, user), len(items), InventoryCapacity, warn)
 	list := format.Items(items)
 	return c.Send(head+list, tele.ModeHTML)
-}
-
-func fullInventory(i *item.Set) bool {
-	return i.Count() >= inventoryCapacity
-}
-
-type Sort struct {
-	Universe *game.Universe
-}
-
-var sortRe = Regexp("^!сорт (.*)")
-
-func (h *Sort) Match(s string) bool {
-	return sortRe.MatchString(s)
-}
-
-func (h *Sort) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	items := []*item.Item{}
-	seen := map[*item.Item]bool{}
-	for _, k := range tu.NumArg(c, sortRe, 1) {
-		x, ok := user.Inventory.ByKey(k)
-		if !ok {
-			return c.Send(format.BadKey(k), tele.ModeHTML)
-		}
-		if !seen[x] {
-			items = append(items, x)
-		}
-		seen[x] = true
-	}
-
-	for _, x := range items {
-		if !user.Inventory.Remove(x) {
-			panic(fmt.Sprintf("sort: cannot remove %v", x))
-		}
-	}
-	user.Inventory.AddFront(items...)
-	return c.Send(format.InventorySorted)
 }
 
 type Catch struct {
@@ -112,71 +98,6 @@ func (h *Catch) Handle(c tele.Context) error {
 	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", tu.Link(c, user))
 	list := format.Catch(user.Inventory.HkList())
 	return c.Send(head+list, tele.ModeHTML)
-}
-
-type Drop struct {
-	Universe *game.Universe
-}
-
-var dropRe = Regexp("^!(выкинуть|выбросить|выложить|дроп|положить) (.*)")
-
-func (h *Drop) Match(s string) bool {
-	return dropRe.MatchString(s)
-}
-
-func (h *Drop) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	dropped := []*item.Item{}
-	for _, key := range tu.NumArg(c, dropRe, 2) {
-		item, ok := user.Inventory.ByKey(key)
-		if !ok {
-			c.Send(format.BadKey(key), tele.ModeHTML)
-			break
-		}
-		if !user.Inventory.Move(world.Floor, item) {
-			c.Send(format.CannotDrop(item), tele.ModeHTML)
-			break
-		}
-		dropped = append(dropped, item)
-	}
-	world.Floor.Trim(10)
-	return c.Send(format.Dropped(tu.Link(c, user), dropped...), tele.ModeHTML)
-}
-
-type Pick struct {
-	Universe *game.Universe
-}
-
-var pickRe = Regexp("^!(взять|подобрать|поднять) (.*)")
-
-func (h *Pick) Match(s string) bool {
-	return pickRe.MatchString(s)
-}
-
-func (h *Pick) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if fullInventory(user.Inventory) {
-		return c.Send(format.InventoryOverflow)
-	}
-
-	picked := []*item.Item{}
-	for _, key := range tu.NumArg(c, pickRe, 2) {
-		item, ok := world.Floor.ByKey(key)
-		if !ok {
-			c.Send(format.BadKey(key), tele.ModeHTML)
-			break
-		}
-		if !world.Floor.Move(user.Inventory, item) {
-			c.Send(format.CannotPick(item), tele.ModeHTML)
-			break
-		}
-		picked = append(picked, item)
-	}
-	return c.Send(format.Picked(tu.Link(c, user), picked...), tele.ModeHTML)
 }
 
 type Floor struct {
@@ -310,105 +231,6 @@ func (h *QuitJob) Handle(c tele.Context) error {
 	return c.Send(format.CannotFireJob)
 }
 
-type Buy struct {
-	Universe *game.Universe
-}
-
-var buyRe = Regexp("^!купить (.*)")
-
-func (h *Buy) Match(s string) bool {
-	return buyRe.MatchString(s)
-}
-
-func (h *Buy) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if fullInventory(user.Inventory) {
-		return c.Send(format.InventoryOverflow)
-	}
-
-	bought := []*item.Item{}
-	cost := 0
-	for _, key := range tu.NumArg(c, buyRe, 1) {
-		p, err := user.Buy(world, key)
-		if errors.Is(err, game.ErrNoKey) {
-			c.Send(format.BadKey(key), tele.ModeHTML)
-			break
-		} else if err != nil {
-			c.Send(format.NoMoney, tele.ModeHTML)
-			break
-		}
-		bought = append(bought, p.Item)
-		cost += p.Price
-	}
-	return c.Send(format.Bought(tu.Link(c, user), cost, bought...), tele.ModeHTML)
-}
-
-type Eat struct {
-	Universe *game.Universe
-}
-
-var eatRe = Regexp("^!(с[ъь]есть|еда) (.*)")
-
-func (h *Eat) Match(s string) bool {
-	return eatRe.MatchString(s)
-}
-
-func (h *Eat) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if user.Energy.Full() {
-		return c.Send(format.NotHungry)
-	}
-	eaten := []*item.Item{}
-	for _, key := range tu.NumArg(c, eatRe, 2) {
-		item, ok := user.Inventory.ByKey(key)
-		if !ok {
-			c.Send(format.BadKey(key), tele.ModeHTML)
-			break
-		}
-		if !user.Eat(item) {
-			c.Send(format.CannotEat(item), tele.ModeHTML)
-			break
-		}
-		eaten = append(eaten, item)
-	}
-	return c.Send(format.Eaten(tu.Link(c, user), eaten...)+"\n\n"+
-		format.EnergyRemaining(user.Energy), tele.ModeHTML)
-
-}
-
-type EatQuick struct {
-	Universe *game.Universe
-}
-
-var eatQuickRe = Regexp("^!еда")
-
-func (h *EatQuick) Match(s string) bool {
-	return eatQuickRe.MatchString(s)
-}
-
-func (h *EatQuick) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if user.Energy.Full() {
-		return c.Send(format.NotHungry)
-	}
-	eaten := []*item.Item{}
-	for !user.Energy.Full() {
-		x, ok := user.EatQuick()
-		if !ok {
-			break
-		}
-		eaten = append(eaten, x)
-	}
-	return c.Send(format.Eaten(tu.Link(c, user), eaten...)+"\n\n"+
-		format.EnergyRemaining(user.Energy), tele.ModeHTML)
-}
-
 type CastNet struct {
 	Universe *game.Universe
 }
@@ -448,7 +270,7 @@ func (h *DrawNet) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if fullInventory(user.Inventory) {
+	if FullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 
@@ -507,36 +329,6 @@ func (h *FishingRecords) Handle(c tele.Context) error {
 		}
 	}
 	return c.Send(format.FishingRecords(byPrice, byWeight[0], byLength[0]), tele.ModeHTML)
-}
-
-type Craft struct {
-	Universe *game.Universe
-}
-
-var craftRe = Regexp("^!крафт (.*)")
-
-func (h *Craft) Match(s string) bool {
-	return craftRe.MatchString(s)
-}
-
-func (h *Craft) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	keys := tu.NumArg(c, craftRe, 1)
-	recipe := []*item.Item{}
-	for _, k := range keys {
-		i, ok := user.Inventory.ByKey(k)
-		if !ok {
-			return c.Send(format.BadKey(k), tele.ModeHTML)
-		}
-		recipe = append(recipe, i)
-	}
-	crafted, ok := recipes.Craft(user.Inventory, recipe)
-	if !ok {
-		return c.Send(format.CannotCraft)
-	}
-	return c.Send(format.Crafted(tu.Link(c, user), crafted...), tele.ModeHTML)
 }
 
 type Status struct {
@@ -672,7 +464,7 @@ func (h *Split) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if fullInventory(user.Inventory) {
+	if FullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 
@@ -695,35 +487,6 @@ func (h *Split) Handle(c tele.Context) error {
 	}
 	user.Inventory.Add(part)
 	return c.Send(format.Splitted(tu.Link(c, user), part), tele.ModeHTML)
-}
-
-type Cashout struct {
-	Universe *game.Universe
-}
-
-var cashoutRe = Regexp("^!(отложить|обнал|снять) (.*)")
-
-func (h *Cashout) Match(s string) bool {
-	return cashoutRe.MatchString(s)
-}
-
-func (h *Cashout) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-	args := tu.NumArg(c, cashoutRe, 2)
-	if len(args) != 1 {
-		return c.Send(format.SpecifyMoney)
-	}
-	amount := args[0]
-	if err := user.Balance().Cashout(amount); errors.Is(err, money.ErrBadMoney) {
-		return c.Send(format.BadMoney)
-	} else if errors.Is(err, money.ErrNoMoney) {
-		return c.Send(format.NoMoney)
-	} else if err != nil {
-		return err
-	}
-	return c.Send(fmt.Sprintf("💵 Вы отложили %s.",
-		format.Money(amount)), tele.ModeHTML)
 }
 
 type Fight struct {
@@ -879,7 +642,7 @@ func (h *Funds) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if fullInventory(user.Inventory) {
+	if FullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
 

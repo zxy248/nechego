@@ -158,16 +158,11 @@ func (u *User) Buy(w *World, key int) (*Product, error) {
 // Sell removes the specified item from the inventory and adds money
 // if the item can be sold.
 func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
-	if !i.Transferable {
-		return 0, false
-	}
 	profit, ok = w.Market.PriceList.Price(i)
 	if !ok {
 		return 0, false
 	}
-	if !u.Inventory.Remove(i) {
-		panic("selling item is not in the inventory")
-	}
+	u.Inventory.Remove(i)
 	u.Balance().Add(profit)
 	payEloTopTax(w, profit/10)
 	return profit, true

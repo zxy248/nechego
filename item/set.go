@@ -29,13 +29,14 @@ func (s *Set) AddFront(x ...*Item) {
 	s.I = append(x, s.I...)
 }
 
-// Remove removes the specified item from the set and returns true.
-// If the item is not in the set, returns false.
-func (s *Set) Remove(x *Item) bool {
-	_, ok := s.Pop(func(y *Item) bool {
-		return x == y
-	})
-	return ok
+// Remove removes the specified items from the set and returns true.
+// If some of the items was not in the set, returns false.
+func (s *Set) Remove(xs ...*Item) {
+	for _, x := range xs {
+		s.Pop(func(y *Item) bool {
+			return x == y
+		})
+	}
 }
 
 // Pop removes and returns the first item from the list for which the
@@ -116,9 +117,10 @@ func (s *Set) itemsCopy() []*Item {
 // Move removes the item from the set s and adds it to the set to.
 // Returns false if the item is not transferable or cannot be removed.
 func (s *Set) Move(to *Set, x *Item) bool {
-	if !x.Transferable || !s.Remove(x) {
+	if !x.Transferable {
 		return false
 	}
+	s.Remove(x)
 	to.Add(x)
 	return true
 }

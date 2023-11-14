@@ -14,8 +14,10 @@ import (
 	"nechego/handlers/casino"
 	"nechego/handlers/command"
 	"nechego/handlers/daily"
+	"nechego/handlers/economy"
 	"nechego/handlers/farm"
 	"nechego/handlers/fun"
+	"nechego/handlers/market"
 	"nechego/handlers/pictures"
 	"nechego/handlers/top"
 	"os"
@@ -172,13 +174,13 @@ func (a *app) economyServices() []server.Service {
 	return []server.Service{
 		text(&handlers.Inventory{Universe: a.universe}),
 		text(&handlers.Funds{Universe: a.universe}),
-		text(&handlers.Sort{Universe: a.universe}),
-		text(&handlers.Drop{Universe: a.universe}),
-		text(&handlers.Pick{Universe: a.universe}),
+		&economy.Sort{Universe: a.universe},
+		&economy.Drop{Universe: a.universe},
+		&economy.Pick{Universe: a.universe},
 		text(&handlers.Floor{Universe: a.universe}),
 		text(&handlers.Stack{Universe: a.universe}),
 		text(&handlers.Split{Universe: a.universe}),
-		text(&handlers.Cashout{Universe: a.universe}),
+		&economy.Cashout{Universe: a.universe},
 		text(&handlers.Capital{Universe: a.universe}),
 		text(&handlers.Balance{Universe: a.universe}),
 	}
@@ -198,7 +200,7 @@ func (a *app) marketServices() []server.Service {
 	return []server.Service{
 		text(&handlers.Market{Universe: a.universe}),
 		text(&handlers.PriceList{Universe: a.universe}),
-		text(&handlers.Buy{Universe: a.universe}),
+		&market.Buy{Universe: a.universe},
 		text(&handlers.Sell{Universe: a.universe}),
 		text(&handlers.SellQuick{Universe: a.universe}),
 		text(&handlers.NameMarket{Universe: a.universe}),
@@ -210,14 +212,14 @@ func (a *app) marketServices() []server.Service {
 func (a *app) actionsServices() []server.Service {
 	return []server.Service{
 		&actions.Fish{Universe: a.universe},
-		text(&handlers.Craft{Universe: a.universe}),
+		&actions.Craft{Universe: a.universe},
 		text(&handlers.DrawNet{Universe: a.universe}),
 		text(&handlers.CastNet{Universe: a.universe}),
 		text(&handlers.Net{Universe: a.universe}),
 		text(&handlers.Catch{Universe: a.universe}),
 		text(&handlers.Fight{Universe: a.universe}),
-		text(&handlers.Eat{Universe: a.universe}),
-		text(&handlers.EatQuick{Universe: a.universe}),
+		&actions.Eat{Universe: a.universe},
+		&actions.EatQuick{Universe: a.universe},
 		text(&handlers.FishingRecords{Universe: a.universe}),
 		text(&handlers.Friends{Universe: a.universe}),
 		text(&handlers.Transfer{Universe: a.universe}),

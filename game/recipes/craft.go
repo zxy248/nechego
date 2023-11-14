@@ -18,13 +18,8 @@ func Craft(inventory *item.Set, ingredients []*item.Item) (result []*item.Item, 
 	}
 	for _, craft := range list {
 		if result, ok := craft(ingredients); ok {
-			for _, x := range ingredients {
-				inventory.Remove(x)
-			}
-			for _, x := range result {
-				x.Transferable = true
-				inventory.Add(x)
-			}
+			inventory.Remove(ingredients...)
+			inventory.Add(result...)
 			return result, true
 		}
 	}
