@@ -1,7 +1,6 @@
 package game
 
 import (
-	"nechego/buff"
 	"nechego/farm"
 	"nechego/fishing"
 	"nechego/game/reputation"
@@ -21,7 +20,6 @@ type User struct {
 	Inventory        *item.Set    // Personal items.
 	Net              *fishing.Net // Net if currently cast, else nil.
 	LastMessage      time.Time    // When was the last message sent?
-	Buffs            buff.Set     // Active buffs.
 	Funds            Funds        // Collectable items.
 	Farm             *farm.Farm   // The source of vegetables.
 	Retired          time.Time    // When the job shift should finish.
@@ -38,7 +36,6 @@ func NewUser(id int64) *User {
 		ID:        id,
 		Rating:    1500,
 		Inventory: item.NewSet(),
-		Buffs:     buff.Set{},
 		Funds:     Funds{},
 		Farm:      farm.New(2, 3),
 		Friends:   Friends{},

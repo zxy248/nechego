@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"nechego/modifier"
 )
 
 // Energy represents the user's energy level.
@@ -32,25 +31,6 @@ func (e *Energy) Add(x Energy) {
 	if *e > 1 {
 		*e = 1
 	}
-}
-
-// Mod returns a modifier corresponding to the energy level.
-func (e *Energy) Mod() (m *modifier.Mod, ok bool) {
-	if e.Low() {
-		return &modifier.Mod{
-			Emoji:       "😣",
-			Multiplier:  -0.2,
-			Description: "Вы чувствуете себя уставшим.",
-		}, true
-	}
-	if e.Full() {
-		return &modifier.Mod{
-			Emoji:       "⚡️",
-			Multiplier:  0.1,
-			Description: "Вы полны сил.",
-		}, true
-	}
-	return nil, false
 }
 
 // Low returns true if the energy level is close to 0.

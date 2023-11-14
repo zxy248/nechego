@@ -1,13 +1,11 @@
 package game
 
 import (
-	"nechego/buff"
 	"nechego/farm/plant"
 	"nechego/fishing"
 	"nechego/food"
 	"nechego/item"
 	"nechego/pets"
-	"time"
 )
 
 // EatQuick finds the first sensibly eatable item and calls Eat.
@@ -72,9 +70,6 @@ func eatFish(u *User, f *fishing.Fish) {
 
 func eatFood(u *User, f *food.Food) {
 	u.Energy.Add(Energy(f.Nutrition()))
-	if f.Type == food.Beer {
-		u.Buffs.Apply(buff.Beer, 10*time.Minute)
-	}
 }
 
 func eatMeat(u *User, m *food.Meat) {

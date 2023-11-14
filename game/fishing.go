@@ -3,7 +3,6 @@ package game
 import (
 	"errors"
 	"math/rand"
-	"nechego/buff"
 	"nechego/fishing"
 	"nechego/item"
 )
@@ -12,9 +11,6 @@ import (
 func (u *User) FishCatchProb() float64 {
 	p := 0.5
 	p += -0.04 + 0.08*u.Luck()
-	if u.Buffs.Active(buff.Beer) {
-		p += 0.12
-	}
 	return p
 }
 

@@ -7,7 +7,7 @@ import (
 
 func (u *User) Strength() float64 {
 	const base, mult = 1, 2
-	c := base + u.Activity + u.Luck() + u.Modifiers().Sum()
+	c := base + u.Activity + u.Luck() + ModSum(u.Mods())
 	return mult * c
 }
 

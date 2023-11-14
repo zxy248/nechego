@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"nechego/item"
-	"nechego/modifier"
 	"nechego/money"
 )
 
@@ -83,23 +82,4 @@ func (b *Balance) Cashout(n int) error {
 	}
 	b.Add(n)
 	return nil
-}
-
-// Mod returns a modifier corresponding to the amount of money on the balance.
-func (b *Balance) Mod() (m *modifier.Mod, ok bool) {
-	if b.Rich() {
-		return &modifier.Mod{
-			Emoji:       "🎩",
-			Multiplier:  +0.05,
-			Description: "Вы богаты.",
-		}, true
-	}
-	if b.Poor() {
-		return &modifier.Mod{
-			Emoji:       "🗑️",
-			Multiplier:  -0.05,
-			Description: "Вы бедны.",
-		}, true
-	}
-	return nil, false
 }

@@ -7,7 +7,6 @@ import (
 	"nechego/food"
 	"nechego/game"
 	"nechego/item"
-	"nechego/modifier"
 	"nechego/money"
 	"strconv"
 	"strings"
@@ -192,9 +191,9 @@ func BadKey(k int) string {
 	return fmt.Sprintf("🔖 Предмет %s не найден.", Key(k))
 }
 
-func Modifiers(s modifier.Set) string {
+func Mods(ms []*game.Mod) string {
 	c := NewConnector("\n")
-	for _, m := range s.List() {
+	for _, m := range ms {
 		c.Add(fmt.Sprintf("<i>%s %s</i>", m.Emoji, m.Description))
 	}
 	return c.String()
@@ -381,9 +380,9 @@ func Profile(u *game.User) string {
 		Balance(u.Balance().Total()),
 	}
 	table := profileTable(entries)
-	modset := Modifiers(u.Modifiers())
+	mods := Mods(u.Mods())
 	status := Status(u.Status)
-	return fmt.Sprintf("%s\n%s\n\n%s\n\n%s", head, table, modset, status)
+	return fmt.Sprintf("%s\n%s\n\n%s\n\n%s", head, table, mods, status)
 }
 
 func profileTable(entries []string) string {
