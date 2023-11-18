@@ -1,8 +1,8 @@
 package game
 
 import (
+	"math"
 	"math/rand"
-	"nechego/elo"
 )
 
 func (u *User) Strength() float64 {
@@ -11,21 +11,26 @@ func (u *User) Strength() float64 {
 	return mult * c
 }
 
-func Fight(u1, u2 *User) (winner, loser *User, rating float64) {
-	if u1 == u2 {
-		panic("user cannot be an opponent to themself")
-	}
-
+func Fight(u1, u2 *User) (uw, ul *User, δr float64) {
 	s1 := u1.Strength() * rand.Float64()
 	s2 := u2.Strength() * rand.Float64()
 	if s1 > s2 {
-		winner, loser = u1, u2
+		uw, ul = u1, u2
 	} else {
-		winner, loser = u2, u1
+		uw, ul = u2, u1
 	}
-
-	rating = elo.EloDelta(winner.Rating, loser.Rating, elo.KDefault, elo.ScoreWin)
-	winner.Rating += rating
-	loser.Rating -= rating
+	δr = eloDelta(uw.Rating, ul.Rating, kDefault, scoreWin)
+	uw.Rating += δr
+	ul.Rating -= δr
 	return
+}
+
+const (
+	scoreWin = 1.0
+	kDefault = 20.0
+)
+
+func eloDelta(a, b, k, score float64) float64 {
+	x := 1.0 / (1.0 + math.Pow(10.0, (b-a)/400.0))
+	return k * (score - x)
 }
