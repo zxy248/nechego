@@ -6,7 +6,7 @@ import (
 	"nechego/handlers"
 	tu "nechego/teleutil"
 
-	tele"gopkg.in/telebot.v3"
+	tele "gopkg.in/telebot.v3"
 )
 
 type Admin struct {

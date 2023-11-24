@@ -251,7 +251,6 @@ func splitWallet(w *money.Wallet, n int) (*Item, bool) {
 	}
 	w.Money -= n
 	return New(&money.Cash{Money: n}), true
-
 }
 
 func splitCash(c *money.Cash, n int) (*Item, bool) {
