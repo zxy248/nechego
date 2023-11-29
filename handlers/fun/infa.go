@@ -1,0 +1,51 @@
+package fun
+
+import (
+	"fmt"
+	"math/rand"
+	"nechego/handlers"
+
+	tele "gopkg.in/telebot.v3"
+)
+
+type Infa struct{}
+
+var infaRe = handlers.Regexp("^!(инфа|вероятность)(.*)")
+
+func (h *Infa) Match(c tele.Context) bool {
+	_, ok := parseInfa(c.Text())
+	return ok
+}
+
+func (h *Infa) Handle(c tele.Context) error {
+	s, _ := parseInfa(c.Text())
+	return c.Send(infa(s))
+}
+
+func parseInfa(s string) (t string, ok bool) {
+	m := infaRe.FindStringSubmatch(s)
+	if m == nil {
+		return "", false
+	}
+	return m[2], true
+}
+
+func infa(s string) string {
+	templates := [...]string{
+		"Здравый смысл говорит мне о том, что",
+		"Благодаря чувственному опыту я определил, что",
+		"Я думаю, что",
+		"Используя диалектическую логику, я пришел к выводу, что",
+		"Проведя некие изыскания, я выяснил, что",
+		"Я провёл мысленный эксперимент и выяснил, что",
+		"Мои интеллектуальные потуги привели меня к тому, что",
+		"С помощью фактов и логики я доказал, что",
+		"Как показывает практика,",
+		"Прикинув раз на раз, я определился с тем, что",
+		"Уверяю вас в том, что",
+	}
+	t := templates[rand.Intn(len(templates))]
+	p := rand.Intn(101)
+	suffix := fmt.Sprintf(" с вероятностью %d%%", p)
+	return t + s + suffix
+}

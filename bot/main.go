@@ -247,8 +247,8 @@ func (a *app) profileServices() []server.Service {
 
 func (a *app) funServices() []server.Service {
 	return []server.Service{
-		text(&handlers.Game{}),
-		text(&handlers.Infa{}),
+		&fun.Game{},
+		&fun.Infa{},
 		text(&handlers.Weather{}),
 		text(&handlers.Calculator{}),
 		text(&fun.Name{}),

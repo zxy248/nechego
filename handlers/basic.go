@@ -31,47 +31,6 @@ func (h *Help) Handle(c tele.Context) error {
 	return c.Send("📖 <b>Документация:</b> nechego.pages.dev.", tele.ModeHTML)
 }
 
-type Infa struct{}
-
-func (h *Infa) Match(s string) bool {
-	_, ok := infaCommand(s)
-	return ok
-}
-
-func (h *Infa) Handle(c tele.Context) error {
-	s, _ := infaCommand(c.Text())
-	return c.Send(infa(s, rand.Intn(101)))
-}
-
-func infaCommand(s string) (text string, ok bool) {
-	re := Regexp("^!инфа ?(.*)")
-	m := re.FindStringSubmatch(s)
-	if m == nil {
-		return "", false
-	}
-	return m[1], true
-}
-
-func infa(s string, p int) string {
-	pres := []string{
-		"Здравый смысл говорит мне о том, что",
-		"Благодаря чувственному опыту я определил, что",
-		"Я думаю, что",
-		"Используя диалектическую логику, я пришел к выводу, что",
-		"Проведя некие изыскания, я выяснил, что",
-		"Я провёл мысленный эксперимент и выяснил, что",
-		"Мои интеллектуальные потуги привели меня к тому, что",
-		"С помощью фактов и логики я доказал, что",
-		"Как показывает практика,",
-		"Прикинув раз на раз, я определился с тем, что",
-		"Уверяю вас в том, что",
-	}
-	pre := pres[rand.Intn(len(pres))]
-	suf := "с вероятностью"
-	prob := fmt.Sprintf("%d%%", p)
-	return strings.Join([]string{pre, s, suf, prob}, " ")
-}
-
 type Who struct {
 	Universe *game.Universe
 }
@@ -143,19 +102,6 @@ func (h *Top) Handle(c tele.Context) error {
 
 func topCommand(s string) (text string, ok bool) {
 	return textCommand(parse.Match("!топ"), s)
-}
-
-type Game struct{}
-
-var gameRe = Regexp("^!игр")
-
-func (h *Game) Match(s string) bool {
-	return gameRe.MatchString(s)
-}
-
-func (h *Game) Handle(c tele.Context) error {
-	games := [...]*tele.Dice{tele.Dart, tele.Ball, tele.Goal, tele.Slot, tele.Bowl}
-	return c.Send(games[rand.Intn(len(games))])
 }
 
 type Weather struct{}
