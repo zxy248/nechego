@@ -4,15 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"html"
-	"io"
 	"math/rand"
 	"nechego/avatar"
 	"nechego/format"
 	"nechego/game"
 	"nechego/handlers/parse"
 	tu "nechego/teleutil"
-	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -102,55 +99,6 @@ func (h *Top) Handle(c tele.Context) error {
 
 func topCommand(s string) (text string, ok bool) {
 	return textCommand(parse.Match("!топ"), s)
-}
-
-type Weather struct{}
-
-func (h *Weather) Match(s string) bool {
-	_, ok := weatherCommand(s)
-	return ok
-}
-
-func (h *Weather) Handle(c tele.Context) error {
-	const addr = "https://wttr.in/"
-	const format = `?format=%l:+%c+%t+\n` +
-		`Ощущается+как+%f\n\n` +
-		`Ветер+—+%w\n` +
-		`Влажность+—+%h\n` +
-		`Давление+—+%P\n` +
-		`Фаза+луны+—+%m\n` +
-		`УФ-индекс+—+%u\n`
-	city, _ := weatherCommand(c.Text())
-	city = url.PathEscape(city)
-
-	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, addr+city+format, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Add("Accept-Language", "ru")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return c.Send("☔️ Такого места не существует.")
-	} else if resp.StatusCode != http.StatusOK {
-		return c.Send("☔️ Неудачный запрос.")
-	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	return c.Send(string(data))
-}
-
-func weatherCommand(s string) (city string, ok bool) {
-	return textCommand(parse.Prefix("!погода"), s)
 }
 
 type Avatar struct {

@@ -249,7 +249,7 @@ func (a *app) funServices() []server.Service {
 	return []server.Service{
 		&fun.Game{},
 		&fun.Infa{},
-		text(&handlers.Weather{}),
+		&fun.Weather{},
 		text(&handlers.Calculator{}),
 		text(&fun.Name{}),
 		text(&fun.CheckName{}),
