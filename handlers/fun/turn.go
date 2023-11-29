@@ -25,7 +25,8 @@ func (h *TurnOn) Handle(c tele.Context) error {
 
 	world.Inactive = false
 	es := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
-	return c.Send(es[rand.Intn(len(es))] + " Робот включен.")
+	e := es[rand.Intn(len(es))]
+	return c.Send(e + " Робот включен.")
 }
 
 type TurnOff struct {
@@ -43,6 +44,7 @@ func (h *TurnOff) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	world.Inactive = true
-	e := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
-	return c.Send(e[rand.Intn(len(e))] + " Робот выключен.")
+	es := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
+	e := es[rand.Intn(len(es))]
+	return c.Send(e + " Робот выключен.")
 }

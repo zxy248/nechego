@@ -250,7 +250,7 @@ func (a *app) funServices() []server.Service {
 		&fun.Game{},
 		&fun.Infa{},
 		&fun.Weather{},
-		text(&handlers.Calculator{}),
+		&fun.Calc{},
 		text(&fun.Name{}),
 		text(&fun.CheckName{}),
 		text(&handlers.Who{Universe: a.universe}),
