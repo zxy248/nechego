@@ -25,14 +25,14 @@ func (h *TurnOn) Handle(c tele.Context) error {
 
 	world.Inactive = false
 	es := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
-	return c.Send(es[rand.Intn(len(es))])
+	return c.Send(es[rand.Intn(len(es))] + " Робот включен.")
 }
 
 type TurnOff struct {
 	Universe *game.Universe
 }
 
-var turnOffRe = handlers.Regexp("^!(выкл|откл)")
+var turnOffRe = handlers.Regexp("^!(выкл|откл|отруб)")
 
 func (h *TurnOff) Match(c tele.Context) bool {
 	return turnOffRe.MatchString(c.Text())
@@ -44,5 +44,5 @@ func (h *TurnOff) Handle(c tele.Context) error {
 
 	world.Inactive = true
 	e := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
-	return c.Send(e[rand.Intn(len(e))])
+	return c.Send(e[rand.Intn(len(e))] + " Робот выключен.")
 }
