@@ -1,8 +1,8 @@
 package fun
 
 import (
+	"nechego/handlers"
 	"nechego/handlers/fun/clock"
-	"nechego/handlers/parse"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -10,26 +10,24 @@ import (
 
 type Clock struct{}
 
-func (*Clock) Match(s string) bool {
-	_, ok := parseClock(s)
+var clockRe = handlers.Regexp("!время до ([0-9:]+)")
+
+func (*Clock) Match(c tele.Context) bool {
+	_, ok := parseClock(c.Text())
 	return ok
 }
 
 func (*Clock) Handle(c tele.Context) error {
-	given, _ := parseClock(c.Message().Text)
-	now := clock.FromTime(time.Now())
-	return c.Send(given.Sub(now).String())
+	to, _ := parseClock(c.Text())
+	from := clock.FromTime(time.Now())
+	return c.Send(to.Sub(from).String())
 }
 
 func parseClock(s string) (c clock.Clock, ok bool) {
-	var x string
-	if !parse.Seq(
-		parse.Match("!время"),
-		parse.Match("до"),
-		parse.Str(parse.Assign(&x)),
-	)(s) {
+	m := clockRe.FindStringSubmatch(s)
+	if m == nil {
 		return clock.Clock{}, false
 	}
-	c, err := clock.FromString(x)
+	c, err := clock.FromString(m[1])
 	return c, err == nil
 }
