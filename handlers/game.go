@@ -75,25 +75,6 @@ func (h *Catch) Handle(c tele.Context) error {
 	return c.Send(head+list, tele.ModeHTML)
 }
 
-type Floor struct {
-	Universe *game.Universe
-}
-
-var floorRe = Regexp("^!(пол|мусор|вещи|предметы)")
-
-func (h *Floor) Match(s string) bool {
-	return floorRe.MatchString(s)
-}
-
-func (h *Floor) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	head := "<b>🗃️ Предметы</b>\n"
-	list := format.Items(world.Floor.HkList())
-	return c.Send(head+list, tele.ModeHTML)
-}
-
 type Market struct {
 	Universe *game.Universe
 }
