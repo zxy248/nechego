@@ -388,24 +388,6 @@ func (h *SellQuick) Handle(c tele.Context) error {
 	return c.Send(format.Sold(tu.Link(c, user), total, sold...), tele.ModeHTML)
 }
 
-type Stack struct {
-	Universe *game.Universe
-}
-
-var stackRe = Regexp("^!сложить")
-
-func (h *Stack) Match(s string) bool {
-	return stackRe.MatchString(s)
-}
-
-func (h *Stack) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	user.Inventory.Stack()
-	return c.Send("🗄 Вы сложили вещи.")
-}
-
 type Split struct {
 	Universe *game.Universe
 }
