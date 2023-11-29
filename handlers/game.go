@@ -50,31 +50,6 @@ func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad 
 	return
 }
 
-type Inventory struct {
-	Universe *game.Universe
-}
-
-var inventoryRe = Regexp("^!(инвентарь|лут)")
-
-func (h *Inventory) Match(s string) bool {
-	return inventoryRe.MatchString(s)
-}
-
-func (h *Inventory) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	items := user.Inventory.HkList()
-	warn := ""
-	if FullInventory(user.Inventory) {
-		warn = " (!)"
-	}
-	head := fmt.Sprintf("<b>🗄 %s: Инвентарь <code>[%d/%d%s]</code></b>\n",
-		tu.Link(c, user), len(items), InventoryCapacity, warn)
-	list := format.Items(items)
-	return c.Send(head+list, tele.ModeHTML)
-}
-
 type Catch struct {
 	Universe *game.Universe
 }
