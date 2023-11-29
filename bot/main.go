@@ -180,7 +180,7 @@ func (a *app) economyServices() []server.Service {
 		&economy.Pick{Universe: a.universe},
 		&economy.Floor{Universe: a.universe},
 		&economy.Stack{Universe: a.universe},
-		text(&handlers.Split{Universe: a.universe}),
+		&economy.Split{Universe: a.universe},
 		&economy.Cashout{Universe: a.universe},
 		text(&handlers.Capital{Universe: a.universe}),
 		text(&handlers.Balance{Universe: a.universe}),

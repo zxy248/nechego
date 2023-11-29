@@ -12,7 +12,6 @@ import (
 	"nechego/item"
 	tu "nechego/teleutil"
 	"nechego/valid"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -386,45 +385,6 @@ func (h *SellQuick) Handle(c tele.Context) error {
 		sold = append(sold, item)
 	}
 	return c.Send(format.Sold(tu.Link(c, user), total, sold...), tele.ModeHTML)
-}
-
-type Split struct {
-	Universe *game.Universe
-}
-
-var splitRe = Regexp(`^!(отложить|разделить) (\d*) (\d*)`)
-
-func (h *Split) Match(s string) bool {
-	return splitRe.MatchString(s)
-}
-
-func (h *Split) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if FullInventory(user.Inventory) {
-		return c.Send(format.InventoryOverflow)
-	}
-
-	args := tu.Args(c, splitRe)
-	key, err := strconv.Atoi(args[2])
-	if err != nil {
-		return nil
-	}
-	count, err := strconv.Atoi(args[3])
-	if err != nil {
-		return nil
-	}
-	whole, ok := user.Inventory.ByKey(key)
-	if !ok {
-		return c.Send(format.BadKey(key), tele.ModeHTML)
-	}
-	part, ok := item.Split(whole, count)
-	if !ok {
-		return c.Send(format.CannotSplit(whole), tele.ModeHTML)
-	}
-	user.Inventory.Add(part)
-	return c.Send(format.Splitted(tu.Link(c, user), part), tele.ModeHTML)
 }
 
 type Fight struct {
