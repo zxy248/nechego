@@ -477,23 +477,6 @@ func (h *Profile) Handle(c tele.Context) error {
 	return c.Send(out, tele.ModeHTML)
 }
 
-type Balance struct {
-	Universe *game.Universe
-}
-
-var balanceRe = Regexp("^!(баланс|деньги)")
-
-func (h *Balance) Match(s string) bool {
-	return balanceRe.MatchString(s)
-}
-
-func (h *Balance) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-	return c.Send(fmt.Sprintf("💵 Ваш баланс: %s",
-		format.Money(user.Balance().Total())), tele.ModeHTML)
-}
-
 type Energy struct {
 	Universe *game.Universe
 }

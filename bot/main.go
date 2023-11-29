@@ -183,7 +183,7 @@ func (a *app) economyServices() []server.Service {
 		&economy.Split{Universe: a.universe},
 		&economy.Cashout{Universe: a.universe},
 		&economy.Capital{Universe: a.universe},
-		text(&handlers.Balance{Universe: a.universe}),
+		&economy.Balance{Universe: a.universe},
 	}
 }
 
