@@ -603,32 +603,6 @@ func (h *Balance) Handle(c tele.Context) error {
 		format.Money(user.Balance().Total())), tele.ModeHTML)
 }
 
-type Funds struct {
-	Universe *game.Universe
-}
-
-var fundsRe = Regexp("^!(зарплата|средства|получить)")
-
-func (h *Funds) Match(s string) bool {
-	return fundsRe.MatchString(s)
-}
-
-func (h *Funds) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if FullInventory(user.Inventory) {
-		return c.Send(format.InventoryOverflow)
-	}
-
-	collected := user.Funds.Collect()
-	for _, f := range collected {
-		user.Inventory.Add(f.Item)
-	}
-	user.Inventory.Stack()
-	return c.Send(format.FundsCollected(tu.Link(c, user), collected...), tele.ModeHTML)
-}
-
 type Energy struct {
 	Universe *game.Universe
 }

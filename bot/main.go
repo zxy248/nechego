@@ -174,7 +174,7 @@ func (a *app) dailyServices() []server.Service {
 func (a *app) economyServices() []server.Service {
 	return []server.Service{
 		&economy.Inventory{Universe: a.universe},
-		text(&handlers.Funds{Universe: a.universe}),
+		&economy.Funds{Universe: a.universe},
 		&economy.Sort{Universe: a.universe},
 		&economy.Drop{Universe: a.universe},
 		&economy.Pick{Universe: a.universe},

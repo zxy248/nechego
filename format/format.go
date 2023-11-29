@@ -402,7 +402,7 @@ func profileTable(entries []string) string {
 	return strings.Join(lines, "\n")
 }
 
-func FundsCollected(who string, fs ...*game.Fund) string {
+func FundsCollected(who string, fs []*game.Fund) string {
 	if len(fs) == 0 {
 		return "🧾 Средств пока нет."
 	}
@@ -410,10 +410,10 @@ func FundsCollected(who string, fs ...*game.Fund) string {
 	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", Name(who)))
 	for i, f := range fs {
 		if rest := len(fs) - i; i >= 15 && rest >= 5 {
-			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> пунктов.</i>", rest))
+			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> шт.</i>", rest))
 			break
 		}
-		c.Add(fmt.Sprintf("<b>·</b> %s <i>(%s)</i>", Item(f.Item), f.Source))
+		c.Add(fmt.Sprintf("<code> • </code>%s <i>%s</i>", Item(f.Item), f.Source))
 	}
 	return c.String()
 }
