@@ -172,10 +172,9 @@ func payEloTopTax(w *World, n int) {
 	if n == 0 {
 		return
 	}
-	if top := w.SortedUsers(ByElo); len(top) > 0 {
-		x := item.New(&money.Cash{Money: n})
-		top[0].Funds.Add("налог", x)
-	}
+	u := w.TopUser(ByElo)
+	x := item.New(&money.Cash{Money: n})
+	u.Funds.Add("налог", x)
 }
 
 func payMarketWorkerWage(w *World, n int) {

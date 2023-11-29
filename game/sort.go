@@ -12,6 +12,17 @@ func (w *World) ListUsers() []*User {
 	return us
 }
 
+func (w *World) TopUser(f UserSortFunc) *User {
+	us := w.ListUsers()
+	top := us[0]
+	for _, u := range us[1:] {
+		if f(u, top) {
+			top = u
+		}
+	}
+	return top
+}
+
 func (w *World) SortedUsers(f UserSortFunc) []*User {
 	us := w.ListUsers()
 	sort.Slice(us, func(i, j int) bool {

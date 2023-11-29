@@ -477,38 +477,6 @@ func (h *Profile) Handle(c tele.Context) error {
 	return c.Send(out, tele.ModeHTML)
 }
 
-type Capital struct {
-	Universe *game.Universe
-}
-
-var capitalRe = Regexp("^!капитал")
-
-func (h *Capital) Match(s string) bool {
-	return capitalRe.MatchString(s)
-}
-
-func (h *Capital) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	total, avg := world.Capital()
-	users := world.SortedUsers(game.ByWealth)
-	users = users[:min(len(users), 5)]
-	rich := users[0]
-	balance := rich.Balance().Total()
-	list := []string{
-		fmt.Sprintf("💸 Капитал беседы <b>%s</b>: %s\n",
-			c.Chat().Title, format.Money(total)),
-		fmt.Sprintf("<i>В среднем на счету: %s</i>\n",
-			format.Money(avg)),
-		fmt.Sprintf("<i>В руках магната %s %s,</i>",
-			tu.Link(c, users[0].ID), format.Money(balance)),
-		fmt.Sprintf("<i>или %s от общего количества средств.</i>\n",
-			format.Percentage(float64(balance)/float64(total))),
-	}
-	return c.Send(strings.Join(list, "\n"), tele.ModeHTML)
-}
-
 type Balance struct {
 	Universe *game.Universe
 }
