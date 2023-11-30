@@ -6,6 +6,7 @@ import (
 	"nechego/farm/plant"
 	"nechego/game"
 	"nechego/item"
+	"time"
 )
 
 const (
@@ -96,7 +97,9 @@ func FarmNamed(who string, name string) string {
 }
 
 func PriceList(p *game.PriceList) string {
-	out := fmt.Sprintf("<b>📊 Цены на %s</b>\n", p.Updated.Format("2006.01.02"))
+	t := p.Updated
+	d, m, y := t.Day(), genitiveMonth(t.Month()), t.Year()
+	out := fmt.Sprintf("<b>📊 Цены на %d %s %d г.</b>\n", d, m, y)
 	var table string
 	for i, t := range plant.Types {
 		table += fmt.Sprintf("<code>%s %-20s</code>", t, Money(p.Plants[t]))
@@ -107,4 +110,22 @@ func PriceList(p *game.PriceList) string {
 		}
 	}
 	return out + table
+}
+
+func genitiveMonth(t time.Month) string {
+	months := [...]string{
+		"января",
+		"февраля",
+		"марта",
+		"апреля",
+		"мая",
+		"июня",
+		"июля",
+		"августа",
+		"сентября",
+		"октября",
+		"ноября",
+		"декабря",
+	}
+	return months[int(t)-1]
 }

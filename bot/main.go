@@ -199,8 +199,8 @@ func (a *app) farmServices() []server.Service {
 
 func (a *app) marketServices() []server.Service {
 	return []server.Service{
-		text(&handlers.Market{Universe: a.universe}),
-		text(&handlers.PriceList{Universe: a.universe}),
+		&market.Market{Universe: a.universe},
+		&market.PriceList{Universe: a.universe},
 		&market.Buy{Universe: a.universe},
 		text(&handlers.Sell{Universe: a.universe}),
 		text(&handlers.SellQuick{Universe: a.universe}),

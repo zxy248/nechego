@@ -121,7 +121,7 @@ func (m *Market) Products() []*Product {
 func (m *Market) String() string {
 	s := "🏪 Магазин"
 	if m.Name != "" {
-		s += fmt.Sprintf(` «%s»`, m.Name)
+		s += fmt.Sprintf(" «%s»", m.Name)
 	}
 	return s
 }

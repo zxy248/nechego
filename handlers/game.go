@@ -74,45 +74,6 @@ func (h *Catch) Handle(c tele.Context) error {
 	return c.Send(head+list, tele.ModeHTML)
 }
 
-type Market struct {
-	Universe *game.Universe
-}
-
-var marketRe = Regexp("^!(магаз|шоп)")
-
-func (h *Market) Match(s string) bool {
-	return marketRe.MatchString(s)
-}
-
-func (h *Market) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	var who string
-	if id, ok := world.Market.Shift.Worker(); ok {
-		who = tu.Link(c, id)
-	}
-	return c.Send(format.Market(who, world.Market), tele.ModeHTML)
-}
-
-type PriceList struct {
-	Universe *game.Universe
-}
-
-var priceListRe = Regexp("^!(прайс-?лист|цен)")
-
-func (h *PriceList) Match(s string) bool {
-	return priceListRe.MatchString(s)
-}
-
-func (h *PriceList) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	world.Market.PriceList.Refresh()
-	return c.Send(format.PriceList(world.Market.PriceList), tele.ModeHTML)
-}
-
 type NameMarket struct {
 	Universe *game.Universe
 }
