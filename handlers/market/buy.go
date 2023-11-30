@@ -28,12 +28,11 @@ func (h *Buy) Handle(c tele.Context) error {
 	if handlers.FullInventory(user.Inventory) {
 		return c.Send(format.InventoryOverflow)
 	}
-
 	var bought []*item.Item
-	cost := 0
+	total := 0
 	keys := buyKeys(c.Text())
 	for _, key := range keys {
-		x, err := user.Buy(world, key)
+		p, err := user.Buy(world, key)
 		if errors.Is(err, game.ErrNoKey) {
 			c.Send(format.BadKey(key), tele.ModeHTML)
 			break
@@ -41,11 +40,11 @@ func (h *Buy) Handle(c tele.Context) error {
 			c.Send(format.NoMoney, tele.ModeHTML)
 			break
 		}
-		bought = append(bought, x.Item)
-		cost += x.Price
+		total += p.Price
+		bought = append(bought, p.Item)
 	}
 	l := tu.Link(c, user)
-	s := format.Bought(l, cost, bought)
+	s := format.Bought(l, total, bought)
 	return c.Send(s, tele.ModeHTML)
 }
 

@@ -8,7 +8,6 @@ import (
 	"nechego/fishing"
 	"nechego/format"
 	"nechego/game"
-	"nechego/handlers/parse"
 	"nechego/item"
 	tu "nechego/teleutil"
 	"nechego/valid"
@@ -277,75 +276,6 @@ func (h *Status) Handle(c tele.Context) error {
 	}
 	user.Status = status
 	return c.Send("✅ Статус установлен.")
-}
-
-type Sell struct {
-	Universe *game.Universe
-}
-
-func (h *Sell) Match(s string) bool {
-	_, ok := sellCommand(s)
-	return ok
-}
-
-func sellCommand(s string) (keys []int, ok bool) {
-	return numCommand(parse.Match("!продать"), s)
-}
-
-func (h *Sell) Handle(c tele.Context) error {
-	keys, _ := sellCommand(c.Text())
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	total := 0
-	sold := []*item.Item{}
-	for _, key := range keys {
-		item, ok := user.Inventory.ByKey(key)
-		if !ok {
-			c.Send(format.BadKey(key), tele.ModeHTML)
-			break
-		}
-		profit, ok := user.Sell(world, item)
-		if !ok {
-			c.Send(format.CannotSell(item), tele.ModeHTML)
-			break
-		}
-		total += profit
-		sold = append(sold, item)
-	}
-	return c.Send(format.Sold(tu.Link(c, user), total, sold...), tele.ModeHTML)
-}
-
-type SellQuick struct {
-	Universe *game.Universe
-}
-
-var sellQuickRe = Regexp("^!продать")
-
-func (h *SellQuick) Match(s string) bool {
-	return sellQuickRe.MatchString(s)
-}
-
-func (h *SellQuick) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	total := 0
-	sold := []*item.Item{}
-	for _, item := range user.Inventory.List() {
-		fish, ok := item.Value.(*fishing.Fish)
-		if !ok || fish.Price() < 2000 {
-			continue
-		}
-		profit, ok := user.Sell(world, item)
-		if !ok {
-			c.Send(format.CannotSell(item), tele.ModeHTML)
-			break
-		}
-		total += profit
-		sold = append(sold, item)
-	}
-	return c.Send(format.Sold(tu.Link(c, user), total, sold...), tele.ModeHTML)
 }
 
 type Fight struct {

@@ -245,7 +245,7 @@ func CannotSell(i *item.Item) string {
 	return fmt.Sprintf("🏪 Нельзя продать %s.", Item(i))
 }
 
-func Sold(who string, profit int, is ...*item.Item) string {
+func Sold(who string, profit int, is []*item.Item) string {
 	if len(is) == 0 {
 		return "💵 Ничего не продано."
 	}
