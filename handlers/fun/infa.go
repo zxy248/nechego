@@ -13,24 +13,18 @@ type Infa struct{}
 var infaRe = handlers.Regexp("^!(инфа|вероятность)(.*)")
 
 func (h *Infa) Match(c tele.Context) bool {
-	_, ok := parseInfa(c.Text())
-	return ok
+	return infaRe.MatchString(c.Text())
 }
 
 func (h *Infa) Handle(c tele.Context) error {
-	s, _ := parseInfa(c.Text())
-	return c.Send(infa(s))
+	return c.Send(formatInfa(parseInfa(c.Text())))
 }
 
-func parseInfa(s string) (t string, ok bool) {
-	m := infaRe.FindStringSubmatch(s)
-	if m == nil {
-		return "", false
-	}
-	return m[2], true
+func parseInfa(s string) string {
+	return infaRe.FindStringSubmatch(s)[2]
 }
 
-func infa(s string) string {
+func formatInfa(s string) string {
 	templates := [...]string{
 		"Здравый смысл говорит мне о том, что",
 		"Благодаря чувственному опыту я определил, что",
