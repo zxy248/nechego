@@ -253,7 +253,7 @@ func (a *app) funServices() []server.Service {
 		&fun.Calc{},
 		&fun.Name{},
 		&fun.CheckName{},
-		text(&handlers.Who{Universe: a.universe}),
+		&fun.Who{Universe: a.universe},
 		text(&handlers.List{Universe: a.universe}),
 		text(&handlers.Top{Universe: a.universe}),
 		&fun.Clock{},

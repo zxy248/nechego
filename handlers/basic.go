@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"html"
 	"math/rand"
 	"nechego/avatar"
 	"nechego/format"
@@ -26,29 +25,6 @@ func (h *Help) Match(s string) bool {
 
 func (h *Help) Handle(c tele.Context) error {
 	return c.Send("📖 <b>Документация:</b> nechego.pages.dev.", tele.ModeHTML)
-}
-
-type Who struct {
-	Universe *game.Universe
-}
-
-func (h *Who) Match(s string) bool {
-	_, ok := whoCommand(s)
-	return ok
-}
-
-func (h *Who) Handle(c tele.Context) error {
-	text, _ := whoCommand(c.Text())
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	m := tu.Link(c, world.RandomUserID())
-	s := html.EscapeString(text)
-	return c.Send(m+" "+s, tele.ModeHTML)
-}
-
-func whoCommand(s string) (text string, ok bool) {
-	return textCommand(parse.Prefix("!кто"), s)
 }
 
 type List struct {
