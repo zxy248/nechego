@@ -27,30 +27,6 @@ func (h *Help) Handle(c tele.Context) error {
 	return c.Send("📖 <b>Документация:</b> nechego.pages.dev.", tele.ModeHTML)
 }
 
-type List struct {
-	Universe *game.Universe
-}
-
-var listRe = Regexp("^!список ?(.*)")
-
-func (h *List) Match(s string) bool {
-	return listRe.MatchString(s)
-}
-
-func (h *List) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	us := world.RandomUserIDs(3 + rand.Intn(3))
-	arg := tu.Args(c, listRe)[1]
-	s := []string{fmt.Sprintf("<b>📝 Список %s</b>", arg)}
-	for _, u := range us {
-		who := tu.Link(c, u)
-		s = append(s, fmt.Sprintf("<b>•</b> %s", who))
-	}
-	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
-}
-
 type Top struct {
 	Universe *game.Universe
 }
