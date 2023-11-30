@@ -2,14 +2,10 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
-	"math/rand"
 	"nechego/avatar"
 	"nechego/format"
 	"nechego/game"
-	"nechego/handlers/parse"
 	tu "nechego/teleutil"
-	"strings"
 	"time"
 
 	tele "gopkg.in/telebot.v3"
@@ -25,32 +21,6 @@ func (h *Help) Match(s string) bool {
 
 func (h *Help) Handle(c tele.Context) error {
 	return c.Send("📖 <b>Документация:</b> nechego.pages.dev.", tele.ModeHTML)
-}
-
-type Top struct {
-	Universe *game.Universe
-}
-
-func (h *Top) Match(s string) bool {
-	_, ok := topCommand(s)
-	return ok
-}
-
-func (h *Top) Handle(c tele.Context) error {
-	text, _ := topCommand(c.Text())
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	us := world.RandomUserIDs(3 + rand.Intn(3))
-	s := []string{fmt.Sprintf("<b>🏆 Топ %s</b>", text)}
-	for i, u := range us {
-		s = append(s, fmt.Sprintf("<i>%d.</i> %s", 1+i, tu.Link(c, u)))
-	}
-	return c.Send(strings.Join(s, "\n"), tele.ModeHTML)
-}
-
-func topCommand(s string) (text string, ok bool) {
-	return textCommand(parse.Match("!топ"), s)
 }
 
 type Avatar struct {

@@ -34,3 +34,9 @@ func TopStrength(us []*game.User) string {
 	}
 	return Top("🏋️‍♀️ <b>Самые сильные пользователи</b>", f, us)
 }
+
+func TopPlain(title string, us []*game.User) string {
+	head := fmt.Sprintf("<b>🏆 Топ %s</b>", title)
+	f := func(u *game.User) string { return "" }
+	return Top(head, f, us)
+}

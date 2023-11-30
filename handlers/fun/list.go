@@ -25,7 +25,8 @@ func (h *List) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	var links []string
-	ids := world.RandomUserIDs(3 + rand.Intn(3))
+	n := 3 + rand.Intn(3)
+	ids := world.RandomUserIDs(n)
 	for _, id := range ids {
 		l := tu.Link(c, id)
 		links = append(links, l)
