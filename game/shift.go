@@ -4,35 +4,32 @@ import "time"
 
 // Shift represents a work shift.
 type Shift struct {
-	LastWorkerID int64
-	Start        time.Time
-	End          time.Time
+	LastEmployee int64
+	From, To     time.Time
 }
 
-// Worker returns the current worker's ID if the shift is in progress.
-func (s *Shift) Worker() (id int64, ok bool) {
-	if time.Now().After(s.End) {
+// Employee returns the current employee's ID iff the shift is
+// in progress.
+func (s *Shift) Employee() (id int64, ok bool) {
+	if !s.active() {
 		return 0, false
 	}
-	return s.LastWorkerID, true
+	return s.LastEmployee, true
 }
 
-// Begin starts the shift and returns true.
+// Start starts the shift and returns true.
 // If another shift is in progress, returns false.
-func (s *Shift) Begin(workerID int64, d time.Duration) bool {
-	if time.Now().Before(s.End) {
+func (s *Shift) Start(employee int64, d time.Duration) bool {
+	if s.active() {
 		return false
 	}
-	s.LastWorkerID = workerID
-	s.Start = time.Now()
-	s.End = s.Start.Add(d)
+	s.LastEmployee = employee
+	t := time.Now()
+	s.From = t
+	s.To = t.Add(d)
 	return true
 }
 
-// Cancel stops the shift by setting its end to the current time.
-func (s *Shift) Cancel() {
-	if time.Now().After(s.End) {
-		return
-	}
-	s.End = time.Now()
+func (s *Shift) active() bool {
+	return time.Now().Before(s.To)
 }

@@ -181,7 +181,7 @@ func payMarketWorkerWage(w *World, n int) {
 	if n == 0 {
 		return
 	}
-	if id, ok := w.Market.Shift.Worker(); ok {
+	if id, ok := w.Market.Shift.Employee(); ok {
 		x := item.New(&money.Cash{Money: n})
 		w.User(id).Funds.Add("магазин", x)
 	}

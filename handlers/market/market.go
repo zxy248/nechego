@@ -24,7 +24,7 @@ func (h *Market) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	var l string
-	if id, ok := world.Market.Shift.Worker(); ok {
+	if id, ok := world.Market.Shift.Employee(); ok {
 		l = tu.Link(c, id)
 	}
 	s := format.Market(l, world.Market)

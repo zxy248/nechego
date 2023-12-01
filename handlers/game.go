@@ -73,49 +73,6 @@ func (h *Catch) Handle(c tele.Context) error {
 	return c.Send(head+list, tele.ModeHTML)
 }
 
-type GetJob struct {
-	Universe *game.Universe
-}
-
-var getJobRe = Regexp("^!(рохля|работа)")
-
-func (h *GetJob) Match(s string) bool {
-	return getJobRe.MatchString(s)
-}
-
-func (h *GetJob) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	const shiftHours = 2
-	if time.Since(user.Retired) < 2*time.Hour || !world.Market.Shift.Begin(user.ID, shiftHours*time.Hour) {
-		return c.Send(format.CannotGetJob)
-	}
-	user.Retired = time.Now().Add(shiftHours * time.Hour)
-	return c.Send(format.GetJob(tu.Link(c, user), shiftHours), tele.ModeHTML)
-}
-
-type QuitJob struct {
-	Universe *game.Universe
-}
-
-var quitJobRe = Regexp("^!(уволиться|увольнение)")
-
-func (h *QuitJob) Match(s string) bool {
-	return quitJobRe.MatchString(s)
-}
-
-func (h *QuitJob) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if id, ok := world.Market.Shift.Worker(); ok && id == user.ID {
-		world.Market.Shift.Cancel()
-		return c.Send(format.FireJob(tu.Link(c, id)), tele.ModeHTML)
-	}
-	return c.Send(format.CannotFireJob)
-}
-
 type CastNet struct {
 	Universe *game.Universe
 }

@@ -41,7 +41,6 @@ const (
 	NoFishingRecords     = "🏆 Рекордов пока нет."
 	NotOnline            = "🚫 Этот пользователь не в сети."
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
-	CannotFireJob        = "💼 Вы нигде не работаете."
 	CannotFriend         = "👤 С этим пользователем нельзя подружиться."
 	NonFriendTransfer    = "📦 Вещи можно передавать только тем, кто с вами дружит."
 	ItemNotFound         = "🔖 Предмет не найден."
@@ -419,16 +418,16 @@ func FundsCollected(who string, fs []*game.Fund) string {
 }
 
 func GetJob(who string, hours int) string {
-	return fmt.Sprintf("💼 %s получает работу на <code>%d %s</code>.",
-		Name(who), hours, declHours(hours))
+	const format = "💼 %s получает работу на <code>%d %s</code>."
+	return fmt.Sprintf(format, Name(who), hours, declHours(hours))
 }
 
 func MarketShift(who string, s game.Shift) string {
 	const clock = "<code>%02d:%02d</code>"
 	const format = "🪪 С " + clock + " по " + clock + " вас обслуживает %s."
 	return fmt.Sprintf(format,
-		s.Start.Hour(), s.Start.Minute(),
-		s.End.Hour(), s.End.Minute(),
+		s.From.Hour(), s.From.Minute(),
+		s.To.Hour(), s.To.Minute(),
 		Name(who))
 }
 
@@ -440,10 +439,6 @@ func Market(who string, m *game.Market) string {
 	}
 	c.Add(Products(m.Products()))
 	return c.String()
-}
-
-func FireJob(who string) string {
-	return fmt.Sprintf("💼 %s покидает место работы.", Name(who))
 }
 
 func CannotSplit(i *item.Item) string {

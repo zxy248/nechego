@@ -22,7 +22,6 @@ type User struct {
 	LastMessage      time.Time    // When was the last message sent?
 	Funds            Funds        // Collectable items.
 	Farm             *farm.Farm   // The source of vegetables.
-	Retired          time.Time    // When the job shift should finish.
 	Friends          Friends      // The list of friends' TUIDs.
 	SlotBet          int          // The bet for slots.
 	Activity         float64      // Message count coefficient.
