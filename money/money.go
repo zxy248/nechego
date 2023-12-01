@@ -7,7 +7,7 @@ import (
 	"math/rand"
 )
 
-const Currency = "₴"
+const Currency = "₽"
 
 var (
 	ErrNoMoney  = errors.New("insufficient money")
