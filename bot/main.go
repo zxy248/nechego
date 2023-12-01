@@ -111,7 +111,6 @@ func (a *app) services() []server.Service {
 		services   []server.Service
 		middleware []adapter.Wrapper
 	}{
-		{a.informationServices(), nil},
 		{a.dailyServices(), nil},
 		{a.economyServices(), spam},
 		{a.farmServices(), spam},
@@ -154,12 +153,6 @@ func (a *app) globalMiddleware() []adapter.Wrapper {
 		&middleware.CacheName{Universe: a.universe},
 		&middleware.IncrementCounters{Universe: a.universe},
 		&middleware.RandomPhoto{Avatars: a.avatars, Prob: 1. / 200},
-	}
-}
-
-func (a *app) informationServices() []server.Service {
-	return []server.Service{
-		text(&handlers.Help{}),
 	}
 }
 
@@ -305,6 +298,7 @@ func (a *app) commandServices() []server.Service {
 
 func (a *app) otherServices() []server.Service {
 	return []server.Service{
+		&handlers.Help{},
 		&handlers.Pass{},
 	}
 }

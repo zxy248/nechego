@@ -15,8 +15,8 @@ type Help struct{}
 
 var helpRe = Regexp("^!(помощь|команды|документ)")
 
-func (h *Help) Match(s string) bool {
-	return helpRe.MatchString(s)
+func (h *Help) Match(c tele.Context) bool {
+	return helpRe.MatchString(c.Text())
 }
 
 func (h *Help) Handle(c tele.Context) error {
