@@ -204,7 +204,7 @@ func (a *app) marketServices() []server.Service {
 		&market.Buy{Universe: a.universe},
 		&market.Sell{Universe: a.universe},
 		&market.SellQuick{Universe: a.universe},
-		text(&handlers.NameMarket{Universe: a.universe}),
+		&market.Name{Universe: a.universe},
 		text(&handlers.GetJob{Universe: a.universe}),
 		text(&handlers.QuitJob{Universe: a.universe}),
 	}

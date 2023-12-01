@@ -73,36 +73,6 @@ func (h *Catch) Handle(c tele.Context) error {
 	return c.Send(head+list, tele.ModeHTML)
 }
 
-type NameMarket struct {
-	Universe *game.Universe
-}
-
-var nameMarketRe = Regexp("^!назвать магазин (.+)")
-
-func (h *NameMarket) Match(s string) bool {
-	return nameMarketRe.MatchString(s)
-}
-
-func (h *NameMarket) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	n := marketName(c.Text())
-	if n == "" {
-		return c.Send(format.BadMarketName)
-	}
-	world.Market.Name = n
-	return c.Send(format.MarketRenamed)
-}
-
-func marketName(s string) string {
-	n := nameMarketRe.FindStringSubmatch(s)[1]
-	if !valid.Name(n) {
-		return ""
-	}
-	return strings.Title(n)
-}
-
 type GetJob struct {
 	Universe *game.Universe
 }
