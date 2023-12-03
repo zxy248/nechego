@@ -9,12 +9,13 @@ import (
 
 type Soy struct{}
 
-func (h *Soy) Match(s string) bool {
-	return handlers.HasPrefix(s, "!сой")
+func (h *Soy) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!сой")
 }
 
 func (h *Soy) Handle(c tele.Context) error {
-	resp, err := http.Get("https://booru.soy/random_image/download")
+	const url = "https://booru.soy/random_image/download"
+	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}

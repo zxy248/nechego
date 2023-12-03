@@ -3,7 +3,6 @@ package pictures
 import (
 	"bytes"
 	"encoding/base64"
-	"io"
 	"nechego/handlers"
 	"regexp"
 
@@ -12,25 +11,19 @@ import (
 
 type Car struct{}
 
-func (h *Car) Match(s string) bool {
-	return handlers.HasPrefix(s, "!авто", "!машин", "!тачка")
+func (h *Car) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!авто", "!машин", "!тачка")
 }
 
 func (h *Car) Handle(c tele.Context) error {
-	car, err := randomCar()
+	const url = "https://www.thisautomobiledoesnotexist.com/"
+	body, err := getBytes(url)
 	if err != nil {
 		return err
 	}
-	return c.Send(&tele.Photo{File: tele.FromReader(car)})
+	b64 := carImageRe.FindSubmatch(body)[1]
+	data := base64.NewDecoder(base64.StdEncoding, bytes.NewReader(b64))
+	return c.Send(&tele.Photo{File: tele.FromReader(data)})
 }
 
-var carImageRegexp = regexp.MustCompile(`<img id = "vehicle" src="data:image/png;base64,(.+)" class="center">`)
-
-func randomCar() (io.Reader, error) {
-	page, err := download("https://www.thisautomobiledoesnotexist.com/")
-	if err != nil {
-		return nil, err
-	}
-	data := carImageRegexp.FindSubmatch(page)[1]
-	return base64.NewDecoder(base64.StdEncoding, bytes.NewReader(data)), nil
-}
+var carImageRe = regexp.MustCompile(`<img id = "vehicle" src="data:image/png;base64,(.+)" class="center">`)

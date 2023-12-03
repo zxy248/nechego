@@ -10,12 +10,12 @@ type Pic struct {
 	Path string
 }
 
-func (h *Pic) Match(s string) bool {
-	return handlers.HasPrefix(s, "!пик")
+func (h *Pic) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!пик")
 }
 
 func (h *Pic) Handle(c tele.Context) error {
-	f, err := randomFileFromSubdir(h.Path)
+	f, err := randomSubdirFile(h.Path)
 	if err != nil {
 		return err
 	}

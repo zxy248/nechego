@@ -23,17 +23,17 @@ func (e errStatusCode) Error() string {
 }
 
 func get(url string) (*file, error) {
-	r, err := http.Get(url)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer r.Body.Close()
-	if r.StatusCode != http.StatusOK {
-		return nil, errStatusCode(r.StatusCode)
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, errStatusCode(resp.StatusCode)
 	}
 
 	var f file
-	if err := json.NewDecoder(r.Body).Decode(&f); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&f); err != nil {
 		return nil, err
 	}
 	return &f, nil
@@ -52,13 +52,13 @@ func getter(url string, files chan<- *file, errs chan<- error) {
 }
 
 func download(url string) ([]byte, error) {
-	r, err := http.Get(url)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
-	defer r.Body.Close()
+	defer resp.Body.Close()
 
-	data, err := io.ReadAll(r.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

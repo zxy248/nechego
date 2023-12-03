@@ -10,8 +10,8 @@ type Mouse struct {
 	Path string
 }
 
-func (h *Mouse) Match(s string) bool {
-	return handlers.HasPrefix(s, "!мыш")
+func (h *Mouse) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!мыш")
 }
 
 func (h *Mouse) Handle(c tele.Context) error {

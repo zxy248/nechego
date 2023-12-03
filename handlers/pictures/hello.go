@@ -5,13 +5,16 @@ import (
 	"math/rand"
 	"nechego/handlers"
 	"os"
+	"sync"
 
 	tele "gopkg.in/telebot.v3"
 )
 
 type Hello struct {
-	Path  string
-	cache []tele.Sticker
+	Path string
+
+	s  []tele.Sticker
+	mu sync.Mutex
 }
 
 var helloRe = handlers.Regexp("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
@@ -24,16 +27,19 @@ func (h *Hello) Handle(c tele.Context) error {
 	if err := h.init(); err != nil {
 		return err
 	}
-	return c.Send(&h.cache[rand.Intn(len(h.cache))])
+	return c.Send(&h.s[rand.Intn(len(h.s))])
 }
 
 func (h *Hello) init() error {
-	if h.cache == nil {
-		ss, err := loadStickers(h.Path)
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if h.s == nil {
+		s, err := loadStickers(h.Path)
 		if err != nil {
 			return err
 		}
-		h.cache = ss
+		h.s = s
 	}
 	return nil
 }
@@ -45,9 +51,9 @@ func loadStickers(path string) ([]tele.Sticker, error) {
 	}
 	defer f.Close()
 
-	r := []tele.Sticker{}
-	if err := json.NewDecoder(f).Decode(&r); err != nil {
+	var s []tele.Sticker
+	if err := json.NewDecoder(f).Decode(&s); err != nil {
 		return nil, err
 	}
-	return r, nil
+	return s, nil
 }

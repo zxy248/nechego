@@ -12,41 +12,42 @@ import (
 )
 
 func randomFile(dir string) (string, error) {
-	dirs, err := os.ReadDir(dir)
+	es, err := os.ReadDir(dir)
 	if err != nil {
 		return "", err
 	}
-	if len(dirs) == 0 {
+	if len(es) == 0 {
 		return "", fmt.Errorf("randomFile: empty directory %s", dir)
 	}
-	return filepath.Join(dir, dirs[rand.Intn(len(dirs))].Name()), nil
+	e := es[rand.Intn(len(es))]
+	return filepath.Join(dir, e.Name()), nil
 }
 
-func randomFileFromSubdir(dir string) (string, error) {
-	f1, err := randomFile(dir)
+func randomSubdirFile(root string) (string, error) {
+	dir, err := randomFile(root)
 	if err != nil {
 		return "", err
 	}
-	f2, err := randomFile(f1)
+	f, err := randomFile(dir)
 	if err != nil {
 		return "", err
 	}
-	return f2, nil
+	return f, nil
 }
 
-func download(addr string) ([]byte, error) {
-	r, err := http.Get(addr)
+func getBytes(addr string) ([]byte, error) {
+	resp, err := http.Get(addr)
 	if err != nil {
 		return nil, err
 	}
-	defer r.Body.Close()
-	return io.ReadAll(r.Body)
+	defer resp.Body.Close()
+	return io.ReadAll(resp.Body)
 }
 
-func randomSticker(c tele.Context, setName string) (*tele.Sticker, error) {
-	set, err := c.Bot().StickerSet(setName)
+func randomSticker(c tele.Context, set string) (*tele.Sticker, error) {
+	s, err := c.Bot().StickerSet(set)
 	if err != nil {
 		return nil, err
 	}
-	return &set.Stickers[rand.Intn(len(set.Stickers))], nil
+	return &s.Stickers[rand.Intn(len(s.Stickers))], nil
 }

@@ -258,24 +258,24 @@ func (a *app) funServices() []server.Service {
 
 func (a *app) pictureServices() []server.Service {
 	return []server.Service{
-		text(&pictures.Pic{Path: assetPath("pic")}),
+		&pictures.Pic{Path: assetPath("pic")},
 		&pictures.Basili{Path: assetPath("basili")},
 		&pictures.Casper{Path: assetPath("casper")},
-		text(&pictures.Zeus{Path: assetPath("zeus")}),
-		text(&pictures.Mouse{Path: assetPath("mouse.mp4")}),
-		text(&pictures.Tiktok{Path: assetPath("tiktok")}),
+		&pictures.Zeus{Path: assetPath("zeus")},
+		&pictures.Mouse{Path: assetPath("mouse.mp4")},
+		&pictures.Tiktok{Path: assetPath("tiktok")},
 		&pictures.Hello{Path: assetPath("hello.json")},
-		text(&pictures.Anime{}),
-		text(&pictures.Furry{}),
-		text(&pictures.Flag{}),
-		text(&pictures.Car{}),
-		text(&pictures.Soy{}),
-		text(&pictures.Danbooru{API: a.danbooru}),
+		&pictures.Anime{},
+		&pictures.Furry{},
+		&pictures.Flag{},
+		&pictures.Car{},
+		&pictures.Soy{},
+		&pictures.Danbooru{API: a.danbooru},
 		&pictures.Fap{API: a.danbooru},
 		&pictures.Masyunya{},
-		text(&pictures.Poppy{}),
-		text(&pictures.Sima{}),
-		text(&pictures.Cat{}),
+		&pictures.Poppy{},
+		&pictures.Sima{},
+		&pictures.Cat{},
 	}
 }
 

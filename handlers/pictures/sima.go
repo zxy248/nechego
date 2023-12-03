@@ -8,8 +8,8 @@ import (
 
 type Sima struct{}
 
-func (h *Sima) Match(s string) bool {
-	return handlers.HasPrefix(s, "!сима")
+func (h *Sima) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!сима")
 }
 
 func (h *Sima) Handle(c tele.Context) error {

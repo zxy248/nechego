@@ -23,12 +23,13 @@ func (h *Fap) Handle(c tele.Context) error {
 	if err != nil {
 		return err
 	}
-	photo := &tele.Photo{
-		File:       tele.FromReader(bytes.NewReader(pic.Data)),
+	r := bytes.NewReader(pic.Data)
+	p := &tele.Photo{
+		File:       tele.FromReader(r),
 		Caption:    ratingEmoji(pic.Rating),
 		HasSpoiler: true,
 	}
-	return c.Send(photo, tele.ModeHTML)
+	return c.Send(p, tele.ModeHTML)
 }
 
 func ratingEmoji(r danbooru.Rating) string {

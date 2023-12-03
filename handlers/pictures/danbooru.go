@@ -13,8 +13,8 @@ type Danbooru struct {
 	API *danbooru.Danbooru
 }
 
-func (h *Danbooru) Match(s string) bool {
-	return handlers.HasPrefix(s, "!данбору")
+func (h *Danbooru) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!данбору")
 }
 
 func (h *Danbooru) Handle(c tele.Context) error {
@@ -22,19 +22,20 @@ func (h *Danbooru) Handle(c tele.Context) error {
 	if err != nil {
 		return err
 	}
-	photo := &tele.Photo{File: tele.FromReader(bytes.NewReader(pic.Data))}
+	r := bytes.NewReader(pic.Data)
+	p := &tele.Photo{File: tele.FromReader(r)}
 	if pic.Rating == danbooru.Explicit {
-		photo.Caption = randomWarningNSFW()
-		photo.HasSpoiler = true
+		p.Caption = warningNSFW()
+		p.HasSpoiler = true
 	}
-	return c.Send(photo, tele.ModeHTML)
+	return c.Send(p, tele.ModeHTML)
 }
 
-func randomWarningNSFW() string {
-	caps := [...]string{
+func warningNSFW() string {
+	s := [...]string{
 		"🔞 Осторожно! Только для взрослых.",
 		"<i>Содержимое предназначено для просмотра лицами старше 18 лет.</i>",
 		"<b>ВНИМАНИЕ!</b> Вы увидите фотографии взрослых голых женщин. Будьте сдержанны.",
 	}
-	return caps[rand.Intn(len(caps))]
+	return s[rand.Intn(len(s))]
 }

@@ -10,8 +10,8 @@ type Tiktok struct {
 	Path string
 }
 
-func (h *Tiktok) Match(s string) bool {
-	return handlers.HasPrefix(s, "!тикток")
+func (h *Tiktok) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!тикток")
 }
 
 func (h *Tiktok) Handle(c tele.Context) error {

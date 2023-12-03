@@ -9,14 +9,14 @@ import (
 
 type Poppy struct{}
 
-func (h *Poppy) Match(s string) bool {
-	return handlers.HasPrefix(s, "!паппи")
+func (h *Poppy) Match(c tele.Context) bool {
+	return handlers.HasPrefix(c.Text(), "!паппи")
 }
 
 func (h *Poppy) Handle(c tele.Context) error {
-	names := []string{"pappy2_vk", "poppy_vk"}
-	name := names[rand.Intn(len(names))]
-	s, err := randomSticker(c, name)
+	sets := [...]string{"pappy2_vk", "poppy_vk"}
+	set := sets[rand.Intn(len(sets))]
+	s, err := randomSticker(c, set)
 	if err != nil {
 		return err
 	}
