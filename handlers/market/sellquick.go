@@ -32,7 +32,7 @@ func (h *SellQuick) Handle(c tele.Context) error {
 		if !ok || f.Price() < 2000 {
 			continue
 		}
-		n, ok := user.Sell(world, i)
+		n, ok := user.Sell(world.Market, i)
 		if !ok {
 			c.Send(format.CannotSell(i), tele.ModeHTML)
 			break

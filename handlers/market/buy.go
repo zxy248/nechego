@@ -32,7 +32,7 @@ func (h *Buy) Handle(c tele.Context) error {
 	total := 0
 	keys := buyKeys(c.Text())
 	for _, key := range keys {
-		p, err := user.Buy(world, key)
+		p, err := user.Buy(world.Market, key)
 		if errors.Is(err, game.ErrNoKey) {
 			c.Send(format.BadKey(key), tele.ModeHTML)
 			break

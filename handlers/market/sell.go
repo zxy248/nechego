@@ -33,7 +33,7 @@ func (h *Sell) Handle(c tele.Context) error {
 			c.Send(format.BadKey(key), tele.ModeHTML)
 			break
 		}
-		n, ok := user.Sell(world, i)
+		n, ok := user.Sell(world.Market, i)
 		if !ok {
 			c.Send(format.CannotSell(i), tele.ModeHTML)
 			break

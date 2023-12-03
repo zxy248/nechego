@@ -88,6 +88,8 @@ func setup() (*app, error) {
 			addService(w, refreshMarket, time.Minute)
 			addService(w, restoreEnergy, time.Minute)
 			addService(w, fillNets, time.Minute)
+			w.Market.OnBuy = onBuyHandler(w)
+			w.Market.OnSell = onSellHandler(w)
 		}),
 		avatars: &avatar.Storage{
 			Bot:       bot,

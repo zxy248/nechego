@@ -30,6 +30,9 @@ type Market struct {
 	Shift     Shift            // Work shift.
 	PriceList *PriceList       // Dynamic plant prices.
 	keys      map[int]*Product // keys for product selection.
+
+	OnBuy  func(*User, *Product)
+	OnSell func(*User, *item.Item, int)
 }
 
 // NewMarket returns a new Market with no products on sale.
@@ -128,10 +131,8 @@ func (m *Market) String() string {
 
 // Buy removes the product specified by key from the market and adds
 // it to the user's inventory if there is enough money on the balance.
-func (u *User) Buy(w *World, key int) (*Product, error) {
-	market := w.Market
-
-	product, ok := market.keys[key]
+func (u *User) Buy(m *Market, key int) (*Product, error) {
+	product, ok := m.keys[key]
 	if !ok {
 		return nil, ErrNoKey
 	}
@@ -140,49 +141,31 @@ func (u *User) Buy(w *World, key int) (*Product, error) {
 	}
 
 	// The purchase is commited.
-	delete(market.keys, key)
-	for i, v := range market.P {
+	delete(m.keys, key)
+	for i, v := range m.P {
 		if v == product {
-			market.P[i] = market.P[len(market.P)-1]
-			market.P = market.P[:len(market.P)-1]
+			m.P[i] = m.P[len(m.P)-1]
+			m.P = m.P[:len(m.P)-1]
 		}
 	}
 	u.Inventory.Add(product.Item)
-
-	earn := product.Price / 3
-	payEloTopTax(w, earn)
-	payMarketWorkerWage(w, earn)
+	if m.OnBuy != nil {
+		m.OnBuy(u, product)
+	}
 	return product, nil
 }
 
 // Sell removes the specified item from the inventory and adds money
 // if the item can be sold.
-func (u *User) Sell(w *World, i *item.Item) (profit int, ok bool) {
-	profit, ok = w.Market.PriceList.Price(i)
+func (u *User) Sell(m *Market, i *item.Item) (profit int, ok bool) {
+	profit, ok = m.PriceList.Price(i)
 	if !ok {
 		return 0, false
 	}
 	u.Inventory.Remove(i)
 	u.Balance().Add(profit)
-	payEloTopTax(w, profit/10)
+	if m.OnSell != nil {
+		m.OnSell(u, i, profit)
+	}
 	return profit, true
-}
-
-func payEloTopTax(w *World, n int) {
-	if n == 0 {
-		return
-	}
-	u := w.TopUser(ByElo)
-	x := item.New(&money.Cash{Money: n})
-	u.Funds.Add("налог", x)
-}
-
-func payMarketWorkerWage(w *World, n int) {
-	if n == 0 {
-		return
-	}
-	if id, ok := w.Market.Shift.Employee(); ok {
-		x := item.New(&money.Cash{Money: n})
-		w.User(id).Funds.Add("магазин", x)
-	}
 }

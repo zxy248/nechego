@@ -3,6 +3,8 @@ package main
 import (
 	"math/rand"
 	"nechego/game"
+	"nechego/item"
+	"nechego/money"
 	"time"
 )
 
@@ -44,5 +46,36 @@ func fillNets(w *game.World) {
 		if rand.Float64() < p {
 			u.FillNet()
 		}
+	}
+}
+
+func onBuyHandler(w *game.World) func(*game.User, *game.Product) {
+	return func(u *game.User, p *game.Product) {
+		payMarketEmployee(w, p.Price/5)
+	}
+}
+
+func onSellHandler(w *game.World) func(*game.User, *item.Item, int) {
+	return func(u *game.User, i *item.Item, profit int) {
+		payTopElo(w, profit/10)
+	}
+}
+
+func payTopElo(w *game.World, n int) {
+	if n == 0 {
+		return
+	}
+	u := w.TopUser(game.ByElo)
+	x := item.New(&money.Cash{Money: n})
+	u.Funds.Add("налог", x)
+}
+
+func payMarketEmployee(w *game.World, n int) {
+	if n == 0 {
+		return
+	}
+	if id, ok := w.Market.Shift.Employee(); ok {
+		x := item.New(&money.Cash{Money: n})
+		w.User(id).Funds.Add("магазин", x)
 	}
 }
