@@ -11,7 +11,7 @@ func (u *User) Strength() float64 {
 	return mult * c
 }
 
-func Fight(u1, u2 *User) (uw, ul *User, δr float64) {
+func Fight(u1, u2 *User) (uw, ul *User, dr float64) {
 	s1 := u1.Strength() * rand.Float64()
 	s2 := u2.Strength() * rand.Float64()
 	if s1 > s2 {
@@ -19,9 +19,9 @@ func Fight(u1, u2 *User) (uw, ul *User, δr float64) {
 	} else {
 		uw, ul = u2, u1
 	}
-	δr = eloDelta(uw.Rating, ul.Rating, kDefault, scoreWin)
-	uw.Rating += δr
-	ul.Rating -= δr
+	dr = eloDelta(uw.Rating, ul.Rating, kDefault, scoreWin)
+	uw.Rating += dr
+	ul.Rating -= dr
 	return
 }
 

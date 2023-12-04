@@ -207,7 +207,7 @@ func (a *app) actionsServices() []server.Service {
 	return []server.Service{
 		&actions.Fish{Universe: a.universe},
 		&actions.Craft{Universe: a.universe},
-		text(&handlers.Fight{Universe: a.universe}),
+		&actions.Fight{Universe: a.universe},
 		&actions.Eat{Universe: a.universe},
 		&actions.EatQuick{Universe: a.universe},
 		text(&handlers.FishingRecords{Universe: a.universe}),

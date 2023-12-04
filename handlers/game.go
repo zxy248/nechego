@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"math/rand"
 	"nechego/avatar"
 	"nechego/fishing"
 	"nechego/format"
@@ -11,7 +10,6 @@ import (
 	tu "nechego/teleutil"
 	"nechego/valid"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	tele "gopkg.in/telebot.v3"
@@ -101,69 +99,6 @@ func (h *Status) Handle(c tele.Context) error {
 	}
 	user.Status = status
 	return c.Send("✅ Статус установлен.")
-}
-
-type Fight struct {
-	Universe *game.Universe
-}
-
-var fightRe = Regexp("^!(драка|дуэль|поединок|атака|битва|схватка|сражение|бой|борьба)")
-
-func (h *Fight) Match(s string) bool {
-	return fightRe.MatchString(s)
-}
-
-func (h *Fight) Handle(c tele.Context) error {
-	// Sanity check before locking the world.
-	reply, ok := tu.Reply(c)
-	if !ok {
-		return c.Send(format.RepostMessage)
-	}
-	if c.Sender().ID == reply.ID {
-		return c.Send(format.CannotAttackYourself)
-	}
-
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-	opnt := world.User(reply.ID)
-
-	// Can opponent fight back?
-	if time.Since(opnt.LastMessage) > 10*time.Minute {
-		return c.Send(format.NotOnline)
-	}
-
-	if !user.Energy.Spend(0.33) {
-		return c.Send(format.NoEnergy)
-	}
-
-	// Fight begins.
-	win, lose, elo := game.Fight(user, opnt)
-
-	msg := format.NewConnector("\n\n")
-	msg.Add(format.Fight(user, opnt))
-
-	// The winner takes a random item.
-	if rand.Float64() < 0.02 {
-		if x, ok := moveRandomItem(win.Inventory, lose.Inventory); ok {
-			msg.Add(format.WinnerTook(tu.Link(c, win), x))
-		}
-	}
-	// The attacker drops a random item.
-	if rand.Float64() < 0.04 {
-		if x, ok := moveRandomItem(world.Floor, user.Inventory); ok {
-			msg.Add(format.AttackerDrop(tu.Link(c, user), x))
-		}
-	}
-	msg.Add(format.Win(tu.Link(c, win), elo))
-	return c.Send(msg.String(), tele.ModeHTML)
-}
-
-func moveRandomItem(dst, src *item.Set) (i *item.Item, ok bool) {
-	i, ok = src.Random()
-	if !ok {
-		return nil, false
-	}
-	return i, src.Move(dst, i)
 }
 
 type Profile struct {
