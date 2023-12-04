@@ -64,19 +64,3 @@ func MakeMeat(recipe []*item.Item) (result []*item.Item, ok bool) {
 	meat := &food.Meat{Species: pet.Species}
 	return []*item.Item{item.New(meat), item.New(knife)}, true
 }
-
-func MakeFishingNet(recipe []*item.Item) (result []*item.Item, ok bool) {
-	if !(template{
-		item.TypeDetails,
-		item.TypeThread,
-		item.TypeThread,
-		item.TypeThread,
-	}.match(recipe)) {
-		return nil, false
-	}
-	d := recipe[0].Value.(*details.Details)
-	if !d.Spend(50) {
-		return nil, false
-	}
-	return []*item.Item{item.New(fishing.NewNet()), item.New(d)}, true
-}

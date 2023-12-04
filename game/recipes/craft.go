@@ -14,7 +14,6 @@ func Craft(inventory *item.Set, ingredients []*item.Item) (result []*item.Item, 
 		RepairFishingRod,
 		DustFishingRod,
 		MakeMeat,
-		MakeFishingNet,
 	}
 	for _, craft := range list {
 		if result, ok := craft(ingredients); ok {

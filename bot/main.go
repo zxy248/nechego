@@ -87,7 +87,6 @@ func setup() (*app, error) {
 			resetEnergy(w)
 			addService(w, refreshMarket, time.Minute)
 			addService(w, restoreEnergy, time.Minute)
-			addService(w, fillNets, time.Minute)
 			w.Market.OnBuy = onBuyHandler(w)
 			w.Market.OnSell = onSellHandler(w)
 		}),
@@ -208,10 +207,6 @@ func (a *app) actionsServices() []server.Service {
 	return []server.Service{
 		&actions.Fish{Universe: a.universe},
 		&actions.Craft{Universe: a.universe},
-		text(&handlers.DrawNet{Universe: a.universe}),
-		text(&handlers.CastNet{Universe: a.universe}),
-		text(&handlers.Net{Universe: a.universe}),
-		text(&handlers.Catch{Universe: a.universe}),
 		text(&handlers.Fight{Universe: a.universe}),
 		&actions.Eat{Universe: a.universe},
 		&actions.EatQuick{Universe: a.universe},

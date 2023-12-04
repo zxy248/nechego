@@ -34,10 +34,6 @@ const (
 	InventorySorted      = "🗃 Инвентарь отсортирован."
 	BuyFishingRod        = "🎣 Приобретите удочку в магазине, прежде чем рыбачить."
 	FishingRodBroke      = "🎣 Удочка сломалась."
-	NoNet                = "🕸 У вас нет рыболовной сети."
-	NetAlreadyCast       = "🕸 Рыболовная сеть уже закинута."
-	CastNet              = "🕸 Рыболовная сеть закинута."
-	NetNotCasted         = "🕸 Рыболовная сеть ещё не закинута."
 	NoFishingRecords     = "🏆 Рекордов пока нет."
 	NotOnline            = "🚫 Этот пользователь не в сети."
 	CannotGetJob         = "💼 Такую работу получить пока нельзя."
@@ -293,21 +289,6 @@ func BadFishOutcome() string {
 
 func FishCatch(who string, i *item.Item) string {
 	return fmt.Sprintf("🎣 %s получает %s.", Name(who), Item(i))
-}
-
-func DrawNet(n *fishing.Net) string {
-	m := n.Count()
-	c := NewConnector("\n")
-	c.Add("<b>🕸 Сеть вытянута.</b>")
-	c.Add("<i>🐟 %s <code>%d %s</code>.</i>")
-	return fmt.Sprintf(c.String(), declCaught(m), m, declFish(m))
-}
-
-func Net(n *fishing.Net) string {
-	c := NewConnector("\n")
-	c.Add("<b>🕸 У вас есть рыболовная сеть на <code>%d</code> слотов.</b>")
-	c.Add("<i>🐟 Команды: <code>!закинуть</code>, <code>!вытянуть</code>.</i>")
-	return fmt.Sprintf(c.String(), n.Capacity)
 }
 
 func RecordCatch(p fishing.Parameter, e *fishing.Entry) string {

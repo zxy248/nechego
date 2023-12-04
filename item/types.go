@@ -30,8 +30,6 @@ const (
 	TypeKnife
 	TypeMeat
 	TypeDetails
-	TypeThread
-	TypeFishingNet
 	TypePlant
 )
 
@@ -62,10 +60,6 @@ func TypeOf(x any) Type {
 		return TypeMeat
 	case *details.Details:
 		return TypeDetails
-	case *details.Thread:
-		return TypeThread
-	case *fishing.Net:
-		return TypeFishingNet
 	case *plant.Plant:
 		return TypePlant
 	default:
@@ -101,10 +95,6 @@ func ValueOf(t Type) any {
 		return &food.Meat{}
 	case TypeDetails:
 		return &details.Details{}
-	case TypeThread:
-		return &details.Thread{}
-	case TypeFishingNet:
-		return &fishing.Net{}
 	case TypePlant:
 		return &plant.Plant{}
 	default:

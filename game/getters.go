@@ -28,4 +28,3 @@ func (u *User) Pair() bool  { _, ok := GetItem[*token.Pair](u); return ok }
 
 func (u *User) Pet() (p *pets.Pet, ok bool)           { return GetItem[*pets.Pet](u) }
 func (u *User) FishingRod() (r *fishing.Rod, ok bool) { return GetItem[*fishing.Rod](u) }
-func (u *User) FishingNet() (n *fishing.Net, ok bool) { return GetItem[*fishing.Net](u) }

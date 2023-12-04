@@ -108,10 +108,6 @@ func integral(i *Item) bool {
 		if x.Count == 0 {
 			return false
 		}
-	case *fishing.Net:
-		if x.Count() == 0 && x.Broken() {
-			return false
-		}
 	case *plant.Plant:
 		if x.Count == 0 {
 			return false

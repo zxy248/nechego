@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"nechego/avatar"
@@ -46,107 +45,6 @@ func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad 
 		moved = append(moved, x)
 	}
 	return
-}
-
-type Catch struct {
-	Universe *game.Universe
-}
-
-var catchRe = Regexp("^!улов")
-
-func (h *Catch) Match(s string) bool {
-	return catchRe.MatchString(s)
-}
-
-func (h *Catch) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if net, ok := user.FishingNet(); ok {
-		caught := user.UnloadNet(net)
-		for _, f := range caught {
-			world.History.Add(user.ID, f)
-		}
-	}
-	head := fmt.Sprintf("<b>🐟 %s: Улов</b>\n", tu.Link(c, user))
-	list := format.Catch(user.Inventory.HkList())
-	return c.Send(head+list, tele.ModeHTML)
-}
-
-type CastNet struct {
-	Universe *game.Universe
-}
-
-var castNetRe = Regexp("^!закинуть")
-
-func (h *CastNet) Match(s string) bool {
-	return castNetRe.MatchString(s)
-}
-
-func (h *CastNet) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	err := user.CastNet()
-	if errors.Is(err, game.ErrNoNet) {
-		return c.Send(format.NoNet)
-	} else if errors.Is(err, game.ErrNetAlreadyCast) {
-		return c.Send(format.NetAlreadyCast)
-	} else if err != nil {
-		return err
-	}
-	return c.Send(format.CastNet)
-}
-
-type DrawNet struct {
-	Universe *game.Universe
-}
-
-var drawNetRe = Regexp("^!вытянуть")
-
-func (h *DrawNet) Match(s string) bool {
-	return drawNetRe.MatchString(s)
-}
-
-func (h *DrawNet) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if FullInventory(user.Inventory) {
-		return c.Send(format.InventoryOverflow)
-	}
-
-	net, ok := user.DrawNew()
-	if !ok {
-		return c.Send(format.NetNotCasted)
-	}
-	err := c.Send(format.DrawNet(net), tele.ModeHTML)
-	caught := user.UnloadNet(net)
-	for _, f := range caught {
-		world.History.Add(user.ID, f)
-	}
-	return err
-}
-
-type Net struct {
-	Universe *game.Universe
-}
-
-var netRe = Regexp("^!сеть")
-
-func (h *Net) Match(s string) bool {
-	return netRe.MatchString(s)
-}
-
-func (h *Net) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	net, ok := user.FishingNet()
-	if !ok {
-		return c.Send(format.NoNet)
-	}
-	return c.Send(format.Net(net), tele.ModeHTML)
 }
 
 type FishingRecords struct {

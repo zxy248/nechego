@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math/rand"
 	"nechego/game"
 	"nechego/item"
 	"nechego/money"
@@ -37,15 +36,6 @@ func restoreEnergy(w *game.World) {
 func resetEnergy(w *game.World) {
 	for _, u := range w.Users {
 		u.Energy = 1.0
-	}
-}
-
-func fillNets(w *game.World) {
-	const p = 0.04
-	for _, u := range w.Users {
-		if rand.Float64() < p {
-			u.FillNet()
-		}
 	}
 }
 

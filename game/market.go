@@ -31,8 +31,8 @@ type Market struct {
 	PriceList *PriceList       // Dynamic plant prices.
 	keys      map[int]*Product // keys for product selection.
 
-	OnBuy  func(*User, *Product)
-	OnSell func(*User, *item.Item, int)
+	OnBuy  func(*User, *Product)        `json:"-"`
+	OnSell func(*User, *item.Item, int) `json:"-"`
 }
 
 // NewMarket returns a new Market with no products on sale.
