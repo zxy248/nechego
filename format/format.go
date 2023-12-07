@@ -306,22 +306,34 @@ func RecordCatch(p fishing.Parameter, e *fishing.Entry) string {
 	return fmt.Sprintf(c.String(), p1, Fish(e.Fish), p2)
 }
 
-func FishingRecords(price []*fishing.Entry, weight, length *fishing.Entry) string {
+func FishingRecords(price, weight, length []*fishing.Entry) string {
 	c := NewConnector("\n")
 	c.Add("<b>🏆 Книга рекордов 🎣</b>")
 	c.Add("")
 	c.Add("<b>💰 Самые дорогие рыбы:</b>")
 	for i, e := range price {
-		n := fmt.Sprintf("<b><i>%s</i></b>. ", Link(e.ID, strconv.Itoa(1+i)))
-		c.Add(n + Fish(e.Fish) + ", " + Money(int(e.Fish.Price())))
+		l := fishingRecordsEntry(i, e)
+		l += ", " + Money(int(e.Fish.Price()))
+		c.Add(l)
 	}
 	c.Add("")
-	c.Add("<b>⚖ Самая тяжёлая рыба:</b>")
-	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(weight.ID, "→"), Fish(weight.Fish)))
+	c.Add("<b>⚖ Самые тяжёлые рыбы:</b>")
+	for i, e := range weight {
+		c.Add(fishingRecordsEntry(i, e))
+	}
 	c.Add("")
-	c.Add("<b>📐 Самая большая рыба:</b>")
-	c.Add(fmt.Sprintf("<b><i>%s</i></b> %s", Link(length.ID, "→"), Fish(length.Fish)))
+	c.Add("<b>📐 Самые большие рыбы:</b>")
+	for i, e := range length {
+		c.Add(fishingRecordsEntry(i, e))
+	}
 	return c.String()
+}
+
+func fishingRecordsEntry(i int, e *fishing.Entry) string {
+	const format = "<b><i>%s</i></b>. %s"
+	l := Link(e.ID, strconv.Itoa(i+1))
+	f := Fish(e.Fish)
+	return fmt.Sprintf(format, l, f)
 }
 
 func Fight(u1, u2 *game.User) string {

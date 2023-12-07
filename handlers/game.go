@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"nechego/avatar"
-	"nechego/fishing"
 	"nechego/format"
 	"nechego/game"
 	"nechego/item"
@@ -43,30 +42,6 @@ func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad 
 		moved = append(moved, x)
 	}
 	return
-}
-
-type FishingRecords struct {
-	Universe *game.Universe
-}
-
-var fishingRecordsRe = Regexp("^!рекорды")
-
-func (h *FishingRecords) Match(s string) bool {
-	return fishingRecordsRe.MatchString(s)
-}
-
-func (h *FishingRecords) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-	byPrice := world.History.Top(fishing.Price, 10)
-	byWeight := world.History.Top(fishing.Weight, 1)
-	byLength := world.History.Top(fishing.Length, 1)
-	for _, top := range [][]*fishing.Entry{byPrice, byWeight, byLength} {
-		if len(top) == 0 {
-			return c.Send(format.NoFishingRecords)
-		}
-	}
-	return c.Send(format.FishingRecords(byPrice, byWeight[0], byLength[0]), tele.ModeHTML)
 }
 
 type Status struct {
