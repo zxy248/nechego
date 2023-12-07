@@ -25,8 +25,8 @@ func (h *Profile) Handle(c tele.Context) error {
 	world, user := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	if u, ok := tu.Reply(c); ok {
-		user = world.User(u.ID)
+	if r, ok := tu.Reply(c); ok {
+		user = world.User(r.ID)
 	}
 	out := format.Profile(user)
 	if a, ok := h.Avatars.Get(user.ID); ok {

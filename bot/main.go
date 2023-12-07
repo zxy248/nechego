@@ -91,12 +91,7 @@ func setup() (*app, error) {
 			w.Market.OnBuy = onBuyHandler(w)
 			w.Market.OnSell = onSellHandler(w)
 		}),
-		avatars: &avatar.Storage{
-			Bot:       bot,
-			Dir:       avatarDirectory,
-			MaxWidth:  1500,
-			MaxHeight: 1500,
-		},
+		avatars:  &avatar.Storage{Dir: avatarDirectory},
 		danbooru: danbooru.New(danbooru.URL, 5*time.Second, 3),
 	}, nil
 }
@@ -229,7 +224,7 @@ func (a *app) profileServices() []server.Service {
 	return []server.Service{
 		&profile.Status{Universe: a.universe, MaxLength: 140},
 		&profile.Profile{Universe: a.universe, Avatars: a.avatars},
-		text(&handlers.Avatar{Universe: a.universe, Avatars: a.avatars}),
+		&profile.Avatar{Avatars: a.avatars, MaxWidth: 1500, MaxHeight: 1500},
 		text(&handlers.Energy{Universe: a.universe}),
 		text(&handlers.NamePet{Universe: a.universe}),
 	}

@@ -24,8 +24,8 @@ func (h *Friends) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	var s string
-	if reply, ok := tu.Reply(c); ok {
-		target := world.User(reply.ID)
+	if r, ok := tu.Reply(c); ok {
+		target := world.User(r.ID)
 		s = h.handleReply(c, world, user, target)
 	} else {
 		s = h.handleList(c, world, user)
