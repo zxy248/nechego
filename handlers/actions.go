@@ -10,55 +10,6 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-type Friends struct {
-	Universe *game.Universe
-}
-
-var friendsRe = Regexp("^!(друзья|друж)")
-
-func (h *Friends) Match(s string) bool {
-	return friendsRe.MatchString(s)
-}
-
-func (h *Friends) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if reply, ok := tu.Reply(c); ok {
-		if user.ID == reply.ID {
-			return c.Send(format.CannotFriend)
-		}
-		target := world.User(reply.ID)
-		if user.Friends.With(target.ID) {
-			user.Friends.Remove(target.ID)
-			return c.Send(format.FriendRemoved(
-				tu.Link(c, user), tu.Link(c, target)),
-				tele.ModeHTML)
-		} else {
-			user.Friends.Add(target.ID)
-			if user.MutualFriends(target) {
-				return c.Send(format.MutualFriends(
-					tu.Link(c, user), tu.Link(c, target)),
-					tele.ModeHTML)
-			} else {
-				return c.Send(format.FriendAdded(
-					tu.Link(c, user), tu.Link(c, target)),
-					tele.ModeHTML)
-			}
-		}
-	}
-	list := user.Friends.List()
-	friends := make([]format.Friend, 0, len(list))
-	for _, id := range list {
-		target := world.User(id)
-		friends = append(friends, format.Friend{
-			Who:    tu.Link(c, target),
-			Mutual: user.MutualFriends(target),
-		})
-	}
-	return c.Send(format.FriendList(tu.Link(c, user), friends), tele.ModeHTML)
-}
-
 type Transfer struct {
 	Universe *game.Universe
 }

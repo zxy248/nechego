@@ -453,24 +453,19 @@ func MutualFriends(who1, who2 string) string {
 	return fmt.Sprintf("🤝 %s и %s теперь друзья.", Name(who1), Name(who2))
 }
 
-type Friend struct {
-	Who    string
-	Mutual bool
-}
-
-func FriendList(who string, friends []Friend) string {
-	mutual := 0
+func FriendList(who string, friends map[string]bool) string {
 	c := NewConnector("\n")
-	for _, f := range friends {
+	total := 0
+	for l, m := range friends {
 		e := "💔"
-		if f.Mutual {
-			mutual++
+		if m {
+			total++
 			e = "❤️"
 		}
-		c.Add(e + " " + Name(f.Who))
+		c.Add(e + " " + Name(l))
 	}
-	header := fmt.Sprintf("<b>👥 %s: Друзья <code>[%d/%d]</code></b>",
-		Name(who), mutual, len(friends))
+	const format = "<b>👥 %s: Друзья <code>[%d/%d]</code></b>"
+	header := fmt.Sprintf(format, Name(who), total, len(friends))
 	return header + "\n" + c.String()
 }
 
