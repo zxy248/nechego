@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"nechego/avatar"
 	"nechego/format"
 	"nechego/game"
 	"nechego/item"
@@ -41,33 +40,6 @@ func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad 
 		moved = append(moved, x)
 	}
 	return
-}
-
-type Profile struct {
-	Universe *game.Universe
-	Avatars  *avatar.Storage
-}
-
-var profileRe = Regexp("^!(профиль|стат)")
-
-func (h *Profile) Match(s string) bool {
-	return profileRe.MatchString(s)
-}
-
-func (h *Profile) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	if u, ok := tu.Reply(c); ok {
-		user = world.User(u.ID)
-	}
-
-	out := format.Profile(user)
-	if a, ok := h.Avatars.Get(user.ID); ok {
-		a.Caption = out
-		return c.Send(a, tele.ModeHTML)
-	}
-	return c.Send(out, tele.ModeHTML)
 }
 
 type Energy struct {

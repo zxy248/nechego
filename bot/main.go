@@ -228,7 +228,7 @@ func (a *app) topServices() []server.Service {
 func (a *app) profileServices() []server.Service {
 	return []server.Service{
 		&profile.Status{Universe: a.universe, MaxLength: 140},
-		text(&handlers.Profile{Universe: a.universe, Avatars: a.avatars}),
+		&profile.Profile{Universe: a.universe, Avatars: a.avatars},
 		text(&handlers.Avatar{Universe: a.universe, Avatars: a.avatars}),
 		text(&handlers.Energy{Universe: a.universe}),
 		text(&handlers.NamePet{Universe: a.universe}),
