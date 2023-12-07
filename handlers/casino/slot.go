@@ -15,7 +15,7 @@ type Slot struct {
 	MinBet   int
 }
 
-var slotRe = handlers.Regexp("!(слот|ставка|казино) ([0-9]+)")
+var slotRe = handlers.Regexp("^!(слот|ставка|казино) ([0-9]+)")
 
 func (h *Slot) Match(c tele.Context) bool {
 	return slotRe.MatchString(c.Text())

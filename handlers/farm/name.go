@@ -15,7 +15,7 @@ type Name struct {
 	Universe *game.Universe
 }
 
-var nameRe = handlers.Regexp("!назвать ферму (.+)")
+var nameRe = handlers.Regexp("^!назвать ферму (.+)")
 
 func (h *Name) Match(c tele.Context) bool {
 	return nameRe.MatchString(c.Text())
