@@ -19,6 +19,7 @@ import (
 	"nechego/handlers/fun"
 	"nechego/handlers/market"
 	"nechego/handlers/pictures"
+	"nechego/handlers/profile"
 	"nechego/handlers/top"
 	"os"
 	"path/filepath"
@@ -226,7 +227,7 @@ func (a *app) topServices() []server.Service {
 
 func (a *app) profileServices() []server.Service {
 	return []server.Service{
-		text(&handlers.Status{Universe: a.universe, MaxLength: 120}),
+		&profile.Status{Universe: a.universe, MaxLength: 140},
 		text(&handlers.Profile{Universe: a.universe, Avatars: a.avatars}),
 		text(&handlers.Avatar{Universe: a.universe, Avatars: a.avatars}),
 		text(&handlers.Energy{Universe: a.universe}),
