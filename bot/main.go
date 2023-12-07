@@ -242,6 +242,7 @@ func (a *app) funServices() []server.Service {
 		&fun.List{Universe: a.universe},
 		&fun.Top{Universe: a.universe},
 		&fun.Clock{},
+		&fun.Date{},
 		&fun.TurnOn{Universe: a.universe},
 		&fun.TurnOff{Universe: a.universe},
 		&fun.Reputation{Universe: a.universe},
