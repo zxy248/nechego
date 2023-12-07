@@ -212,7 +212,7 @@ func (a *app) actionsServices() []server.Service {
 		&actions.EatQuick{Universe: a.universe},
 		&actions.Records{Universe: a.universe},
 		&actions.Friends{Universe: a.universe},
-		text(&handlers.Transfer{Universe: a.universe}),
+		&actions.Transfer{Universe: a.universe},
 	}
 }
 

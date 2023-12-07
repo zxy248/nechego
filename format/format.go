@@ -473,7 +473,7 @@ func CannotTransfer(i *item.Item) string {
 	return fmt.Sprintf("📦 Нельзя передать %s.", Item(i))
 }
 
-func Transfered(sender, receiver string, is ...*item.Item) string {
+func Transfered(from, to string, is []*item.Item) string {
 	if len(is) == 0 {
 		return "📦 Ничего не передано."
 	}
@@ -482,8 +482,9 @@ func Transfered(sender, receiver string, is ...*item.Item) string {
 		c.Add(Item(i))
 	}
 	const help = "<i>Используйте команду <code>!получить</code>, чтобы взять предметы.</i>"
-	message := fmt.Sprintf("📦 %s передаёт %s %s.", Name(sender), Name(receiver), c.String())
-	return message + "\n\n" + help
+	const format = "📦 %s передаёт %s %s."
+	s := fmt.Sprintf(format, Name(from), Name(to), c.String())
+	return s + "\n\n" + help
 }
 
 func Duration(d time.Duration) string {
