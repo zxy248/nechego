@@ -5,8 +5,6 @@ import (
 	"log"
 	"nechego/avatar"
 	"nechego/bot/middleware"
-	"nechego/bot/server"
-	"nechego/bot/server/adapter"
 	"nechego/danbooru"
 	"nechego/game"
 	"nechego/handlers"
@@ -43,7 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot setup: ", err)
 	}
-	srv := &server.Server{
+	srv := &Server{
 		Bot:      app.bot,
 		Handlers: app.services(),
 	}
@@ -100,13 +98,13 @@ func (a *app) shutdown() error {
 	return a.universe.SaveAll()
 }
 
-func (a *app) services() []server.Service {
+func (a *app) services() []Service {
 	global := a.globalMiddleware()
-	spam := []adapter.Wrapper{&middleware.AutoDelete{After: 5 * time.Minute}}
+	spam := []Wrapper{&middleware.AutoDelete{After: 15 * time.Minute}}
 
 	groups := []struct {
-		services   []server.Service
-		middleware []adapter.Wrapper
+		services   []Service
+		middleware []Wrapper
 	}{
 		{a.dailyServices(), nil},
 		{a.economyServices(), spam},
@@ -122,18 +120,21 @@ func (a *app) services() []server.Service {
 		{a.otherServices(), nil},
 	}
 
-	var handlers []server.Service
+	var handlers []Service
 	for _, g := range groups {
 		for _, s := range g.services {
-			h := wrap(s, concat(global, g.middleware)...)
+			var w []Wrapper
+			w = append(w, global...)
+			w = append(w, g.middleware...)
+			h := &Wrapped{s, w}
 			handlers = append(handlers, h)
 		}
 	}
 	return handlers
 }
 
-func (a *app) globalMiddleware() []adapter.Wrapper {
-	return []adapter.Wrapper{
+func (a *app) globalMiddleware() []Wrapper {
+	return []Wrapper{
 		&middleware.Recover{},
 		&middleware.RequireSupergroup{},
 		&middleware.IgnoreMessageForwarded{},
@@ -153,16 +154,16 @@ func (a *app) globalMiddleware() []adapter.Wrapper {
 	}
 }
 
-func (a *app) dailyServices() []server.Service {
-	return []server.Service{
+func (a *app) dailyServices() []Service {
+	return []Service{
 		&daily.Eblan{Universe: a.universe},
 		&daily.Admin{Universe: a.universe},
 		&daily.Pair{Universe: a.universe},
 	}
 }
 
-func (a *app) economyServices() []server.Service {
-	return []server.Service{
+func (a *app) economyServices() []Service {
+	return []Service{
 		&economy.Inventory{Universe: a.universe},
 		&economy.Funds{Universe: a.universe},
 		&economy.Sort{Universe: a.universe},
@@ -177,8 +178,8 @@ func (a *app) economyServices() []server.Service {
 	}
 }
 
-func (a *app) farmServices() []server.Service {
-	return []server.Service{
+func (a *app) farmServices() []Service {
+	return []Service{
 		&farm.Farm{Universe: a.universe},
 		&farm.Plant{Universe: a.universe},
 		&farm.Harvest{Universe: a.universe},
@@ -187,8 +188,8 @@ func (a *app) farmServices() []server.Service {
 	}
 }
 
-func (a *app) marketServices() []server.Service {
-	return []server.Service{
+func (a *app) marketServices() []Service {
+	return []Service{
 		&market.Market{Universe: a.universe},
 		&market.PriceList{Universe: a.universe},
 		&market.Buy{Universe: a.universe},
@@ -199,8 +200,8 @@ func (a *app) marketServices() []server.Service {
 	}
 }
 
-func (a *app) actionsServices() []server.Service {
-	return []server.Service{
+func (a *app) actionsServices() []Service {
+	return []Service{
 		&actions.Fish{Universe: a.universe},
 		&actions.Craft{Universe: a.universe},
 		&actions.Fight{Universe: a.universe},
@@ -212,16 +213,16 @@ func (a *app) actionsServices() []server.Service {
 	}
 }
 
-func (a *app) topServices() []server.Service {
-	return []server.Service{
+func (a *app) topServices() []Service {
+	return []Service{
 		top.Rating(a.universe),
 		top.Rich(a.universe),
 		top.Strength(a.universe),
 	}
 }
 
-func (a *app) profileServices() []server.Service {
-	return []server.Service{
+func (a *app) profileServices() []Service {
+	return []Service{
 		&profile.Status{Universe: a.universe, MaxLength: 140},
 		&profile.Profile{Universe: a.universe, Avatars: a.avatars},
 		&profile.Avatar{Avatars: a.avatars, MaxWidth: 1500, MaxHeight: 1500},
@@ -230,8 +231,8 @@ func (a *app) profileServices() []server.Service {
 	}
 }
 
-func (a *app) funServices() []server.Service {
-	return []server.Service{
+func (a *app) funServices() []Service {
+	return []Service{
 		&fun.Game{},
 		&fun.Infa{},
 		&fun.Weather{},
@@ -250,8 +251,8 @@ func (a *app) funServices() []server.Service {
 	}
 }
 
-func (a *app) pictureServices() []server.Service {
-	return []server.Service{
+func (a *app) pictureServices() []Service {
+	return []Service{
 		&pictures.Pic{Path: assetPath("pic")},
 		&pictures.Basili{Path: assetPath("basili")},
 		&pictures.Casper{Path: assetPath("casper")},
@@ -273,8 +274,8 @@ func (a *app) pictureServices() []server.Service {
 	}
 }
 
-func (a *app) casinoServices() []server.Service {
-	return []server.Service{
+func (a *app) casinoServices() []Service {
+	return []Service{
 		&casino.DiceRoll{Universe: a.universe},
 		&casino.SlotRoll{Universe: a.universe},
 		&casino.Dice{Universe: a.universe, MinBet: 100},
@@ -282,36 +283,17 @@ func (a *app) casinoServices() []server.Service {
 	}
 }
 
-func (a *app) commandServices() []server.Service {
-	return []server.Service{
+func (a *app) commandServices() []Service {
+	return []Service{
 		&command.Add{Universe: a.universe},
 		&command.Remove{Universe: a.universe},
 		&command.Use{Universe: a.universe},
 	}
 }
 
-func (a *app) otherServices() []server.Service {
-	return []server.Service{
+func (a *app) otherServices() []Service {
+	return []Service{
 		&handlers.Help{},
 		&handlers.Pass{},
 	}
-}
-
-func text(s adapter.TextService) server.Service {
-	return &adapter.Text{TextService: s}
-}
-
-func wrap(s server.Service, w ...adapter.Wrapper) server.Service {
-	for i := len(w) - 1; i >= 0; i-- {
-		s = adapter.Wrap(s, w[i])
-	}
-	return s
-}
-
-func concat[T any](slices ...[]T) []T {
-	var r []T
-	for _, s := range slices {
-		r = append(r, s...)
-	}
-	return r
 }
