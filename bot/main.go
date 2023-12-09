@@ -226,7 +226,7 @@ func (a *app) profileServices() []server.Service {
 		&profile.Profile{Universe: a.universe, Avatars: a.avatars},
 		&profile.Avatar{Avatars: a.avatars, MaxWidth: 1500, MaxHeight: 1500},
 		&profile.Energy{Universe: a.universe},
-		text(&handlers.NamePet{Universe: a.universe}),
+		&profile.NamePet{Universe: a.universe},
 	}
 }
 

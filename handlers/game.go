@@ -1,14 +1,7 @@
 package handlers
 
 import (
-	"fmt"
-	"nechego/game"
 	"nechego/item"
-	tu "nechego/teleutil"
-	"nechego/valid"
-	"strings"
-
-	tele "gopkg.in/telebot.v3"
 )
 
 const InventoryCapacity = 20
@@ -39,41 +32,4 @@ func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad 
 		moved = append(moved, x)
 	}
 	return
-}
-
-type NamePet struct {
-	Universe *game.Universe
-}
-
-var namePetRe = Regexp("^!назвать (.+)")
-
-func (h *NamePet) Match(s string) bool {
-	return namePetRe.MatchString(s)
-}
-
-func (h *NamePet) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	pet, ok := user.Pet()
-	if !ok {
-		return c.Send("🐱 У вас нет питомца.")
-	}
-
-	e := pet.Species.Emoji()
-	n := petName(c.Text())
-	if n == "" {
-		return c.Send(fmt.Sprintf("%s Такое имя не подходит для питомца.", e))
-	}
-	pet.Name = n
-	s := fmt.Sprintf("%s Вы назвали питомца <code>%s</code>.", e, n)
-	return c.Send(s, tele.ModeHTML)
-}
-
-func petName(s string) string {
-	n := namePetRe.FindStringSubmatch(s)[1]
-	if !valid.Name(n) {
-		return ""
-	}
-	return strings.Title(n)
 }
