@@ -72,9 +72,6 @@ func Random() *Item {
 			details.Random(),
 			pets.Random(),
 		},
-		0.25: {
-			&details.Thread{},
-		},
 		0.12: {
 			tools.NewKnife(),
 		},

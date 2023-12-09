@@ -94,8 +94,6 @@ func randomProduct() *Product {
 		p = price(5000, 2000)
 	case *details.Details:
 		p = price(5000, 2500)
-	case *details.Thread:
-		p = price(5000, 2500)
 	case *plant.Plant:
 		p = x.Count * price(1000, 500)
 	default:
