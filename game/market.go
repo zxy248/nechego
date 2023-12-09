@@ -84,12 +84,13 @@ func randomProduct() *Product {
 		case pets.Exotic:
 			p = price(50000, 25000)
 		case pets.Legendary:
-			p = price(200_000, 100_000)
+			p = price(200000, 100000)
 		default:
 			panic(fmt.Sprintf("unexpected pet type %d", q))
 		}
 	case *food.Food:
-		p = price(1000, 500)
+		q := x.Price()
+		p = price(q, q/3)
 	case *tools.Knife:
 		p = price(5000, 2000)
 	case *details.Details:
