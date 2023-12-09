@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"nechego/format"
 	"nechego/game"
 	"nechego/item"
 	tu "nechego/teleutil"
@@ -40,28 +39,6 @@ func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad 
 		moved = append(moved, x)
 	}
 	return
-}
-
-type Energy struct {
-	Universe *game.Universe
-}
-
-var energyRe = Regexp("^!энергия")
-
-func (h *Energy) Match(s string) bool {
-	return energyRe.MatchString(s)
-}
-
-func (h *Energy) Handle(c tele.Context) error {
-	world, user := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	emoji := "🔋"
-	if user.Energy < 0.5 {
-		emoji = "🪫"
-	}
-	return c.Send(fmt.Sprintf("%s Запас энергии: %s",
-		emoji, format.Energy(user.Energy)), tele.ModeHTML)
 }
 
 type NamePet struct {

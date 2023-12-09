@@ -130,6 +130,14 @@ func EnergyRemaining(e game.Energy) string {
 	return fmt.Sprintf("<i>Энергии осталось: %s</i>", Energy(e))
 }
 
+func EnergyLevel(e game.Energy) string {
+	j := "🔋"
+	if e < 0.5 {
+		j = "🪫"
+	}
+	return fmt.Sprintf("%s Запас энергии: %s", j, Energy(e))
+}
+
 func Eaten(who string, is []*item.Item) string {
 	if len(is) == 0 {
 		return NoFood
