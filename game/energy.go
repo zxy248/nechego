@@ -1,8 +1,6 @@
 package game
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // Energy represents the user's energy level.
 // It must be in the range [0, 1].

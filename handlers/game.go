@@ -1,8 +1,6 @@
 package handlers
 
-import (
-	"nechego/item"
-)
+import "nechego/item"
 
 const InventoryCapacity = 20
 

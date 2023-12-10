@@ -14,7 +14,6 @@ type User struct {
 	Energy           Energy     // Energy level.
 	Rating           float64    // Elo rating in fights.
 	Messages         int        // Number of messages sent.
-	BannedUntil      time.Time  // Time after which the user is unbanned.
 	Status           string     // Status displayed in the profile.
 	Inventory        *item.Set  // Personal items.
 	LastMessage      time.Time  // When was the last message sent?

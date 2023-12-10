@@ -19,9 +19,7 @@ const (
 	Empty             = "<code>. . .</code>"
 	NoMoney           = "💵 Недостаточно средств."
 	NoEnergy          = "⚡ Недостаточно энергии."
-	AdminsOnly        = "⚠️ Эта команда доступна только администрации."
 	RepostMessage     = "✉️ Перешлите сообщение другого пользователя."
-	UserUnbanned      = "✅ Пользователь разблокирован."
 	NoFood            = "🍊 Подходящей еды нет."
 	NotHungry         = "🍊 Вы не хотите есть."
 	InventoryOverflow = "🗄 Инвентарь переполнен."
@@ -203,10 +201,6 @@ func Mods(ms []*game.Mod) string {
 
 func Percentage(p float64) string {
 	return fmt.Sprintf("%.1f%%", p*100)
-}
-
-func UserBanned(hours int) string {
-	return fmt.Sprintf("🚫 Пользователь заблокирован на %d %s.", hours, declHours(hours))
 }
 
 func CannotDrop(i *item.Item) string {

@@ -3,27 +3,9 @@ package middleware
 import (
 	"nechego/game"
 	tu "nechego/teleutil"
-	"time"
 
 	tele "gopkg.in/telebot.v3"
 )
-
-type IgnoreUserBanned struct {
-	Universe *game.Universe
-}
-
-func (m *IgnoreUserBanned) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
-	return func(c tele.Context) error {
-		w, u := tu.Lock(c, m.Universe)
-		e := u.BannedUntil
-		w.Unlock()
-
-		if time.Now().Before(e) {
-			return nil
-		}
-		return next(c)
-	}
-}
 
 type IgnoreMessageForwarded struct{}
 

@@ -138,7 +138,6 @@ func (a *app) globalMiddleware() []Wrapper {
 		&middleware.Recover{},
 		&middleware.RequireSupergroup{},
 		&middleware.IgnoreMessageForwarded{},
-		&middleware.IgnoreUserBanned{Universe: a.universe},
 		&middleware.LogMessage{Wait: 5 * time.Second},
 		&middleware.Throttle{Duration: 800 * time.Millisecond},
 		&middleware.IgnoreWorldInactive{

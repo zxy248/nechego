@@ -1,8 +1,6 @@
 package pets
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestRandom(t *testing.T) {
 	const sample = 10000

@@ -1,8 +1,6 @@
 package format
 
-import (
-	"strings"
-)
+import "strings"
 
 // Connector joins added strings.
 type Connector struct {

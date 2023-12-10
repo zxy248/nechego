@@ -1,8 +1,6 @@
 package fishing
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestNewRod(t *testing.T) {
 	const sample = 100_000
