@@ -234,6 +234,7 @@ func (a *app) funServices() []Service {
 	return []Service{
 		&fun.Game{},
 		&fun.Infa{},
+		&fun.Choose{},
 		&fun.Weather{},
 		&fun.Calc{},
 		&fun.Name{},
