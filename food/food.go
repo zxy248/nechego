@@ -54,17 +54,17 @@ var beverages = map[Type]bool{
 	Juice:          true,
 }
 
-func (t Type) Emoji() string      { return data[t].Emoji }
-func (t Type) Nutrition() float64 { return data[t].Nutrition }
-func (t Type) String() string     { return data[t].Description }
+func (t Type) Emoji() string      { return data[t].emoji }
+func (t Type) Nutrition() float64 { return data[t].nutrition }
+func (t Type) String() string     { return data[t].name }
+func (t Type) Price() float64     { return data[t].price }
 func (t Type) Beverage() bool     { return beverages[t] }
-func (t Type) Price() float64     { return data[t].Price }
 
 var data = map[Type]struct {
-	Emoji       string
-	Nutrition   float64
-	Description string
-	Price       float64
+	emoji     string
+	nutrition float64
+	name      string
+	price     float64
 }{
 	Bread:              {"🍞", 0.15, "Хлеб", 50},
 	ChickenLeg:         {"🍗", 0.15, "Куриная ножка", 100},

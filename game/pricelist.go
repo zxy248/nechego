@@ -34,8 +34,9 @@ func (p *PriceList) Refresh() {
 
 func (p *PriceList) refreshPlants() {
 	for _, t := range plant.Types {
-		price := math.Abs(500 + 2500*rand.NormFloat64())
-		p.Plants[t] = int(price)
+		x := t.Price()
+		q := math.Abs(x + 0.33*x*rand.NormFloat64())
+		p.Plants[t] = int(q)
 	}
 }
 

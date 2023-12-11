@@ -36,7 +36,7 @@ func NewUser(id int64) *User {
 		Farm:      farm.New(2, 3),
 		Friends:   Friends{},
 	}
-	u.Balance().Add(10000)
+	u.Balance().Add(5000)
 	return u
 }
 

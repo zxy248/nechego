@@ -102,7 +102,7 @@ func PriceList(p *game.PriceList) string {
 	out := fmt.Sprintf("<b>📊 Цены на %d %s %d г.</b>\n", d, m, y)
 	var table string
 	for i, t := range plant.Types {
-		table += fmt.Sprintf("<code>%s %-20s</code>", t, Money(p.Plants[t]))
+		table += fmt.Sprintf("<code>%s %-20s</code>", t.Emoji(), Money(p.Plants[t]))
 		if i%2 == 0 {
 			table += "<code>    </code>"
 		} else {

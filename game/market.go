@@ -60,49 +60,37 @@ func (m *Market) Trim(n int) {
 
 // randomProduct returns a random product that can be sold at the market.
 func randomProduct() *Product {
-	// normalize returns the absolute value of x as int.
-	normalize := func(x float64) int { return int(math.Abs(x)) }
-
-	// price returns a normally distributed positive int.
-	price := func(mean, stddev float64) int {
-		return normalize(mean + stddev*rand.NormFloat64())
-	}
-
-	var p int
+	var p float64
 	i := item.Random()
 	switch x := i.Value.(type) {
 	case *fishing.Rod:
-		p = price(5000, 2500)
+		p = 5000
 	case *fishing.Fish:
-		p = normalize(x.Price() * (1.0 + 0.33*rand.NormFloat64()))
+		p = x.Price()
 	case *pets.Pet:
 		switch q := x.Species.Quality(); q {
 		case pets.Common:
-			p = price(3000, 1500)
+			p = 5e3
 		case pets.Rare:
-			p = price(10000, 5000)
+			p = 5e4
 		case pets.Exotic:
-			p = price(50000, 25000)
+			p = 5e5
 		case pets.Legendary:
-			p = price(200000, 100000)
-		default:
-			panic(fmt.Sprintf("unexpected pet type %d", q))
+			p = 5e6
 		}
 	case *food.Food:
-		q := x.Price()
-		p = price(q, q/3)
+		p = x.Price()
 	case *tools.Knife:
-		p = price(5000, 2000)
+		p = 2000
 	case *details.Details:
-		p = price(5000, 2500)
+		p = float64(x.Count) * 150
 	case *plant.Plant:
-		p = x.Count * price(1000, 500)
+		p = float64(x.Count) * x.Price()
 	default:
-		// This type of item cannot be sold at the market.
-		// Reroll.
 		return randomProduct()
 	}
-	return &Product{p, i}
+	q := int(math.Abs(p + 0.16*p*rand.NormFloat64()))
+	return &Product{q, i}
 }
 
 // Add adds a new product to the market.
