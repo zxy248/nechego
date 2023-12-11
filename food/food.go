@@ -43,6 +43,7 @@ const (
 	Popcorn
 	Cookie
 	Coffee
+	Dumpling
 )
 
 var beverages = map[Type]bool{
@@ -52,6 +53,7 @@ var beverages = map[Type]bool{
 	Jaguar:         true,
 	Beer:           true,
 	Juice:          true,
+	Coffee:         true,
 }
 
 func (t Type) Emoji() string      { return data[t].emoji }
@@ -101,6 +103,7 @@ var data = map[Type]struct {
 	Popcorn:            {"🍿", 0.10, "Попкорн", 100},
 	Cookie:             {"🍪", 0.10, "Печенье", 50},
 	Coffee:             {"☕️", 0.15, "MacCoffee", 100},
+	Dumpling:           {"🥟", 0.20, "Чебупели", 150},
 }
 
 type Food struct {
