@@ -31,6 +31,7 @@ const (
 	TypeMeat
 	TypeDetails
 	TypePlant
+	TypeLetter
 )
 
 // TypeOf returns a Type corresponding to the actual type of x.
@@ -62,6 +63,8 @@ func TypeOf(x any) Type {
 		return TypeDetails
 	case *plant.Plant:
 		return TypePlant
+	case *token.Letter:
+		return TypeLetter
 	default:
 		return TypeUnknown
 	}
@@ -97,6 +100,8 @@ func ValueOf(t Type) any {
 		return &details.Details{}
 	case TypePlant:
 		return &plant.Plant{}
+	case TypeLetter:
+		return &token.Letter{}
 	default:
 		panic(fmt.Sprintf("unexpected item type %v", t))
 	}

@@ -209,6 +209,8 @@ func (a *app) actionsServices() []Service {
 		&actions.Records{Universe: a.universe},
 		&actions.Friends{Universe: a.universe},
 		&actions.Transfer{Universe: a.universe},
+		&actions.Write{Universe: a.universe},
+		&actions.Read{Universe: a.universe},
 	}
 }
 
