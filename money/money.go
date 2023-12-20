@@ -61,3 +61,12 @@ func (w *Wallet) Spend(n int) bool {
 func (w Wallet) String() string {
 	return fmt.Sprintf("💰 Кошелёк (%d %s)", w.Money, Currency)
 }
+
+type Transfer struct {
+	Money   int
+	Comment string
+}
+
+func (t Transfer) String() string {
+	return fmt.Sprintf("💳 Перевод (%d %s, %s)", t.Money, Currency, t.Comment)
+}

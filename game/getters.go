@@ -6,13 +6,6 @@ import (
 	"nechego/token"
 )
 
-// Spender is implemented by any value that can be partially spended.
-type Spender interface {
-	// Spend must return true on success, or false if the value
-	// cannot be spended by n.
-	Spend(n int) bool
-}
-
 func GetItem[T any](u *User) (x T, ok bool) {
 	for _, x := range u.Inventory.List() {
 		if x, ok := x.Value.(T); ok {

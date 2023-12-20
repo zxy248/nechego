@@ -37,7 +37,7 @@ const (
 	CannotFriend      = "👤 С этим пользователем нельзя подружиться."
 	NonFriendTransfer = "📦 Вещи можно передавать только тем, кто с вами дружит."
 	ItemNotFound      = "🔖 Предмет не найден."
-	ChooseLetter      = "✉️ Выберите письмо."
+	ChooseBox         = "📦 Выберите посылку или письмо."
 )
 
 func Link(id int64, text string) string {
@@ -392,18 +392,19 @@ func profileTable(entries []string) string {
 	return strings.Join(lines, "\n")
 }
 
-func FundsCollected(who string, fs []*game.Fund) string {
-	if len(fs) == 0 {
-		return "🧾 Средств пока нет."
+func Mail(who string, is []*item.Item) string {
+	if len(is) == 0 {
+		return "📪️ Почты нет."
 	}
 	c := NewConnector("\n")
-	c.Add(fmt.Sprintf("<b>🧾 %s получает средства:</b>", Name(who)))
-	for i, f := range fs {
-		if rest := len(fs) - i; i >= 15 && rest >= 5 {
-			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> шт.</i>", rest))
+	c.Add(fmt.Sprintf("<b> 📬 %s получает почту:</b>", Name(who)))
+	for i, x := range is {
+		rem := len(is) - i
+		if i >= 15 && rem >= 5 {
+			c.Add(fmt.Sprintf("<i>...и ещё <code>%d</code> шт.</i>", rem))
 			break
 		}
-		c.Add(fmt.Sprintf("<code> • </code>%s <i>%s</i>", Item(f.Item), f.Source))
+		c.Add(fmt.Sprintf("<code> • </code>%s", Item(x)))
 	}
 	return c.String()
 }
@@ -478,14 +479,14 @@ func CannotTransfer(i *item.Item) string {
 
 func Transfered(from, to string, is []*item.Item) string {
 	if len(is) == 0 {
-		return "📦 Ничего не передано."
+		return "📦 Ничего не отправлено."
 	}
 	c := NewConnector(", ")
 	for _, i := range is {
 		c.Add(Item(i))
 	}
-	const help = "<i>Используйте команду <code>!получить</code>, чтобы взять предметы.</i>"
-	const format = "📦 %s передаёт %s %s."
+	const help = "<i>Используйте команду <code>!почта</code>, чтобы получить посылку.</i>"
+	const format = "📦 %s отправляет %s %s."
 	s := fmt.Sprintf(format, Name(from), Name(to), c.String())
 	return s + "\n\n" + help
 }

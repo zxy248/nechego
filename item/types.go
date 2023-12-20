@@ -23,6 +23,7 @@ const (
 	TypePair
 	TypeCash
 	TypeWallet
+	TypeTransfer
 	TypeFishingRod
 	TypeFish
 	TypePet
@@ -32,6 +33,7 @@ const (
 	TypeDetails
 	TypePlant
 	TypeLetter
+	TypeBox
 )
 
 // TypeOf returns a Type corresponding to the actual type of x.
@@ -47,6 +49,8 @@ func TypeOf(x any) Type {
 		return TypeCash
 	case *money.Wallet:
 		return TypeWallet
+	case *money.Transfer:
+		return TypeTransfer
 	case *fishing.Rod:
 		return TypeFishingRod
 	case *fishing.Fish:
@@ -65,6 +69,8 @@ func TypeOf(x any) Type {
 		return TypePlant
 	case *token.Letter:
 		return TypeLetter
+	case *Box:
+		return TypeBox
 	default:
 		return TypeUnknown
 	}
@@ -84,6 +90,8 @@ func ValueOf(t Type) any {
 		return &money.Cash{}
 	case TypeWallet:
 		return &money.Wallet{}
+	case TypeTransfer:
+		return &money.Transfer{}
 	case TypeFishingRod:
 		return &fishing.Rod{}
 	case TypeFish:
@@ -102,6 +110,8 @@ func ValueOf(t Type) any {
 		return &plant.Plant{}
 	case TypeLetter:
 		return &token.Letter{}
+	case TypeBox:
+		return &Box{}
 	default:
 		panic(fmt.Sprintf("unexpected item type %v", t))
 	}

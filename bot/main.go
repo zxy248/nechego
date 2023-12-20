@@ -124,9 +124,9 @@ func (a *app) services() []Service {
 	for _, g := range groups {
 		for _, s := range g.services {
 			var w []Wrapper
-			w = append(w, global...)
 			w = append(w, g.middleware...)
-			h := &Wrapped{s, w}
+			w = append(w, global...)
+			h := Wrap(s, w)
 			handlers = append(handlers, h)
 		}
 	}
@@ -136,20 +136,19 @@ func (a *app) services() []Service {
 func (a *app) globalMiddleware() []Wrapper {
 	return []Wrapper{
 		&middleware.Recover{},
-		&middleware.RequireSupergroup{},
-		&middleware.IgnoreMessageForwarded{},
-		&middleware.LogMessage{Wait: 5 * time.Second},
-		&middleware.Throttle{Duration: 800 * time.Millisecond},
+		&middleware.RandomPhoto{Avatars: a.avatars, Prob: 1. / 200},
+		&middleware.IncrementCounters{Universe: a.universe},
+		&middleware.CacheName{Universe: a.universe},
 		&middleware.IgnoreWorldInactive{
 			Universe: a.universe,
 			Immune: func(c tele.Context) bool {
 				var h fun.TurnOn
 				return h.Match(c)
-			},
-		},
-		&middleware.CacheName{Universe: a.universe},
-		&middleware.IncrementCounters{Universe: a.universe},
-		&middleware.RandomPhoto{Avatars: a.avatars, Prob: 1. / 200},
+			}},
+		&middleware.Throttle{Duration: 800 * time.Millisecond},
+		&middleware.LogMessage{Wait: 5 * time.Second},
+		&middleware.IgnoreMessageForwarded{},
+		&middleware.RequireSupergroup{},
 	}
 }
 
@@ -164,7 +163,8 @@ func (a *app) dailyServices() []Service {
 func (a *app) economyServices() []Service {
 	return []Service{
 		&economy.Inventory{Universe: a.universe},
-		&economy.Funds{Universe: a.universe},
+		&economy.Send{Universe: a.universe},
+		&economy.Mail{Universe: a.universe},
 		&economy.Sort{Universe: a.universe},
 		&economy.Drop{Universe: a.universe},
 		&economy.Pick{Universe: a.universe},
@@ -208,9 +208,8 @@ func (a *app) actionsServices() []Service {
 		&actions.EatQuick{Universe: a.universe},
 		&actions.Records{Universe: a.universe},
 		&actions.Friends{Universe: a.universe},
-		&actions.Transfer{Universe: a.universe},
 		&actions.Write{Universe: a.universe},
-		&actions.Read{Universe: a.universe},
+		&actions.Open{Universe: a.universe},
 	}
 }
 

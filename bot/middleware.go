@@ -8,13 +8,17 @@ type Wrapper interface {
 
 type Wrapped struct {
 	Service
-	Middleware []Wrapper
+	handler func(c tele.Context) error
 }
 
-func (w *Wrapped) Handle(c tele.Context) error {
-	h := w.Service.Handle
-	for i := len(w.Middleware) - 1; i >= 0; i-- {
-		h = w.Middleware[i].Wrap(h)
+func (h *Wrapped) Handle(c tele.Context) error {
+	return h.handler(c)
+}
+
+func Wrap(s Service, ws []Wrapper) Service {
+	r := &Wrapped{s, s.Handle}
+	for _, w := range ws {
+		r.handler = w.Wrap(r.handler)
 	}
-	return h(c)
+	return r
 }

@@ -16,8 +16,8 @@ type User struct {
 	Messages         int        // Number of messages sent.
 	Status           string     // Status displayed in the profile.
 	Inventory        *item.Set  // Personal items.
+	Mail             *item.Set  // Incoming mail.
 	LastMessage      time.Time  // When was the last message sent?
-	Funds            Funds      // Collectable items.
 	Farm             *farm.Farm // The source of vegetables.
 	Friends          Friends    // The list of friends' TUIDs.
 	SlotBet          int        // The bet for slots.
@@ -32,21 +32,10 @@ func NewUser(id int64) *User {
 		ID:        id,
 		Rating:    1500,
 		Inventory: item.NewSet(),
-		Funds:     Funds{},
+		Mail:      item.NewSet(),
 		Farm:      farm.New(2, 3),
 		Friends:   Friends{},
 	}
 	u.Balance().Add(5000)
 	return u
-}
-
-// Transfer moves the item x from the sender's inventory to the
-// receiver's funds.
-func (u *User) Transfer(to *User, x *item.Item) bool {
-	if !x.Transferable {
-		return false
-	}
-	u.Inventory.Remove(x)
-	to.Funds.Add("обмен", x)
-	return true
 }

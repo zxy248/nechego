@@ -2,8 +2,8 @@ package main
 
 import (
 	"nechego/game"
+	"nechego/handlers"
 	"nechego/item"
-	"nechego/money"
 	"time"
 )
 
@@ -56,8 +56,7 @@ func payTopElo(w *game.World, n int) {
 		return
 	}
 	u := w.TopUser(game.ByElo)
-	x := item.New(&money.Cash{Money: n})
-	u.Funds.Add("налог", x)
+	handlers.Pay(u, n, "налог")
 }
 
 func payMarketEmployee(w *game.World, n int) {
@@ -65,7 +64,6 @@ func payMarketEmployee(w *game.World, n int) {
 		return
 	}
 	if id, ok := w.Market.Shift.Employee(); ok {
-		x := item.New(&money.Cash{Money: n})
-		w.User(id).Funds.Add("магазин", x)
+		handlers.Pay(w.User(id), n, "работа")
 	}
 }

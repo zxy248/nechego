@@ -1,6 +1,10 @@
 package handlers
 
-import "nechego/item"
+import (
+	"nechego/game"
+	"nechego/item"
+	"nechego/money"
+)
 
 const InventoryCapacity = 20
 
@@ -30,4 +34,16 @@ func MoveItems(dst, src *item.Set, items []*item.Item) (moved []*item.Item, bad 
 		moved = append(moved, x)
 	}
 	return
+}
+
+func Pay(u *game.User, n int, tag string) {
+	for _, i := range u.Mail.List() {
+		t, ok := i.Value.(*money.Transfer)
+		if ok && tag == t.Comment {
+			t.Money += n
+			return
+		}
+	}
+	t := &money.Transfer{Money: n, Comment: tag}
+	u.Mail.Add(item.New(t))
 }

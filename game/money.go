@@ -53,6 +53,7 @@ func (b *Balance) Spend(n int) bool {
 		if x.Type != item.TypeCash && x.Type != item.TypeWallet {
 			continue
 		}
+		type Spender interface{ Spend(int) bool }
 		if v, ok := x.Value.(Spender); ok && v.Spend(n) {
 			return true
 		}
