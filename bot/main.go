@@ -83,7 +83,6 @@ func setup() (*app, error) {
 		bot: bot,
 		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
 			refreshMarket(w)
-			resetEnergy(w)
 			addService(w, refreshMarket, time.Minute)
 			addService(w, restoreEnergy, time.Minute)
 			w.Market.OnBuy = onBuyHandler(w)

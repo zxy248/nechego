@@ -16,7 +16,7 @@ type Write struct {
 	Universe *game.Universe
 }
 
-var writeRe = handlers.Regexp("(?s)^!написать (.+)")
+var writeRe = handlers.Regexp("(?s)^!написать (письмо )?(.+)")
 
 func (h *Write) Match(c tele.Context) bool {
 	return writeRe.MatchString(c.Text())
@@ -41,5 +41,5 @@ func (h *Write) Handle(c tele.Context) error {
 }
 
 func letterText(s string) string {
-	return writeRe.FindStringSubmatch(s)[1]
+	return writeRe.FindStringSubmatch(s)[2]
 }
