@@ -18,7 +18,7 @@ type Open struct {
 	Universe *game.Universe
 }
 
-var openRe = handlers.Regexp("^!(прочитать|прочесть|открыть) ([0-9]+)")
+var openRe = handlers.Regexp("^!(прочитать|прочесть|открыть|распаковать) ([0-9]+)")
 
 func (h *Open) Match(c tele.Context) bool {
 	return openRe.MatchString(c.Text())
