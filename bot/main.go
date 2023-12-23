@@ -248,6 +248,7 @@ func (a *app) funServices() []Service {
 		&fun.TurnOff{Universe: a.universe},
 		&fun.Reputation{Universe: a.universe},
 		&fun.UpdateReputation{Universe: a.universe},
+		&fun.NewYear{},
 	}
 }
 
