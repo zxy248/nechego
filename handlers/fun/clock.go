@@ -10,7 +10,7 @@ import (
 
 type Clock struct{}
 
-var clockRe = handlers.Regexp("^!время до ([0-9:]+)")
+var clockRe = handlers.NewRegexp("^!время до ([0-9:]+)")
 
 func (*Clock) Match(c tele.Context) bool {
 	_, ok := parseClock(c.Text())

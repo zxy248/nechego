@@ -10,7 +10,7 @@ type Casper struct {
 	Path string
 }
 
-var casperRe = handlers.Regexp("^!касп[ие]р")
+var casperRe = handlers.NewRegexp("^!касп[ие]р")
 
 func (h *Casper) Match(c tele.Context) bool {
 	return casperRe.MatchString(c.Text())

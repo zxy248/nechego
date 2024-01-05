@@ -3,22 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
-	"nechego/avatar"
 	"nechego/bot/middleware"
 	"nechego/danbooru"
 	"nechego/game"
 	"nechego/handlers"
-	"nechego/handlers/actions"
-	"nechego/handlers/casino"
 	"nechego/handlers/command"
 	"nechego/handlers/daily"
-	"nechego/handlers/economy"
-	"nechego/handlers/farm"
 	"nechego/handlers/fun"
-	"nechego/handlers/market"
 	"nechego/handlers/pictures"
-	"nechego/handlers/profile"
-	"nechego/handlers/top"
 	"os"
 	"path/filepath"
 	"time"
@@ -26,24 +18,27 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-const (
-	universeDirectory = "universe"
-	avatarDirectory   = "avatar"
-)
-
 var (
-	botToken        = getenv("NECHEGO_TOKEN")
-	assetsDirectory = getenv("NECHEGO_ASSETS")
+	botToken         = getenv("NECHEGO_TOKEN")
+	assetsDirectory  = getenv("NECHEGO_ASSETS")
+	storageDirectory = getenv("NECHEGO_STORAGE")
 )
 
 func main() {
-	app, err := setup()
+	bot, err := tele.NewBot(tele.Settings{
+		Token:  botToken,
+		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
+	})
 	if err != nil {
-		log.Fatal("cannot setup: ", err)
+		log.Fatal("cannot build bot: ", err)
+	}
+	app := &app{
+		universe: game.NewUniverse(storageDirectory),
+		danbooru: danbooru.New(danbooru.URL, 5*time.Second, 3),
 	}
 	srv := &Server{
-		Bot:      app.bot,
-		Handlers: app.services(),
+		Bot:      bot,
+		Handlers: app.handlers(),
 	}
 	srv.Run()
 	if err := app.shutdown(); err != nil {
@@ -65,173 +60,58 @@ func getenv(s string) string {
 }
 
 type app struct {
-	bot      *tele.Bot
 	universe *game.Universe
-	avatars  *avatar.Storage
 	danbooru *danbooru.Danbooru
-}
-
-func setup() (*app, error) {
-	bot, err := tele.NewBot(tele.Settings{
-		Token:  botToken,
-		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &app{
-		bot: bot,
-		universe: game.NewUniverse(universeDirectory, func(w *game.World) {
-			refreshMarket(w)
-			addService(w, refreshMarket, time.Minute)
-			addService(w, restoreEnergy, time.Minute)
-			w.Market.OnBuy = onBuyHandler(w)
-			w.Market.OnSell = onSellHandler(w)
-		}),
-		avatars:  &avatar.Storage{Dir: avatarDirectory},
-		danbooru: danbooru.New(danbooru.URL, 5*time.Second, 3),
-	}, nil
 }
 
 func (a *app) shutdown() error {
 	return a.universe.SaveAll()
 }
 
-func (a *app) services() []Service {
-	global := a.globalMiddleware()
-	spam := []Wrapper{&middleware.AutoDelete{After: 15 * time.Minute}}
+func (a *app) handlers() []Handler {
+	var hs []Handler
+	hs = append(hs, a.dailyHandlers()...)
+	hs = append(hs, a.funHandlers()...)
+	hs = append(hs, a.pictureHandlers()...)
+	hs = append(hs, a.commandHandlers()...)
+	hs = append(hs, a.otherHandlers()...)
 
-	groups := []struct {
-		services   []Service
-		middleware []Wrapper
-	}{
-		{a.dailyServices(), nil},
-		{a.economyServices(), spam},
-		{a.farmServices(), spam},
-		{a.marketServices(), spam},
-		{a.actionsServices(), spam},
-		{a.topServices(), spam},
-		{a.profileServices(), spam},
-		{a.funServices(), nil},
-		{a.pictureServices(), nil},
-		{a.casinoServices(), spam},
-		{a.commandServices(), nil},
-		{a.otherServices(), nil},
+	mw := a.middleware()
+	var r []Handler
+	for _, h := range hs {
+		r = append(r, Wrap(h, mw))
 	}
-
-	var handlers []Service
-	for _, g := range groups {
-		for _, s := range g.services {
-			var w []Wrapper
-			w = append(w, g.middleware...)
-			w = append(w, global...)
-			h := Wrap(s, w)
-			handlers = append(handlers, h)
-		}
-	}
-	return handlers
+	return r
 }
 
-func (a *app) globalMiddleware() []Wrapper {
+func (a *app) middleware() []Wrapper {
 	return []Wrapper{
 		&middleware.Recover{},
-		&middleware.RandomPhoto{Avatars: a.avatars, Prob: 1. / 200},
-		&middleware.IncrementCounters{Universe: a.universe},
-		&middleware.CacheName{Universe: a.universe},
-		&middleware.IgnoreWorldInactive{
-			Universe: a.universe,
-			Immune: func(c tele.Context) bool {
-				var h fun.TurnOn
-				return h.Match(c)
-			}},
-		&middleware.Throttle{Duration: 800 * time.Millisecond},
+		&middleware.RandomPhoto{Prob: 0.005},
+		&middleware.IgnoreWorldInactive{Universe: a.universe, Immune: turnOnMatch},
+		&middleware.Throttle{Duration: 400 * time.Millisecond},
 		&middleware.LogMessage{Wait: 5 * time.Second},
 		&middleware.IgnoreMessageForwarded{},
 		&middleware.RequireSupergroup{},
+		&middleware.AddUser{Universe: a.universe},
 	}
 }
 
-func (a *app) dailyServices() []Service {
-	return []Service{
+func turnOnMatch(c tele.Context) bool {
+	var h fun.TurnOn
+	return h.Match(c)
+}
+
+func (a *app) dailyHandlers() []Handler {
+	return []Handler{
 		&daily.Eblan{Universe: a.universe},
 		&daily.Admin{Universe: a.universe},
 		&daily.Pair{Universe: a.universe},
 	}
 }
 
-func (a *app) economyServices() []Service {
-	return []Service{
-		&economy.Inventory{Universe: a.universe},
-		&economy.Send{Universe: a.universe},
-		&economy.Mail{Universe: a.universe},
-		&economy.Sort{Universe: a.universe},
-		&economy.Drop{Universe: a.universe},
-		&economy.Pick{Universe: a.universe},
-		&economy.Floor{Universe: a.universe},
-		&economy.Stack{Universe: a.universe},
-		&economy.Split{Universe: a.universe},
-		&economy.Cashout{Universe: a.universe},
-		&economy.Capital{Universe: a.universe},
-		&economy.Balance{Universe: a.universe},
-	}
-}
-
-func (a *app) farmServices() []Service {
-	return []Service{
-		&farm.Farm{Universe: a.universe},
-		&farm.Plant{Universe: a.universe},
-		&farm.Harvest{Universe: a.universe},
-		&farm.Upgrade{Universe: a.universe},
-		&farm.Name{Universe: a.universe},
-	}
-}
-
-func (a *app) marketServices() []Service {
-	return []Service{
-		&market.Market{Universe: a.universe},
-		&market.PriceList{Universe: a.universe},
-		&market.Buy{Universe: a.universe},
-		&market.Sell{Universe: a.universe},
-		&market.SellQuick{Universe: a.universe},
-		&market.Name{Universe: a.universe},
-		&market.Job{Universe: a.universe},
-	}
-}
-
-func (a *app) actionsServices() []Service {
-	return []Service{
-		&actions.Fish{Universe: a.universe},
-		&actions.Craft{Universe: a.universe},
-		&actions.Fight{Universe: a.universe},
-		&actions.Eat{Universe: a.universe},
-		&actions.EatQuick{Universe: a.universe},
-		&actions.Records{Universe: a.universe},
-		&actions.Friends{Universe: a.universe},
-		&actions.Write{Universe: a.universe},
-		&actions.Open{Universe: a.universe},
-	}
-}
-
-func (a *app) topServices() []Service {
-	return []Service{
-		top.Rating(a.universe),
-		top.Rich(a.universe),
-		top.Strength(a.universe),
-	}
-}
-
-func (a *app) profileServices() []Service {
-	return []Service{
-		&profile.Status{Universe: a.universe, MaxLength: 140},
-		&profile.Profile{Universe: a.universe, Avatars: a.avatars},
-		&profile.Avatar{Avatars: a.avatars, MaxWidth: 1500, MaxHeight: 1500},
-		&profile.Energy{Universe: a.universe},
-		&profile.NamePet{Universe: a.universe},
-	}
-}
-
-func (a *app) funServices() []Service {
-	return []Service{
+func (a *app) funHandlers() []Handler {
+	return []Handler{
 		&fun.Game{},
 		&fun.Infa{},
 		&fun.Choose{},
@@ -246,14 +126,12 @@ func (a *app) funServices() []Service {
 		&fun.Date{},
 		&fun.TurnOn{Universe: a.universe},
 		&fun.TurnOff{Universe: a.universe},
-		&fun.Reputation{Universe: a.universe},
-		&fun.UpdateReputation{Universe: a.universe},
 		&fun.NewYear{},
 	}
 }
 
-func (a *app) pictureServices() []Service {
-	return []Service{
+func (a *app) pictureHandlers() []Handler {
+	return []Handler{
 		&pictures.Pic{Path: assetPath("pic")},
 		&pictures.Basili{Path: assetPath("basili")},
 		&pictures.Casper{Path: assetPath("casper")},
@@ -275,26 +153,16 @@ func (a *app) pictureServices() []Service {
 	}
 }
 
-func (a *app) casinoServices() []Service {
-	return []Service{
-		&casino.DiceRoll{Universe: a.universe},
-		&casino.SlotRoll{Universe: a.universe},
-		&casino.Dice{Universe: a.universe, MinBet: 100},
-		&casino.Slot{Universe: a.universe, MinBet: 100},
-	}
-}
-
-func (a *app) commandServices() []Service {
-	return []Service{
+func (a *app) commandHandlers() []Handler {
+	return []Handler{
 		&command.Add{Universe: a.universe},
 		&command.Remove{Universe: a.universe},
 		&command.Use{Universe: a.universe},
 	}
 }
 
-func (a *app) otherServices() []Service {
-	return []Service{
-		&handlers.Help{},
+func (a *app) otherHandlers() []Handler {
+	return []Handler{
 		&handlers.Pass{},
 	}
 }

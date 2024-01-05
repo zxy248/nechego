@@ -8,7 +8,8 @@ import (
 )
 
 type Throttle struct {
-	Duration    time.Duration
+	Duration time.Duration
+
 	lastMessage map[int64]time.Time
 	mu          sync.Mutex
 	once        sync.Once
@@ -20,14 +21,15 @@ func (m *Throttle) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	})
 	return func(c tele.Context) error {
 		id := c.Sender().ID
+
 		m.mu.Lock()
-		if time.Since(m.lastMessage[id]) < m.Duration {
-			m.mu.Unlock()
-			return nil
-		}
+		d := time.Since(m.lastMessage[id])
 		m.lastMessage[id] = time.Now()
 		m.mu.Unlock()
 
+		if d < m.Duration {
+			return nil
+		}
 		return next(c)
 	}
 }

@@ -12,17 +12,14 @@ import (
 type Universe struct {
 	worlds map[int64]*World // Loaded worlds indexed by group IDs.
 	dir    string           // Persistent storage directory.
-	init   func(*World)     // World initialization function.
-
-	mu sync.Mutex
+	mu     sync.Mutex
 }
 
 // NewUniverse returns a new Universe.
-func NewUniverse(dir string, init func(*World)) *Universe {
+func NewUniverse(dir string) *Universe {
 	return &Universe{
 		dir:    dir,
 		worlds: map[int64]*World{},
-		init:   init,
 	}
 }
 
@@ -50,7 +47,6 @@ func (u *Universe) World(id int64) (*World, error) {
 		} else if err != nil {
 			return nil, err
 		}
-		u.init(w)
 		u.worlds[id] = w
 	}
 	return w, nil

@@ -1,8 +1,8 @@
 package fun
 
 import (
+	"fmt"
 	"html"
-	"nechego/format"
 	"nechego/handlers"
 	tu "nechego/teleutil"
 	"unicode/utf8"
@@ -12,28 +12,28 @@ import (
 
 type Name struct{}
 
-var nameRe = handlers.Regexp("^!имя (.+)")
+var nameRe = handlers.NewRegexp("^!имя (.+)")
 
 func (h *Name) Match(c tele.Context) bool {
 	return nameRe.MatchString(c.Text())
 }
 
 func (h *Name) Handle(c tele.Context) error {
-	u, ok := tu.Reply(c)
-	if !ok {
+	u := tu.Reply(c)
+	if u == nil {
 		u = c.Sender()
 	}
 	name := parseName(c.Text())
 	if !validNameLength(name) {
-		return c.Send(format.LongName(maxNameLength))
+		return c.Send(nameLengthExceeded(maxNameLength))
 	}
 	if err := promoteUser(c, u); err != nil {
 		return err
 	}
 	if err := setName(c, u, name); err != nil {
-		return c.Send(format.CannotSetName)
+		return c.Send(setNameFail())
 	}
-	return c.Send(format.NameSet(name), tele.ModeHTML)
+	return c.Send(setNameSuccess(name), tele.ModeHTML)
 }
 
 func parseName(s string) string {
@@ -54,6 +54,18 @@ func setName(c tele.Context, u *tele.User, name string) error {
 	return c.Bot().SetAdminTitle(c.Chat(), u, name)
 }
 
+func setNameSuccess(name string) string {
+	return fmt.Sprintf("Имя <b>%s</b> установлено ✅", name)
+}
+
+func setNameFail() string {
+	return "⚠️ Не удалось установить имя."
+}
+
+func nameLengthExceeded(max int) string {
+	return fmt.Sprintf("⚠️ Максимальная длина имени %d символов.", max)
+}
+
 type CheckName struct{}
 
 func (h *CheckName) Match(c tele.Context) bool {
@@ -62,5 +74,6 @@ func (h *CheckName) Match(c tele.Context) bool {
 
 func (h *CheckName) Handle(c tele.Context) error {
 	l := tu.Link(c, c.Sender())
-	return c.Send(format.YourName(l), tele.ModeHTML)
+	s := fmt.Sprintf("Ваше имя: <b>%s</b> 🔖", l)
+	return c.Send(s, tele.ModeHTML)
 }

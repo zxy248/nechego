@@ -17,7 +17,7 @@ type Hello struct {
 	mu sync.Mutex
 }
 
-var helloRe = handlers.Regexp("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
+var helloRe = handlers.NewRegexp("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
 
 func (h *Hello) Match(c tele.Context) bool {
 	return helloRe.MatchString(c.Text())

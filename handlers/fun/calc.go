@@ -11,7 +11,7 @@ import (
 
 type Calc struct{}
 
-var calcRe = handlers.Regexp("^!(калькул|вычисл)[а-я]* (.+)")
+var calcRe = handlers.NewRegexp("^!(калькул|вычисл)[а-я]* (.+)")
 
 func (h *Calc) Match(c tele.Context) bool {
 	return calcRe.MatchString(c.Text())

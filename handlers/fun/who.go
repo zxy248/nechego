@@ -13,18 +13,18 @@ type Who struct {
 	Universe *game.Universe
 }
 
-var whoRe = handlers.Regexp("^!кто(.*)")
+var whoRe = handlers.NewRegexp("^!кто(.*)")
 
 func (h *Who) Match(c tele.Context) bool {
 	return whoRe.MatchString(c.Text())
 }
 
 func (h *Who) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	w := parseWho(c.Text())
-	l := tu.Link(c, world.RandomUserID())
+	l := tu.Link(c, world.RandomUser())
 	s := l + w
 	return c.Send(s, tele.ModeHTML)
 }

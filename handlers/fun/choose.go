@@ -10,7 +10,7 @@ import (
 
 type Choose struct{}
 
-var chooseRe = handlers.Regexp("^!(выбор|выбрать) (.+)")
+var chooseRe = handlers.NewRegexp("^!(выбор|выбрать) (.+)")
 
 func (h *Choose) Match(c tele.Context) bool {
 	return chooseRe.MatchString(c.Text())

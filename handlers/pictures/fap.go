@@ -12,7 +12,7 @@ type Fap struct {
 	API *danbooru.Danbooru
 }
 
-var fapRe = handlers.Regexp("^!(др[ао]ч|фап|эро|порн)")
+var fapRe = handlers.NewRegexp("^!(др[ао]ч|фап|эро|порн)")
 
 func (h *Fap) Match(c tele.Context) bool {
 	return fapRe.MatchString(c.Text())

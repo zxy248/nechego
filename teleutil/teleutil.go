@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"html"
 	"nechego/game"
-	"regexp"
 	"strings"
 
 	tele "gopkg.in/telebot.v3"
@@ -27,21 +26,11 @@ func Link(c tele.Context, who any) string {
 		m = Member(c, x)
 	case int64:
 		m = Member(c, tele.ChatID(x))
-	case *game.User:
-		m = Member(c, tele.ChatID(x.ID))
 	default:
 		panic(fmt.Sprintf("unexpected type %T", x))
 	}
 	const format = `<a href="tg://user?id=%d">%s</a>`
 	return fmt.Sprintf(format, m.User.ID, html.EscapeString(Name(m)))
-}
-
-func LinkSender(c tele.Context) string {
-	return Link(c, c.Sender())
-}
-
-func Args(c tele.Context, re *regexp.Regexp) []string {
-	return re.FindStringSubmatch(c.Text())
 }
 
 func Member(c tele.Context, r tele.Recipient) *tele.ChatMember {
@@ -69,38 +58,24 @@ func Left(m *tele.ChatMember) bool {
 	return m.Role == tele.Kicked || m.Role == tele.Left
 }
 
-// Reply returns the sender of the replied message.
-// Returns (nil, false) is there is no reply or the reply's sender is a bot.
-func Reply(c tele.Context) (u *tele.User, ok bool) {
-	if !c.Message().IsReply() || c.Message().ReplyTo.Sender.IsBot {
-		return nil, false
+func Reply(c tele.Context) *tele.User {
+	if c.Message().IsReply() && !c.Message().ReplyTo.Sender.IsBot {
+		return c.Message().ReplyTo.Sender
 	}
-	return c.Message().ReplyTo.Sender, true
+	return nil
 }
 
-func Lock(c tele.Context, u *game.Universe) (*game.World, *game.User) {
+func Lock(c tele.Context, u *game.Universe) *game.World {
 	world, err := u.World(c.Chat().ID)
 	if err != nil {
 		panic(fmt.Sprintf("cannot get world: %s", err))
 	}
 	world.Lock()
-	return world, CurrentUser(c, world)
+	return world
 }
 
 func MessageForwarded(m *tele.Message) bool {
 	return m.OriginalUnixtime != 0
-}
-
-func CurrentUser(c tele.Context, w *game.World) *game.User {
-	return w.User(c.Sender().ID)
-}
-
-func RepliedUser(c tele.Context, w *game.World) (u *game.User, ok bool) {
-	r, ok := Reply(c)
-	if !ok {
-		return nil, false
-	}
-	return w.User(r.ID), true
 }
 
 func SuperGroup(c tele.Context) bool {

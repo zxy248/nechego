@@ -10,7 +10,7 @@ import (
 
 type Infa struct{}
 
-var infaRe = handlers.Regexp("^!(инфа|вероятность)(.*)")
+var infaRe = handlers.NewRegexp("^!(инфа|вероятность)(.*)")
 
 func (h *Infa) Match(c tele.Context) bool {
 	return infaRe.MatchString(c.Text())

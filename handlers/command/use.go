@@ -12,7 +12,7 @@ type Use struct {
 }
 
 func (h *Use) Match(c tele.Context) bool {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	d := sanitizeDefinition(c.Text())
@@ -21,7 +21,7 @@ func (h *Use) Match(c tele.Context) bool {
 }
 
 func (h *Use) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	d := sanitizeDefinition(c.Text())

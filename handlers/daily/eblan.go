@@ -13,20 +13,17 @@ type Eblan struct {
 	Universe *game.Universe
 }
 
-var eblanRe = handlers.Regexp("^![ие][б6п]?л[ап]н[а-я]*")
+var eblanRe = handlers.NewRegexp("^![ие][б6п]?л[ап]н[а-я]*")
 
 func (h *Eblan) Match(c tele.Context) bool {
 	return eblanRe.MatchString(c.Text())
 }
 
 func (h *Eblan) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	u, ok := world.DailyEblan()
-	if !ok {
-		return c.Send("😸")
-	}
+	u := world.DailyEblan()
 	l := tu.Link(c, u)
 	s := fmt.Sprintf("<b>Еблан дня</b> — %s 😸", l)
 	return c.Send(s, tele.ModeHTML)

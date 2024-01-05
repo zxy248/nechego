@@ -25,7 +25,7 @@ type IgnoreWorldInactive struct {
 
 func (m *IgnoreWorldInactive) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		w, _ := tu.Lock(c, m.Universe)
+		w := tu.Lock(c, m.Universe)
 		off := w.Inactive
 		w.Unlock()
 

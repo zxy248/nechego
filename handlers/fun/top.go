@@ -1,8 +1,8 @@
 package fun
 
 import (
+	"fmt"
 	"math/rand"
-	"nechego/format"
 	"nechego/game"
 	"nechego/handlers"
 	tu "nechego/teleutil"
@@ -14,32 +14,27 @@ type Top struct {
 	Universe *game.Universe
 }
 
-var topRe = handlers.Regexp("^!топ ?(.*)")
+var topRe = handlers.NewRegexp("^!топ ?(.*)")
 
 func (h *Top) Match(c tele.Context) bool {
 	return topRe.MatchString(c.Text())
 }
 
 func (h *Top) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	title := topTitle(c.Text())
+	name := topName(c.Text())
 	n := 3 + rand.Intn(3)
-	us := randomUsers(world, n)
-	s := format.TopPlain(title, us)
-	return c.Send(s, tele.ModeHTML)
-}
-
-func topTitle(s string) string {
-	return topRe.FindStringSubmatch(s)[1]
-}
-
-func randomUsers(w *game.World, n int) []*game.User {
-	var us []*game.User
-	ids := w.RandomUserIDs(n)
-	for _, id := range ids {
-		us = append(us, w.User(id))
+	list := world.RandomUsers(n)
+	out := fmt.Sprintf("<b>🏆 Топ %s</b>\n", name)
+	for i, id := range list {
+		l := tu.Link(c, id)
+		out += fmt.Sprintf("%d. <b>%s</b>\n", i+1, l)
 	}
-	return us
+	return c.Send(out, tele.ModeHTML)
+}
+
+func topName(s string) string {
+	return topRe.FindStringSubmatch(s)[1]
 }

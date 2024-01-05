@@ -12,14 +12,14 @@ type Remove struct {
 	Universe *game.Universe
 }
 
-var removeRe = handlers.Regexp(removePattern)
+var removeRe = handlers.NewRegexp(removePattern)
 
 func (h *Remove) Match(c tele.Context) bool {
 	return removeRe.MatchString(c.Text())
 }
 
 func (h *Remove) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	m := removeRe.FindStringSubmatch(c.Text())

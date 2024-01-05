@@ -13,14 +13,14 @@ type Add struct {
 	Universe *game.Universe
 }
 
-var addRe = handlers.Regexp(addPattern)
+var addRe = handlers.NewRegexp(addPattern)
 
 func (h *Add) Match(c tele.Context) bool {
 	return addRe.MatchString(c.Text())
 }
 
 func (h *Add) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	m := addRe.FindStringSubmatch(c.Text())

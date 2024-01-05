@@ -9,7 +9,7 @@ import (
 
 type Game struct{}
 
-var gameRe = handlers.Regexp("^!игр")
+var gameRe = handlers.NewRegexp("^!игр")
 
 func (h *Game) Match(c tele.Context) bool {
 	return gameRe.MatchString(c.Text())

@@ -11,7 +11,7 @@ import (
 
 type Weather struct{}
 
-var weatherRe = handlers.Regexp("^!погода (.+)")
+var weatherRe = handlers.NewRegexp("^!погода (.+)")
 
 func (h *Weather) Match(c tele.Context) bool {
 	_, ok := weatherCity(c.Text())

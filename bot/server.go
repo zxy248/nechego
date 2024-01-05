@@ -8,14 +8,14 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-type Service interface {
+type Handler interface {
 	Match(c tele.Context) bool
 	Handle(c tele.Context) error
 }
 
 type Server struct {
 	Bot      *tele.Bot
-	Handlers []Service
+	Handlers []Handler
 }
 
 func (s *Server) Run() {
@@ -30,7 +30,7 @@ func (s *Server) Run() {
 	<-x
 }
 
-func dispatcher(ss []Service) tele.HandlerFunc {
+func dispatcher(ss []Handler) tele.HandlerFunc {
 	return func(c tele.Context) error {
 		for _, s := range ss {
 			if s.Match(c) {

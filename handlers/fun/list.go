@@ -1,8 +1,8 @@
 package fun
 
 import (
+	"fmt"
 	"math/rand"
-	"nechego/format"
 	"nechego/game"
 	"nechego/handlers"
 	tu "nechego/teleutil"
@@ -14,28 +14,27 @@ type List struct {
 	Universe *game.Universe
 }
 
-var listRe = handlers.Regexp("^!список ?(.*)")
+var listRe = handlers.NewRegexp("^!список ?(.*)")
 
 func (h *List) Match(c tele.Context) bool {
 	return listRe.MatchString(c.Text())
 }
 
 func (h *List) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
-	var links []string
+	name := listName(c.Text())
 	n := 3 + rand.Intn(3)
-	ids := world.RandomUserIDs(n)
-	for _, id := range ids {
+	list := world.RandomUsers(n)
+	out := fmt.Sprintf("<b>📝 Список %s</b>\n", name)
+	for _, id := range list {
 		l := tu.Link(c, id)
-		links = append(links, l)
+		out += fmt.Sprintf("• <b>%s</b>\n", l)
 	}
-	title := listTitle(c.Text())
-	s := format.List(title, links)
-	return c.Send(s, tele.ModeHTML)
+	return c.Send(out, tele.ModeHTML)
 }
 
-func listTitle(s string) string {
+func listName(s string) string {
 	return listRe.FindStringSubmatch(s)[1]
 }

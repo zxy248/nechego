@@ -13,14 +13,14 @@ type TurnOn struct {
 	Universe *game.Universe
 }
 
-var turnOnRe = handlers.Regexp("^!(вкл|подкл|подруб)")
+var turnOnRe = handlers.NewRegexp("^!(вкл|подкл|подруб)")
 
 func (h *TurnOn) Match(c tele.Context) bool {
 	return turnOnRe.MatchString(c.Text())
 }
 
 func (h *TurnOn) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	world.Inactive = false
@@ -33,14 +33,14 @@ type TurnOff struct {
 	Universe *game.Universe
 }
 
-var turnOffRe = handlers.Regexp("^!(выкл|откл|отруб)")
+var turnOffRe = handlers.NewRegexp("^!(выкл|откл|отруб)")
 
 func (h *TurnOff) Match(c tele.Context) bool {
 	return turnOffRe.MatchString(c.Text())
 }
 
 func (h *TurnOff) Handle(c tele.Context) error {
-	world, _ := tu.Lock(c, h.Universe)
+	world := tu.Lock(c, h.Universe)
 	defer world.Unlock()
 
 	world.Inactive = true
