@@ -1,10 +1,6 @@
 package main
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
-
 	tele "gopkg.in/telebot.v3"
 )
 
@@ -18,37 +14,26 @@ type Server struct {
 	Handlers []Handler
 }
 
-func (s *Server) Run() {
-	endpoints := []string{tele.OnText, tele.OnPhoto, tele.OnDice}
-	h := dispatcher(s.Handlers)
-	for _, e := range endpoints {
-		s.Bot.Handle(e, h)
+func (s *Server) Start() {
+	eps := []string{tele.OnText, tele.OnPhoto}
+	hf := handleFirstMatch(s.Handlers)
+	for _, ep := range eps {
+		s.Bot.Handle(ep, hf)
 	}
-
-	x := shutdown(s.Bot)
 	s.Bot.Start()
-	<-x
 }
 
-func dispatcher(ss []Handler) tele.HandlerFunc {
+func (s *Server) Stop() {
+	s.Bot.Stop()
+}
+
+func handleFirstMatch(hs []Handler) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		for _, s := range ss {
-			if s.Match(c) {
-				return s.Handle(c)
+		for _, h := range hs {
+			if h.Match(c) {
+				return h.Handle(c)
 			}
 		}
 		return nil
 	}
-}
-
-func shutdown(b *tele.Bot) <-chan struct{} {
-	x := make(chan struct{})
-	go func() {
-		interrupt := make(chan os.Signal, 1)
-		signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
-		<-interrupt
-		b.Stop()
-		x <- struct{}{}
-	}()
-	return x
 }
