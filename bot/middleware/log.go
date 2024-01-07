@@ -9,38 +9,38 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-type LogMessage struct {
-	Wait time.Duration
+type Log struct {
+	Timeout time.Duration
 }
 
-func (m *LogMessage) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
+func (m *Log) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		var prefix string
-		var err error
-
+		summary := contextSummary(c)
+		timeout := time.After(m.Timeout)
 		start := time.Now()
-		select {
-		case err = <-runHandler(c, next):
-			prefix = time.Since(start).String()
-		case <-time.After(m.Wait):
-			prefix = "TOO LONG"
-		}
+		errc := make(chan error, 1)
+		go func() { errc <- next(c) }()
 
-		log.Printf("[%s] %s", prefix, contextSummary(c))
-		return err
+		select {
+		case err := <-errc:
+			d := time.Since(start)
+			log.Printf("%s %s", d, summary)
+			return err
+		case <-timeout:
+			log.Printf("∞ %s", summary)
+			return nil
+		}
 	}
 }
 
-func runHandler(c tele.Context, f tele.HandlerFunc) <-chan error {
-	errc := make(chan error, 1)
-	go func() {
-		errc <- f(c)
-	}()
-	return errc
-}
-
 func contextSummary(c tele.Context) string {
-	return fmt.Sprintf("<%s> %s :: %s\n", c.Chat().Title, userName(c.Sender()), c.Text())
+	title := c.Chat().Title
+	user := userName(c.Sender())
+	text := c.Text()
+	if m := c.Message(); m != nil && m.Sticker != nil {
+		text = m.Sticker.Emoji
+	}
+	return fmt.Sprintf("|%s| %s -> %s\n", title, user, text)
 }
 
 func userName(u *tele.User) string {

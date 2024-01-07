@@ -42,13 +42,13 @@ func (a *App) middleware() []Wrapper {
 	return []Wrapper{
 		&middleware.Recover{},
 		&middleware.RandomPhoto{Prob: 0.005},
-		&middleware.RandomReact{Prob: 0.03},
+		&middleware.RandomReact{Prob: 0.033},
 		&middleware.IgnoreWorldInactive{
 			Universe: a.Universe,
 			Immune:   (&fun.TurnOn{}).Match,
 		},
+		&middleware.Log{Timeout: 10 * time.Second},
 		&middleware.Throttle{Duration: 400 * time.Millisecond},
-		&middleware.LogMessage{Wait: 5 * time.Second},
 		&middleware.IgnoreMessageForwarded{},
 		&middleware.RequireSupergroup{},
 		&middleware.AddUser{Universe: a.Universe},

@@ -13,7 +13,7 @@ type Server struct {
 }
 
 func (s *Server) Start() {
-	eps := []string{tele.OnText, tele.OnPhoto}
+	eps := []string{tele.OnText, tele.OnPhoto, tele.OnSticker}
 	hf := handleFirstMatch(s.Handlers)
 	for _, ep := range eps {
 		s.Bot.Handle(ep, hf)
