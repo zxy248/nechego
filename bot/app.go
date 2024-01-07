@@ -42,6 +42,7 @@ func (a *App) middleware() []Wrapper {
 	return []Wrapper{
 		&middleware.Recover{},
 		&middleware.RandomPhoto{Prob: 0.005},
+		&middleware.RandomReact{Prob: 0.03},
 		&middleware.IgnoreWorldInactive{
 			Universe: a.Universe,
 			Immune:   (&fun.TurnOn{}).Match,
