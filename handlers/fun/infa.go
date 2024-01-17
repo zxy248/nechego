@@ -39,7 +39,14 @@ func formatInfa(s string) string {
 		"Уверяю вас в том, что",
 	}
 	t := templates[rand.Intn(len(templates))]
-	p := rand.Intn(101)
-	suffix := fmt.Sprintf(" с вероятностью %d%%", p)
-	return t + s + suffix
+
+	var p int
+	if rand.Intn(100) == 0 {
+		p = 100
+	} else {
+		d1 := rand.Intn(10)
+		d2 := rand.Intn(10)
+		p = d1*10 + d2
+	}
+	return fmt.Sprint(t, s, " с вероятностью ", p, "%")
 }
