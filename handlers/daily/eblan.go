@@ -2,9 +2,9 @@ package daily
 
 import (
 	"fmt"
-	"nechego/game"
-	"nechego/handlers"
-	tu "nechego/teleutil"
+	"github.com/zxy248/nechego/game"
+	"github.com/zxy248/nechego/handlers"
+	tu "github.com/zxy248/nechego/teleutil"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )

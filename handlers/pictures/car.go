@@ -3,7 +3,7 @@ package pictures
 import (
 	"bytes"
 	"encoding/base64"
-	"nechego/handlers"
+	"github.com/zxy248/nechego/handlers"
 	"regexp"
 
 	tele "gopkg.in/zxy248/telebot.v3"

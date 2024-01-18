@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	tu "nechego/teleutil"
+	tu "github.com/zxy248/nechego/teleutil"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )

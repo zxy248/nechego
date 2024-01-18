@@ -1,4 +1,4 @@
-module nechego
+module github.com/zxy248/nechego
 
 go 1.21
 

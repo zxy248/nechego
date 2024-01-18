@@ -1,8 +1,8 @@
 package fun
 
 import (
-	"nechego/handlers"
-	"nechego/handlers/fun/clock"
+	"github.com/zxy248/nechego/handlers"
+	"github.com/zxy248/nechego/handlers/fun/clock"
 	"time"
 
 	tele "gopkg.in/zxy248/telebot.v3"

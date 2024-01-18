@@ -1,7 +1,7 @@
 package pictures
 
 import (
-	"nechego/handlers"
+	"github.com/zxy248/nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )

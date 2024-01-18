@@ -2,9 +2,9 @@ package fun
 
 import (
 	"fmt"
+	"github.com/zxy248/nechego/handlers"
+	tu "github.com/zxy248/nechego/teleutil"
 	"html"
-	"nechego/handlers"
-	tu "nechego/teleutil"
 	"unicode/utf8"
 
 	tele "gopkg.in/zxy248/telebot.v3"

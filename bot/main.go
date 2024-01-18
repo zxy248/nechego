@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/zxy248/nechego/danbooru"
+	"github.com/zxy248/nechego/game"
 	"log"
-	"nechego/danbooru"
-	"nechego/game"
 	"os"
 	"os/signal"
 	"syscall"

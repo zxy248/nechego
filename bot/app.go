@@ -1,14 +1,14 @@
 package main
 
 import (
-	"nechego/bot/middleware"
-	"nechego/danbooru"
-	"nechego/game"
-	"nechego/handlers"
-	"nechego/handlers/command"
-	"nechego/handlers/daily"
-	"nechego/handlers/fun"
-	"nechego/handlers/pictures"
+	"github.com/zxy248/nechego/bot/middleware"
+	"github.com/zxy248/nechego/danbooru"
+	"github.com/zxy248/nechego/game"
+	"github.com/zxy248/nechego/handlers"
+	"github.com/zxy248/nechego/handlers/command"
+	"github.com/zxy248/nechego/handlers/daily"
+	"github.com/zxy248/nechego/handlers/fun"
+	"github.com/zxy248/nechego/handlers/pictures"
 	"path/filepath"
 	"time"
 )

@@ -2,8 +2,8 @@ package teleutil
 
 import (
 	"fmt"
+	"github.com/zxy248/nechego/game"
 	"html"
-	"nechego/game"
 	"strings"
 
 	tele "gopkg.in/zxy248/telebot.v3"

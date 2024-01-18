@@ -2,8 +2,8 @@ package pictures
 
 import (
 	"encoding/json"
+	"github.com/zxy248/nechego/handlers"
 	"math/rand"
-	"nechego/handlers"
 	"os"
 	"sync"
 

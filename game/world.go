@@ -3,8 +3,8 @@ package game
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/zxy248/nechego/commands"
 	"math/rand"
-	"nechego/commands"
 	"os"
 	"path/filepath"
 	"slices"

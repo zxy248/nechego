@@ -2,8 +2,8 @@ package pictures
 
 import (
 	"bytes"
-	"nechego/danbooru"
-	"nechego/handlers"
+	"github.com/zxy248/nechego/danbooru"
+	"github.com/zxy248/nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )

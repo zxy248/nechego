@@ -2,9 +2,9 @@ package pictures
 
 import (
 	"bytes"
+	"github.com/zxy248/nechego/danbooru"
+	"github.com/zxy248/nechego/handlers"
 	"math/rand"
-	"nechego/danbooru"
-	"nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )

@@ -2,8 +2,8 @@ package fun
 
 import (
 	"fmt"
+	"github.com/zxy248/nechego/handlers"
 	"math/rand"
-	"nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )

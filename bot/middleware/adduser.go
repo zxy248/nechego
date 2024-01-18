@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"nechego/game"
-	tu "nechego/teleutil"
+	"github.com/zxy248/nechego/game"
+	tu "github.com/zxy248/nechego/teleutil"
 	"slices"
 
 	tele "gopkg.in/zxy248/telebot.v3"

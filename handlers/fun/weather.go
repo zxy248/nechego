@@ -1,8 +1,8 @@
 package fun
 
 import (
+	"github.com/zxy248/nechego/handlers"
 	"io"
-	"nechego/handlers"
 	"net/http"
 	"net/url"
 
