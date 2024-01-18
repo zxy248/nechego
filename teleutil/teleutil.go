@@ -6,7 +6,7 @@ import (
 	"nechego/game"
 	"strings"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 func Name(m *tele.ChatMember) string {

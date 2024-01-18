@@ -1,6 +1,6 @@
 package main
 
-import tele "gopkg.in/telebot.v3"
+import tele "gopkg.in/zxy248/telebot.v3"
 
 type Wrapper interface {
 	Wrap(next tele.HandlerFunc) tele.HandlerFunc

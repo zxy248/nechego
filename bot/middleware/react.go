@@ -3,7 +3,7 @@ package middleware
 import (
 	"math/rand"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type RandomReact struct {

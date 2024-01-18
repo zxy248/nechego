@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Throttle struct {

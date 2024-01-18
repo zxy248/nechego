@@ -6,7 +6,7 @@ import (
 	"nechego/danbooru"
 	"nechego/handlers"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Danbooru struct {

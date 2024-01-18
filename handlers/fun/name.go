@@ -7,7 +7,7 @@ import (
 	tu "nechego/teleutil"
 	"unicode/utf8"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Name struct{}

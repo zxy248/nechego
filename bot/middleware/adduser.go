@@ -5,7 +5,7 @@ import (
 	tu "nechego/teleutil"
 	"slices"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type AddUser struct {

@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 func randomFile(dir string) (string, error) {

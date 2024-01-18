@@ -6,7 +6,7 @@ import (
 	"nechego/handlers"
 
 	"github.com/antonmedv/expr"
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Calc struct{}

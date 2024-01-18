@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	tele "gopkg.in/telebot.v3"
+	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Weather struct{}
