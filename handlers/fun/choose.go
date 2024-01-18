@@ -17,7 +17,7 @@ func (h *Choose) Match(c tele.Context) bool {
 }
 
 func (h *Choose) Handle(c tele.Context) error {
-	vars := strings.Split(parseChoose(c.Text()), "или")
+	vars := strings.Split(parseChoose(c.Text()), " или ")
 	v := vars[rand.Intn(len(vars))]
 	return c.Send(v)
 }
