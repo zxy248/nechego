@@ -1,16 +1,13 @@
 package pictures
 
 import (
-	"bytes"
 	"github.com/zxy248/nechego/danbooru"
 	"github.com/zxy248/nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
-type Fap struct {
-	API *danbooru.Danbooru
-}
+type Fap struct{}
 
 var fapRe = handlers.NewRegexp("^!(др[ао]ч|фап|эро|порн)")
 
@@ -19,25 +16,21 @@ func (h *Fap) Match(c tele.Context) bool {
 }
 
 func (h *Fap) Handle(c tele.Context) error {
-	pic, err := h.API.Get(danbooru.NSFW)
-	if err != nil {
-		return err
+	var pic *danbooru.Picture
+	for {
+		pic = <-danbooruPictures
+		if pic.Rating.NSFW() {
+			break
+		}
 	}
-	r := bytes.NewReader(pic.Data)
-	p := &tele.Photo{
-		File:       tele.FromReader(r),
-		Caption:    ratingEmoji(pic.Rating),
+	emoji := map[danbooru.Rating]string{
+		danbooru.Explicit:     "🔞",
+		danbooru.Questionable: "❓",
+	}
+	photo := &tele.Photo{
+		File:       tele.FromURL(pic.URL),
+		Caption:    emoji[pic.Rating],
 		HasSpoiler: true,
 	}
-	return c.Send(p, tele.ModeHTML)
-}
-
-func ratingEmoji(r danbooru.Rating) string {
-	switch r {
-	case danbooru.Explicit:
-		return "🔞"
-	case danbooru.Questionable:
-		return "❓"
-	}
-	return ""
+	return c.Send(photo, tele.ModeHTML)
 }

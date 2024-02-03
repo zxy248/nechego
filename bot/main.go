@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/zxy248/nechego/danbooru"
-	"github.com/zxy248/nechego/game"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/zxy248/nechego/game"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -27,10 +27,7 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot build bot: ", err)
 	}
-	app := &App{
-		Universe: game.NewUniverse(storageDirectory),
-		Danbooru: danbooru.New(danbooru.URL, 5*time.Second, 3),
-	}
+	app := &App{Universe: game.NewUniverse(storageDirectory)}
 	srv := &Server{
 		Bot:      bot,
 		Handlers: app.Handlers(),

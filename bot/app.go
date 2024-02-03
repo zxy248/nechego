@@ -1,21 +1,20 @@
 package main
 
 import (
+	"path/filepath"
+	"time"
+
 	"github.com/zxy248/nechego/bot/middleware"
-	"github.com/zxy248/nechego/danbooru"
 	"github.com/zxy248/nechego/game"
 	"github.com/zxy248/nechego/handlers"
 	"github.com/zxy248/nechego/handlers/command"
 	"github.com/zxy248/nechego/handlers/daily"
 	"github.com/zxy248/nechego/handlers/fun"
 	"github.com/zxy248/nechego/handlers/pictures"
-	"path/filepath"
-	"time"
 )
 
 type App struct {
 	Universe *game.Universe
-	Danbooru *danbooru.Danbooru
 }
 
 func (a *App) Shutdown() error {
@@ -97,8 +96,8 @@ func (a *App) pictureHandlers() []Handler {
 		&pictures.Flag{},
 		&pictures.Car{},
 		&pictures.Soy{},
-		&pictures.Danbooru{API: a.Danbooru},
-		&pictures.Fap{API: a.Danbooru},
+		&pictures.Danbooru{},
+		&pictures.Fap{},
 		&pictures.Masyunya{},
 		&pictures.Poppy{},
 		&pictures.Sima{},

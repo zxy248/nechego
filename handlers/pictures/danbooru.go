@@ -1,34 +1,29 @@
 package pictures
 
 import (
-	"bytes"
+	"math/rand"
+	"time"
+
 	"github.com/zxy248/nechego/danbooru"
 	"github.com/zxy248/nechego/handlers"
-	"math/rand"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
-type Danbooru struct {
-	API *danbooru.Danbooru
-}
+type Danbooru struct{}
 
 func (h *Danbooru) Match(c tele.Context) bool {
 	return handlers.HasPrefix(c.Text(), "!данбору")
 }
 
 func (h *Danbooru) Handle(c tele.Context) error {
-	pic, err := h.API.Get(danbooru.All)
-	if err != nil {
-		return err
-	}
-	r := bytes.NewReader(pic.Data)
-	p := &tele.Photo{File: tele.FromReader(r)}
+	pic := <-danbooruPictures
+	photo := &tele.Photo{File: tele.FromURL(pic.URL)}
 	if pic.Rating == danbooru.Explicit {
-		p.Caption = warningNSFW()
-		p.HasSpoiler = true
+		photo.Caption = warningNSFW()
+		photo.HasSpoiler = true
 	}
-	return c.Send(p, tele.ModeHTML)
+	return c.Send(photo, tele.ModeHTML)
 }
 
 func warningNSFW() string {
@@ -38,4 +33,34 @@ func warningNSFW() string {
 		"<b>ВНИМАНИЕ!</b> Вы увидите фотографии взрослых голых женщин. Будьте сдержанны.",
 	}
 	return s[rand.Intn(len(s))]
+}
+
+var danbooruPictures = func() chan *danbooru.Picture {
+	const workers = 4
+	const size = 16
+
+	pics := make(chan *danbooru.Picture, size)
+	for i := 0; i < workers; i++ {
+		go func() {
+			for {
+				pics <- danbooruPicture()
+			}
+		}()
+	}
+	return pics
+}()
+
+func danbooruPicture() *danbooru.Picture {
+	const timeout = 2 * time.Second
+	const score = 50
+
+	pic, err := danbooru.Get()
+	if err != nil {
+		time.Sleep(timeout)
+		return danbooruPicture()
+	}
+	if pic.Score < score {
+		return danbooruPicture()
+	}
+	return pic
 }
