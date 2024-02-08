@@ -1,6 +1,6 @@
 module github.com/zxy248/nechego
 
-go 1.21
+go 1.22
 
 require (
 	github.com/antonmedv/expr v1.9.0

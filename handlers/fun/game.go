@@ -1,8 +1,9 @@
 package fun
 
 import (
+	"math/rand/v2"
+
 	"github.com/zxy248/nechego/handlers"
-	"math/rand"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -17,5 +18,5 @@ func (h *Game) Match(c tele.Context) bool {
 
 func (h *Game) Handle(c tele.Context) error {
 	games := [...]*tele.Dice{tele.Dart, tele.Ball, tele.Goal, tele.Slot, tele.Bowl}
-	return c.Send(games[rand.Intn(len(games))])
+	return c.Send(games[rand.N(len(games))])
 }

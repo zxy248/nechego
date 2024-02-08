@@ -2,8 +2,9 @@ package pictures
 
 import (
 	"fmt"
+	"math/rand/v2"
+
 	"github.com/zxy248/nechego/handlers"
-	"math/rand"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -16,7 +17,6 @@ func (h *Furry) Match(c tele.Context) bool {
 
 func (h *Furry) Handle(c tele.Context) error {
 	const spec = "https://thisfursonadoesnotexist.com/v2/jpgs-2x/seed%05d.jpg"
-	r := rand.Intn(100000)
-	url := fmt.Sprintf(spec, r)
+	url := fmt.Sprintf(spec, rand.N(100000))
 	return c.Send(&tele.Photo{File: tele.FromURL(url)})
 }

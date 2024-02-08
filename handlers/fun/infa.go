@@ -2,8 +2,9 @@ package fun
 
 import (
 	"fmt"
+	"math/rand/v2"
+
 	"github.com/zxy248/nechego/handlers"
-	"math/rand"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -38,14 +39,14 @@ func formatInfa(s string) string {
 		"Прикинув раз на раз, я определился с тем, что",
 		"Уверяю вас в том, что",
 	}
-	t := templates[rand.Intn(len(templates))]
+	t := templates[rand.N(len(templates))]
 
 	var p int
-	if rand.Intn(100) == 0 {
+	if rand.N(100) == 0 {
 		p = 100
 	} else {
-		d1 := rand.Intn(10)
-		d2 := rand.Intn(10)
+		d1 := rand.N(10)
+		d2 := rand.N(10)
 		p = d1*10 + d2
 	}
 	return fmt.Sprint(t, s, " с вероятностью ", p, "%")

@@ -3,13 +3,14 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zxy248/nechego/commands"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/zxy248/nechego/commands"
 )
 
 type World struct {
@@ -73,7 +74,7 @@ func (w *World) Save(name string) error {
 }
 
 func (w *World) RandomUser() int64 {
-	return w.Users[rand.Intn(len(w.Users))]
+	return w.Users[rand.N(len(w.Users))]
 }
 
 func (w *World) RandomUsers(n int) []int64 {

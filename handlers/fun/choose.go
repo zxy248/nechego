@@ -1,9 +1,10 @@
 package fun
 
 import (
-	"github.com/zxy248/nechego/handlers"
-	"math/rand"
+	"math/rand/v2"
 	"strings"
+
+	"github.com/zxy248/nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -18,7 +19,7 @@ func (h *Choose) Match(c tele.Context) bool {
 
 func (h *Choose) Handle(c tele.Context) error {
 	vars := strings.Split(parseChoose(c.Text()), " или ")
-	v := vars[rand.Intn(len(vars))]
+	v := vars[rand.N(len(vars))]
 	return c.Send(v)
 }
 

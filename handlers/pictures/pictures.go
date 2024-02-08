@@ -3,7 +3,7 @@ package pictures
 import (
 	"fmt"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,7 +19,7 @@ func randomFile(dir string) (string, error) {
 	if len(es) == 0 {
 		return "", fmt.Errorf("randomFile: empty directory %s", dir)
 	}
-	e := es[rand.Intn(len(es))]
+	e := es[rand.N(len(es))]
 	return filepath.Join(dir, e.Name()), nil
 }
 
@@ -49,5 +49,5 @@ func randomSticker(c tele.Context, set string) (*tele.Sticker, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &s.Stickers[rand.Intn(len(s.Stickers))], nil
+	return &s.Stickers[rand.N(len(s.Stickers))], nil
 }

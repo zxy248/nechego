@@ -1,10 +1,11 @@
 package fun
 
 import (
+	"math/rand/v2"
+
 	"github.com/zxy248/nechego/game"
 	"github.com/zxy248/nechego/handlers"
 	tu "github.com/zxy248/nechego/teleutil"
-	"math/rand"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -25,7 +26,7 @@ func (h *TurnOn) Handle(c tele.Context) error {
 
 	world.Inactive = false
 	es := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
-	e := es[rand.Intn(len(es))]
+	e := es[rand.N(len(es))]
 	return c.Send(e + " Робот включен.")
 }
 
@@ -45,6 +46,6 @@ func (h *TurnOff) Handle(c tele.Context) error {
 
 	world.Inactive = true
 	es := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
-	e := es[rand.Intn(len(es))]
+	e := es[rand.N(len(es))]
 	return c.Send(e + " Робот выключен.")
 }

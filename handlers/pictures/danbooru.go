@@ -1,7 +1,7 @@
 package pictures
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/zxy248/nechego/danbooru"
@@ -32,7 +32,7 @@ func warningNSFW() string {
 		"<i>Содержимое предназначено для просмотра лицами старше 18 лет.</i>",
 		"<b>ВНИМАНИЕ!</b> Вы увидите фотографии взрослых голых женщин. Будьте сдержанны.",
 	}
-	return s[rand.Intn(len(s))]
+	return s[rand.N(len(s))]
 }
 
 var danbooruPictures = func() chan *danbooru.Picture {

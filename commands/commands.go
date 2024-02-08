@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"strings"
 )
 
@@ -34,7 +34,7 @@ func (cs Commands) Match(s string) (c Command, ok bool) {
 		}
 	}
 	if r != nil {
-		return r[rand.Intn(len(r))], true
+		return r[rand.N(len(r))], true
 	}
 	return Command{}, false
 }

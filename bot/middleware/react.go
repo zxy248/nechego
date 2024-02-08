@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"math/rand"
+	"math/rand/v2"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -30,7 +30,7 @@ var emojis = []string{"👍", "👎", "❤", "🔥", "🥰", "👏", "😁", "�
 func react(c tele.Context) error {
 	emoji := map[string]any{
 		"type":  "emoji",
-		"emoji": emojis[rand.Intn(len(emojis))],
+		"emoji": emojis[rand.N(len(emojis))],
 	}
 	params := map[string]any{
 		"chat_id":    c.Chat().ID,

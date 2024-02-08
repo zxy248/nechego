@@ -1,8 +1,9 @@
 package pictures
 
 import (
+	"math/rand/v2"
+
 	"github.com/zxy248/nechego/handlers"
-	"math/rand"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -15,7 +16,7 @@ func (h *Poppy) Match(c tele.Context) bool {
 
 func (h *Poppy) Handle(c tele.Context) error {
 	sets := [...]string{"pappy2_vk", "poppy_vk"}
-	set := sets[rand.Intn(len(sets))]
+	set := sets[rand.N(len(sets))]
 	s, err := randomSticker(c, set)
 	if err != nil {
 		return err

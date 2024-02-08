@@ -2,8 +2,9 @@ package fun
 
 import (
 	"fmt"
+	"math/rand/v2"
+
 	"github.com/zxy248/nechego/handlers"
-	"math/rand"
 
 	"github.com/antonmedv/expr"
 	tele "gopkg.in/zxy248/telebot.v3"
@@ -25,7 +26,7 @@ func (h *Calc) Handle(c tele.Context) error {
 	}
 
 	es := [...]string{"🧠", "🧮", "🤔", "💭", "🤓"}
-	e := es[rand.Intn(len(es))]
+	e := es[rand.N(len(es))]
 	s := fmt.Sprintf("%s %s <b>= %v</b>", e, in, out)
 	return c.Send(s, tele.ModeHTML)
 }

@@ -2,10 +2,11 @@ package fun
 
 import (
 	"fmt"
+	"math/rand/v2"
+
 	"github.com/zxy248/nechego/game"
 	"github.com/zxy248/nechego/handlers"
 	tu "github.com/zxy248/nechego/teleutil"
-	"math/rand"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -25,8 +26,7 @@ func (h *List) Handle(c tele.Context) error {
 	defer world.Unlock()
 
 	name := listName(c.Text())
-	n := 3 + rand.Intn(3)
-	list := world.RandomUsers(n)
+	list := world.RandomUsers(3 + rand.N(3))
 	out := fmt.Sprintf("<b>📝 Список %s</b>\n", name)
 	for _, id := range list {
 		l := tu.Link(c, id)

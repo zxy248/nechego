@@ -2,10 +2,11 @@ package pictures
 
 import (
 	"encoding/json"
-	"github.com/zxy248/nechego/handlers"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"sync"
+
+	"github.com/zxy248/nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -27,7 +28,7 @@ func (h *Hello) Handle(c tele.Context) error {
 	if err := h.init(); err != nil {
 		return err
 	}
-	return c.Send(&h.s[rand.Intn(len(h.s))])
+	return c.Send(&h.s[rand.N(len(h.s))])
 }
 
 func (h *Hello) init() error {

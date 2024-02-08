@@ -2,9 +2,10 @@ package pictures
 
 import (
 	"fmt"
-	"github.com/zxy248/nechego/handlers"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
+
+	"github.com/zxy248/nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -17,9 +18,7 @@ func (h *Cat) Match(c tele.Context) bool {
 
 func (h *Cat) Handle(c tele.Context) error {
 	const spec = "https://d2ph5fj80uercy.cloudfront.net/%02d/cat%d.jpg"
-	r1 := 1 + rand.Intn(6)
-	r2 := rand.Intn(5000)
-	url := fmt.Sprintf(spec, r1, r2)
+	url := fmt.Sprintf(spec, 1+rand.N(6), rand.N(5000))
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
