@@ -112,7 +112,7 @@ func (a *App) commandHandlers() []Handler {
 		&command.Add{Universe: a.Universe},
 		&command.Remove{Universe: a.Universe},
 		&command.Use{Universe: a.Universe},
-		&command.MarkovConfig{Universe: a.Universe},
+		&fun.MarkovConfig{Universe: a.Universe},
 	}
 }
 

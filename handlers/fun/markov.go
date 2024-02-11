@@ -1,13 +1,16 @@
-package command
+package fun
 
 import (
 	"strconv"
 	"strings"
 
 	"github.com/zxy248/nechego/game"
+	"github.com/zxy248/nechego/handlers"
 	tu "github.com/zxy248/nechego/teleutil"
 	tele "gopkg.in/zxy248/telebot.v3"
 )
+
+var cfgPattern = handlers.NewRegexp("^!конфиг(.*)")
 
 type MarkovConfig struct {
 	Universe *game.Universe
