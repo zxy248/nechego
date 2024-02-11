@@ -10,9 +10,10 @@ import (
 
 // Universe holds worlds.
 type Universe struct {
-	worlds map[int64]*World // Loaded worlds indexed by group IDs.
-	dir    string           // Persistent storage directory.
-	mu     sync.Mutex
+	worlds      map[int64]*World // Loaded worlds indexed by group IDs.
+	dir         string           // Persistent storage directory.
+	mu          sync.Mutex
+	Expressions []string // slice of expressions
 }
 
 // NewUniverse returns a new Universe.

@@ -3,13 +3,14 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/zxy248/nechego/commands"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"slices"
 	"sync"
 	"time"
+
+	"github.com/zxy248/nechego/commands"
 )
 
 type World struct {

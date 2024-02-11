@@ -3,6 +3,8 @@ package command
 import (
 	"fmt"
 	"strings"
+
+	"github.com/zxy248/nechego/handlers"
 )
 
 var (
@@ -19,6 +21,7 @@ var (
 		"^!(удалить|убрать) (%s)",
 		definitionPattern,
 	)
+	cfgPattern = handlers.NewRegexp("^!конфиг(.*)")
 )
 
 func sanitizeDefinition(s string) string {
