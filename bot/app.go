@@ -81,6 +81,7 @@ func (a *App) funHandlers() []Handler {
 		&fun.TurnOn{Universe: a.Universe},
 		&fun.TurnOff{Universe: a.Universe},
 		&fun.NewYear{},
+		&fun.MarkovConfig{Universe: a.Universe},
 	}
 }
 
@@ -112,7 +113,6 @@ func (a *App) commandHandlers() []Handler {
 		&command.Add{Universe: a.Universe},
 		&command.Remove{Universe: a.Universe},
 		&command.Use{Universe: a.Universe},
-		&fun.MarkovConfig{Universe: a.Universe},
 	}
 }
 
