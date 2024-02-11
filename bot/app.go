@@ -115,7 +115,7 @@ func (a *App) commandHandlers() []Handler {
 
 func (a *App) otherHandlers() []Handler {
 	return []Handler{
-		&handlers.Pass{},
+		&handlers.Pass{&handlers.Logger{Dir: messagesDirectory}},
 	}
 }
 

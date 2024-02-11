@@ -14,9 +14,10 @@ import (
 )
 
 var (
-	botToken         = getenv("NECHEGO_TOKEN")
-	assetsDirectory  = getenv("NECHEGO_ASSETS")
-	storageDirectory = getenv("NECHEGO_STORAGE")
+	botToken          = getenv("NECHEGO_TOKEN")
+	assetsDirectory   = getenv("NECHEGO_ASSETS")
+	storageDirectory  = getenv("NECHEGO_STORAGE")
+	messagesDirectory = getenv("NECHEGO_MESSAGES")
 )
 
 func main() {
