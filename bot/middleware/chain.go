@@ -1,4 +1,4 @@
-package markov
+package middleware
 
 import (
 	"math/rand"
@@ -6,22 +6,24 @@ import (
 
 	"github.com/mb-14/gomarkov"
 	"github.com/zxy248/nechego/game"
+	tu "github.com/zxy248/nechego/teleutil"
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
-type Chain struct {
+type MarkovChain struct {
 	Universe *game.Universe
-	Prob     *float64
 }
 
-func (c *Chain) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
+func (c *MarkovChain) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(ctx tele.Context) error {
 		go func() {
-			if rand.Float64() < *c.Prob {
+			w := tu.Lock(ctx, c.Universe)
+			if rand.Float64() < w.MarkovProb {
 				chain := gomarkov.NewChain(1)
-				for _, exp := range c.Universe.Expressions {
+				for _, exp := range w.Expressions {
 					chain.Add(strings.Split(exp, " "))
 				}
+
 				var (
 					err       error
 					generated string
@@ -36,10 +38,11 @@ func (c *Chain) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 					responseText += " " + strings.TrimSpace(strings.Trim(generated, "$"))
 
 				}
-				if len(responseText) != len(ctx.Text()) {
+				if len(strings.TrimRight(responseText, " ")) != len(ctx.Text()) {
 					ctx.Send(responseText)
 				}
 			}
+			w.Unlock()
 		}()
 		return next(ctx)
 	}

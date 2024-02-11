@@ -14,11 +14,13 @@ import (
 )
 
 type World struct {
-	ID       int64
-	Users    []int64
-	Daily    Daily
-	Commands commands.Commands
-	Inactive bool
+	ID          int64
+	Users       []int64
+	Expressions []string
+	MarkovProb  float64
+	Daily       Daily
+	Commands    commands.Commands
+	Inactive    bool
 
 	sync.Mutex `json:"-"`
 }

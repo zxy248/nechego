@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/zxy248/nechego/bot/middleware"
-	"github.com/zxy248/nechego/bot/middleware/markov"
 	"github.com/zxy248/nechego/game"
 	"github.com/zxy248/nechego/handlers"
 	"github.com/zxy248/nechego/handlers/command"
@@ -52,8 +51,8 @@ func (a *App) middleware() []Wrapper {
 		&middleware.IgnoreMessageForwarded{},
 		&middleware.RequireSupergroup{},
 		&middleware.AddUser{Universe: a.Universe},
-		&markov.MarkovKeeper{Universe: a.Universe},
-		&markov.Chain{Prob: &MarkovProb, Universe: a.Universe},
+		&middleware.MarkovKeeper{Universe: a.Universe},
+		&middleware.MarkovChain{Universe: a.Universe},
 	}
 }
 
@@ -113,7 +112,7 @@ func (a *App) commandHandlers() []Handler {
 		&command.Add{Universe: a.Universe},
 		&command.Remove{Universe: a.Universe},
 		&command.Use{Universe: a.Universe},
-		&command.MarkovConfig{Prob: &MarkovProb},
+		&command.MarkovConfig{Universe: a.Universe},
 	}
 }
 
