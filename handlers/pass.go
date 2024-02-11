@@ -48,6 +48,7 @@ func (l *Logger) Log(id int64, s string) error {
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
 	_, err = io.WriteString(f, s+"\n")
 	return err
