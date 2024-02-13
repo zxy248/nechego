@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/zxy248/nechego/commands"
+	"github.com/zxy248/nechego/markov"
 )
 
 type World struct {
@@ -19,6 +20,9 @@ type World struct {
 	Daily    Daily
 	Commands commands.Commands
 	Inactive bool
+
+	Chain       *markov.Chain `json:"-"`
+	ChainUpdate time.Time     `json:"-"`
 
 	sync.Mutex `json:"-"`
 }

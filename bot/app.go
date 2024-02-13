@@ -114,8 +114,11 @@ func (a *App) commandHandlers() []Handler {
 }
 
 func (a *App) otherHandlers() []Handler {
+	logger := &handlers.Logger{Dir: messagesDirectory}
+
 	return []Handler{
-		&handlers.Pass{&handlers.Logger{Dir: messagesDirectory}},
+		&fun.Speak{Universe: a.Universe, Logger: logger, Attempts: 50},
+		&handlers.Pass{logger},
 	}
 }
 
