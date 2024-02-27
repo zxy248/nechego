@@ -20,6 +20,7 @@ type World struct {
 	Daily    Daily
 	Commands commands.Commands
 	Inactive bool
+	Stickers []string
 
 	Chain       *markov.Chain `json:"-"`
 	ChainUpdate time.Time     `json:"-"`

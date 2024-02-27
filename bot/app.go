@@ -42,6 +42,10 @@ func (a *App) middleware() []Wrapper {
 		&middleware.Recover{},
 		&middleware.RandomPhoto{Prob: 0.005},
 		&middleware.RandomReact{Prob: 0.033},
+		&middleware.RandomSticker{
+			Universe: a.Universe,
+			Prob:     0.02,
+		},
 		&middleware.IgnoreWorldInactive{
 			Universe: a.Universe,
 			Immune:   (&fun.TurnOn{}).Match,
@@ -118,7 +122,7 @@ func (a *App) otherHandlers() []Handler {
 
 	return []Handler{
 		&fun.Speak{Universe: a.Universe, Logger: logger, Attempts: 50},
-		&handlers.Pass{logger},
+		&handlers.Pass{a.Universe, logger},
 	}
 }
 
