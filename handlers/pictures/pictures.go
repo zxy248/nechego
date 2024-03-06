@@ -6,7 +6,9 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
@@ -28,11 +30,11 @@ func randomSubdirFile(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	f, err := randomFile(dir)
+	name, err := randomFile(dir)
 	if err != nil {
 		return "", err
 	}
-	return f, nil
+	return name, nil
 }
 
 func getBytes(addr string) ([]byte, error) {
@@ -50,4 +52,13 @@ func randomSticker(c tele.Context, set string) (*tele.Sticker, error) {
 		return nil, err
 	}
 	return &s.Stickers[rand.N(len(s.Stickers))], nil
+}
+
+func sendableFromFile(name string) tele.Sendable {
+	f := tele.FromDisk(name)
+	ext := strings.ToLower(path.Ext(name))
+	if ext == ".mp4" || ext == ".mov" {
+		return &tele.Video{File: f}
+	}
+	return &tele.Photo{File: f}
 }

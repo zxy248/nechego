@@ -15,9 +15,9 @@ func (h *Tiktok) Match(c tele.Context) bool {
 }
 
 func (h *Tiktok) Handle(c tele.Context) error {
-	f, err := randomFile(h.Path)
+	name, err := randomFile(h.Path)
 	if err != nil {
 		return err
 	}
-	return c.Send(&tele.Video{File: tele.FromDisk(f)})
+	return c.Send(&tele.Video{File: tele.FromDisk(name)})
 }

@@ -17,9 +17,9 @@ func (h *Casper) Match(c tele.Context) bool {
 }
 
 func (h *Casper) Handle(c tele.Context) error {
-	f, err := randomFile(h.Path)
+	name, err := randomFile(h.Path)
 	if err != nil {
 		return err
 	}
-	return c.Send(&tele.Photo{File: tele.FromDisk(f)})
+	return c.Send(sendableFromFile(name))
 }
