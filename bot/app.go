@@ -72,6 +72,7 @@ func (a *App) funHandlers() []Handler {
 		&fun.TurnOn{Queries: a.Queries},
 		&fun.TurnOff{Queries: a.Queries},
 		&fun.NewYear{},
+		&fun.Photon{},
 	}
 }
 
