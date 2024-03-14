@@ -2,10 +2,9 @@ package main
 
 import (
 	"path/filepath"
-	"time"
 
 	"github.com/zxy248/nechego/bot/middleware"
-	"github.com/zxy248/nechego/game"
+	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
 	"github.com/zxy248/nechego/handlers/command"
 	"github.com/zxy248/nechego/handlers/daily"
@@ -14,11 +13,7 @@ import (
 )
 
 type App struct {
-	Universe *game.Universe
-}
-
-func (a *App) Shutdown() error {
-	return a.Universe.SaveAll()
+	Queries *data.Queries
 }
 
 func (a *App) Handlers() []Handler {
@@ -42,27 +37,21 @@ func (a *App) middleware() []Wrapper {
 		&middleware.Recover{},
 		&middleware.RandomPhoto{Prob: 0.005},
 		&middleware.RandomReact{Prob: 0.033},
-		&middleware.RandomSticker{
-			Universe: a.Universe,
-			Prob:     0.02,
-		},
-		&middleware.IgnoreWorldInactive{
-			Universe: a.Universe,
-			Immune:   (&fun.TurnOn{}).Match,
-		},
-		&middleware.Log{Timeout: 10 * time.Second},
-		&middleware.Throttle{Duration: 400 * time.Millisecond},
+		&middleware.RandomSticker{Queries: a.Queries, Prob: 0.02},
+		&middleware.IgnoreInactive{Queries: a.Queries, Immune: (&fun.TurnOn{}).Match},
+		&middleware.UpdateDaily{Queries: a.Queries},
+		&middleware.LogMessage{Queries: a.Queries},
+		&middleware.UpdateInfo{Queries: a.Queries},
 		&middleware.IgnoreMessageForwarded{},
 		&middleware.RequireSupergroup{},
-		&middleware.AddUser{Universe: a.Universe},
 	}
 }
 
 func (a *App) dailyHandlers() []Handler {
 	return []Handler{
-		&daily.Eblan{Universe: a.Universe},
-		&daily.Admin{Universe: a.Universe},
-		&daily.Pair{Universe: a.Universe},
+		&daily.Eblan{Queries: a.Queries},
+		&daily.Admin{Queries: a.Queries},
+		&daily.Pair{Queries: a.Queries},
 	}
 }
 
@@ -75,13 +64,13 @@ func (a *App) funHandlers() []Handler {
 		&fun.Calc{},
 		&fun.Name{},
 		&fun.CheckName{},
-		&fun.Who{Universe: a.Universe},
-		&fun.List{Universe: a.Universe},
-		&fun.Top{Universe: a.Universe},
+		&fun.Who{Queries: a.Queries},
+		&fun.List{Queries: a.Queries},
+		&fun.Top{Queries: a.Queries},
 		&fun.Clock{},
 		&fun.Date{},
-		&fun.TurnOn{Universe: a.Universe},
-		&fun.TurnOff{Universe: a.Universe},
+		&fun.TurnOn{Queries: a.Queries},
+		&fun.TurnOff{Queries: a.Queries},
 		&fun.NewYear{},
 	}
 }
@@ -94,7 +83,7 @@ func (a *App) pictureHandlers() []Handler {
 		&pictures.Zeus{Path: assetPath("zeus")},
 		&pictures.Mouse{Path: assetPath("mouse.mp4")},
 		&pictures.Tiktok{Path: assetPath("tiktok")},
-		&pictures.Hello{Path: assetPath("hello.json")},
+		&pictures.Hello{Queries: a.Queries},
 		&pictures.Anime{},
 		&pictures.Furry{},
 		&pictures.Flag{},
@@ -111,18 +100,16 @@ func (a *App) pictureHandlers() []Handler {
 
 func (a *App) commandHandlers() []Handler {
 	return []Handler{
-		&command.Add{Universe: a.Universe},
-		&command.Remove{Universe: a.Universe},
-		&command.Use{Universe: a.Universe},
+		&command.Add{Queries: a.Queries},
+		&command.Remove{Queries: a.Queries},
+		&command.Use{Queries: a.Queries},
 	}
 }
 
 func (a *App) otherHandlers() []Handler {
-	logger := &handlers.Logger{Dir: messagesDirectory}
-
 	return []Handler{
-		&fun.Speak{Universe: a.Universe, Logger: logger, Attempts: 50},
-		&handlers.Pass{a.Universe, logger},
+		&fun.Speak{Queries: a.Queries, Attempts: 50},
+		&handlers.Pass{Queries: a.Queries},
 	}
 }
 

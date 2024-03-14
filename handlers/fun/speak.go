@@ -1,20 +1,26 @@
 package fun
 
 import (
+	"context"
 	"strings"
 	"time"
 
-	"github.com/zxy248/nechego/game"
+	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
-	"github.com/zxy248/nechego/markov"
-	tu "github.com/zxy248/nechego/teleutil"
+	"github.com/zxy248/nechego/handlers/fun/markov"
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
+type cachedChain struct {
+	chain *markov.Chain
+	time  time.Time
+}
+
 type Speak struct {
-	Universe *game.Universe
-	Logger   *handlers.Logger
+	Queries  *data.Queries
 	Attempts int
+
+	data handlers.Store[*cachedChain]
 }
 
 func (h *Speak) Match(c tele.Context) bool {
@@ -23,36 +29,46 @@ func (h *Speak) Match(c tele.Context) bool {
 }
 
 func (h *Speak) Handle(c tele.Context) error {
-	world := tu.Lock(c, h.Universe)
-	defer world.Unlock()
+	v, done := h.data.Get(c.Chat().ID, &cachedChain{})
+	if time.Since(v.time) > 10*time.Minute {
+		ch, err := h.buildChain(c.Chat().ID)
+		if err != nil {
+			return err
+		}
+		v.chain = ch
+		v.time = time.Now()
+	}
+	chain := v.chain
+	done()
 
 	size, _ := parseSpeak(c.Text())
-	chain, err := h.getChain(world)
-	if err != nil {
-		return err
+	out := h.generateText(chain, size)
+	if out == "" {
+		out = "⚠️ Не удалось сгенерировать сообщение."
 	}
-	res := h.generateText(chain, size)
-	if res == "" {
-		res = "⚠️ Не удалось сгенерировать сообщение."
-	}
-	return c.Send(res)
+	return c.Send(out)
 }
 
-func (h *Speak) getChain(w *game.World) (*markov.Chain, error) {
-	if time.Since(w.ChainUpdate) > 30*time.Minute {
-		samples, err := h.Logger.Messages(w.ID)
-		if err != nil {
-			return nil, err
-		}
-		w.Chain = markov.New(samples)
+func (h *Speak) buildChain(id int64) (*markov.Chain, error) {
+	ctx := context.Background()
+	messages, err := h.Queries.ListMessages(ctx, id)
+	if err != nil {
+		return nil, err
 	}
-	return w.Chain, nil
+	var samples []string
+	for _, m := range messages {
+		text := strings.ToLower(m.Content)
+		samples = append(samples, text)
+	}
+	return markov.New(samples), nil
 }
 
 func (h *Speak) generateText(c *markov.Chain, size int) string {
 	minSize := [...]int{0, 2, 4, 8}
 	maxSize := [...]int{100, 3, 7, 100}
-
+	if c.Empty() {
+		return ""
+	}
 	for range h.Attempts {
 		s := c.Generate()
 		if len(s) >= minSize[size] && len(s) <= maxSize[size] {

@@ -32,11 +32,14 @@ func New(samples []string) *Chain {
 	return &Chain{chain}
 }
 
-func (g *Chain) Generate() []string {
+func (c *Chain) Generate() []string {
+	if c.Empty() {
+		return nil
+	}
 	words := []string{start}
 	for {
 		last := words[len(words)-1]
-		choices := g.chain[hash(last)]
+		choices := c.chain[hash(last)]
 		next := choices[rand.N(len(choices))]
 		if next == end {
 			break
@@ -44,6 +47,10 @@ func (g *Chain) Generate() []string {
 		words = append(words, next)
 	}
 	return words[1:]
+}
+
+func (c *Chain) Empty() bool {
+	return len(c.chain) == 0
 }
 
 func hash(s string) string {

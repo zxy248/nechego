@@ -1,10 +1,11 @@
 package fun
 
 import (
+	"context"
 	"fmt"
 	"math/rand/v2"
 
-	"github.com/zxy248/nechego/game"
+	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
 	tu "github.com/zxy248/nechego/teleutil"
 
@@ -12,7 +13,7 @@ import (
 )
 
 type Top struct {
-	Universe *game.Universe
+	Queries *data.Queries
 }
 
 var topRe = handlers.NewRegexp("^!топ ?(.*)")
@@ -22,14 +23,16 @@ func (h *Top) Match(c tele.Context) bool {
 }
 
 func (h *Top) Handle(c tele.Context) error {
-	world := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
+	ctx := context.Background()
+	users, err := h.Queries.RecentUsers(ctx, c.Chat().ID)
+	if err != nil {
+		return err
+	}
+	list := randomSample(users, 3+rand.N(3))
 	name := topName(c.Text())
-	list := world.RandomUsers(3 + rand.N(3))
 	out := fmt.Sprintf("<b>🏆 Топ %s</b>\n", name)
-	for i, id := range list {
-		l := tu.Link(c, id)
+	for i, u := range list {
+		l := tu.Link(c, u)
 		out += fmt.Sprintf("%d. <b>%s</b>\n", i+1, l)
 	}
 	return c.Send(out, tele.ModeHTML)

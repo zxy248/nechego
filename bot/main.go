@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -8,16 +9,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zxy248/nechego/game"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/zxy248/nechego/data"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 var (
-	botToken          = getenv("NECHEGO_TOKEN")
-	assetsDirectory   = getenv("NECHEGO_ASSETS")
-	storageDirectory  = getenv("NECHEGO_STORAGE")
-	messagesDirectory = getenv("NECHEGO_MESSAGES")
+	botToken        = getenv("NECHEGO_TOKEN")
+	assetsDirectory = getenv("NECHEGO_ASSETS")
 )
 
 func main() {
@@ -28,7 +28,14 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot build bot: ", err)
 	}
-	app := &App{Universe: game.NewUniverse(storageDirectory)}
+
+	pool, err := pgxpool.New(context.Background(), getenv("NECHEGO_DATABASE"))
+	if err != nil {
+		log.Fatal("cannot create connection pool: ", err)
+	}
+	defer pool.Close()
+
+	app := &App{Queries: data.New(pool)}
 	srv := &Server{
 		Bot:      bot,
 		Handlers: app.Handlers(),
@@ -36,10 +43,6 @@ func main() {
 	go srv.Start()
 	<-interrupt()
 	srv.Stop()
-	if err := app.Shutdown(); err != nil {
-		log.Fatal("cannot shutdown: ", err)
-	}
-	log.Println("successful shutdown")
 }
 
 func getenv(s string) string {

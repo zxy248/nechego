@@ -1,8 +1,10 @@
 package daily
 
 import (
+	"context"
 	"fmt"
-	"github.com/zxy248/nechego/game"
+
+	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
 	tu "github.com/zxy248/nechego/teleutil"
 
@@ -10,7 +12,7 @@ import (
 )
 
 type Eblan struct {
-	Universe *game.Universe
+	Queries *data.Queries
 }
 
 var eblanRe = handlers.NewRegexp("^![ие][б6п]?л[ап]н[а-я]*")
@@ -20,11 +22,12 @@ func (h *Eblan) Match(c tele.Context) bool {
 }
 
 func (h *Eblan) Handle(c tele.Context) error {
-	world := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	u := world.DailyEblan()
-	l := tu.Link(c, u)
-	s := fmt.Sprintf("<b>Еблан дня</b> — %s 😸", l)
-	return c.Send(s, tele.ModeHTML)
+	ctx := context.Background()
+	chat, err := h.Queries.GetChat(ctx, c.Chat().ID)
+	if err != nil {
+		return err
+	}
+	link := tu.Link(c, chat.Data.Eblan)
+	out := fmt.Sprintf("<b>Еблан дня</b> — %s 😸", link)
+	return c.Send(out, tele.ModeHTML)
 }

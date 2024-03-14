@@ -1,0 +1,15 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "queries.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        out: "data"
+        sql_package: "pgx/v5"
+        overrides:
+          - db_type: "pg_catalog.timestamp"
+            go_type: "time.Time"
+          - column: "chats.data"
+            go_type:
+              "type": "ChatData"

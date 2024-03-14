@@ -2,10 +2,10 @@ package teleutil
 
 import (
 	"fmt"
-	"github.com/zxy248/nechego/game"
 	"html"
 	"strings"
 
+	"github.com/zxy248/nechego/data"
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
@@ -26,6 +26,8 @@ func Link(c tele.Context, who any) string {
 		m = Member(c, x)
 	case int64:
 		m = Member(c, tele.ChatID(x))
+	case data.User:
+		m = Member(c, tele.ChatID(x.ID))
 	default:
 		panic(fmt.Sprintf("unexpected type %T", x))
 	}
@@ -63,15 +65,6 @@ func Reply(c tele.Context) *tele.User {
 		return c.Message().ReplyTo.Sender
 	}
 	return nil
-}
-
-func Lock(c tele.Context, u *game.Universe) *game.World {
-	world, err := u.World(c.Chat().ID)
-	if err != nil {
-		panic(fmt.Sprintf("cannot get world: %s", err))
-	}
-	world.Lock()
-	return world
 }
 
 func MessageForwarded(m *tele.Message) bool {

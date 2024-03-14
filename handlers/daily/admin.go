@@ -1,8 +1,10 @@
 package daily
 
 import (
+	"context"
 	"fmt"
-	"github.com/zxy248/nechego/game"
+
+	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
 	tu "github.com/zxy248/nechego/teleutil"
 
@@ -10,7 +12,7 @@ import (
 )
 
 type Admin struct {
-	Universe *game.Universe
+	Queries *data.Queries
 }
 
 var adminRe = handlers.NewRegexp("^!админ")
@@ -20,11 +22,12 @@ func (h *Admin) Match(c tele.Context) bool {
 }
 
 func (h *Admin) Handle(c tele.Context) error {
-	world := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	u := world.DailyAdmin()
-	l := tu.Link(c, u)
-	s := fmt.Sprintf("<b>Админ дня</b> — %s 👑", l)
-	return c.Send(s, tele.ModeHTML)
+	ctx := context.Background()
+	chat, err := h.Queries.GetChat(ctx, c.Chat().ID)
+	if err != nil {
+		return err
+	}
+	link := tu.Link(c, chat.Data.Admin)
+	out := fmt.Sprintf("<b>Админ дня</b> — %s 👑", link)
+	return c.Send(out, tele.ModeHTML)
 }

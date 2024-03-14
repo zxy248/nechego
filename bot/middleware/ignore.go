@@ -1,7 +1,9 @@
 package middleware
 
 import (
-	"github.com/zxy248/nechego/game"
+	"context"
+
+	"github.com/zxy248/nechego/data"
 	tu "github.com/zxy248/nechego/teleutil"
 
 	tele "gopkg.in/zxy248/telebot.v3"
@@ -18,18 +20,19 @@ func (m *IgnoreMessageForwarded) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	}
 }
 
-type IgnoreWorldInactive struct {
-	Universe *game.Universe
-	Immune   func(tele.Context) bool
+type IgnoreInactive struct {
+	Queries *data.Queries
+	Immune  func(tele.Context) bool
 }
 
-func (m *IgnoreWorldInactive) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
+func (m *IgnoreInactive) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 	return func(c tele.Context) error {
-		w := tu.Lock(c, m.Universe)
-		off := w.Inactive
-		w.Unlock()
-
-		if off && !m.Immune(c) {
+		ctx := context.Background()
+		chat, err := m.Queries.GetChat(ctx, c.Chat().ID)
+		if err != nil {
+			return err
+		}
+		if !chat.Data.Active && !m.Immune(c) {
 			return nil
 		}
 		return next(c)

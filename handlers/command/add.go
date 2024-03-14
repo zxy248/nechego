@@ -1,43 +1,39 @@
 package command
 
 import (
-	"github.com/zxy248/nechego/commands"
-	"github.com/zxy248/nechego/game"
+	"context"
+
+	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
-	tu "github.com/zxy248/nechego/teleutil"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Add struct {
-	Universe *game.Universe
+	Queries *data.Queries
 }
 
-var addRe = handlers.NewRegexp(addPattern)
+var addRe = handlers.NewRegexp("^!добавить (" + definitionPattern + ")\\|?(.*)")
 
 func (h *Add) Match(c tele.Context) bool {
 	return addRe.MatchString(c.Text())
 }
 
 func (h *Add) Handle(c tele.Context) error {
-	world := tu.Lock(c, h.Universe)
-	defer world.Unlock()
-
-	m := addRe.FindStringSubmatch(c.Text())
-	d := sanitizeDefinition(m[1])
-	s := sanitizeSubstitution(m[2])
-	x := commands.Command{
-		Message: s,
-		Photo:   photoFileID(c),
-	}
-	world.Commands.Add(d, x)
-	return c.Send("✅ Команда добавлена.")
-}
-
-func photoFileID(c tele.Context) string {
-	var s string
+	match := addRe.FindStringSubmatch(c.Text())
+	var photo string
 	if p := c.Message().Photo; p != nil {
-		s = p.FileID
+		photo = p.FileID
 	}
-	return s
+	ctx := context.Background()
+	arg := data.AddCommandParams{
+		ChatID:            c.Chat().ID,
+		Definition:        sanitizeDefinition(match[1]),
+		SubstitutionText:  sanitizeSubstitution(match[2]),
+		SubstitutionPhoto: photo,
+	}
+	if err := h.Queries.AddCommand(ctx, arg); err != nil {
+		return err
+	}
+	return c.Send("✅ Команда добавлена.")
 }

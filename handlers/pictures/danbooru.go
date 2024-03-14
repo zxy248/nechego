@@ -4,8 +4,8 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/zxy248/nechego/danbooru"
 	"github.com/zxy248/nechego/handlers"
+	"github.com/zxy248/nechego/handlers/pictures/danbooru"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
