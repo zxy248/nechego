@@ -25,9 +25,6 @@ func (m *UpdateDaily) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 			if err != nil {
 				return err
 			}
-			if len(users) == 0 {
-				return next(c)
-			}
 			arg := data.UpdateDailyParams{
 				ID: c.Chat().ID,
 				Data: data.ChatData{
