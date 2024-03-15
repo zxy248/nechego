@@ -28,6 +28,13 @@ type Command struct {
 	SubstitutionPhoto string
 }
 
+type Handler struct {
+	MessageID int64
+	Handler   string
+	Time      time.Duration
+	Error     string
+}
+
 type HelloSticker struct {
 	Sticker []byte
 }
@@ -37,7 +44,6 @@ type Message struct {
 	UserID    int64
 	ChatID    int64
 	Content   string
-	IsCommand bool
 	Timestamp time.Time
 }
 

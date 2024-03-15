@@ -7,6 +7,8 @@ package data
 
 import (
 	"context"
+
+	"time"
 )
 
 const activateChat = `-- name: ActivateChat :exec
@@ -144,6 +146,28 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 	return i, err
 }
 
+const instrumentMessage = `-- name: InstrumentMessage :exec
+insert into handlers (message_id, handler, time, error)
+values ($1, $2, $3, $4)
+`
+
+type InstrumentMessageParams struct {
+	MessageID int64
+	Handler   string
+	Time      time.Duration
+	Error     string
+}
+
+func (q *Queries) InstrumentMessage(ctx context.Context, arg InstrumentMessageParams) error {
+	_, err := q.db.Exec(ctx, instrumentMessage,
+		arg.MessageID,
+		arg.Handler,
+		arg.Time,
+		arg.Error,
+	)
+	return err
+}
+
 const listCommands = `-- name: ListCommands :many
 select id, chat_id, definition, substitution_text, substitution_photo from commands where chat_id = $1
 `
@@ -175,11 +199,13 @@ func (q *Queries) ListCommands(ctx context.Context, chatID int64) ([]Command, er
 }
 
 const listMessages = `-- name: ListMessages :many
-select id, user_id, chat_id, content, is_command, timestamp
-  from messages
+select m.id, m.user_id, m.chat_id, m.content, m.timestamp
+  from messages m
+       join handlers h
+           on m.id = h.message_id
  where chat_id = $1
-   and not is_command
-   and content != ''
+   and h.handler = '*handlers.Pass'
+   and m.content != ''
 `
 
 func (q *Queries) ListMessages(ctx context.Context, chatID int64) ([]Message, error) {
@@ -196,7 +222,6 @@ func (q *Queries) ListMessages(ctx context.Context, chatID int64) ([]Message, er
 			&i.UserID,
 			&i.ChatID,
 			&i.Content,
-			&i.IsCommand,
 			&i.Timestamp,
 		); err != nil {
 			return nil, err
@@ -288,15 +313,6 @@ func (q *Queries) RecentUsers(ctx context.Context, chatID int64) ([]User, error)
 		return nil, err
 	}
 	return items, nil
-}
-
-const setMessageNotCommand = `-- name: SetMessageNotCommand :exec
-update messages set is_command = false where id = $1
-`
-
-func (q *Queries) SetMessageNotCommand(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, setMessageNotCommand, id)
-	return err
 }
 
 const updateChat = `-- name: UpdateChat :exec

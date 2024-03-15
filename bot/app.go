@@ -27,6 +27,7 @@ func (a *App) Handlers() []Handler {
 	mw := a.middleware()
 	var r []Handler
 	for _, h := range hs {
+		h = &InstrumentedHandler{a.Queries, h}
 		r = append(r, Wrap(h, mw))
 	}
 	return r

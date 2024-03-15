@@ -50,14 +50,17 @@ values ($1, $2, $3)
 returning id;
 
 -- name: ListMessages :many
-select *
-  from messages
+select m.*
+  from messages m
+       join handlers h
+           on m.id = h.message_id
  where chat_id = $1
-   and not is_command
-   and content != '';
+   and h.handler = '*handlers.Pass'
+   and m.content != '';
 
--- name: SetMessageNotCommand :exec
-update messages set is_command = false where id = $1;
+-- name: InstrumentMessage :exec
+insert into handlers (message_id, handler, time, error)
+values ($1, $2, $3, $4);
 
 -- name: AddSticker :exec
 insert into stickers (message_id, file_id) values ($1, $2);

@@ -10,6 +10,8 @@ sql:
         overrides:
           - db_type: "pg_catalog.timestamp"
             go_type: "time.Time"
+          - db_type: "pg_catalog.interval"
+            go_type: "time.Duration"
           - column: "chats.data"
             go_type:
               "type": "ChatData"

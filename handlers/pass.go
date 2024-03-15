@@ -19,14 +19,10 @@ func (h *Pass) Match(c tele.Context) bool {
 }
 
 func (h *Pass) Handle(c tele.Context) error {
-	ctx := context.Background()
-	messageID := c.Get(MessageIDKey).(int64)
-	if err := h.Queries.SetMessageNotCommand(ctx, messageID); err != nil {
-		return err
-	}
 	if s := c.Message().Sticker; s != nil {
+		ctx := context.Background()
 		arg := data.AddStickerParams{
-			MessageID: messageID,
+			MessageID: c.Get(MessageIDKey).(int64),
 			FileID:    s.FileID,
 		}
 		if err := h.Queries.AddSticker(ctx, arg); err != nil {

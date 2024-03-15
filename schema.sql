@@ -24,7 +24,6 @@ create table if not exists messages (
   user_id bigint not null references users,
   chat_id bigint not null references chats,
   content text not null,
-  is_command boolean not null default true,
   timestamp timestamp not null default now()
 );
 
@@ -40,6 +39,13 @@ create table if not exists commands (
   definition text not null,
   substitution_text text not null,
   substitution_photo text not null
+);
+
+create table if not exists handlers (
+  message_id bigint primary key references messages,
+  handler text not null,
+  time interval not null,
+  error text not null
 );
 
 create table if not exists hello_stickers (
