@@ -44,7 +44,6 @@ type Message struct {
 }
 
 type Sticker struct {
-	ID        int64
 	MessageID int64
 	FileID    string
 }

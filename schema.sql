@@ -28,8 +28,7 @@ create table if not exists messages (
 );
 
 create table if not exists stickers (
-  id bigserial primary key,
-  message_id bigint not null references messages,
+  message_id bigint primary key references messages,
   file_id text not null
 );
 

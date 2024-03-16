@@ -213,7 +213,7 @@ func (q *Queries) ListMessages(ctx context.Context, chatID int64) ([]Message, er
 }
 
 const recentStickers = `-- name: RecentStickers :many
-select s.id, s.message_id, s.file_id
+select s.message_id, s.file_id
   from stickers s
        join messages m
            on s.message_id = m.id
@@ -231,7 +231,7 @@ func (q *Queries) RecentStickers(ctx context.Context, chatID int64) ([]Sticker, 
 	var items []Sticker
 	for rows.Next() {
 		var i Sticker
-		if err := rows.Scan(&i.ID, &i.MessageID, &i.FileID); err != nil {
+		if err := rows.Scan(&i.MessageID, &i.FileID); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
