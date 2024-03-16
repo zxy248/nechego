@@ -86,14 +86,9 @@ update chats
  where id = $1
    and coalesce((data ->> 'updated_at')::date < current_date, true);
 
--- name: ActivateChat :exec
+-- name: SetChatStatus :exec
 update chats
-   set data['active'] = to_jsonb(true)
- where id = $1;
-
--- name: DisableChat :exec
-update chats
-   set data['active'] = to_jsonb(false)
+   set data['active'] = to_jsonb(@active::boolean)
  where id = $1;
 
 -- name: AddCommand :exec

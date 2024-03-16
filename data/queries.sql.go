@@ -12,17 +12,6 @@ import (
 	"time"
 )
 
-const activateChat = `-- name: ActivateChat :exec
-update chats
-   set data['active'] = to_jsonb(true)
- where id = $1
-`
-
-func (q *Queries) ActivateChat(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, activateChat, id)
-	return err
-}
-
 const addCommand = `-- name: AddCommand :exec
 insert into commands (chat_id, definition, substitution_text, substitution_photo)
 values ($1, $2, $3, $4)
@@ -89,17 +78,6 @@ type DeleteCommandsParams struct {
 
 func (q *Queries) DeleteCommands(ctx context.Context, arg DeleteCommandsParams) error {
 	_, err := q.db.Exec(ctx, deleteCommands, arg.ChatID, arg.Definition)
-	return err
-}
-
-const disableChat = `-- name: DisableChat :exec
-update chats
-   set data['active'] = to_jsonb(false)
- where id = $1
-`
-
-func (q *Queries) DisableChat(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, disableChat, id)
 	return err
 }
 
@@ -314,6 +292,22 @@ func (q *Queries) RecentUsers(ctx context.Context, chatID int64) ([]User, error)
 		return nil, err
 	}
 	return items, nil
+}
+
+const setChatStatus = `-- name: SetChatStatus :exec
+update chats
+   set data['active'] = to_jsonb($2::boolean)
+ where id = $1
+`
+
+type SetChatStatusParams struct {
+	ID     int64
+	Active bool
+}
+
+func (q *Queries) SetChatStatus(ctx context.Context, arg SetChatStatusParams) error {
+	_, err := q.db.Exec(ctx, setChatStatus, arg.ID, arg.Active)
+	return err
 }
 
 const updateChat = `-- name: UpdateChat :exec

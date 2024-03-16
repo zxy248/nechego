@@ -22,9 +22,11 @@ func (h *TurnOn) Match(c tele.Context) bool {
 
 func (h *TurnOn) Handle(c tele.Context) error {
 	ctx := context.Background()
-	if err := h.Queries.ActivateChat(ctx, c.Chat().ID); err != nil {
+	arg := data.SetChatStatusParams{ID: c.Chat().ID, Active: true}
+	if err := h.Queries.SetChatStatus(ctx, arg); err != nil {
 		return err
 	}
+
 	es := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
 	e := es[rand.N(len(es))]
 	return c.Send(e + " Робот включен.")
@@ -42,9 +44,11 @@ func (h *TurnOff) Match(c tele.Context) bool {
 
 func (h *TurnOff) Handle(c tele.Context) error {
 	ctx := context.Background()
-	if err := h.Queries.DisableChat(ctx, c.Chat().ID); err != nil {
+	arg := data.SetChatStatusParams{ID: c.Chat().ID, Active: false}
+	if err := h.Queries.SetChatStatus(ctx, arg); err != nil {
 		return err
 	}
+
 	es := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
 	e := es[rand.N(len(es))]
 	return c.Send(e + " Робот выключен.")
