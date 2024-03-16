@@ -6,8 +6,6 @@ package data
 
 import (
 	"time"
-
-	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Chat struct {
@@ -35,10 +33,6 @@ type Handler struct {
 	Handler   string
 	Time      time.Duration
 	Error     string
-}
-
-type HelloSticker struct {
-	Sticker tele.Sticker
 }
 
 type Message struct {

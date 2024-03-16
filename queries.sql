@@ -74,12 +74,6 @@ select s.*
  order by m.timestamp desc
  limit 50;
 
--- name: RandomHelloSticker :one
-select *
-  from hello_stickers
- order by random()
- limit 1;
-
 -- name: UpdateDaily :exec
 update chats
    set data = $2

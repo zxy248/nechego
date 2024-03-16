@@ -47,7 +47,3 @@ create table if not exists handlers (
   time interval not null,
   error text not null
 );
-
-create table if not exists hello_stickers (
-  sticker jsonb not null
-);
