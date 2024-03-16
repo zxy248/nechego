@@ -2,7 +2,6 @@ package pictures
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
@@ -22,14 +21,9 @@ func (h *Hello) Match(c tele.Context) bool {
 
 func (h *Hello) Handle(c tele.Context) error {
 	ctx := context.Background()
-	raw, err := h.Queries.RandomHelloSticker(ctx)
+	sticker, err := h.Queries.RandomHelloSticker(ctx)
 	if err != nil {
 		return err
 	}
-
-	var s tele.Sticker
-	if err := json.Unmarshal(raw, &s); err != nil {
-		return err
-	}
-	return c.Send(&s)
+	return c.Send(&sticker)
 }

@@ -8,6 +8,7 @@ package data
 import (
 	"context"
 
+	tele "gopkg.in/zxy248/telebot.v3"
 	"time"
 )
 
@@ -241,9 +242,9 @@ select sticker
  limit 1
 `
 
-func (q *Queries) RandomHelloSticker(ctx context.Context) ([]byte, error) {
+func (q *Queries) RandomHelloSticker(ctx context.Context) (tele.Sticker, error) {
 	row := q.db.QueryRow(ctx, randomHelloSticker)
-	var sticker []byte
+	var sticker tele.Sticker
 	err := row.Scan(&sticker)
 	return sticker, err
 }

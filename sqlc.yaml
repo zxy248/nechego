@@ -14,4 +14,9 @@ sql:
             go_type: "time.Duration"
           - column: "chats.data"
             go_type:
-              "type": "ChatData"
+              type: "ChatData"
+          - column: "hello_stickers.sticker"
+            go_type:
+              import: "gopkg.in/zxy248/telebot.v3"
+              package: "tele"
+              type: "Sticker"
