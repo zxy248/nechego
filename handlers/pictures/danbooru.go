@@ -40,7 +40,7 @@ var danbooruPictures = func() chan *danbooru.Picture {
 	const size = 16
 
 	pics := make(chan *danbooru.Picture, size)
-	for i := 0; i < workers; i++ {
+	for range workers {
 		go func() {
 			for {
 				pics <- danbooruPicture()
