@@ -18,6 +18,7 @@ import (
 var (
 	botToken        = getenv("NECHEGO_TOKEN")
 	assetsDirectory = getenv("NECHEGO_ASSETS")
+	connString      = getenv("NECHEGO_DATABASE")
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 		log.Fatal("cannot build bot: ", err)
 	}
 
-	pool, err := pgxpool.New(context.Background(), getenv("NECHEGO_DATABASE"))
+	pool, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		log.Fatal("cannot create connection pool: ", err)
 	}
