@@ -10,7 +10,7 @@ type Basili struct {
 	Path string
 }
 
-var basiliRe = handlers.NewRegexp("^!(муся|марс|(кот|кошка) василия)")
+var basiliRe = handlers.NewRegexp("^!(муся|марс|(кот|кош)[а-я]* василия)")
 
 func (h *Basili) Match(c tele.Context) bool {
 	return basiliRe.MatchString(c.Text())
