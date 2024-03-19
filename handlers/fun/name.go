@@ -2,78 +2,71 @@ package fun
 
 import (
 	"fmt"
+	"html"
+	"strings"
+	"unicode/utf8"
+
 	"github.com/zxy248/nechego/handlers"
 	tu "github.com/zxy248/nechego/teleutil"
-	"html"
-	"unicode/utf8"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
 type Name struct{}
 
-var nameRe = handlers.NewRegexp("^!имя (.+)")
-
 func (h *Name) Match(c tele.Context) bool {
-	return nameRe.MatchString(c.Text())
-}
-
-func (h *Name) Handle(c tele.Context) error {
-	u := tu.Reply(c)
-	if u == nil {
-		u = c.Sender()
-	}
-	name := parseName(c.Text())
-	if !validNameLength(name) {
-		return c.Send(nameLengthExceeded(maxNameLength))
-	}
-	if err := promoteUser(c, u); err != nil {
-		return err
-	}
-	if err := setName(c, u, name); err != nil {
-		return c.Send(setNameFail())
-	}
-	return c.Send(setNameSuccess(name), tele.ModeHTML)
-}
-
-func parseName(s string) string {
-	return html.EscapeString(nameRe.FindStringSubmatch(s)[1])
-}
-
-const maxNameLength = 16
-
-func validNameLength(s string) bool {
-	return utf8.RuneCountInString(s) <= maxNameLength
-}
-
-func promoteUser(c tele.Context, u *tele.User) error {
-	return tu.Promote(c, tu.Member(c, u))
-}
-
-func setName(c tele.Context, u *tele.User, name string) error {
-	return c.Bot().SetAdminTitle(c.Chat(), u, name)
-}
-
-func setNameSuccess(name string) string {
-	return fmt.Sprintf("Имя <b>%s</b> установлено ✅", name)
-}
-
-func setNameFail() string {
-	return "⚠️ Не удалось установить имя."
-}
-
-func nameLengthExceeded(max int) string {
-	return fmt.Sprintf("⚠️ Максимальная длина имени %d символов.", max)
-}
-
-type CheckName struct{}
-
-func (h *CheckName) Match(c tele.Context) bool {
 	return handlers.HasPrefix(c.Text(), "!имя")
 }
 
-func (h *CheckName) Handle(c tele.Context) error {
-	l := tu.Link(c, c.Sender())
-	s := fmt.Sprintf("Ваше имя: <b>%s</b> 🔖", l)
-	return c.Send(s, tele.ModeHTML)
+func (h *Name) Handle(c tele.Context) error {
+	user := c.Sender()
+	if reply := c.Message().ReplyTo; reply != nil {
+		user = reply.Sender
+	}
+
+	name := getNameArgument(c.Text())
+	if name == "" {
+		// Check the user's name.
+		prefix := "Имя пользователя"
+		if user.ID == c.Sender().ID {
+			prefix = "Ваше имя"
+		}
+		link := tu.Link(c, user)
+		out := fmt.Sprintf("%s: <b>%s</b> 🔖", prefix, link)
+		return c.Send(out, tele.ModeHTML)
+	}
+
+	if n := 16; utf8.RuneCountInString(name) > n {
+		out := fmt.Sprintf("⚠️ Максимальная длина имени %d символов.", n)
+		return c.Send(out)
+	}
+
+	if user.ID == c.Bot().Me.ID {
+		// Set the bot's name.
+		payload := map[string]any{"name": name}
+		if _, err := c.Bot().Raw("setMyName", payload); err != nil {
+			return c.Send("⚠️ Подождите, прежде чем использовать эту команду снова.")
+		}
+		out := fmt.Sprintf("Теперь меня зовут <b>%s</b> ✅", name)
+		return c.Send(out, tele.ModeHTML)
+	}
+
+	// User must be an admin to have a name.
+	if err := tu.Promote(c, tu.Member(c, user)); err != nil {
+		return err
+	}
+
+	if err := c.Bot().SetAdminTitle(c.Chat(), user, name); err != nil {
+		return c.Send("⚠️ Не удалось установить имя.")
+	}
+	out := fmt.Sprintf("Имя <b>%s</b> установлено ✅", name)
+	return c.Send(out, tele.ModeHTML)
+}
+
+func getNameArgument(s string) string {
+	trim := strings.TrimPrefix(s, "!имя")
+	if len(trim) == 0 || trim[0] != ' ' {
+		return ""
+	}
+	return html.EscapeString(trim[1:])
 }

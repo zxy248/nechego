@@ -64,7 +64,6 @@ func (a *App) funHandlers() []Handler {
 		&fun.Weather{},
 		&fun.Calc{},
 		&fun.Name{},
-		&fun.CheckName{},
 		&fun.Who{Queries: a.Queries},
 		&fun.List{Queries: a.Queries},
 		&fun.Top{Queries: a.Queries},
