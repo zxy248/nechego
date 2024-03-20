@@ -3,15 +3,12 @@ package pictures
 import (
 	"math/rand/v2"
 
-	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
 
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
-type Hello struct {
-	Queries *data.Queries
-}
+type Hello struct{}
 
 var helloRe = handlers.NewRegexp("^!(п[рл]ив[а-я]*|хай|зд[ао]ров[а-я]*|ку|здрав[а-я]*)")
 

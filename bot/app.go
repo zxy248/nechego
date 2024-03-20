@@ -79,13 +79,31 @@ func (a *App) funHandlers() []Handler {
 
 func (a *App) pictureHandlers() []Handler {
 	return []Handler{
-		&pictures.Pic{Path: assetPath("pic")},
-		&pictures.Basili{Path: assetPath("basili")},
-		&pictures.Casper{Path: assetPath("casper")},
-		&pictures.Zeus{Path: assetPath("zeus")},
-		&pictures.Mouse{Path: assetPath("mouse.mp4")},
-		&pictures.Tiktok{Path: assetPath("tiktok")},
-		&pictures.Hello{Queries: a.Queries},
+		&pictures.FromDir{
+			Path:   assetPath("pic"),
+			Regexp: handlers.NewRegexp("^!пик"),
+		},
+		&pictures.FromDir{
+			Path:   assetPath("basili"),
+			Regexp: handlers.NewRegexp("^!(муся|марс|(кот|кош)[а-я]* василия)"),
+		},
+		&pictures.FromDir{
+			Path:   assetPath("casper"),
+			Regexp: handlers.NewRegexp("^!касп[ие]р"),
+		},
+		&pictures.FromDir{
+			Path:   assetPath("zeus"),
+			Regexp: handlers.NewRegexp("^!зевс"),
+		},
+		&pictures.FromDir{
+			Path:   assetPath("mouse"),
+			Regexp: handlers.NewRegexp("!мыш"),
+		},
+		&pictures.FromDir{
+			Path:   assetPath("tiktok"),
+			Regexp: handlers.NewRegexp("^!тикток"),
+		},
+		&pictures.Hello{},
 		&pictures.Anime{},
 		&pictures.Furry{},
 		&pictures.Flag{},
