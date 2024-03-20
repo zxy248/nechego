@@ -9,7 +9,7 @@ import (
 
 type Avatar struct{}
 
-var avatarRe = regexp.MustCompile("^!аватар")
+var avatarRe = regexp.MustCompile("^!ава")
 
 func (h *Avatar) Match(c tele.Context) bool {
 	return avatarRe.MatchString(c.Text())
