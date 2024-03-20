@@ -71,3 +71,24 @@ func (h *FromURL) Handle(c tele.Context) error {
 	defer resp.Body.Close()
 	return c.Send(&tele.Photo{File: tele.FromReader(resp.Body)})
 }
+
+type FromStickerPack struct {
+	Source []string
+	Regexp *regexp.Regexp
+}
+
+func (h *FromStickerPack) Match(c tele.Context) bool {
+	return h.Regexp.MatchString(c.Text())
+}
+
+func (h *FromStickerPack) Handle(c tele.Context) error {
+	var all []tele.Sticker
+	for _, src := range h.Source {
+		set, err := c.Bot().StickerSet(src)
+		if err != nil {
+			return err
+		}
+		all = append(all, set.Stickers...)
+	}
+	return c.Send(&all[rand.N(len(all))])
+}

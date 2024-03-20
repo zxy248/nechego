@@ -126,9 +126,26 @@ func (a *App) pictureHandlers() []Handler {
 		&pictures.Car{},
 		&pictures.Danbooru{},
 		&pictures.Fap{},
-		&pictures.Masyunya{},
-		&pictures.Poppy{},
-		&pictures.Sima{},
+		&pictures.FromStickerPack{
+			Source: []string{"masyunya_vk"},
+			Regexp: handlers.NewRegexp("^!ма[нс]ю[нс][а-я]*[пая]"),
+		},
+		&pictures.FromStickerPack{
+			Source: []string{"pappy2_vk", "poppy_vk"},
+			Regexp: handlers.NewRegexp("^!паппи"),
+		},
+		&pictures.FromStickerPack{
+			Source: []string{"catsima_vk"},
+			Regexp: handlers.NewRegexp("^!сима"),
+		},
+		&pictures.FromStickerPack{
+			Source: []string{"Vjopeneogurez_by_fStikBot"},
+			Regexp: handlers.NewRegexp("^!зюз[а-я]*"),
+		},
+		&pictures.FromStickerPack{
+			Source: []string{"jdjsjakwkek_by_fStikBot"},
+			Regexp: handlers.NewRegexp("^!с[еи]л[еи]н[еи]?[еэ]ль?"),
+		},
 		&pictures.Hello{},
 	}
 }
