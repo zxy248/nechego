@@ -24,7 +24,7 @@ create table if not exists messages (
   user_id bigint not null references users,
   chat_id bigint not null references chats,
   content text not null,
-  timestamp timestamp not null default now()
+  timestamp timestamptz not null default now()
 );
 
 create table if not exists stickers (
