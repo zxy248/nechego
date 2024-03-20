@@ -103,18 +103,33 @@ func (a *App) pictureHandlers() []Handler {
 			Path:   assetPath("tiktok"),
 			Regexp: handlers.NewRegexp("^!тикток"),
 		},
-		&pictures.Hello{},
-		&pictures.Anime{},
-		&pictures.Furry{},
-		&pictures.Flag{},
+		&pictures.FromURL{
+			Locator: &pictures.Anime{},
+			Regexp:  handlers.NewRegexp("^!(аним|мульт)"),
+		},
+		&pictures.FromURL{
+			Locator: &pictures.Furry{},
+			Regexp:  handlers.NewRegexp("^!фур"),
+		},
+		&pictures.FromURL{
+			Locator: &pictures.Flag{},
+			Regexp:  handlers.NewRegexp("^!флаг"),
+		},
+		&pictures.FromURL{
+			Locator: &pictures.Soy{},
+			Regexp:  handlers.NewRegexp("^!сой"),
+		},
+		&pictures.FromURL{
+			Locator: &pictures.Cat{},
+			Regexp:  handlers.NewRegexp("!(кот|кош)"),
+		},
 		&pictures.Car{},
-		&pictures.Soy{},
 		&pictures.Danbooru{},
 		&pictures.Fap{},
 		&pictures.Masyunya{},
 		&pictures.Poppy{},
 		&pictures.Sima{},
-		&pictures.Cat{},
+		&pictures.Hello{},
 	}
 }
 

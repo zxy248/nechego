@@ -3,6 +3,7 @@ package pictures
 import (
 	"io/fs"
 	"math/rand/v2"
+	"net/http"
 	"path/filepath"
 	"regexp"
 	"sync"
@@ -47,4 +48,26 @@ func (h *FromDir) initFiles() error {
 		}
 		return nil
 	})
+}
+
+type Locator interface {
+	URL() string
+}
+
+type FromURL struct {
+	Locator Locator
+	Regexp  *regexp.Regexp
+}
+
+func (h *FromURL) Match(c tele.Context) bool {
+	return h.Regexp.MatchString(c.Text())
+}
+
+func (h *FromURL) Handle(c tele.Context) error {
+	resp, err := http.Get(h.Locator.URL())
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	return c.Send(&tele.Photo{File: tele.FromReader(resp.Body)})
 }

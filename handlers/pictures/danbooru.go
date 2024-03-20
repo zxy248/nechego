@@ -26,6 +26,34 @@ func (h *Danbooru) Handle(c tele.Context) error {
 	return c.Send(photo, tele.ModeHTML)
 }
 
+type Fap struct{}
+
+var fapRe = handlers.NewRegexp("^!(др[ао]ч|фап|эро|порн)")
+
+func (h *Fap) Match(c tele.Context) bool {
+	return fapRe.MatchString(c.Text())
+}
+
+func (h *Fap) Handle(c tele.Context) error {
+	var pic *danbooru.Picture
+	for {
+		pic = <-danbooruPictures
+		if pic.Rating.NSFW() {
+			break
+		}
+	}
+	emoji := map[danbooru.Rating]string{
+		danbooru.Explicit:     "🔞",
+		danbooru.Questionable: "❓",
+	}
+	photo := &tele.Photo{
+		File:       tele.FromURL(pic.URL),
+		Caption:    emoji[pic.Rating],
+		HasSpoiler: true,
+	}
+	return c.Send(photo, tele.ModeHTML)
+}
+
 func warningNSFW() string {
 	s := [...]string{
 		"🔞 Осторожно! Только для взрослых.",
