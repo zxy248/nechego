@@ -3,6 +3,7 @@ package teleutil
 import (
 	"fmt"
 	"html"
+	"path"
 	"strings"
 
 	"github.com/zxy248/nechego/data"
@@ -73,4 +74,13 @@ func MessageForwarded(m *tele.Message) bool {
 
 func SuperGroup(c tele.Context) bool {
 	return c.Chat().Type == tele.ChatSuperGroup
+}
+
+func SendFile(c tele.Context, name string, opts ...interface{}) error {
+	file := tele.FromDisk(name)
+	ext := strings.ToLower(path.Ext(name))
+	if ext == ".mp4" || ext == ".mov" {
+		return c.Send(&tele.Video{File: file}, opts...)
+	}
+	return c.Send(&tele.Photo{File: file}, opts...)
 }

@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"sync"
 
+	tu "github.com/zxy248/nechego/teleutil"
+
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
@@ -29,7 +31,7 @@ func (h *FromDir) Handle(c tele.Context) error {
 	}
 
 	file := h.files[rand.N(len(h.files))]
-	return c.Send(sendableFromFile(file))
+	return tu.SendFile(c, file)
 }
 
 func (h *FromDir) initFiles() error {
