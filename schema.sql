@@ -46,3 +46,9 @@ create table if not exists handlers (
   time interval not null,
   error text not null
 );
+
+create or replace view active_users as (
+  select distinct user_id, chat_id
+    from messages
+   where timestamp > now() - '1 week'::interval
+);

@@ -27,9 +27,8 @@ func (h *TurnOn) Handle(c tele.Context) error {
 		return err
 	}
 
-	es := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
-	e := es[rand.N(len(es))]
-	return c.Send(e + " Робот включен.")
+	e := [...]string{"🔈", "🔔", "✅", "🆗", "▶️"}
+	return c.Send(e[rand.N(len(e))] + " Робот включен.")
 }
 
 type TurnOff struct {
@@ -49,7 +48,6 @@ func (h *TurnOff) Handle(c tele.Context) error {
 		return err
 	}
 
-	es := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
-	e := es[rand.N(len(es))]
-	return c.Send(e + " Робот выключен.")
+	e := [...]string{"🔇", "🔕", "💤", "❌", "⛔️", "🚫", "⏹"}
+	return c.Send(e[rand.N(len(e))] + " Робот выключен.")
 }

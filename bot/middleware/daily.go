@@ -21,7 +21,7 @@ func (m *UpdateDaily) Wrap(next tele.HandlerFunc) tele.HandlerFunc {
 			return err
 		}
 		if chat.Data.UpdatedAt.YearDay() != time.Now().YearDay() {
-			users, err := m.Queries.RecentUsers(ctx, c.Chat().ID)
+			users, err := m.Queries.ListUsers(ctx, c.Chat().ID)
 			if err != nil {
 				return err
 			}

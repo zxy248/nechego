@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+type ActiveUser struct {
+	UserID int64
+	ChatID int64
+}
+
 type Chat struct {
 	ID    int64
 	Title string

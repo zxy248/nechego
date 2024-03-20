@@ -212,6 +212,81 @@ func (q *Queries) ListMessages(ctx context.Context, chatID int64) ([]Message, er
 	return items, nil
 }
 
+const listUsers = `-- name: ListUsers :many
+select id, first_name, last_name, username, is_premium
+  from users
+ where (id, $1::bigint)
+       in (select user_id, chat_id
+             from active_users)
+`
+
+func (q *Queries) ListUsers(ctx context.Context, chatID int64) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers, chatID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Username,
+			&i.IsPremium,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const randomUsers = `-- name: RandomUsers :many
+select id, first_name, last_name, username, is_premium
+  from users
+ where (id, $2::bigint)
+       in (select user_id, chat_id
+             from active_users)
+ order by random()
+ limit $1
+`
+
+type RandomUsersParams struct {
+	Limit  int32
+	ChatID int64
+}
+
+func (q *Queries) RandomUsers(ctx context.Context, arg RandomUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, randomUsers, arg.Limit, arg.ChatID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Username,
+			&i.IsPremium,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const recentStickers = `-- name: RecentStickers :many
 select s.message_id, s.file_id
   from stickers s
@@ -232,43 +307,6 @@ func (q *Queries) RecentStickers(ctx context.Context, chatID int64) ([]Sticker, 
 	for rows.Next() {
 		var i Sticker
 		if err := rows.Scan(&i.MessageID, &i.FileID); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const recentUsers = `-- name: RecentUsers :many
-select id, first_name, last_name, username, is_premium
-  from users
- where id in (
-   select user_id
-     from messages
-    where chat_id = $1
-      and timestamp > now() - '1 week'::interval
- )
-`
-
-func (q *Queries) RecentUsers(ctx context.Context, chatID int64) ([]User, error) {
-	rows, err := q.db.Query(ctx, recentUsers, chatID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []User
-	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.FirstName,
-			&i.LastName,
-			&i.Username,
-			&i.IsPremium,
-		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

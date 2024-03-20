@@ -3,7 +3,6 @@ package fun
 import (
 	"context"
 	"html"
-	"math/rand/v2"
 
 	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
@@ -24,17 +23,19 @@ func (h *Who) Match(c tele.Context) bool {
 
 func (h *Who) Handle(c tele.Context) error {
 	ctx := context.Background()
-	users, err := h.Queries.RecentUsers(ctx, c.Chat().ID)
+	arg := data.RandomUsersParams{
+		ChatID: c.Chat().ID,
+		Limit:  1,
+	}
+	users, err := h.Queries.RandomUsers(ctx, arg)
 	if err != nil {
 		return err
 	}
-	u := users[rand.N(len(users))]
-	w := parseWho(c.Text())
-	l := tu.Link(c, u.ID)
-	s := l + w
-	return c.Send(s, tele.ModeHTML)
+
+	out := tu.Link(c, users[0].ID) + getWhoArgument(c.Text())
+	return c.Send(out, tele.ModeHTML)
 }
 
-func parseWho(s string) string {
+func getWhoArgument(s string) string {
 	return html.EscapeString(whoRe.FindStringSubmatch(s)[1])
 }

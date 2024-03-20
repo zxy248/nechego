@@ -24,20 +24,22 @@ func (h *Top) Match(c tele.Context) bool {
 
 func (h *Top) Handle(c tele.Context) error {
 	ctx := context.Background()
-	users, err := h.Queries.RecentUsers(ctx, c.Chat().ID)
+	arg := data.RandomUsersParams{
+		ChatID: c.Chat().ID,
+		Limit:  3 + rand.N[int32](3),
+	}
+	users, err := h.Queries.RandomUsers(ctx, arg)
 	if err != nil {
 		return err
 	}
-	list := randomSample(users, 3+rand.N(3))
-	name := topName(c.Text())
-	out := fmt.Sprintf("<b>🏆 Топ %s</b>\n", name)
-	for i, u := range list {
-		l := tu.Link(c, u)
-		out += fmt.Sprintf("%d. <b>%s</b>\n", i+1, l)
+
+	out := fmt.Sprintf("<b>🏆 Топ %s</b>\n", getTopArgument(c.Text()))
+	for i, u := range users {
+		out += fmt.Sprintf("%d. <b>%s</b>\n", i+1, tu.Link(c, u))
 	}
 	return c.Send(out, tele.ModeHTML)
 }
 
-func topName(s string) string {
+func getTopArgument(s string) string {
 	return topRe.FindStringSubmatch(s)[1]
 }

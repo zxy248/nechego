@@ -17,7 +17,7 @@ func (h *Photon) Match(c tele.Context) bool {
 
 func (h *Photon) Handle(c tele.Context) error {
 	candidate := [...]string{"Даванков", "Харитонов", "Слуцкий"}[c.Sender().ID%3]
-	out := "<blockquote><b>🇷🇺 Выборы Президента РФ</b></blockquote>\n" +
+	format := "<blockquote><b>🇷🇺 Выборы Президента РФ</b></blockquote>\n" +
 		"Ваш кандидат: <tg-spoiler><b>%s ☑</b></tg-spoiler>"
-	return c.Send(fmt.Sprintf(out, candidate), tele.ModeHTML)
+	return c.Send(fmt.Sprintf(format, candidate), tele.ModeHTML)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
-	"slices"
 
 	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
@@ -25,28 +24,22 @@ func (h *List) Match(c tele.Context) bool {
 
 func (h *List) Handle(c tele.Context) error {
 	ctx := context.Background()
-	users, err := h.Queries.RecentUsers(ctx, c.Chat().ID)
+	arg := data.RandomUsersParams{
+		ChatID: c.Chat().ID,
+		Limit:  3 + rand.N[int32](3),
+	}
+	users, err := h.Queries.RandomUsers(ctx, arg)
 	if err != nil {
 		return err
 	}
-	list := randomSample(users, 3+rand.N(3))
-	name := listName(c.Text())
-	out := fmt.Sprintf("<b>📝 Список %s</b>\n", name)
-	for _, u := range list {
-		l := tu.Link(c, u)
-		out += fmt.Sprintf("• <b>%s</b>\n", l)
+
+	out := fmt.Sprintf("<b>📝 Список %s</b>\n", getListArgument(c.Text()))
+	for _, u := range users {
+		out += fmt.Sprintf("• <b>%s</b>\n", tu.Link(c, u))
 	}
 	return c.Send(out, tele.ModeHTML)
 }
 
-func listName(s string) string {
+func getListArgument(s string) string {
 	return listRe.FindStringSubmatch(s)[1]
-}
-
-func randomSample[T any](a []T, n int) []T {
-	c := slices.Clone(a)
-	rand.Shuffle(len(c), func(i, j int) {
-		c[i], c[j] = c[j], c[i]
-	})
-	return c[:min(len(c), n)]
 }

@@ -12,15 +12,21 @@ do update set
   is_premium = excluded.is_premium
 where users.* != excluded.*;
 
--- name: RecentUsers :many
+-- name: ListUsers :many
 select *
   from users
- where id in (
-   select user_id
-     from messages
-    where chat_id = $1
-      and timestamp > now() - '1 week'::interval
- );
+ where (id, @chat_id::bigint)
+       in (select user_id, chat_id
+             from active_users);
+
+-- name: RandomUsers :many
+select *
+  from users
+ where (id, @chat_id::bigint)
+       in (select user_id, chat_id
+             from active_users)
+ order by random()
+ limit $1;
 
 -- name: GetChat :one
 select * from chats where id = $1;
