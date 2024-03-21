@@ -50,5 +50,5 @@ create table if not exists handlers (
 create or replace view active_users as (
   select distinct user_id, chat_id
     from messages
-   where timestamp > now() - '1 week'::interval
+   where timestamp > now() - interval '1 week'
 );
