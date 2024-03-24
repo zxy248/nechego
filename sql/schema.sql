@@ -47,6 +47,11 @@ create table if not exists handlers (
   error text not null
 );
 
+create table if not exists handlers_info (
+  handler text primary key,
+  usage text not null
+);
+
 create or replace view active_users as (
   select distinct user_id, chat_id
     from messages

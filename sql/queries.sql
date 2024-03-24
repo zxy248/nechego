@@ -100,3 +100,53 @@ select * from commands where chat_id = $1;
 
 -- name: DeleteCommands :exec
 delete from commands where chat_id = $1 and definition = $2;
+
+-- name: MessageCount :one
+select jsonb_agg(q)::text from (
+  select to_char(date_trunc('day', timestamp), 'DD.MM') as x,
+         count(*) as y
+    from messages
+   where chat_id = $1
+     and timestamp > '2024-03-16'
+   group by x
+   order by x
+) q;
+
+-- name: CommandCount :one
+select jsonb_agg(q)::text from (
+  select to_char(date_trunc('day', timestamp), 'DD.MM') as x,
+         count(*) as y
+    from messages m
+         left join handlers h
+             on m.id = h.message_id
+   where chat_id = $1
+     and handler <> '*handlers.Pass'
+     and timestamp > '2024-03-16'
+   group by x
+   order by x
+) q;
+
+-- name: TopCommands :one
+select jsonb_agg(q)::text from (
+  select count(*) as x,
+         usage as y
+    from handlers h
+         join messages m
+             on h.message_id = m.id
+         join handlers_info hi
+             on h.handler = hi.handler
+   where chat_id = $1
+     and h.handler <> '*handlers.Pass'
+   group by usage
+   order by x desc
+) q;
+
+-- name: TopUsers :one
+select jsonb_agg(q)::text from (
+  select count(*) as x,
+         format_name(user_id, chat_id) as y
+    from messages
+   where chat_id = $1
+   group by y
+   order by x desc
+) q;

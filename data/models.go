@@ -40,6 +40,11 @@ type Handler struct {
 	Error     string
 }
 
+type HandlersInfo struct {
+	Handler string
+	Usage   string
+}
+
 type Message struct {
 	ID        int64
 	UserID    int64

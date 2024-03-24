@@ -66,6 +66,28 @@ func (q *Queries) AddSticker(ctx context.Context, arg AddStickerParams) error {
 	return err
 }
 
+const commandCount = `-- name: CommandCount :one
+select jsonb_agg(q)::text from (
+  select to_char(date_trunc('day', timestamp), 'DD.MM') as x,
+         count(*) as y
+    from messages m
+         left join handlers h
+             on m.id = h.message_id
+   where chat_id = $1
+     and handler <> '*handlers.Pass'
+     and timestamp > '2024-03-16'
+   group by x
+   order by x
+) q
+`
+
+func (q *Queries) CommandCount(ctx context.Context, chatID int64) (string, error) {
+	row := q.db.QueryRow(ctx, commandCount, chatID)
+	var column_1 string
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const deleteCommands = `-- name: DeleteCommands :exec
 delete from commands where chat_id = $1 and definition = $2
 `
@@ -246,6 +268,25 @@ func (q *Queries) ListUsers(ctx context.Context, chatID int64) ([]User, error) {
 	return items, nil
 }
 
+const messageCount = `-- name: MessageCount :one
+select jsonb_agg(q)::text from (
+  select to_char(date_trunc('day', timestamp), 'DD.MM') as x,
+         count(*) as y
+    from messages
+   where chat_id = $1
+     and timestamp > '2024-03-16'
+   group by x
+   order by x
+) q
+`
+
+func (q *Queries) MessageCount(ctx context.Context, chatID int64) (string, error) {
+	row := q.db.QueryRow(ctx, messageCount, chatID)
+	var column_1 string
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const randomUsers = `-- name: RandomUsers :many
 select id, first_name, last_name, username, is_premium
   from users
@@ -331,6 +372,47 @@ type SetChatStatusParams struct {
 func (q *Queries) SetChatStatus(ctx context.Context, arg SetChatStatusParams) error {
 	_, err := q.db.Exec(ctx, setChatStatus, arg.ID, arg.Active)
 	return err
+}
+
+const topCommands = `-- name: TopCommands :one
+select jsonb_agg(q)::text from (
+  select count(*) as x,
+         usage as y
+    from handlers h
+         join messages m
+             on h.message_id = m.id
+         join handlers_info hi
+             on h.handler = hi.handler
+   where chat_id = $1
+     and h.handler <> '*handlers.Pass'
+   group by usage
+   order by x desc
+) q
+`
+
+func (q *Queries) TopCommands(ctx context.Context, chatID int64) (string, error) {
+	row := q.db.QueryRow(ctx, topCommands, chatID)
+	var column_1 string
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const topUsers = `-- name: TopUsers :one
+select jsonb_agg(q)::text from (
+  select count(*) as x,
+         format_name(user_id, chat_id) as y
+    from messages
+   where chat_id = $1
+   group by y
+   order by x desc
+) q
+`
+
+func (q *Queries) TopUsers(ctx context.Context, chatID int64) (string, error) {
+	row := q.db.QueryRow(ctx, topUsers, chatID)
+	var column_1 string
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const updateChat = `-- name: UpdateChat :exec
