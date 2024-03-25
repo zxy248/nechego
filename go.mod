@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2
 	github.com/expr-lang/expr v1.16.2
 	github.com/jackc/pgx/v5 v5.5.5
-	gopkg.in/zxy248/telebot.v3 v3.0.0-20240118190624-f026759a7e4f
+	gopkg.in/zxy248/telebot.v3 v3.0.0-20240325162633-f0957059b073
 )
 
 require (
