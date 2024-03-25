@@ -166,5 +166,5 @@ func (a *App) otherHandlers() []Handler {
 }
 
 func assetPath(s string) string {
-	return filepath.Join(assetsDirectory, s)
+	return filepath.Join(config.Assets, s)
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -15,22 +14,16 @@ import (
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
-var (
-	botToken        = getenv("NECHEGO_TOKEN")
-	assetsDirectory = getenv("NECHEGO_ASSETS")
-	connString      = getenv("NECHEGO_DATABASE")
-)
-
 func main() {
 	bot, err := tele.NewBot(tele.Settings{
-		Token:  botToken,
+		Token:  config.Token,
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	})
 	if err != nil {
 		log.Fatal("cannot build bot: ", err)
 	}
 
-	pool, err := pgxpool.New(context.Background(), connString)
+	pool, err := pgxpool.New(context.Background(), config.Database)
 	if err != nil {
 		log.Fatal("cannot create connection pool: ", err)
 	}
@@ -44,14 +37,6 @@ func main() {
 	go srv.Start()
 	<-interrupt()
 	srv.Stop()
-}
-
-func getenv(s string) string {
-	e := os.Getenv(s)
-	if e == "" {
-		panic(fmt.Sprintf("%s not set", s))
-	}
-	return e
 }
 
 func interrupt() <-chan os.Signal {
