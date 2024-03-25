@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"math/rand/v2"
 
+	"github.com/expr-lang/expr"
 	"github.com/zxy248/nechego/handlers"
-
-	"github.com/antonmedv/expr"
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
