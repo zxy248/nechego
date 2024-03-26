@@ -12,28 +12,24 @@ type Use struct {
 }
 
 func (h *Use) Match(c tele.Context) bool {
-	ctx := context.Background()
-	arg := data.SelectCommandParams{
+	if _, err := h.Queries.SelectCommand(context.Background(), data.SelectCommandParams{
 		ChatID:     c.Chat().ID,
-		Definition: c.Text(),
-	}
-	_, err := h.Queries.SelectCommand(ctx, arg)
-	if err != nil {
+		Definition: commandDefinition(c.Text()),
+	}); err != nil {
 		return false
 	}
 	return true
 }
 
 func (h *Use) Handle(c tele.Context) error {
-	ctx := context.Background()
-	arg := data.SelectCommandParams{
+	cmd, err := h.Queries.SelectCommand(context.Background(), data.SelectCommandParams{
 		ChatID:     c.Chat().ID,
-		Definition: c.Text(),
-	}
-	cmd, err := h.Queries.SelectCommand(ctx, arg)
+		Definition: commandDefinition(c.Text()),
+	})
 	if err != nil {
 		return err
 	}
+
 	if cmd.SubstitutionPhoto != "" {
 		f := tele.File{FileID: cmd.SubstitutionPhoto}
 		p := &tele.Photo{File: f, Caption: cmd.SubstitutionText}

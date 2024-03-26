@@ -31,6 +31,7 @@ type Command struct {
 	Definition        string
 	SubstitutionText  string
 	SubstitutionPhoto string
+	CreatedAt         time.Time
 }
 
 type Handler struct {

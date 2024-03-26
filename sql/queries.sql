@@ -95,11 +95,17 @@ update chats
 insert into commands (chat_id, definition, substitution_text, substitution_photo)
 values ($1, $2, $3, $4);
 
--- name: ListCommands :many
-select * from commands where chat_id = $1;
-
--- name: DeleteCommands :exec
-delete from commands where chat_id = $1 and definition = $2;
+-- name: DeleteCommand :one
+delete from commands
+ where id = (
+   select c.id
+     from commands c
+    where c.chat_id = $1
+      and $2 like c.definition || '%'
+    order by c.created_at desc
+    limit 1
+ )
+returning *;
 
 -- name: SelectCommand :one
 select *

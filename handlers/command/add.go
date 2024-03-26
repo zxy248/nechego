@@ -20,18 +20,18 @@ func (h *Add) Match(c tele.Context) bool {
 
 func (h *Add) Handle(c tele.Context) error {
 	match := addRe.FindStringSubmatch(c.Text())
+
 	var photo string
 	if p := c.Message().Photo; p != nil {
 		photo = p.FileID
 	}
-	ctx := context.Background()
-	arg := data.AddCommandParams{
+
+	if err := h.Queries.AddCommand(context.Background(), data.AddCommandParams{
 		ChatID:            c.Chat().ID,
 		Definition:        commandDefinition(match[1]),
 		SubstitutionText:  commandSubstitution(match[2]),
 		SubstitutionPhoto: photo,
-	}
-	if err := h.Queries.AddCommand(ctx, arg); err != nil {
+	}); err != nil {
 		return err
 	}
 	return c.Send("✅ Команда добавлена.")

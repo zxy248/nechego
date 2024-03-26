@@ -37,7 +37,8 @@ create table if not exists commands (
   chat_id bigint not null references chats,
   definition text not null,
   substitution_text text not null,
-  substitution_photo text not null
+  substitution_photo text not null,
+  created_at timestamptz not null default now()
 );
 
 create table if not exists handlers (

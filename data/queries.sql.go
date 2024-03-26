@@ -88,18 +88,36 @@ func (q *Queries) CommandCount(ctx context.Context, chatID int64) (string, error
 	return column_1, err
 }
 
-const deleteCommands = `-- name: DeleteCommands :exec
-delete from commands where chat_id = $1 and definition = $2
+const deleteCommand = `-- name: DeleteCommand :one
+delete from commands
+ where id = (
+   select c.id
+     from commands c
+    where c.chat_id = $1
+      and $2 like c.definition || '%'
+    order by c.created_at desc
+    limit 1
+ )
+returning id, chat_id, definition, substitution_text, substitution_photo, created_at
 `
 
-type DeleteCommandsParams struct {
+type DeleteCommandParams struct {
 	ChatID     int64
 	Definition string
 }
 
-func (q *Queries) DeleteCommands(ctx context.Context, arg DeleteCommandsParams) error {
-	_, err := q.db.Exec(ctx, deleteCommands, arg.ChatID, arg.Definition)
-	return err
+func (q *Queries) DeleteCommand(ctx context.Context, arg DeleteCommandParams) (Command, error) {
+	row := q.db.QueryRow(ctx, deleteCommand, arg.ChatID, arg.Definition)
+	var i Command
+	err := row.Scan(
+		&i.ID,
+		&i.ChatID,
+		&i.Definition,
+		&i.SubstitutionText,
+		&i.SubstitutionPhoto,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const getChat = `-- name: GetChat :one
@@ -166,36 +184,6 @@ func (q *Queries) InstrumentMessage(ctx context.Context, arg InstrumentMessagePa
 		arg.Error,
 	)
 	return err
-}
-
-const listCommands = `-- name: ListCommands :many
-select id, chat_id, definition, substitution_text, substitution_photo from commands where chat_id = $1
-`
-
-func (q *Queries) ListCommands(ctx context.Context, chatID int64) ([]Command, error) {
-	rows, err := q.db.Query(ctx, listCommands, chatID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Command
-	for rows.Next() {
-		var i Command
-		if err := rows.Scan(
-			&i.ID,
-			&i.ChatID,
-			&i.Definition,
-			&i.SubstitutionText,
-			&i.SubstitutionPhoto,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 const listMessages = `-- name: ListMessages :many
@@ -359,7 +347,7 @@ func (q *Queries) RecentStickers(ctx context.Context, chatID int64) ([]Sticker, 
 }
 
 const selectCommand = `-- name: SelectCommand :one
-select id, chat_id, definition, substitution_text, substitution_photo
+select id, chat_id, definition, substitution_text, substitution_photo, created_at
   from commands
  where chat_id = $1
    and $2 like definition || '%'
@@ -381,6 +369,7 @@ func (q *Queries) SelectCommand(ctx context.Context, arg SelectCommandParams) (C
 		&i.Definition,
 		&i.SubstitutionText,
 		&i.SubstitutionPhoto,
+		&i.CreatedAt,
 	)
 	return i, err
 }
