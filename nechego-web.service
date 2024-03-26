@@ -1,0 +1,13 @@
+[Unit]
+Description=nechego web
+After=postgresql.service
+
+[Service]
+WorkingDirectory=/var/lib/nechego
+ExecStart=/usr/local/bin/nechego-web
+User=nechego
+Group=nechego
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

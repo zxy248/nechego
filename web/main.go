@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"embed"
 	"html/template"
 	"log"
 	"net/http"
@@ -14,7 +14,13 @@ import (
 	"github.com/zxy248/nechego/data"
 )
 
-var templates = template.Must(template.ParseGlob("templates/*"))
+//go:embed static
+var static embed.FS
+
+//go:embed templates
+var resources embed.FS
+
+var templates = template.Must(template.ParseFS(resources, "templates/*"))
 
 type Chat struct {
 	Queries *data.Queries
@@ -74,28 +80,17 @@ func serverError(w http.ResponseWriter, err error) {
 	errorLog.Printf("%s\n%s\n", err.Error(), debug.Stack())
 }
 
-func getenv(key string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		panic(fmt.Sprintf("%s not set", key))
-	}
-	return value
-}
-
 func main() {
-	addr := getenv("NECHEGO_ADDR")
-	db := getenv("NECHEGO_DATABASE")
-
 	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, db)
+	conn, err := pgx.Connect(ctx, config.Database)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("static"))))
+	mux.Handle("/static/", http.FileServerFS(static))
 	mux.Handle("/chat/{id}", &Chat{data.New(conn)})
 
-	log.Println("Listening on", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Println("Listening on", config.Address)
+	log.Fatal(http.ListenAndServe(config.Address, mux))
 }
