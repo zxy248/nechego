@@ -5,7 +5,6 @@ import (
 
 	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
-
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
@@ -24,7 +23,7 @@ func (h *Remove) Handle(c tele.Context) error {
 	ctx := context.Background()
 	arg := data.DeleteCommandsParams{
 		ChatID:     c.Chat().ID,
-		Definition: sanitizeDefinition(match[2]),
+		Definition: commandDefinition(match[2]),
 	}
 	if err := h.Queries.DeleteCommands(ctx, arg); err != nil {
 		return err

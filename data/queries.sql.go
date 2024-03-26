@@ -358,6 +358,33 @@ func (q *Queries) RecentStickers(ctx context.Context, chatID int64) ([]Sticker, 
 	return items, nil
 }
 
+const selectCommand = `-- name: SelectCommand :one
+select id, chat_id, definition, substitution_text, substitution_photo
+  from commands
+ where chat_id = $1
+   and $2 like definition || '%'
+ order by random()
+ limit 1
+`
+
+type SelectCommandParams struct {
+	ChatID     int64
+	Definition string
+}
+
+func (q *Queries) SelectCommand(ctx context.Context, arg SelectCommandParams) (Command, error) {
+	row := q.db.QueryRow(ctx, selectCommand, arg.ChatID, arg.Definition)
+	var i Command
+	err := row.Scan(
+		&i.ID,
+		&i.ChatID,
+		&i.Definition,
+		&i.SubstitutionText,
+		&i.SubstitutionPhoto,
+	)
+	return i, err
+}
+
 const setChatStatus = `-- name: SetChatStatus :exec
 update chats
    set data['active'] = to_jsonb($2::boolean)

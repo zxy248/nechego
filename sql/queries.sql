@@ -101,6 +101,14 @@ select * from commands where chat_id = $1;
 -- name: DeleteCommands :exec
 delete from commands where chat_id = $1 and definition = $2;
 
+-- name: SelectCommand :one
+select *
+  from commands
+ where chat_id = $1
+   and $2 like definition || '%'
+ order by random()
+ limit 1;
+
 -- name: MessageCount :one
 select jsonb_agg(q)::text from (
   select to_char(date_trunc('day', timestamp), 'DD.MM') as x,

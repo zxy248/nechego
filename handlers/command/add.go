@@ -5,7 +5,6 @@ import (
 
 	"github.com/zxy248/nechego/data"
 	"github.com/zxy248/nechego/handlers"
-
 	tele "gopkg.in/zxy248/telebot.v3"
 )
 
@@ -28,8 +27,8 @@ func (h *Add) Handle(c tele.Context) error {
 	ctx := context.Background()
 	arg := data.AddCommandParams{
 		ChatID:            c.Chat().ID,
-		Definition:        sanitizeDefinition(match[1]),
-		SubstitutionText:  sanitizeSubstitution(match[2]),
+		Definition:        commandDefinition(match[1]),
+		SubstitutionText:  commandSubstitution(match[2]),
 		SubstitutionPhoto: photo,
 	}
 	if err := h.Queries.AddCommand(ctx, arg); err != nil {
