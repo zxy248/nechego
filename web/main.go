@@ -66,7 +66,7 @@ func (h *Chat) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := templates.ExecuteTemplate(w, "chat", data); err != nil {
+	if err := templates.ExecuteTemplate(w, "chat.html", data); err != nil {
 		serverError(w, err)
 		return
 	}
